@@ -1106,30 +1106,12 @@ async function runAutonomousAgent() {
     for (const item of all) {
       stmt.run(item.id, item.type, item.title, item.category || null, item.date || null, item.excerpt || null, item.body || null, item.source || null, item.art || null, item.read_time || null)
     }
-    console.log(`[AI Agent] Synced ${all.length} items`)
-
-    // 2. Generate AI insights
-    const context = buildKingdomContext()
-    const insightResponse = await fetch(GEMINI_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ role: 'user', parts: [{ text: `${context}\n\nAs the Kingdom 846 autonomous AI agent, generate 3 brief insights about the kingdom status. Format as a JSON array of strings. Each insight should be 1 sentence about: 1) Data freshness/content status 2) Upcoming events or recommendations 3) Alliance or transfer status. Respond ONLY with the JSON array.` }] }],
-        generationConfig: { temperature: 0.5, maxOutputTokens: 300 }
-      })
-    })
-    if (insightResponse.ok) {
-      const insightData = await insightResponse.json()
-      const insightRaw = insightData.candidates?.[0]?.content?.parts?.map(p => p.text || '').join('') || '[]'
-      const insightCleaned = insightRaw.replace(/```json|```/g, '').trim()
-      const insightMatch = insightCleaned.match(/\[[\s\S]*\]/)
-      try {
-        agentInsights = JSON.parse(insightMatch ? insightMatch[0] : insightCleaned)
-      } catch { agentInsights = [] }
-    }
+    // 2. Skip insights generation on auto-runs to save free tier quota for chat
+    // Insights can be generated manually from admin panel
+    console.log(`[AI Agent] Synced ${all.length} items (skipping insights to save quota)`)
 
     lastAgentRun = new Date().toISOString()
-    logAction('Auto-sync', `Synced ${all.length} items, generated ${agentInsights.length} insights`)
+    logAction('Auto-sync', `Synced ${all.length} items`)
 
     // 3. Run design scan only if explicitly requested (skip on auto-runs to save quota)
     // Design scan is triggered manually via admin panel
@@ -1230,9 +1212,9 @@ const isProduction = process.env.NODE_ENV === 'production'
     console.log(`Kingdom 846 backend listening on ${PORT} (${isProduction ? 'production' : 'dev'})`)
     // Start autonomous AI agent — runs on startup then every 4 hours
     if (GEMINI_API_KEY) {
-      setTimeout(() => runAutonomousAgent(), 30000) // 30s delay after startup
+      // Don't run on startup — preserves free tier quota for chat
       setInterval(() => runAutonomousAgent(), AGENT_INTERVAL)
-      console.log('[AI Agent] Autonomous agent scheduled (every 4 hours)')
+      console.log('[AI Agent] Autonomous agent scheduled (every 4 hours, no startup run)')
     } else {
       console.log('[AI Agent] No GEMINI_API_KEY set — AI features disabled')
     }

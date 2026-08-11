@@ -92,27 +92,24 @@ export default function Alliances() {
                   <span className={`font-display text-xl font-bold ${activeColor.text}`}>{active.tag}</span>
                   <span className="text-base font-semibold text-parchment">{active.name}</span>
                 </div>
-                <div className="text-[11px] uppercase tracking-wider text-parchment/60">Event Schedule (UTC)</div>
+                <div className="text-[11px] uppercase tracking-wider text-gold/60">Event Schedule (UTC)</div>
               </div>
             </div>
-            <div className="space-y-2 p-5">
-              <div className="text-[10px] uppercase tracking-[0.2em] text-gold/50 mb-2 text-center">Event Schedule (UTC)</div>
-              {chunkPairs(buildSchedule(active.schedule)).map((pair, pi) => (
-                <div key={pi} className="grid grid-cols-2 gap-2">
-                  {pair.map((s, si) => {
-                    const meta = getEventMetaLocal(s.event)
-                    return (
-                      <div key={si} className="royal-plaque text-center" style={{ padding: '0.75rem 0.5rem' }}>
-                        <div className="royal-icon-circle mx-auto mb-1.5" style={{ width: '2rem', height: '2rem' }}>
-                          <Icon name={meta.icon} size={14} className="text-gold-bright" />
-                        </div>
-                        <div className="text-[10px] font-semibold leading-tight text-parchment/80">{s.event}</div>
-                        <div className="mt-1 royal-time" style={{ fontSize: '1rem' }}>{s.time || 'TBA'}</div>
+            <div className="p-4">
+              <div className="grid grid-cols-2 gap-2">
+                {buildSchedule(active.schedule).map((s, si) => {
+                  const meta = getEventMetaLocal(s.event)
+                  return (
+                    <div key={si} className="royal-plaque text-center" style={{ padding: '0.625rem 0.5rem' }}>
+                      <div className="royal-icon-circle mx-auto mb-1" style={{ width: '1.75rem', height: '1.75rem' }}>
+                        <Icon name={meta.icon} size={13} className="text-gold-bright" />
                       </div>
-                    )
-                  })}
-                </div>
-              ))}
+                      <div className="text-[9px] font-semibold leading-tight text-parchment/80">{s.event}</div>
+                      <div className="mt-0.5 royal-time" style={{ fontSize: '0.875rem' }}>{s.time || 'TBA'}</div>
+                    </div>
+                  )
+                })}
+              </div>
             </div>
           </div>
         )}

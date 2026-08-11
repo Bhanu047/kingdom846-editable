@@ -58,7 +58,7 @@ export default function About() {
               <a href={kingdom.kvkSource} target="_blank" rel="noreferrer" className="btn-secondary">
                 <Icon name="swords" size={14} /> KvK Rankings
               </a>
-              <span className="btn-ghost"><Icon name="fire" size={14} /> {kingdom.season}</span>
+              <span className="btn-ghost"><Icon name="crown" size={14} /> S-Tier Kingdom</span>
             </div>
           </div>
         </div>
@@ -156,7 +156,7 @@ export default function About() {
         <div className="relative h-56">
           <ArtImage src="./assets/art-season-opening.png" alt="Kingdom 846 season opening" className="h-full w-full" />
           {/* Dark gradient overlay for readability */}
-          <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, rgba(14,18,32,0.85) 0%, rgba(14,18,32,0.6) 50%, rgba(14,18,32,0.9) 100%)' }} />
+          <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, rgba(14,18,32,0.55) 0%, rgba(14,18,32,0.35) 50%, rgba(14,18,32,0.65) 100%)' }} />
           <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6">
             <div className="eyebrow text-gold-bright" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.8)' }}>The Realm</div>
             <h2 className="mt-1 font-display text-3xl font-bold gradient-gold" style={{ textShadow: '0 2px 12px rgba(0,0,0,0.9), 0 0 20px rgba(212,175,55,0.3)' }}>The Forge of Legends</h2>

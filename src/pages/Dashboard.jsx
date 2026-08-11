@@ -95,7 +95,7 @@ export default function Dashboard({ onNavigate }) {
             <span className="ember" style={{ left: '65%', animationDelay: '6s' }} />
           </div>
           <div className="absolute inset-y-0 left-0 flex max-w-xl flex-col justify-center p-6 md:p-10">
-            <div className="eyebrow text-glow">{kingdom.season}</div>
+            <div className="eyebrow text-glow">Royal Portal</div>
             <h1 className="mt-2 font-display text-4xl font-bold tracking-wide text-parchment drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)] md:text-6xl gradient-gold glow-pulse">KINGDOM 846</h1>
             <p className="mt-1 font-display text-sm tracking-[0.15em] text-gold md:text-base text-glow">One Crown. Four Alliances. Endless Glory.</p>
             <div className="mt-5 flex flex-wrap gap-2">

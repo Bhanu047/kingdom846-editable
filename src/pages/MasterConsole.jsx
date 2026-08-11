@@ -4,7 +4,7 @@ import { Panel, SectionTitle, Pill } from '../components/ui'
 import Icon from '../components/Icon'
 import { apiJson, apiFetch } from '../lib/api'
 
-const KING_TYPES = ['High King', 'King']
+const KING_TYPES = ['High King', 'King', 'High Queen', 'Queen']
 const KING_ALLIANCES = [
   { tag: '[RYO]', name: 'Spiders' }, { tag: '[KzK]', name: 'KamilKazeKarnival' },
   { tag: '[SAS]', name: 'SaintsAndSinners' }, { tag: '[ICE]', name: 'IceHunters' },

@@ -7,6 +7,7 @@ import { PageSkeleton } from './components/Skeleton'
 import SplashScreen from './components/SplashScreen'
 import ParticleField from './components/ParticleField'
 import ScrollProgress from './components/ScrollProgress'
+import ChatAssistant from './components/ChatAssistant'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { SiteDataProvider } from './context/SiteDataContext'
 import { nav, timeline, guides, news } from './data/kingdom'
@@ -146,6 +147,7 @@ function Shell() {
       {/* Canvas particle system + mouse glow */}
       <ParticleField />
       <ScrollProgress />
+      <ChatAssistant />
       <div className="flex h-screen overflow-hidden relative z-10">
       <div className="hidden md:flex">
         <Sidebar active={page} onNavigate={navigate} user={sidebarUser} onLogin={() => { setLoginMode('admin'); setLoginOpen(true) }} onSignOut={handleSignOut} isAdmin={isAdmin} />

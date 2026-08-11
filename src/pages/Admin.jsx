@@ -3,6 +3,8 @@ import { useSiteData } from '../context/SiteDataContext'
 import { useAuth } from '../context/AuthContext'
 import Icon from '../components/Icon'
 import { buildSchedule } from '../data/kingdom'
+import { apiJson } from '../lib/api'
+import { RoyalSectionHeader } from '../components/VisualElements'
 
 const SECTIONS = ['Alliances', 'Players', 'Events']
 
@@ -94,6 +96,9 @@ export default function Admin() {
           </button>
         </div>
       </div>
+
+      {/* AI Assistant Panel */}
+      <AdminAI />
 
       {/* Section tabs */}
       <div className="flex flex-wrap gap-1.5">
@@ -188,6 +193,101 @@ export default function Admin() {
             )}
           </>
         )}
+      </div>
+    </div>
+  )
+}
+
+// --- Admin AI Assistant ---
+function AdminAI() {
+  const [messages, setMessages] = useState([])
+  const [input, setInput] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [syncing, setSyncing] = useState(false)
+
+  async function send() {
+    const text = input.trim()
+    if (!text || loading) return
+    setInput('')
+    setLoading(true)
+    setMessages(prev => [...prev, { role: 'user', content: text }])
+    try {
+      const res = await apiJson('/api/ai/admin', {
+        method: 'POST',
+        body: JSON.stringify({ message: text })
+      })
+      setMessages(prev => [...prev, { role: 'assistant', content: res.reply }])
+    } catch (err) {
+      setMessages(prev => [...prev, { role: 'assistant', content: 'AI not configured. Set GEMINI_API_KEY in Render environment variables.' }])
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function syncNow() {
+    setSyncing(true)
+    try {
+      const res = await fetch('https://kingdom-846.onrender.com/api/sync-kingshot?key=k846-sync-a7f3e9c2b1', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}'
+      })
+      const data = await res.json()
+      setMessages(prev => [...prev, { role: 'assistant', content: `Sync complete: ${data.synced?.news || 0} news, ${data.synced?.guides || 0} guides updated.` }])
+    } catch {
+      setMessages(prev => [...prev, { role: 'assistant', content: 'Sync failed. Try again later.' }])
+    } finally {
+      setSyncing(false)
+    }
+  }
+
+  const prompts = [
+    'Summarize kingdom status',
+    'What alliances need attention?',
+    'What events are next?',
+  ]
+
+  return (
+    <div className="panel gold-corners p-4">
+      <RoyalSectionHeader icon="sparkles" eyebrow="AI Powered" title="Admin Assistant" action={
+        <button onClick={syncNow} disabled={syncing} className="btn-secondary !py-1 !text-xs">
+          <Icon name="refresh" size={12} /> {syncing ? 'Syncing…' : 'Sync Now'}
+        </button>
+      } />
+
+      {messages.length > 0 && (
+        <div className="mb-3 max-h-48 overflow-y-auto space-y-2">
+          {messages.map((m, i) => (
+            <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+              <div className={`max-w-[85%] rounded-lg px-3 py-1.5 text-sm ${m.role === 'user' ? 'bg-gold/15 text-parchment' : 'bg-ink/60 border border-gold/10 text-parchment/90'}`}>
+                {m.content}
+              </div>
+            </div>
+          ))}
+          {loading && (
+            <div className="text-sm text-parchment/40">Advisor is thinking…</div>
+          )}
+        </div>
+      )}
+
+      {messages.length === 0 && (
+        <div className="mb-3 flex flex-wrap gap-1.5">
+          {prompts.map(p => (
+            <button key={p} onClick={() => setInput(p)} className="rounded-full border border-gold/20 bg-gold/5 px-2.5 py-1 text-[10px] text-gold/80 hover:bg-gold/10 transition">{p}</button>
+          ))}
+        </div>
+      )}
+
+      <div className="flex items-center gap-2">
+        <input
+          value={input}
+          onChange={e => setInput(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); send() } }}
+          placeholder="Ask the AI assistant…"
+          className="flex-1 rounded-md border border-gold/20 bg-ink/60 px-3 py-1.5 text-sm text-parchment placeholder-parchment/30 outline-none focus:border-gold/60"
+          disabled={loading}
+        />
+        <button onClick={send} disabled={loading || !input.trim()} className="btn-primary !py-1.5 !text-xs">
+          <Icon name="arrow" size={12} />
+        </button>
       </div>
     </div>
   )

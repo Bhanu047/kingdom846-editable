@@ -594,6 +594,154 @@ async function fetchKingshotData() {
 }
 
 // Sync endpoint (called by cron with secret key)
+// --- AI Chat Assistant (Google Gemini) ---
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY || ''
+const GEMINI_MODEL = 'gemini-2.0-flash'
+const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`
+
+// Kingdom context for the AI
+function buildKingdomContext(req) {
+  const kingRow = db.prepare('SELECT * FROM king_status WHERE id = 1').get()
+  const alliances = db.prepare('SELECT slug, name, leader, language, tagline FROM alliances').all()
+  const events = db.prepare('SELECT title, date, time, category, description FROM kingshot_items WHERE category != "News" ORDER BY date ASC LIMIT 10').all()
+  const news = db.prepare('SELECT title, excerpt, category FROM kingshot_items WHERE category = "News" ORDER BY date DESC LIMIT 5').all()
+  const guides = db.prepare('SELECT title, category, excerpt FROM kingshot_items WHERE category != "News" ORDER BY id DESC LIMIT 10').all()
+  
+  return `You are the Royal Advisor for Kingdom 846, a gaming community for the strategy game Kingshot. 
+You help players with alliance info, events, guides, and kingdom questions.
+Keep answers concise (2-4 sentences). Be friendly and use medieval/royal tone.
+
+KINGDOM DATA:
+- Kingdom: 846
+- Season: KvK Season 4
+- King: ${kingRow ? kingRow.name : 'Not set'} (${kingRow ? kingRow.alliance_tag : ''})
+
+ALLIANCES:
+${alliances.map(a => `- [${a.slug}] ${a.name} — Leader: ${a.leader}, Language: ${a.language}`).join('\n')}
+
+UPCOMING EVENTS:
+${events.map(e => `- ${e.title} (${e.date} ${e.time || ''}) — ${e.description}`).join('\n')}
+
+RECENT NEWS:
+${news.map(n => `- ${n.title}`).join('\n')}
+
+GUIDES:
+${guides.map(g => `- ${g.title} (${g.category})`).join('\n')}
+`
+}
+
+// Public chat endpoint (no auth — visitors can ask)
+app.post('/api/ai/chat', async (req, res) => {
+  if (!GEMINI_API_KEY) {
+    return res.status(503).json({ error: 'AI not configured. Admin needs to set GEMINI_API_KEY.' })
+  }
+  const { message, history = [] } = req.body
+  if (!message || typeof message !== 'string') {
+    return res.status(400).json({ error: 'Message required' })
+  }
+  // Rate limit: max 30 requests per minute per IP
+  const ip = req.ip
+  const now = Date.now()
+  if (!aiRateLimit.has(ip)) aiRateLimit.set(ip, [])
+  const times = aiRateLimit.get(ip).filter(t => now - t < 60000)
+  if (times.length >= 30) {
+    return res.status(429).json({ error: 'Too many requests. Slow down!' })
+  }
+  times.push(now)
+  aiRateLimit.set(ip, times)
+
+  try {
+    const systemContext = buildKingdomContext(req)
+    const contents = [
+      { role: 'user', parts: [{ text: systemContext + '\n\nUser question: ' + message }] },
+      ...history.slice(-6).map(h => ({
+        role: h.role === 'assistant' ? 'model' : 'user',
+        parts: [{ text: h.content }]
+      })),
+      { role: 'user', parts: [{ text: message }] }
+    ]
+
+    const response = await fetch(GEMINI_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents,
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 500,
+          topP: 0.9,
+        },
+        safetySettings: [
+          { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+          { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+          { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+          { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+        ]
+      })
+    })
+
+    if (!response.ok) {
+      const err = await response.text()
+      console.error('Gemini API error:', err)
+      return res.status(502).json({ error: 'AI service unavailable' })
+    }
+
+    const data = await response.json()
+    const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || 'I have no response for that.'
+    res.json({ reply })
+  } catch (err) {
+    console.error('AI chat error:', err.message)
+    res.status(500).json({ error: 'Something went wrong' })
+  }
+})
+
+const aiRateLimit = new Map()
+
+// Admin AI — can perform actions (sync, update content)
+app.post('/api/ai/admin', auth, adminOnly, async (req, res) => {
+  if (!GEMINI_API_KEY) {
+    return res.status(503).json({ error: 'AI not configured. Set GEMINI_API_KEY environment variable.' })
+  }
+  const { message } = req.body
+  if (!message) return res.status(400).json({ error: 'Message required' })
+
+  const systemContext = buildKingdomContext(req)
+  const adminPrompt = `${systemContext}
+
+You are the Kingdom 846 Admin AI Assistant. The admin asked: "${message}"
+
+You can help with:
+- Answering questions about kingdom data
+- Suggesting what to update
+- Summarizing alliance status, events, transfers
+- Providing recommendations
+
+Respond concisely. If the admin wants to sync data, tell them to use the Sync button.`
+
+  try {
+    const response = await fetch(GEMINI_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ role: 'user', parts: [{ text: adminPrompt }] }],
+        generationConfig: { temperature: 0.6, maxOutputTokens: 600 }
+      })
+    })
+
+    if (!response.ok) {
+      return res.status(502).json({ error: 'AI service unavailable' })
+    }
+
+    const data = await response.json()
+    const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || 'No response.'
+    res.json({ reply })
+  } catch (err) {
+    console.error('Admin AI error:', err.message)
+    res.status(500).json({ error: 'Something went wrong' })
+  }
+})
+
+// Sync endpoint (manual trigger)
 app.post('/api/sync-kingshot', async (req, res) => {
   const key = req.query.key || req.headers['x-sync-key']
   if (key !== SYNC_KEY) return res.status(403).json({ error: 'Invalid sync key' })

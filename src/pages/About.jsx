@@ -156,11 +156,11 @@ export default function About() {
         <div className="relative h-56">
           <ArtImage src="./assets/art-season-opening.png" alt="Kingdom 846 season opening" className="h-full w-full" />
           {/* Dark gradient overlay for readability */}
-          <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, rgba(14,18,32,0.3) 0%, rgba(14,18,32,0.15) 50%, rgba(14,18,32,0.5) 100%)' }} />
+          <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, rgba(14,18,32,0.4) 0%, rgba(14,18,32,0.05) 30%, rgba(14,18,32,0.05) 70%, rgba(14,18,32,0.5) 100%)' }} />
           <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6">
-            <div className="eyebrow text-gold-bright" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.8)' }}>The Realm</div>
-            <h2 className="mt-1 font-display text-3xl font-bold gradient-gold" style={{ textShadow: '0 2px 12px rgba(0,0,0,0.9), 0 0 20px rgba(212,175,55,0.3)' }}>The Forge of Legends</h2>
-            <p className="mt-2 max-w-xl text-sm text-parchment" style={{ textShadow: '0 1px 6px rgba(0,0,0,0.9)' }}>Ten wars. Seven dominations. A perfect diplomatic record. This is where alliances are tested, rivalries are forged, and legends are crowned in gold. Welcome to 846.</p>
+            <div className="eyebrow text-gold-bright" style={{ textShadow: '0 2px 12px rgba(0,0,0,1), 0 0 16px rgba(0,0,0,0.8)' }}>The Realm</div>
+            <h2 className="mt-1 font-display text-3xl font-bold gradient-gold" style={{ textShadow: '0 2px 16px rgba(0,0,0,1), 0 0 24px rgba(0,0,0,0.8), 0 0 20px rgba(212,175,55,0.3)' }}>The Forge of Legends</h2>
+            <p className="mt-2 max-w-xl text-sm text-parchment" style={{ textShadow: '0 2px 10px rgba(0,0,0,1), 0 0 12px rgba(0,0,0,0.9)' }}>Ten wars. Seven dominations. A perfect diplomatic record. This is where alliances are tested, rivalities are forged, and legends are crowned in gold. Welcome to 846.</p>
           </div>
         </div>
       </Panel>

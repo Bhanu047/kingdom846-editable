@@ -381,13 +381,22 @@ app.get('/api/alliance-schedules', (_req, res) => {
   res.json(rows)
 })
 
+// Default schedule per alliance (from kingdom.js static data)
+const SCHEDULE_DEFAULTS = {
+  ryo: { 'Bear Hunt -1': '04:00', 'Bear Hunt-2': '12:00', 'Vikings Vengeance Tuesday': '16:00', 'Vikings Vengeance Thursday': '16:00', 'Tri-Alliance Clash Legion-1': '20:00', 'Tri-Alliance Clash Legion-2': '20:00', 'Swordland Showdown Legion-1': '21:00', 'Swordland Showdown Legion-2': '21:00' },
+  kzk: { 'Bear Hunt -1': '04:00', 'Bear Hunt-2': '12:00', 'Vikings Vengeance Tuesday': '16:00', 'Vikings Vengeance Thursday': '16:00', 'Tri-Alliance Clash Legion-1': '20:00', 'Tri-Alliance Clash Legion-2': '20:00', 'Swordland Showdown Legion-1': '21:00', 'Swordland Showdown Legion-2': '21:00' },
+  sas: { 'Bear Hunt -1': '04:00', 'Bear Hunt-2': '12:00', 'Vikings Vengeance Tuesday': '16:00', 'Vikings Vengeance Thursday': '16:00', 'Tri-Alliance Clash Legion-1': '20:00', 'Tri-Alliance Clash Legion-2': '20:00', 'Swordland Showdown Legion-1': '21:00', 'Swordland Showdown Legion-2': '21:00' },
+  ice: { 'Bear Hunt -1': '14:00', 'Bear Hunt-2': '22:00', 'Vikings Vengeance Tuesday': '02:00', 'Vikings Vengeance Thursday': '02:00', 'Tri-Alliance Clash Legion-1': '06:00', 'Tri-Alliance Clash Legion-2': '06:00', 'Swordland Showdown Legion-1': '07:00', 'Swordland Showdown Legion-2': '07:00' },
+}
+
 // Leader: get their alliance's event schedule
 app.get('/api/leader/schedule', auth, leaderOnly, (req, res) => {
   const slug = req.user.alliance_slug
   const rows = db.prepare('SELECT event_name, event_time, updated_at FROM alliance_schedules WHERE alliance_slug = ?').all(slug)
+  const defaults = SCHEDULE_DEFAULTS[slug] || {}
   const schedule = ALLIANCE_EVENTS.map(event => {
     const match = rows.find(r => r.event_name === event)
-    return { event, time: match?.event_time || '', updated: match?.updated_at || null }
+    return { event, time: match?.event_time || defaults[event] || '', updated: match?.updated_at || null }
   })
   res.json({ alliance_slug: slug, schedule })
 })

@@ -103,7 +103,9 @@ export default function Alliances() {
                     const meta = getEventMetaLocal(s.event)
                     return (
                       <div key={si} className="royal-plaque text-center" style={{ padding: '0.75rem 0.5rem' }}>
-                        <div className="text-base mb-1">{meta.icon}</div>
+                        <div className="royal-icon-circle mx-auto mb-1.5" style={{ width: '2rem', height: '2rem' }}>
+                          <Icon name={meta.icon} size={14} className="text-gold-bright" />
+                        </div>
                         <div className="text-[10px] font-semibold leading-tight text-parchment/80">{s.event}</div>
                         <div className="mt-1 royal-time" style={{ fontSize: '1rem' }}>{s.time || 'TBA'}</div>
                       </div>
@@ -130,13 +132,13 @@ function Field({ label, value }) {
 
 function getEventMetaLocal(name) {
   const map = {
-    'Bear Hunt': { icon: '🐻' },
-    'Vikings': { icon: '⚔️' },
-    'Tri-Alliance': { icon: '🛡️' },
-    'Swordland': { icon: '🏰' },
+    'Bear Hunt': { icon: 'crosshair' },
+    'Vikings': { icon: 'zap' },
+    'Tri-Alliance': { icon: 'layers' },
+    'Swordland': { icon: 'swords' },
   }
   for (const key of Object.keys(map)) {
     if (name && name.includes(key)) return map[key]
   }
-  return { icon: '👑' }
+  return { icon: 'flag' }
 }

@@ -224,9 +224,9 @@ function Shell() {
           <footer className="mt-12 pt-6 pb-4 relative">
             <div className="flex flex-col items-center gap-2 text-center">
               <div className="flex items-center gap-3">
-                <span className="text-2xl float-anim">👑</span>
+                <span className="text-gold-bright float-anim"><Icon name="crown" size={20} /></span>
                 <span className="font-serif text-lg tracking-wider gradient-gold font-bold">Kingdom 846</span>
-                <span className="text-2xl float-anim" style={{ animationDelay: '2s' }}>👑</span>
+                <span className="text-gold-bright float-anim" style={{ animationDelay: '2s' }}><Icon name="crown" size={20} /></span>
               </div>
               <p className="text-[12px] text-gold/50 italic font-serif">Where legends are forged in fire and crowned in gold</p>
               <div className="mt-2 flex items-center gap-2 text-[11px] text-parchment/50">

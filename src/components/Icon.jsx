@@ -2,7 +2,8 @@
 import {
   Home, Castle, Shield, CalendarDays, Newspaper, BookOpen, Trophy, Users,
   Crown, Bell, Settings, Swords, Clock, Search, Flame, ArrowRight, ChevronRight,
-  LogOut, Landmark, ShieldCheck, Sparkles, Star, ScrollText, RefreshCw, Download, Upload
+  LogOut, Landmark, ShieldCheck, Sparkles, Star, ScrollText, RefreshCw, Download, Upload,
+  Crosshair, Zap, Layers, Flag, Target, Axe
 } from 'lucide-react'
 
 const map = {
@@ -11,7 +12,8 @@ const map = {
   crown: Crown, bell: Bell, settings: Settings, swords: Swords, clock: Clock,
   search: Search, fire: Flame, arrow: ArrowRight, chevron: ChevronRight,
   logout: LogOut, landmark: Landmark, shieldCheck: ShieldCheck,
-  sparkles: Sparkles, star: Star, scroll: ScrollText, refresh: RefreshCw, download: Download, upload: Upload
+  sparkles: Sparkles, star: Star, scroll: ScrollText, refresh: RefreshCw, download: Download, upload: Upload,
+  crosshair: Crosshair, zap: Zap, layers: Layers, flag: Flag, target: Target, axe: Axe
 }
 
 export default function Icon({ name, size, className }) {

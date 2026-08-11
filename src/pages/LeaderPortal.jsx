@@ -6,18 +6,18 @@ import { apiJson } from '../lib/api'
 import { useAuth } from '../context/AuthContext'
 
 const EVENT_META = {
-  'Bear Hunt -1': { icon: '🐻', desc: 'First bear hunt rally of the week' },
-  'Bear Hunt-2': { icon: '🐻', desc: 'Second bear hunt rally of the week' },
-  'Vikings Vengeance Tuesday': { icon: '⚔️', desc: 'Tuesday Vikings Vengeance event' },
-  'Vikings Vengeance Thursday': { icon: '⚔️', desc: 'Thursday Vikings Vengeance event' },
-  'Tri-Alliance Clash Legion-1': { icon: '🛡️', desc: 'First Tri-Alliance Clash of the week' },
-  'Tri-Alliance Clash Legion-2': { icon: '🛡️', desc: 'Second Tri-Alliance Clash of the week' },
-  'Swordland Showdown Legion-1': { icon: '🏰', desc: 'First Swordland Showdown of the week' },
-  'Swordland Showdown Legion-2': { icon: '🏰', desc: 'Second Swordland Showdown of the week' },
+  'Bear Hunt -1': { icon: 'crosshair', desc: 'First bear hunt rally of the week' },
+  'Bear Hunt-2': { icon: 'crosshair', desc: 'Second bear hunt rally of the week' },
+  'Vikings Vengeance Tuesday': { icon: 'zap', desc: 'Tuesday Vikings Vengeance event' },
+  'Vikings Vengeance Thursday': { icon: 'zap', desc: 'Thursday Vikings Vengeance event' },
+  'Tri-Alliance Clash Legion-1': { icon: 'layers', desc: 'First Tri-Alliance Clash of the week' },
+  'Tri-Alliance Clash Legion-2': { icon: 'layers', desc: 'Second Tri-Alliance Clash of the week' },
+  'Swordland Showdown Legion-1': { icon: 'swords', desc: 'First Swordland Showdown of the week' },
+  'Swordland Showdown Legion-2': { icon: 'swords', desc: 'Second Swordland Showdown of the week' },
 }
 
 function getEventMeta(name) {
-  return EVENT_META[name] || { icon: '👑', desc: 'Recurring alliance event' }
+  return EVENT_META[name] || { icon: 'flag', desc: 'Recurring alliance event' }
 }
 
 const HOURS = Array.from({length: 24}, (_, i) => String(i).padStart(2, '0'))
@@ -97,7 +97,7 @@ export default function LeaderPortal() {
               className="royal-plaque stagger-in flex items-center gap-4"
               style={{ animationDelay: `${Math.min(i * 0.06, 0.4)}s` }}
             >
-              <div className="royal-icon-circle">{meta.icon}</div>
+              <div className="royal-icon-circle text-gold-bright"><Icon name={meta.icon} size={16} /></div>
 
               <div className="flex-1 min-w-0">
                 <div className="text-sm font-display font-semibold text-parchment truncate">{s.event}</div>

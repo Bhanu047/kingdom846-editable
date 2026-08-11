@@ -156,7 +156,7 @@ function Shell() {
       )}
 
       <main className="flex flex-1 flex-col overflow-hidden">
-        <header className="flex items-center gap-3 border-b border-gold/15 bg-ink/60 px-4 py-3 backdrop-blur md:px-6">
+        <header className="flex items-center gap-3 border-b border-gold/15 bg-ink/60 px-4 py-3 md:px-6">
           <button onClick={() => setMobileNav(true)} className="text-parchment/70 hover:text-parchment md:hidden">
             <Icon name="home" size={20} />
           </button>
@@ -194,7 +194,7 @@ function Shell() {
       </main>
 
       {searchOpen && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center bg-ink/80 p-4 pt-[12vh] backdrop-blur" onClick={() => setSearchOpen(false)}>
+        <div className="fixed inset-0 z-50 flex items-start justify-center bg-ink/80 p-4 pt-[12vh]" onClick={() => setSearchOpen(false)}>
           <div className="w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
             <div className="panel panel-glow overflow-hidden">
               <div className="flex items-center gap-2 border-b border-gold/15 p-3">

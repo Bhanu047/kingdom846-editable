@@ -19,19 +19,13 @@ export default function Guides() {
 
   return (
     <div className="space-y-6">
-      <Panel glow className="relative overflow-hidden p-0">
-        <div className="relative h-44">
-          <ArtImage src="./assets/guide-strategy.png" alt="War academy strategy" className="h-full w-full" />
-          <div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/70 to-ink/20" />
-          <div className="absolute inset-0 flex flex-col justify-center p-6">
-            <div className="eyebrow">Royal Library</div>
-            <h1 className="mt-1 font-display text-3xl font-bold text-parchment drop-shadow-lg">Strategy & Guides</h1>
-            <p className="mt-2 max-w-md text-sm text-parchment/80">
-              Auto-synced from Kingshot Wiki.{' '}
-              {synced?.synced_at && <span className="text-gold/60">Last sync: {new Date(synced.synced_at + 'Z').toLocaleDateString()}</span>}
-            </p>
-          </div>
-        </div>
+      <Panel glow>
+        <div className="eyebrow">Royal Library</div>
+        <h1 className="mt-1 font-display text-2xl font-bold text-parchment">Strategy & Guides</h1>
+        <p className="mt-1 text-sm text-parchment/60">
+          Auto-synced from Kingshot Wiki.{' '}
+          {synced?.synced_at && <span className="text-gold/60">Last sync: {new Date(synced.synced_at + 'Z').toLocaleDateString()}</span>}
+        </p>
       </Panel>
 
       <div className="reveal-clip grid gap-5 md:grid-cols-2 lg:grid-cols-3">

@@ -21,6 +21,15 @@ function useNow() {
 export default function Dashboard({ onNavigate }) {
   const { user } = useAuth()
   const { data } = useSiteData()
+  const [agentStatus, setAgentStatus] = useState(null)
+
+  // Fetch AI agent insights for all visitors
+  useEffect(() => {
+    apiJson('/api/ai/status').then(setAgentStatus).catch(() => {})
+    const id = setInterval(() => apiJson('/api/ai/status').then(setAgentStatus).catch(() => {}), 60000)
+    return () => clearInterval(id)
+  }, [])
+
   const players = data.players
   const alliances = data.alliances
   const news = data.news
@@ -48,6 +57,24 @@ export default function Dashboard({ onNavigate }) {
 
   return (
     <div className="space-y-6">
+      {/* AI insights banner (if available) */}
+      {agentStatus?.insights?.length > 0 && (
+        <Panel glow className="gold-corners">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="pulse-dot" style={{ width: 6, height: 6 }} />
+            <span className="text-[10px] uppercase tracking-wider text-gold/60">AI Advisor Insights</span>
+          </div>
+          <div className="space-y-1.5">
+            {agentStatus.insights.map((insight, i) => (
+              <div key={i} className="flex items-start gap-2 text-sm text-parchment/70">
+                <span className="text-gold text-xs mt-0.5">◆</span>
+                <span>{insight}</span>
+              </div>
+            ))}
+          </div>
+        </Panel>
+      )}
+
       {/* Cinematic Hero */}
       <Panel glow className="hero-frame relative overflow-hidden p-0">
         <div className="relative h-64 md:h-96 hero-shimmer">

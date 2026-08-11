@@ -9,7 +9,7 @@ import { apiJson } from '../lib/api'
 export default function ChatAssistant() {
   const [open, setOpen] = useState(false)
   const [messages, setMessages] = useState([
-    { role: 'assistant', content: 'Greetings, traveler! I am the Royal Advisor of Kingdom 846. Ask me about alliances, events, guides, or anything about the realm.' }
+    { role: 'assistant', content: 'Greetings, traveler! I am the Royal Advisor of Kingdom 846. Ask me about alliances, events, guides, or anything about the realm.' + (window.location.hostname.includes('onrender') ? '' : ' (AI activates after admin sets GEMINI_API_KEY)') }
   ])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)

@@ -671,9 +671,9 @@ const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GE
 function buildKingdomContext() {
   const kingRow = db.prepare('SELECT * FROM king_status WHERE id = 1').get()
   const alliances = db.prepare('SELECT slug, name, leader, language, tagline FROM alliances').all()
-  const events = db.prepare('SELECT title, date, category, excerpt FROM kingshot_sync WHERE type != "news" ORDER BY date ASC LIMIT 10').all()
-  const news = db.prepare('SELECT title, excerpt, category FROM kingshot_sync WHERE type = "news" ORDER BY synced_at DESC LIMIT 5').all()
-  const guides = db.prepare('SELECT title, category, excerpt FROM kingshot_sync WHERE type = "guide" ORDER BY id DESC LIMIT 10').all()
+  const events = db.prepare("SELECT title, date, category, excerpt FROM kingshot_sync WHERE type != 'news' ORDER BY date ASC LIMIT 10").all()
+  const news = db.prepare("SELECT title, excerpt, category FROM kingshot_sync WHERE type = 'news' ORDER BY synced_at DESC LIMIT 5").all()
+  const guides = db.prepare("SELECT title, category, excerpt FROM kingshot_sync WHERE type = 'guide' ORDER BY id DESC LIMIT 10").all()
   const transfers = db.prepare('SELECT name, alliance, status FROM transfers ORDER BY created_at DESC LIMIT 5').all()
   const applications = db.prepare('SELECT type, nickname, status FROM applications ORDER BY created_at DESC LIMIT 5').all()
   
@@ -789,11 +789,11 @@ async function executeTool(toolName, args) {
     }
     case 'get_kingdom_stats': {
       const allianceCount = db.prepare('SELECT COUNT(*) as c FROM alliances').get()
-      const eventCount = db.prepare('SELECT COUNT(*) as c FROM kingshot_sync WHERE type != "news"').get()
-      const newsCount = db.prepare('SELECT COUNT(*) as c FROM kingshot_sync WHERE type = "news"').get()
+      const eventCount = db.prepare("SELECT COUNT(*) as c FROM kingshot_sync WHERE type != 'news'").get()
+      const newsCount = db.prepare("SELECT COUNT(*) as c FROM kingshot_sync WHERE type = 'news'").get()
       const transferCount = db.prepare('SELECT COUNT(*) as c FROM transfers').get()
       const appCount = db.prepare('SELECT COUNT(*) as c FROM applications').get()
-      const guideCount = db.prepare('SELECT COUNT(*) as c FROM kingshot_sync WHERE type = "guide"').get()
+      const guideCount = db.prepare("SELECT COUNT(*) as c FROM kingshot_sync WHERE type = 'guide'").get()
       const king = db.prepare('SELECT * FROM king_status WHERE id = 1').get()
       return `Kingdom Stats:
 - Ruler: ${king ? king.king_type + ' ' + king.name : 'Not set'}

@@ -1,16 +1,18 @@
-import { Panel, Pill } from '../components/ui'
+import { Panel } from '../components/ui'
 import Icon from '../components/Icon'
 
 const FORMS = {
   chief_minister: {
     title: 'Chief Minister Reservation',
-    url: 'https://docs.google.com/forms/d/e/1FAIpQLScM2_mDXcHPC6-rnvckvyDYBIjafHY5mP3STTRNbSBJGu295w/viewform?embedded=true',
+    embed: 'https://docs.google.com/forms/d/e/1FAIpQLScM2_mDXcHPC6-rnvckvyDYBIjafHY5mP3STTRNbSBJGu295w/viewform?embedded=true',
+    link: 'https://docs.google.com/forms/d/e/1FAIpQLScM2_mDXcHPC6-rnvckvyDYBIjafHY5mP3STTRNbSBJGu295w/viewform',
     description: 'Reserve your Chief Minister buffs for construction or research days.',
     art: './assets/apply-chief-minister.png',
   },
   noble_advisor: {
     title: 'Noble Advisor Reservation',
-    url: 'https://docs.google.com/forms/d/e/1FAIpQLSeiyP94snSb7NJ-Ke7weQAHOovdBFtaQBYJ26IsmJwtjMeYBg/viewform?embedded=true',
+    embed: 'https://docs.google.com/forms/d/e/1FAIpQLSeiyP94snSb7NJ-Ke7weQAHOovdBFtaQBYJ26IsmJwtjMeYBg/viewform?embedded=true',
+    link: 'https://docs.google.com/forms/d/e/1FAIpQLSeiyP94snSb7NJ-Ke7weQAHOovdBFtaQBYJ26IsmJwtjMeYBg/viewform',
     description: 'Reserve your Noble Advisor slot for troops training.',
     art: './assets/apply-noble-advisor.png',
   },
@@ -75,19 +77,29 @@ export default function Apply({ type, onNavigate }) {
           </div>
         </div>
       </Panel>
+
+      {/* Embed form + fallback link */}
       <Panel className="p-0 overflow-hidden">
         <iframe
-          src={form.url}
+          src={form.embed}
           width="100%"
-          height="640"
+          height="700"
           frameBorder="0"
           marginHeight="0"
           marginWidth="0"
           title={form.title}
-          style={{ border: 'none', minHeight: '640px' }}
+          style={{ border: 'none', minHeight: '700px' }}
         >
           Loading…
         </iframe>
+      </Panel>
+
+      {/* Fallback in case iframe doesn't load */}
+      <Panel className="text-center">
+        <p className="text-sm text-parchment/60 mb-2">Form not loading above?</p>
+        <a href={form.link} target="_blank" rel="noreferrer" className="btn-primary inline-flex">
+          <Icon name="arrow" size={14} /> Open {form.title} in new tab
+        </a>
       </Panel>
     </div>
   )

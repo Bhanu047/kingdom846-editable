@@ -9,36 +9,37 @@ import { apiJson } from '../lib/api'
  * AI action badges, glow pulse on new message, auto-scroll.
  */
 
-// Medieval crystal orb SVG — fits the Kingdom theme
+// Royal Crown SVG — fits the Kingdom theme
 const OrbIcon = ({ size = 28, online = false }) => (
   <svg width={size} height={size} viewBox="0 0 32 32" fill="none">
     <defs>
-      <radialGradient id="orbGrad" cx="0.4" cy="0.35">
+      <linearGradient id="crownGrad" x1="0" y1="0" x2="0" y2="1">
         <stop offset="0%" stopColor={online ? '#E8C766' : '#6B5B2E'} />
-        <stop offset="60%" stopColor={online ? '#D4AF37' : '#4A3F22'} />
-        <stop offset="100%" stopColor={online ? '#8B6F1F' : '#2A2415'} />
-      </radialGradient>
-      <filter id="orbGlow">
-        <feGaussianBlur stdDeviation="1.5" result="blur" />
+        <stop offset="100%" stopColor={online ? '#D4AF37' : '#4A3F22'} />
+      </linearGradient>
+      <filter id="crownGlow">
+        <feGaussianBlur stdDeviation={online ? '1' : '0'} result="blur" />
         <feMerge>
           <feMergeNode in="blur" />
           <feMergeNode in="SourceGraphic" />
         </feMerge>
       </filter>
     </defs>
-    {/* Base/stand */}
-    <path d="M11 26 Q16 28 21 26 L19.5 24 L12.5 24 Z" fill="#3A3320" stroke="#D4AF37" strokeWidth="0.5" opacity="0.6" />
-    <rect x="12" y="24.5" width="8" height="2.5" rx="1" fill="#5C4A1F" opacity="0.8" />
-    {/* Orb */}
-    <circle cx="16" cy="16" r="9" fill="url(#orbGrad)" filter="url(#orbGlow)" />
-    {/* Highlight */}
-    <ellipse cx="13" cy="13" rx="3" ry="2.5" fill="white" opacity="0.25" />
-    {/* Sparkle */}
+    {/* Crown base */}
+    <path d="M6 22 L8 12 L12 16 L16 8 L20 16 L24 12 L26 22 Z" fill="url(#crownGrad)" filter="url(#crownGlow)" stroke={online ? '#E8C766' : '#5C4A1F'} strokeWidth="0.5" />
+    {/* Crown band */}
+    <rect x="6" y="22" width="20" height="4" rx="1" fill={online ? '#B8941F' : '#3A3320'} stroke={online ? '#D4AF37' : '#5C4A1F'} strokeWidth="0.5" />
+    {/* Gems */}
+    <circle cx="12" cy="24" r="1.2" fill={online ? '#4ade80' : '#2A2415'} />
+    <circle cx="16" cy="24" r="1.2" fill={online ? '#60a5fa' : '#2A2415'} />
+    <circle cx="20" cy="24" r="1.2" fill={online ? '#f87171' : '#2A2415'} />
+    {/* Top jewel */}
+    <circle cx="16" cy="8" r="1.5" fill={online ? '#E8C766' : '#2A2415'} />
+    {/* Sparkles when online */}
     {online && (
       <>
-        <circle cx="22" cy="11" r="0.8" fill="#E8C766" opacity="0.8" />
-        <circle cx="9" cy="18" r="0.6" fill="#E8C766" opacity="0.6" />
-        <circle cx="20" cy="20" r="0.5" fill="#E8C766" opacity="0.5" />
+        <circle cx="9" cy="14" r="0.5" fill="#E8C766" opacity="0.7" />
+        <circle cx="23" cy="14" r="0.5" fill="#E8C766" opacity="0.7" />
       </>
     )}
   </svg>
@@ -94,9 +95,9 @@ export default function ChatAssistant() {
       setMessages(prev => [...prev, { role: 'assistant', content: res.reply }])
       if (!open) setUnread(true)
     } catch (err) {
-      const errText = err.message?.includes('503') || err.message?.includes('not configured')
-        ? 'The Royal Advisor awaits activation. The admin must set the GEMINI_API_KEY to awaken me.'
-        : 'The Royal Advisor is resting. Please try again in a moment.'
+      const errText = err.message?.includes('503')
+        ? 'The Royal Advisor is being awakened. Please try again in a moment.'
+        : 'The Advisor encountered an issue. Please try again.'
       setMessages(prev => [...prev, { role: 'assistant', content: errText }])
     } finally {
       setLoading(false)

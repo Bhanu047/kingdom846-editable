@@ -70,6 +70,19 @@ db.exec(`
     updated_at TEXT DEFAULT (datetime('now')),
     PRIMARY KEY (alliance_slug, event_name)
   );
+  CREATE TABLE IF NOT EXISTS alliances (
+    slug TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    leader TEXT,
+    language TEXT,
+    tagline TEXT,
+    description TEXT
+  );
+  INSERT OR IGNORE INTO alliances (slug, name, leader, language, tagline) VALUES
+    ('ryo', 'Spiders', 'Shoni', 'English', 'Loyal warriors of the crown'),
+    ('kzk', 'KamilKazeKarnival', 'Lovely Khaos', 'English', 'Chaos with purpose'),
+    ('sas', 'SaintsAndSinners', 'Lady Charlotte', 'English', 'Saints by day, sinners by night'),
+    ('ice', 'IceHunters', 'Dunngeon', 'English', 'Cold steel, colder hearts');
   CREATE TABLE IF NOT EXISTS kingshot_sync (
     id TEXT PRIMARY KEY,
     type TEXT NOT NULL,

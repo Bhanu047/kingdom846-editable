@@ -1,19 +1,19 @@
 import { Panel } from '../components/ui'
 import Icon from '../components/Icon'
 
+const SHEET_LINK = 'https://docs.google.com/spreadsheets/d/1S7YMhrjHGftb2vovfAahrxpbZsplo6M0I2f89NZiWHA/edit?usp=sharing'
+
 const FORMS = {
   chief_minister: {
     title: 'Chief Minister Reservation',
     embed: 'https://docs.google.com/forms/d/e/1FAIpQLScM2_mDXcHPC6-rnvckvyDYBIjafHY5mP3STTRNbSBJGu295w/viewform?embedded=true',
     link: 'https://docs.google.com/forms/d/e/1FAIpQLScM2_mDXcHPC6-rnvckvyDYBIjafHY5mP3STTRNbSBJGu295w/viewform',
-    description: 'Reserve your Chief Minister buffs for construction or research days.',
     art: './assets/apply-chief-minister.png',
   },
   noble_advisor: {
     title: 'Noble Advisor Reservation',
     embed: 'https://docs.google.com/forms/d/e/1FAIpQLSeiyP94snSb7NJ-Ke7weQAHOovdBFtaQBYJ26IsmJwtjMeYBg/viewform?embedded=true',
     link: 'https://docs.google.com/forms/d/e/1FAIpQLSeiyP94snSb7NJ-Ke7weQAHOovdBFtaQBYJ26IsmJwtjMeYBg/viewform',
-    description: 'Reserve your Noble Advisor slot for troops training.',
     art: './assets/apply-noble-advisor.png',
   },
 }
@@ -73,12 +73,11 @@ export default function Apply({ type, onNavigate }) {
           <div className="absolute inset-y-0 left-0 flex flex-col justify-center p-6">
             <button onClick={() => onNavigate('apply')} className="text-xs text-gold/70 hover:text-gold mb-1">← Back to roles</button>
             <h1 className="font-display text-xl sm:text-2xl font-bold text-parchment">{form.title}</h1>
-            <p className="mt-1 text-sm text-parchment/60">{form.description}</p>
           </div>
         </div>
       </Panel>
 
-      {/* Embed form + fallback link */}
+      {/* Embed form */}
       <Panel className="p-0 overflow-hidden">
         <iframe
           src={form.embed}
@@ -94,12 +93,12 @@ export default function Apply({ type, onNavigate }) {
         </iframe>
       </Panel>
 
-      {/* Fallback in case iframe doesn't load */}
-      <Panel className="text-center">
-        <p className="text-sm text-parchment/60 mb-2">Form not loading above?</p>
-        <a href={form.link} target="_blank" rel="noreferrer" className="btn-primary inline-flex">
-          <Icon name="arrow" size={14} /> Open {form.title} in new tab
+      {/* Check signup status + fallback link */}
+      <Panel className="text-center space-y-3">
+        <a href={SHEET_LINK} target="_blank" rel="noreferrer" className="btn-secondary inline-flex">
+          <Icon name="search" size={14} /> Check if you signed up
         </a>
+        <p className="text-sm text-parchment/40">Form not loading? <a href={form.link} target="_blank" rel="noreferrer" className="text-gold hover:text-gold-bright underline">Open form in new tab</a></p>
       </Panel>
     </div>
   )

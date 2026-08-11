@@ -445,3 +445,293 @@
   from { opacity: 0; transform: translateY(12px) scale(0.99); }
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
+
+/* ===== MEGA GRAPHICS & ANIMATION LAYER ===== */
+
+/* Animated gradient border for hero panels */
+.hero-frame {
+  position: relative;
+}
+.hero-frame::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  padding: 2px;
+  background: linear-gradient(135deg, rgba(212,175,55,.5), rgba(140,43,58,.3), rgba(212,175,55,.5), rgba(232,199,102,.4));
+  background-size: 300% 300%;
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude;
+  animation: gradient-shift 8s ease infinite;
+  pointer-events: none;
+  z-index: 2;
+}
+@keyframes gradient-shift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+/* Glow pulse for important badges */
+.glow-badge {
+  animation: badge-pulse 2.5s ease-in-out infinite;
+}
+@keyframes badge-pulse {
+  0%, 100% { box-shadow: 0 0 4px rgba(212,175,55,.3), 0 0 0 1px rgba(212,175,55,.2); }
+  50% { box-shadow: 0 0 16px rgba(212,175,55,.5), 0 0 0 1px rgba(212,175,55,.4); }
+}
+
+/* 3D card tilt on hover */
+.tilt-card {
+  transition: transform .3s cubic-bezier(0.16,1,0.3,1), box-shadow .3s;
+  transform-style: preserve-3d;
+}
+.tilt-card:hover {
+  transform: perspective(800px) rotateX(2deg) rotateY(-2deg) translateY(-4px);
+  box-shadow: 0 20px 50px -20px rgba(0,0,0,.9), 0 0 40px -15px rgba(212,175,55,.4);
+}
+
+/* Ripple effect on click */
+.ripple {
+  position: relative;
+  overflow: hidden;
+}
+.ripple::after {
+  content: '';
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 5px; height: 5px;
+  background: rgba(212,175,55,.4);
+  border-radius: 50%;
+  opacity: 0;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+.ripple:active::after {
+  animation: ripple-burst .6s ease-out;
+}
+@keyframes ripple-burst {
+  0% { width: 5px; height: 5px; opacity: 0.6; }
+  100% { width: 300px; height: 300px; opacity: 0; }
+}
+
+/* Animated gold rune circle decoration */
+.rune-circle {
+  position: absolute;
+  width: 200px; height: 200px;
+  border: 1px solid rgba(212,175,55,.1);
+  border-radius: 50%;
+  pointer-events: none;
+  animation: rune-rotate 30s linear infinite;
+}
+.rune-circle::before {
+  content: '';
+  position: absolute;
+  inset: 20px;
+  border: 1px dashed rgba(212,175,55,.08);
+  border-radius: 50%;
+  animation: rune-rotate 20s linear infinite reverse;
+}
+@keyframes rune-rotate {
+  to { transform: rotate(360deg); }
+}
+
+/* Typewriter cursor for titles */
+.type-cursor::after {
+  content: '|';
+  color: rgba(212,175,55,.6);
+  animation: blink 1s steps(1) infinite;
+}
+@keyframes blink {
+  50% { opacity: 0; }
+}
+
+/* Floating animation for crests/badges */
+.float-anim {
+  animation: gentle-float 4s ease-in-out infinite;
+}
+@keyframes gentle-float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+/* Shimmer sweep on stat numbers */
+.stat-shimmer {
+  background: linear-gradient(90deg, #C9A24A 0%, #F3E8CC 50%, #C9A24A 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: stat-shine 4s linear infinite;
+}
+@keyframes stat-shine {
+  to { background-position: 200% center; }
+}
+
+/* Glowing border pulse for active nav */
+.nav-glow {
+  position: relative;
+}
+.nav-glow::after {
+  content: '';
+  position: absolute;
+  left: 0; top: 50%;
+  width: 3px; height: 60%;
+  background: linear-gradient(180deg, transparent, #D4AF37, transparent);
+  transform: translateY(-50%);
+  animation: nav-pulse 2s ease-in-out infinite;
+}
+@keyframes nav-pulse {
+  0%, 100% { opacity: 0.5; box-shadow: 0 0 4px rgba(212,175,55,.3); }
+  50% { opacity: 1; box-shadow: 0 0 12px rgba(212,175,55,.6); }
+}
+
+/* Sparkle burst on hover for important buttons */
+.sparkle-btn {
+  position: relative;
+}
+.sparkle-btn::before {
+  content: '✦';
+  position: absolute;
+  top: -8px; right: -8px;
+  font-size: 12px;
+  color: rgba(232,199,102,.8);
+  opacity: 0;
+  transform: scale(0) rotate(0deg);
+  transition: all .4s cubic-bezier(0.16,1,0.3,1);
+}
+.sparkle-btn:hover::before {
+  opacity: 1;
+  transform: scale(1.2) rotate(180deg);
+}
+
+/* Scroll progress gold bar */
+.scroll-progress {
+  position: fixed;
+  top: 0; left: 0;
+  height: 2px;
+  background: linear-gradient(90deg, #D4AF37, #E8C766, #D4AF37);
+  z-index: 100;
+  transition: width .1s;
+  box-shadow: 0 0 8px rgba(212,175,55,.5);
+}
+
+/* Animated underline for section titles */
+.title-underline {
+  position: relative;
+  display: inline-block;
+  padding-bottom: 6px;
+}
+.title-underline::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0;
+  width: 0; height: 2px;
+  background: linear-gradient(90deg, #D4AF37, transparent);
+  animation: underline-draw 1s cubic-bezier(0.16,1,0.3,1) 0.3s forwards;
+}
+@keyframes underline-draw {
+  to { width: 100%; }
+}
+
+/* Card entrance with 3D flip */
+.flip-in {
+  opacity: 0;
+  transform: perspective(800px) rotateY(-10deg) translateX(-20px);
+  animation: flip-enter .6s cubic-bezier(0.16,1,0.3,1) forwards;
+}
+@keyframes flip-enter {
+  to { opacity: 1; transform: perspective(800px) rotateY(0) translateX(0); }
+}
+
+/* Gold dust trail on card hover */
+.gold-trail {
+  position: relative;
+  overflow: visible;
+}
+.gold-trail::after {
+  content: '';
+  position: absolute;
+  top: 0; right: -30px;
+  width: 30px; height: 100%;
+  background: linear-gradient(90deg, rgba(212,175,55,.15), transparent);
+  opacity: 0;
+  transition: opacity .3s;
+  pointer-events: none;
+}
+.gold-trail:hover::after {
+  opacity: 1;
+}
+
+/* Pulse ring for important elements */
+.pulse-ring {
+  position: relative;
+}
+.pulse-ring::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border: 2px solid rgba(212,175,55,.3);
+  border-radius: inherit;
+  animation: pulse-ring-expand 2s ease-out infinite;
+  pointer-events: none;
+}
+@keyframes pulse-ring-expand {
+  0% { transform: scale(0.95); opacity: 1; }
+  100% { transform: scale(1.15); opacity: 0; }
+}
+
+/* Gradient text for important headings */
+.gradient-gold {
+  background: linear-gradient(135deg, #E8C766 0%, #D4AF37 30%, #F3E8CC 50%, #D4AF37 70%, #E8C766 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: gradient-flow 6s linear infinite;
+}
+@keyframes gradient-flow {
+  to { background-position: 200% center; }
+}
+
+/* Ember burst on hover for hero panels */
+.ember-burst {
+  position: relative;
+}
+.ember-burst:hover .ember-burst-particle {
+  animation: ember-burst-anim 1s ease-out;
+}
+.ember-burst-particle {
+  position: absolute;
+  width: 4px; height: 4px;
+  background: radial-gradient(circle, rgba(232,199,102,.9), transparent);
+  border-radius: 50%;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Glass panel effect (no backdrop-filter, pure CSS) */
+.glass-panel {
+  background: linear-gradient(135deg, rgba(14,18,32,.95) 0%, rgba(20,26,42,.92) 100%);
+  border: 1px solid rgba(212,175,55,.15);
+  box-shadow: inset 0 1px 0 rgba(232,199,102,.05), 0 8px 32px -16px rgba(0,0,0,.8);
+}
+
+/* Decorative gold corners */
+.gold-corners {
+  position: relative;
+}
+.gold-corners::before,
+.gold-corners::after {
+  content: '';
+  position: absolute;
+  width: 12px; height: 12px;
+  pointer-events: none;
+}
+.gold-corners::before {
+  top: 0; left: 0;
+  border-top: 2px solid rgba(212,175,55,.5);
+  border-left: 2px solid rgba(212,175,55,.5);
+}
+.gold-corners::after {
+  bottom: 0; right: 0;
+  border-bottom: 2px solid rgba(212,175,55,.5);
+  border-right: 2px solid rgba(212,175,55,.5);
+}

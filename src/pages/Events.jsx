@@ -58,7 +58,7 @@ export default function Events() {
     <div className="space-y-6">
       <Panel glow className="relative overflow-hidden p-0">
         <div className="relative h-48">
-          <ArtImage src="./assets/art-castle-battle.png" alt="Castle battle" className="h-full w-full" />
+          <ArtImage src="./assets/hero-events.png" alt="Castle battle" className="h-full w-full" />
           <div className="absolute inset-0 flex flex-col justify-center p-6 md:p-10">
             <div className="eyebrow">War Calendar</div>
             <h1 className="mt-1 font-display text-3xl font-bold text-parchment drop-shadow-lg">Upcoming Events</h1>

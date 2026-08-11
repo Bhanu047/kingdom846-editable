@@ -6,10 +6,10 @@ export function Panel({ children, className = '', glow }) {
 
 export function SectionTitle({ eyebrow, title, action }) {
   return (
-    <div className="flex items-end justify-between gap-3 mb-3">
+    <div className="flex items-end justify-between gap-3 mb-3" style={{ textShadow: '0 2px 10px rgba(0,0,0,1), 0 0 14px rgba(0,0,0,0.8)' }}>
       <div className="section-ornate">
-        {eyebrow && <div className="eyebrow mb-1">{eyebrow}</div>}
-        <h2 className="text-lg font-bold text-parchment">{title}</h2>
+        {eyebrow && <div className="eyebrow mb-1" style={{ color: '#E8C766' }}>{eyebrow}</div>}
+        <h2 className="text-lg font-bold text-parchment" style={{ color: '#F3E8CC' }}>{title}</h2>
       </div>
       {action}
     </div>

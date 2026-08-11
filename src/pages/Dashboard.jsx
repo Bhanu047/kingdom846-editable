@@ -189,7 +189,7 @@ export default function Dashboard({ onNavigate }) {
             <div className="absolute inset-0 ring-1 ring-inset ring-gold/15" />
           </div>
           <div className="relative z-10 flex h-full min-h-[460px] flex-col p-5">
-            <SectionTitle eyebrow="Realm" title="Kingdom Status" action={isAdmin ? <button onClick={() => onNavigate('console')} className="text-xs text-gold hover:underline" data-testid="button-edit-king-status">Edit →</button> : undefined} />
+            <SectionTitle eyebrow="Realm" title="Kingdom Status" action={isAdmin ? <button onClick={() => onNavigate('console')} className="text-xs text-gold hover:underline" data-testid="button-edit-king-status" style={{ textShadow: '0 1px 6px rgba(0,0,0,1)' }}>Edit →</button> : undefined} />
             <div className="flex flex-1 flex-col justify-center gap-!3 py-4">
               <div className="inline-flex items-center gap-2 rounded-full border border-gold/40 bg-ink/70 px-3 py-1 ">
                 <Icon name="crown" size={14} className="text-gold" />

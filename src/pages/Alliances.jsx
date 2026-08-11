@@ -36,14 +36,14 @@ export default function Alliances() {
   const activeColor = active ? (colorMap[active.color] || colorMap.blue) : colorMap.blue
   return (
     <div className="space-y-6">
-      <Panel glow className="reveal-clip aurora-border">
+      <Panel glow className="aurora-border">
         <Embers count={10} />
         <div className="eyebrow">The Council</div>
         <h1 className="mt-1 font-display text-3xl font-bold text-parchment">Alliances of 846</h1>
         <p className="mt-2 text-sm text-parchment/60">The four pillars of Kingdom 846 — the alliances and the council that hold the realm together.</p>
       </Panel>
 
-      <div className="reveal-clip grid gap-4 lg:grid-cols-2">
+      <div className="grid gap-4 lg:grid-cols-2">
         {alliances.map((a) => {
           const c = colorMap[a.color] || colorMap.blue
           return (

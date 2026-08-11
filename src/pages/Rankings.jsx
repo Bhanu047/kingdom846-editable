@@ -71,7 +71,7 @@ export default function Rankings() {
   return (
     <div className="space-y-6">
       {/* Hero */}
-      <Panel glow className="reveal-clip relative overflow-hidden p-0">
+      <Panel glow className="relative overflow-hidden p-0">
         <div className="relative h-40">
           <img src="./assets/hero-rankings.png" alt="Commander Rankings" className="h-full w-full drift-slow object-cover" loading="lazy" />
           <div className="absolute inset-0 bg-gradient-to-r from-ink via-ink/80 to-ink/20" />
@@ -84,7 +84,7 @@ export default function Rankings() {
       </Panel>
 
       {/* Leaderboard */}
-      <Panel className="reveal-clip p-3 sm:p-4">
+      <Panel className="p-3 sm:p-4">
         {source === 'live' && (
           <div className="mb-2 rounded-md border border-emerald-500/20 bg-emerald-500/5 px-3 py-1.5 text-[11px] text-emerald-300">
             Live roster — synced from alliance leader uploads.

@@ -138,7 +138,7 @@ export default function LeaderPortal() {
 
   return (
     <div className="space-y-6">
-      <Panel glow className="reveal-clip aurora-border">
+      <Panel glow className="aurora-border">
         <Embers count={8} />
         <div className="eyebrow">Leader Portal</div>
         <h1 className="mt-1 font-display text-3xl font-bold text-parchment">Roster Upload</h1>

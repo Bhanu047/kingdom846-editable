@@ -23,7 +23,7 @@ export default function Players() {
         <p className="mt-2 text-sm text-parchment/60">The kingdom's strongest commanders. Sample roster data.</p>
       </Panel>
 
-      <div className="reveal-clip grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {players.map((p) => {
           const grad = colorMap[p.color] || colorMap.blue
           return (

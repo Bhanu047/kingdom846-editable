@@ -23,14 +23,14 @@ export default function Settings() {
 
   return (
     <div className="space-y-6">
-      <Panel glow className="reveal-clip">
+      <Panel glow className="lift-glow">
         <div className="eyebrow">Account</div>
         <h1 className="mt-1 font-display text-3xl font-bold text-parchment">Settings</h1>
         <p className="mt-2 text-sm text-parchment/60">Manage your profile, notifications, and preferences.</p>
       </Panel>
 
       {/* Profile */}
-      <Panel className="reveal-clip p-5">
+      <Panel className="p-5">
         <SectionTitle eyebrow="Profile" title="Account Info" icon="users" />
         {user ? (
           <div className="mt-3 space-y-3">
@@ -60,7 +60,7 @@ export default function Settings() {
       </Panel>
 
       {/* Notifications */}
-      <Panel className="reveal-clip p-5">
+      <Panel className="p-5">
         <SectionTitle eyebrow="Preferences" title="Notification Settings" icon="bell" />
         <div className="mt-3 space-y-2">
           {[
@@ -85,7 +85,7 @@ export default function Settings() {
       </Panel>
 
       {/* About This Portal */}
-      <Panel className="reveal-clip p-5">
+      <Panel className="p-5">
         <SectionTitle eyebrow="About" title="Kingdom 846 Portal" icon="crown" />
         <div className="mt-3 space-y-2 text-sm text-parchment/60">
           <p>This portal is the official community hub for Kingdom 846 (United We Rise) in the game Kingshot.</p>

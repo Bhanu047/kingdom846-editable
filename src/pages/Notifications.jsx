@@ -43,7 +43,7 @@ export default function Notifications() {
 
   return (
     <div className="space-y-6">
-      <Panel glow className="reveal-clip relative overflow-hidden p-0">
+      <Panel glow className="relative overflow-hidden p-0">
         <div className="relative h-44">
           <img src="./assets/news-throne-room.png" alt="Notifications" className="h-full w-full drift-slow object-cover" />
           <div className="absolute inset-0 bg-gradient-to-r from-ink via-ink/85 to-ink/30" />
@@ -56,7 +56,7 @@ export default function Notifications() {
         </div>
       </Panel>
 
-      <Panel className="reveal-clip">
+      <Panel className="lift-glow">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <SectionTitle eyebrow="Inbox" title="Applications" icon="bell" />
           <div className="flex items-center gap-2">

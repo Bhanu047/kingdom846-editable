@@ -735,3 +735,243 @@
   border-bottom: 2px solid rgba(212,175,55,.5);
   border-right: 2px solid rgba(212,175,55,.5);
 }
+
+/* ===== MORE GRAPHICS & ANIMATION LAYER 2 ===== */
+
+/* Animated sidebar crest glow */
+.sidebar-crest {
+  animation: sidebar-glow 4s ease-in-out infinite;
+}
+@keyframes sidebar-glow {
+  0%, 100% { filter: drop-shadow(0 0 3px rgba(212,175,55,.3)); }
+  50% { filter: drop-shadow(0 0 15px rgba(212,175,55,.6)) drop-shadow(0 0 30px rgba(212,175,55,.2)); }
+}
+
+/* Nav item hover slide */
+.nav-item {
+  position: relative;
+  overflow: hidden;
+}
+.nav-item::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0;
+  width: 0; height: 100%;
+  background: linear-gradient(90deg, rgba(212,175,55,.1), transparent);
+  transition: width .3s cubic-bezier(0.16,1,0.3,1);
+}
+.nav-item:hover::before { width: 100%; }
+
+/* Royal button with animated border */
+.btn-royal {
+  position: relative;
+  background: linear-gradient(135deg, rgba(212,175,55,.15), rgba(140,43,58,.1));
+  border: 1px solid rgba(212,175,55,.3);
+  overflow: hidden;
+}
+.btn-royal::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(212,175,55,.2), transparent);
+  background-size: 200% 100%;
+  animation: royal-sweep 3s linear infinite;
+}
+@keyframes royal-sweep {
+  to { background-position: 200% 0; }
+}
+
+/* Counter animation */
+.count-up {
+  animation: count-pop .6s cubic-bezier(0.16,1,0.3,1);
+}
+@keyframes count-pop {
+  0% { transform: scale(0.5); opacity: 0; }
+  60% { transform: scale(1.15); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* Card with animated gold border on hover */
+.gold-border-hover {
+  border: 1px solid rgba(212,175,55,.15);
+  transition: border-color .3s, box-shadow .3s;
+}
+.gold-border-hover:hover {
+  border-color: rgba(212,175,55,.5);
+  box-shadow: 0 0 0 1px rgba(212,175,55,.3), 0 0 20px -5px rgba(212,175,55,.4), inset 0 1px 0 rgba(232,199,102,.1);
+}
+
+/* Animated gradient background for hero sections */
+.hero-gradient-anim {
+  background: linear-gradient(135deg, rgba(14,18,32,.95), rgba(20,14,32,.9), rgba(14,18,32,.95), rgba(18,14,28,.9));
+  background-size: 400% 400%;
+  animation: hero-bg-shift 12s ease infinite;
+}
+@keyframes hero-bg-shift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+/* Glowing text shadow */
+.text-glow {
+  text-shadow: 0 0 10px rgba(212,175,55,.4), 0 0 20px rgba(212,175,55,.2);
+}
+.text-glow-strong {
+  text-shadow: 0 0 8px rgba(232,199,102,.5), 0 0 16px rgba(212,175,55,.3), 0 0 32px rgba(212,175,55,.15);
+}
+
+/* Loading shimmer */
+.shimmer-loading {
+  background: linear-gradient(90deg, rgba(255,255,255,.03) 25%, rgba(255,255,255,.08) 50%, rgba(255,255,255,.03) 75%);
+  background-size: 200% 100%;
+  animation: shimmer-slide 1.5s infinite;
+}
+@keyframes shimmer-slide {
+  to { background-position: -200% 0; }
+}
+
+/* Fire glow effect */
+.fire-glow {
+  animation: fire-flicker 3s ease-in-out infinite;
+}
+@keyframes fire-flicker {
+  0%, 100% { filter: brightness(1) drop-shadow(0 0 4px rgba(255,150,50,.3)); }
+  25% { filter: brightness(1.1) drop-shadow(0 0 8px rgba(255,180,80,.4)); }
+  50% { filter: brightness(0.95) drop-shadow(0 0 6px rgba(255,140,40,.35)); }
+  75% { filter: brightness(1.05) drop-shadow(0 0 10px rgba(255,170,70,.45)); }
+}
+
+/* Hover lift with glow burst */
+.lift-glow {
+  transition: transform .3s cubic-bezier(0.16,1,0.3,1), box-shadow .3s;
+}
+.lift-glow:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 30px -10px rgba(0,0,0,.8), 0 0 0 1px rgba(212,175,55,.3), 0 0 40px -10px rgba(212,175,55,.5);
+}
+
+/* Animated divider with ornament */
+.divider-ornate {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 0;
+}
+.divider-ornate::before,
+.divider-ornate::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(212,175,55,.4), transparent);
+}
+.divider-ornate-icon {
+  color: rgba(212,175,55,.5);
+  font-size: 14px;
+  animation: ornament-pulse 3s ease-in-out infinite;
+}
+@keyframes ornament-pulse {
+  0%, 100% { opacity: 0.4; transform: scale(1); }
+  50% { opacity: 0.8; transform: scale(1.1); }
+}
+
+/* Badge with rotating conic gradient */
+.badge-rotate {
+  position: relative;
+}
+.badge-rotate::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  background: conic-gradient(from 0deg, rgba(212,175,55,.4), transparent 90deg, rgba(232,199,102,.3) 180deg, transparent 270deg, rgba(212,175,55,.4));
+  animation: badge-rotate 4s linear infinite;
+  z-index: -1;
+}
+@keyframes badge-rotate {
+  to { transform: rotate(360deg); }
+}
+
+/* Smooth scale on hover for images */
+.img-zoom {
+  overflow: hidden;
+}
+.img-zoom img {
+  transition: transform .5s cubic-bezier(0.16,1,0.3,1);
+}
+.img-zoom:hover img {
+  transform: scale(1.08);
+}
+
+/* Bounce in animation */
+.bounce-in {
+  animation: bounce-in .6s cubic-bezier(0.34,1.56,0.64,1);
+}
+@keyframes bounce-in {
+  0% { opacity: 0; transform: scale(0.3) translateY(20px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* Glow trail following scroll */
+.scroll-glow {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #D4AF37, #E8C766, #D4AF37);
+  transform-origin: left;
+  z-index: 100;
+  box-shadow: 0 0 10px rgba(212,175,55,.5);
+}
+
+/* Shimmer overlay for hero images */
+.hero-shimmer::after {
+  content: '';
+  position: absolute;
+  top: 0; left: -50%;
+  width: 30%; height: 100%;
+  background: linear-gradient(100deg, transparent, rgba(255,255,255,.05), transparent);
+  transform: skewX(-20deg);
+  animation: hero-sweep 8s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes hero-sweep {
+  0%, 100% { left: -50%; }
+  50% { left: 120%; }
+}
+
+/* Pulsing dot indicator */
+.pulse-dot {
+  position: relative;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: #D4AF37;
+}
+.pulse-dot::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 2px solid rgba(212,175,55,.5);
+  animation: pulse-dot-ring 1.5s ease-out infinite;
+}
+@keyframes pulse-dot-ring {
+  0% { transform: scale(0.5); opacity: 1; }
+  100% { transform: scale(2); opacity: 0; }
+}
+
+/* Tab hover underline */
+.tab-underline {
+  position: relative;
+}
+.tab-underline::after {
+  content: '';
+  position: absolute;
+  bottom: -2px; left: 50%;
+  width: 0; height: 2px;
+  background: #D4AF37;
+  transform: translateX(-50%);
+  transition: width .3s;
+}
+.tab-underline:hover::after,
+.tab-underline.active::after {
+  width: 100%;
+}

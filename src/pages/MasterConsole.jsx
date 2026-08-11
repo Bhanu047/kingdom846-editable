@@ -90,14 +90,14 @@ export default function MasterConsole() {
 
   return (
     <div className="space-y-6">
-      <Panel glow className="reveal-clip">
+      <Panel glow className="lift-glow">
         <div className="eyebrow">Sparta Master</div>
         <h1 className="mt-1 font-display text-3xl font-bold text-parchment">Master Console</h1>
         <p className="mt-2 text-sm text-parchment/60">Change your own login, and reset alliance leader passwords when they forget theirs.</p>
       </Panel>
 
       {/* Kingdom Status — current king + alliance */}
-      <Panel className="reveal-clip p-5">
+      <Panel className="p-5">
         <SectionTitle eyebrow="Realm" title="Kingdom Status" icon="crown" />
         <p className="mb-4 text-xs text-parchment/50">Current sovereign: <span className="font-semibold text-gold">{king.kingType} {king.name}</span> · <span className="text-gold">{king.allianceTag} {king.allianceName}</span></p>
         <form onSubmit={saveKing} className="grid gap-3 sm:grid-cols-2">
@@ -129,7 +129,7 @@ export default function MasterConsole() {
       </Panel>
 
       {/* Change my credentials */}
-      <Panel className="reveal-clip p-5">
+      <Panel className="p-5">
         <SectionTitle eyebrow="Account" title="My Sparta Login" icon="crown" />
         <p className="mb-4 text-xs text-parchment/50">Current username: <span className="font-semibold text-gold">{user?.username}</span></p>
         <form onSubmit={saveMine} className="grid gap-3 sm:grid-cols-2">
@@ -147,7 +147,7 @@ export default function MasterConsole() {
       </Panel>
 
       {/* Leader management */}
-      <Panel className="reveal-clip p-5">
+      <Panel className="p-5">
         <SectionTitle eyebrow="Leaders" title="Alliance Leader Logins" icon="users" />
         <div className="space-y-2">
           {leaders.map((l) => (

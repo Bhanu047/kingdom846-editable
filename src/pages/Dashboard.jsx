@@ -65,21 +65,21 @@ export default function Dashboard({ onNavigate }) {
       </Panel>
 
       {/* Apply CTA */}
-      <div className="reveal-clip grid gap-3 sm:grid-cols-2">
-        <button onClick={() => onNavigate('apply-chief')} className="lift flex items-center gap-3 rounded-lg border border-gold/30 bg-gradient-to-r from-gold/15 to-transparent p-4 text-left transition hover:from-gold/25">
-          <span className="font-display text-2xl text-gold">♛</span>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <button onClick={() => onNavigate('apply-chief')} className="lift-glow gold-border-hover btn-royal flex items-center gap-3 rounded-lg border border-gold/30 p-4 text-left transition">
+          <span className="font-display text-2xl text-gold fire-glow">♛</span>
           <div><div className="font-display font-bold text-parchment">Apply for Chief Minister</div><div className="text-xs text-parchment/50">Coordinate leadership and keep the realm united.</div></div>
           <Icon name="arrow" size={14} className="ml-auto text-gold" />
         </button>
-        <button onClick={() => onNavigate('apply-noble')} className="lift flex items-center gap-3 rounded-lg border border-gold/30 bg-gradient-to-r from-amethyst/15 to-transparent p-4 text-left transition hover:from-amethyst/25">
-          <span className="font-display text-2xl text-gold">♜</span>
+        <button onClick={() => onNavigate('apply-noble')} className="lift-glow gold-border-hover btn-royal flex items-center gap-3 rounded-lg border border-gold/30 p-4 text-left transition">
+          <span className="font-display text-2xl text-gold fire-glow">♜</span>
           <div><div className="font-display font-bold text-parchment">Apply for Noble Advisor</div><div className="text-xs text-parchment/50">Support appointments, coordination and event planning.</div></div>
           <Icon name="arrow" size={14} className="ml-auto text-gold" />
         </button>
       </div>
 
       {/* Kingdom Performance — summary stats; full detail in About Kingdom */}
-      <Panel glow className="reveal-clip">
+      <Panel glow className="glass-panel">
         <SectionTitle eyebrow="Records" title="Kingdom Performance" action={<button onClick={() => onNavigate('about')} className="text-xs text-gold hover:underline">View About →</button>} />
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <KvKStat onClick={about} label="S-Tier Atlas" value={kingdom.atlasScore} sub={`Rank #${kingdom.atlasRank} · ${kingdom.atlasPercentile}`} icon="landmark" />
@@ -92,7 +92,7 @@ export default function Dashboard({ onNavigate }) {
       {/* Main grid: Alliance Ranking + Event Countdown */}
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Alliance Ranking — 4 clickable banners */}
-        <Panel className="reveal-clip lg:col-span-2">
+        <Panel className="lift-glow lg:col-span-2">
           <SectionTitle eyebrow="The Council" title="Alliance Ranking" action={<button onClick={() => onNavigate('alliances')} className="text-xs text-gold hover:underline">All →</button>} />
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             {top4.map((a) => (
@@ -113,7 +113,7 @@ export default function Dashboard({ onNavigate }) {
 
         {/* Event Countdown */}
         {featured && (
-        <Panel glow className="reveal-clip aurora-border">
+        <Panel glow className="aurora-border">
           <SectionTitle eyebrow="Upcoming Event" title="Castle Battle" action={<Pill tone="gold">{featured.category}</Pill>} />
           <div className="mb-4">
             <ArtImage src={featured.art} alt={featured.title} className="h-24 w-full rounded-lg" />
@@ -132,7 +132,7 @@ export default function Dashboard({ onNavigate }) {
       {/* Kingdom Status (King + alliance banner) | Hall of Legends (players) */}
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Kingdom Status — King + leading-alliance banner, tall card */}
-        <Panel glow className="reveal-clip relative overflow-hidden lg:col-span-1 min-h-[460px]" >
+        <Panel glow className="relative overflow-hidden lg:col-span-1 min-h-[460px]" >
           <div className="absolute inset-0 z-0">
             <img src={kingBanner} alt={`${kingAlliance.name} banner`} className="h-full w-full object-cover opacity-80" style={{ filter: 'brightness(1.3)! contrast(1.12) saturate(1.25)' }} loading="lazy" />
             <div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/80 to-ink/25" />
@@ -159,7 +159,7 @@ export default function Dashboard({ onNavigate }) {
         </Panel>
 
         {/* Hall of Legends — top 5 players, each backed by their alliance banner */}
-        <Panel className="reveal-clip p-3 sm:p-4 lg:col-span-2">
+        <Panel className="p-3 sm:p-4 lg:col-span-2">
           <SectionTitle eyebrow="Hall of Legends" title="Commander Rankings" action={<button onClick={() => onNavigate('rankings')} className="text-xs text-gold hover:underline">Full Rankings →</button>} />
           {players.length > 0 ? (
             <>
@@ -200,7 +200,7 @@ export default function Dashboard({ onNavigate }) {
 
       {/* News + Guides */}
       <div className="grid gap-6 lg:grid-cols-3">
-        <Panel className="reveal-clip lg:col-span-1">
+        <Panel className="lg:col-span-1">
           <SectionTitle eyebrow="Realm" title="Kingdom News" action={<button onClick={() => onNavigate('news')} className="text-xs text-gold hover:underline">All →</button>} />
           <div className="space-y-3">
             {news.slice(0, 4).map((n) => (
@@ -215,7 +215,7 @@ export default function Dashboard({ onNavigate }) {
           </div>
         </Panel>
 
-        <Panel className="reveal-clip lg:col-span-2">
+        <Panel className="lg:col-span-2">
           <SectionTitle eyebrow="Strategy" title="Guides & Playbooks" action={<button onClick={() => onNavigate('guides')} className="text-xs text-gold hover:underline">All →</button>} />
           <div className="grid gap-4 md:grid-cols-3">
             {guides.slice(0, 3).map((g) => (

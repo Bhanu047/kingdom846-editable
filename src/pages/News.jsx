@@ -22,20 +22,26 @@ export default function News() {
   const allNews = synced?.news || []
 
   return (
-    <div className="space-y-6">
-      <Panel glow>
-        <div className="eyebrow">Kingdom Chronicle</div>
-        <h1 className="mt-1 font-display text-3xl font-bold text-parchment">News & Dispatches</h1>
-        <p className="mt-2 text-sm text-parchment/60">
-          Auto-synced from Kingshot sources.{' '}
-          {synced?.synced_at && <span className="text-gold/60">Last synced: {new Date(synced.synced_at + 'Z').toLocaleString()}</span>}
-          {loading && <span className="text-gold/50"> Loading...</span>}
-        </p>
+    <div className="space-y-4">
+      {/* Hero banner */}
+      <Panel glow className="hero-frame relative overflow-hidden p-0">
+        <div className="relative h-36 sm:h-44">
+          <img src="./assets/hero-news.png" alt="News" className="h-full w-full object-cover" />
+          <div className="hero-overlay absolute inset-0" />
+          <div className="absolute inset-y-0 left-0 flex flex-col justify-center p-6">
+            <div className="eyebrow">Kingdom Chronicle</div>
+            <h1 className="mt-1 font-display text-2xl sm:text-3xl font-bold gradient-gold">News & Dispatches</h1>
+            <p className="mt-1 text-sm text-parchment/50">
+              {synced?.synced_at && <span>Last synced: {new Date(synced.synced_at + 'Z').toLocaleString()}</span>}
+              {loading && <span className="text-gold/50"> Loading...</span>}
+            </p>
+          </div>
+        </div>
       </Panel>
 
       <div className="space-y-4">
-        {allNews.map((n) => (
-          <Panel key={n.id}>
+        {allNews.map((n, i) => (
+          <Panel key={n.id} className="lift-glow gold-border-hover stagger-in" >
             <div className="flex flex-wrap items-center gap-2">
               <Pill tone={toneFor(n.category)}>{n.category}</Pill>
               {n.date && <span className="text-[10px] text-parchment/40">{n.date}</span>}

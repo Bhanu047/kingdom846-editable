@@ -77,6 +77,25 @@ export default function Apply({ type, onNavigate }) {
         </div>
       </Panel>
 
+      {/* Role info cards */}
+      <div className="grid gap-3 sm:grid-cols-3">
+        <Panel className="gold-corners p-3 text-center">
+          <div className="text-2xl mb-1">⚔️</div>
+          <div className="text-xs font-bold text-gold">Coordinate</div>
+          <div className="text-[10px] text-parchment/50">Lead the alliance strategy</div>
+        </Panel>
+        <Panel className="gold-corners p-3 text-center">
+          <div className="text-2xl mb-1">🛡️</div>
+          <div className="text-xs font-bold text-gold">Protect</div>
+          <div className="text-[10px] text-parchment/50">Defend the realm together</div>
+        </Panel>
+        <Panel className="gold-corners p-3 text-center">
+          <div className="text-2xl mb-1">👑</div>
+          <div className="text-xs font-bold text-gold">Excel</div>
+          <div className="text-[10px] text-parchment/50">Rise through the ranks</div>
+        </Panel>
+      </div>
+
       {/* Embed form with ornate frame */}
       <Panel className="gold-corners p-0 overflow-hidden glass-panel">
         <div className="px-1 pt-1">

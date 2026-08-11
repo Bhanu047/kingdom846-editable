@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Panel, SectionTitle, Pill, ArtImage } from '../components/ui'
 import Icon from '../components/Icon'
+import { RoyalSectionHeader, GraphicTile, StatusRibbon } from '../components/VisualElements'
 import { kingdom, countdownTo, BANNERS } from '../data/kingdom'
 import { apiJson } from '../lib/api'
 import { useAuth } from '../context/AuthContext'
@@ -66,6 +67,14 @@ export default function Dashboard({ onNavigate }) {
         </div>
       </Panel>
 
+      {/* Quick Action Tiles */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <GraphicTile image="./assets/hero-alliances.png" label="Alliances" sublabel="View ranks" icon="shield" onClick={() => onNavigate('alliances')} />
+        <GraphicTile image="./assets/hero-events.png" label="Events" sublabel="Next countdown" icon="calendar" onClick={() => onNavigate('events')} badge={{ label: 'Live', tone: 'red' }} />
+        <GraphicTile image="./assets/hero-apply-chief.png" label="Apply" sublabel="Chief / Noble" icon="crown" onClick={() => onNavigate('apply')} />
+        <GraphicTile image="./assets/hero-transfer.png" label="Transfer" sublabel="Join 846" icon="castle" onClick={() => onNavigate('transfer')} />
+      </div>
+
       {/* Apply CTA */}
       <div className="grid gap-3 sm:grid-cols-2">
         <button onClick={() => onNavigate('apply-chief')} className="lift-glow gold-border-hover btn-royal flex items-center gap-3 rounded-lg border border-gold/30 p-4 text-left transition">
@@ -82,7 +91,7 @@ export default function Dashboard({ onNavigate }) {
 
       {/* Kingdom Performance — summary stats; full detail in About Kingdom */}
       <Panel glow className="glass-panel">
-        <SectionTitle eyebrow="Records" title="Kingdom Performance" action={<button onClick={() => onNavigate('about')} className="text-xs text-gold hover:underline">View About →</button>} />
+        <RoyalSectionHeader icon="trophy" eyebrow="Records" title="Kingdom Performance" action={<button onClick={() => onNavigate('about')} className="text-xs text-gold hover:underline">View About →</button>} />
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <KvKStat onClick={about} label="S-Tier Atlas" value={kingdom.atlasScore} sub={`Rank #${kingdom.atlasRank} · ${kingdom.atlasPercentile}`} icon="landmark" />
           <KvKStat onClick={about} label="Mystic Trials" value={kingdom.mysticScore.toLocaleString()} sub={`Rank #${kingdom.mysticRank} · ${kingdom.mysticPercentile}`} icon="trophy" />
@@ -95,7 +104,7 @@ export default function Dashboard({ onNavigate }) {
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Alliance Ranking — 4 clickable banners */}
         <Panel className="lift-glow lg:col-span-2">
-          <SectionTitle eyebrow="The Council" title="Alliance Ranking" action={<button onClick={() => onNavigate('alliances')} className="text-xs text-gold hover:underline">All →</button>} />
+          <RoyalSectionHeader icon="shield" eyebrow="The Council" title="Alliance Ranking" action={<button onClick={() => onNavigate('alliances')} className="text-xs text-gold hover:underline">All →</button>} />
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             {top4.map((a) => (
               <button key={a.slug} onClick={() => onNavigate('alliances')} className="lift group relative overflow-hidden rounded-lg border border-gold/20">

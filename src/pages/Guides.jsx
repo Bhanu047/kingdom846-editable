@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { Panel, Pill } from '../components/ui'
+import { RoyalSectionHeader } from '../components/VisualElements'
 import { apiJson } from '../lib/api'
 import Icon from '../components/Icon'
 
@@ -27,8 +28,8 @@ export default function Guides() {
   return (
     <div className="space-y-4">
       <Panel glow>
-        <h1 className="section-ornate font-display text-xl font-bold text-parchment">Strategy & Guides</h1>
-        <p className="mt-2 text-sm text-parchment/50">
+        <RoyalSectionHeader icon="book" eyebrow="Knowledge Base" title="Strategy & Guides" />
+        <p className="text-sm text-parchment/50">
           Auto-synced from Kingshot Wiki · {allGuides.length} guides available
         </p>
       </Panel>

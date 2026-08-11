@@ -8,10 +8,46 @@ import { apiJson } from '../lib/api'
  * Features: thinking animation, quick suggestions, typing indicator,
  * AI action badges, glow pulse on new message, auto-scroll.
  */
+
+// Medieval crystal orb SVG — fits the Kingdom theme
+const OrbIcon = ({ size = 28, online = false }) => (
+  <svg width={size} height={size} viewBox="0 0 32 32" fill="none">
+    <defs>
+      <radialGradient id="orbGrad" cx="0.4" cy="0.35">
+        <stop offset="0%" stopColor={online ? '#E8C766' : '#6B5B2E'} />
+        <stop offset="60%" stopColor={online ? '#D4AF37' : '#4A3F22'} />
+        <stop offset="100%" stopColor={online ? '#8B6F1F' : '#2A2415'} />
+      </radialGradient>
+      <filter id="orbGlow">
+        <feGaussianBlur stdDeviation="1.5" result="blur" />
+        <feMerge>
+          <feMergeNode in="blur" />
+          <feMergeNode in="SourceGraphic" />
+        </feMerge>
+      </filter>
+    </defs>
+    {/* Base/stand */}
+    <path d="M11 26 Q16 28 21 26 L19.5 24 L12.5 24 Z" fill="#3A3320" stroke="#D4AF37" strokeWidth="0.5" opacity="0.6" />
+    <rect x="12" y="24.5" width="8" height="2.5" rx="1" fill="#5C4A1F" opacity="0.8" />
+    {/* Orb */}
+    <circle cx="16" cy="16" r="9" fill="url(#orbGrad)" filter="url(#orbGlow)" />
+    {/* Highlight */}
+    <ellipse cx="13" cy="13" rx="3" ry="2.5" fill="white" opacity="0.25" />
+    {/* Sparkle */}
+    {online && (
+      <>
+        <circle cx="22" cy="11" r="0.8" fill="#E8C766" opacity="0.8" />
+        <circle cx="9" cy="18" r="0.6" fill="#E8C766" opacity="0.6" />
+        <circle cx="20" cy="20" r="0.5" fill="#E8C766" opacity="0.5" />
+      </>
+    )}
+  </svg>
+)
+
 export default function ChatAssistant() {
   const [open, setOpen] = useState(false)
   const [messages, setMessages] = useState([
-    { role: 'assistant', content: 'Greetings, traveler! I am the Royal Advisor of Kingdom 846. Ask me about alliances, events, guides, or anything about the realm.' + (window.location.hostname.includes('onrender') ? '' : ' (AI activates after admin sets GEMINI_API_KEY)') }
+    { role: 'assistant', content: 'Greetings, traveler! I am the Royal Advisor of Kingdom 846. Ask me about alliances, events, guides, or anything about the realm.' }
   ])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
@@ -86,8 +122,8 @@ export default function ChatAssistant() {
       {/* Floating button with glow ring */}
       <button
         onClick={() => setOpen(!open)}
-        className="fixed bottom-4 right-4 z-50 grid h-14 w-14 place-items-center rounded-full border border-gold/50 bg-ink-2 shadow-lg transition-all hover:scale-110 active:scale-95"
-        style={{ boxShadow: '0 4px 30px rgba(212,175,55,.35)' }}
+        className="fixed bottom-4 right-4 grid h-14 w-14 place-items-center rounded-full border border-gold/50 bg-ink-2 shadow-lg transition-all hover:scale-110 active:scale-95"
+        style={{ boxShadow: '0 4px 30px rgba(212,175,55,.35)', zIndex: 9999 }}
         aria-label="Open chat"
       >
         {/* Glow ring */}
@@ -112,8 +148,8 @@ export default function ChatAssistant() {
         {open ? (
           <span className="text-parchment text-xl">×</span>
         ) : (
-          <span className="text-2xl float-anim">
-            {aiOnline ? '🤖' : '👑'}
+          <span className="float-anim">
+            <OrbIcon size={30} online={aiOnline} />
           </span>
         )}
       </button>
@@ -121,8 +157,8 @@ export default function ChatAssistant() {
       {/* Chat panel */}
       {open && (
         <div
-          className="fixed bottom-20 right-4 z-50 w-[calc(100vw-2rem)] max-w-sm overflow-hidden rounded-xl border border-gold/30 bg-ink shadow-2xl stagger-in"
-          style={{ animation: 'stagger-in .3s ease' }}
+          className="fixed bottom-20 right-4 w-[calc(100vw-2rem)] max-w-sm overflow-hidden rounded-xl border border-gold/30 bg-ink shadow-2xl"
+          style={{ zIndex: 9999, animation: 'bounce-in .25s ease' }}
         >
           {/* Header with gradient + AI status */}
           <div
@@ -134,9 +170,9 @@ export default function ChatAssistant() {
               className="absolute inset-0 opacity-20"
               style={{ background: 'linear-gradient(90deg, transparent, rgba(212,175,55,.1), transparent)', animation: 'shimmer-slide 3s ease-in-out infinite' }}
             />
-            <div className="relative text-2xl">{aiOnline ? '🤖' : '👑'}</div>
+            <div className="relative"><OrbIcon size={26} online={aiOnline} /></div>
             <div className="relative flex-1">
-              <div className="text-sm font-bold gradient-gold">Royal Advisor AI</div>
+              <div className="text-sm font-bold gradient-gold">Royal Advisor</div>
               <div className="text-[10px] flex items-center gap-1.5">
                 <span
                   className="inline-block rounded-full"
@@ -170,7 +206,7 @@ export default function ChatAssistant() {
                 >
                   {m.role === 'assistant' && (
                     <div className="mb-1 flex items-center gap-1 text-[9px] uppercase tracking-wider text-gold/40">
-                      <span>🤖</span> Advisor
+                      <OrbIcon size={12} online={aiOnline} /> Advisor
                     </div>
                   )}
                   <div className="whitespace-pre-wrap">{m.content}</div>

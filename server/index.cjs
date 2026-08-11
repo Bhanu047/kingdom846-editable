@@ -896,6 +896,7 @@ app.post('/api/ai/admin', auth, adminOnly, async (req, res) => {
 let lastAgentRun = null
 let agentInsights = []
 let agentLog = [] // Activity log
+let designBriefing = null // Latest design intelligence briefing
 const MAX_LOG = 20
 
 function logAction(action, detail) {
@@ -903,6 +904,100 @@ function logAction(action, detail) {
   agentLog.unshift(entry)
   if (agentLog.length > MAX_LOG) agentLog.pop()
   console.log(`[AI Agent] ${action}: ${detail}`)
+}
+
+// --- Design Intelligence Scanner ---
+// Scans GitHub for trending animation libraries, SVG icon sets, and UI motion design tools
+// Uses Gemini to pick top 3 relevant to Kingdom 846's gaming/fantasy aesthetic
+async function runDesignScan() {
+  if (!GEMINI_API_KEY) return
+  console.log('[AI Agent] Scanning design resources...')
+  try {
+    const oneMonthAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+
+    // GitHub Search API — free, no auth needed (60 req/hr)
+    const searches = [
+      { category: 'Animation Libraries', q: `animation+library+language:javascript+pushed:>${oneMonthAgo}&sort=stars&order=desc&per_page=8` },
+      { category: 'SVG Icon Sets', q: `svg+icons+language:javascript+pushed:>${oneMonthAgo}&sort=stars&order=desc&per_page=8` },
+      { category: 'UI Motion Design', q: `motion+ui+design+language:javascript+pushed:>${oneMonthAgo}&sort=stars&order=desc&per_page=8` },
+      { category: 'Gaming/Fantasy UI', q: `game+ui+fantasy+language:javascript+stars:>50&sort=stars&order=desc&per_page=8` },
+      { category: 'CSS Effects', q: `css+animation+effects+language:css+stars:>100&sort=stars&order=desc&per_page=5` },
+    ]
+
+    const allResults = []
+    for (const search of searches) {
+      try {
+        const res = await fetch(`https://api.github.com/search/repositories?q=${search.q}`, {
+          headers: { 'Accept': 'application/vnd.github.v3+json', 'User-Agent': 'Kingdom846-AI-Agent' }
+        })
+        if (res.ok) {
+          const data = await res.json()
+          for (const repo of (data.items || []).slice(0, 5)) {
+            allResults.push({
+              category: search.category,
+              name: repo.full_name,
+              url: repo.html_url,
+              stars: repo.stargazers_count,
+              description: repo.description || '',
+              updated: repo.pushed_at,
+              language: repo.language,
+            })
+          }
+        }
+      } catch (e) { console.error(`[AI Agent] GitHub search error for ${search.category}:`, e.message) }
+    }
+
+    // Use Gemini to analyze and pick top 3 for Kingdom 846
+    const repoList = allResults.map((r, i) => `${i+1}. [${r.category}] ${r.name} (${r.stars} stars, updated ${r.updated.split('T')[0]})\n   ${r.description}\n   URL: ${r.url}`).join('\n\n')
+
+    const analysisPrompt = `You are the design intelligence agent for Kingdom 846, a gaming community portal for the strategy game Kingshot.
+The site uses a dark medieval/fantasy theme with gold accents (#0E1220 bg, #D4AF37 gold, #F3E8CC parchment).
+Stack: React 18 + Vite 5 + Tailwind 3.
+
+Here are trending GitHub repos found today:
+${repoList}
+
+Pick the TOP 3 most relevant for Kingdom 846's visual identity. Respond as JSON array:
+[
+  {
+    "name": "repo name",
+    "category": "category",
+    "url": "github url",
+    "stars": 12345,
+    "why": "1-2 sentences why it fits Kingdom 846's medieval/fantasy gaming aesthetic",
+    "integration": "how to integrate (e.g., 'npm install X' or 'use for hero animations')",
+    "priority": "high|medium|low"
+  }
+]
+
+Only include repos with 100+ stars or updated in the last 30 days. Respond ONLY with the JSON array.`
+
+    const aiRes = await fetch(GEMINI_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ role: 'user', parts: [{ text: analysisPrompt }] }],
+        generationConfig: { temperature: 0.4, maxOutputTokens: 1000 }
+      })
+    })
+
+    if (aiRes.ok) {
+      const aiData = await aiRes.json()
+      const rawText = aiData.candidates?.[0]?.content?.parts?.[0]?.text || '[]'
+      try {
+        const picks = JSON.parse(rawText.replace(/```json|```/g, '').trim())
+        designBriefing = {
+          date: new Date().toISOString(),
+          scanned: allResults.length,
+          top_picks: picks,
+        }
+        logAction('Design Scan', `Scanned ${allResults.length} repos, picked top ${picks.length}`)
+        console.log(`[AI Agent] Design scan complete: ${picks.length} picks from ${allResults.length} repos`)
+      } catch { console.error('[AI Agent] Failed to parse design scan JSON') }
+    }
+  } catch (err) {
+    console.error('[AI Agent] Design scan error:', err.message)
+  }
 }
 
 async function runAutonomousAgent() {
@@ -939,6 +1034,14 @@ async function runAutonomousAgent() {
 
     lastAgentRun = new Date().toISOString()
     logAction('Auto-sync', `Synced ${all.length} items, generated ${agentInsights.length} insights`)
+
+    // 3. Run design intelligence scan (daily — only on first run of each day)
+    const today = new Date().toDateString()
+    const lastScanDay = designBriefing ? new Date(designBriefing.date).toDateString() : null
+    if (today !== lastScanDay) {
+      await runDesignScan()
+    }
+
     console.log(`[AI Agent] Complete at ${lastAgentRun}`)
   } catch (err) {
     console.error('[AI Agent] Error:', err.message)
@@ -955,6 +1058,7 @@ app.get('/api/ai/status', (_req, res) => {
     last_run: lastAgentRun,
     insights: agentInsights,
     activity_log: agentLog.slice(0, 10),
+    design_briefing: designBriefing,
     next_run: lastAgentRun ? new Date(new Date(lastAgentRun).getTime() + AGENT_INTERVAL).toISOString() : null
   })
 })
@@ -964,6 +1068,16 @@ app.post('/api/ai/run-agent', auth, adminOnly, async (_req, res) => {
   try {
     await runAutonomousAgent()
     res.json({ ok: true, last_run: lastAgentRun, insights: agentInsights })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+// Trigger design scan manually (admin only)
+app.post('/api/ai/run-design-scan', auth, adminOnly, async (_req, res) => {
+  try {
+    await runDesignScan()
+    res.json({ ok: true, briefing: designBriefing })
   } catch (err) {
     res.status(500).json({ error: err.message })
   }

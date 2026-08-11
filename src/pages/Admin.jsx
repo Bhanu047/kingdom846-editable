@@ -314,6 +314,47 @@ function AdminAI() {
         </div>
       )}
 
+      {/* Design Intelligence Briefing */}
+      {agentStatus?.design_briefing?.top_picks?.length > 0 && (
+        <div className="mb-3 rounded-lg border border-gold/15 bg-ink-2/50 p-3">
+          <div className="mb-2 flex items-center justify-between">
+            <div className="flex items-center gap-1 text-[9px] uppercase tracking-wider text-gold/50">
+              <span>🎨</span> Design Intelligence Briefing
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-[9px] text-parchment/30">
+                {new Date(agentStatus.design_briefing.date).toLocaleDateString()}
+              </span>
+              <button onClick={async () => {
+                setSyncing(true)
+                try { await apiJson('/api/ai/run-design-scan', { method: 'POST' }); apiJson('/api/ai/status').then(setAgentStatus) }
+                catch {} finally { setSyncing(false) }
+              }} disabled={syncing} className="text-[9px] text-gold/60 hover:text-gold transition">
+                {syncing ? 'Scanning…' : 'Rescan'}
+              </button>
+            </div>
+          </div>
+          <div className="space-y-2">
+            {agentStatus.design_briefing.top_picks.map((pick, i) => (
+              <div key={i} className="rounded-md border border-gold/10 bg-ink/40 p-2">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-gold">{i+1}.</span>
+                  <a href={pick.url} target="_blank" rel="noreferrer" className="text-xs font-medium text-parchment/80 hover:text-gold transition">
+                    {pick.name}
+                  </a>
+                  <span className="text-[9px] text-parchment/30">{pick.stars || ''} stars</span>
+                  <span className={`ml-auto rounded-full px-1.5 py-0.5 text-[8px] font-bold uppercase ${
+                    pick.priority === 'high' ? 'bg-rose-500/20 text-rose-300' : pick.priority === 'medium' ? 'bg-amber-500/20 text-amber-300' : 'bg-sky-500/20 text-sky-300'
+                  }`}>{pick.priority || 'low'}</span>
+                </div>
+                <p className="mt-1 text-[10px] text-parchment/50">{pick.why}</p>
+                <p className="mt-0.5 text-[10px] text-gold/40">→ {pick.integration}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {messages.length > 0 && (
         <div className="mb-3 max-h-48 overflow-y-auto space-y-2">
           {messages.map((m, i) => (

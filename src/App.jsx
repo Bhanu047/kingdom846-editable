@@ -12,6 +12,26 @@ import { AuthProvider, useAuth } from './context/AuthContext'
 import { SiteDataProvider } from './context/SiteDataContext'
 import { nav, timeline, guides, news } from './data/kingdom'
 
+function useESTClock() {
+  const [time, setTime] = useState('')
+  useEffect(() => {
+    function update() {
+      const now = new Date()
+      const est = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }))
+      const h = est.getHours()
+      const m = est.getMinutes()
+      const s = est.getSeconds()
+      const ampm = h >= 12 ? 'PM' : 'AM'
+      const h12 = h % 12 || 12
+      setTime(`${h12}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')} ${ampm} EST`)
+    }
+    update()
+    const id = setInterval(update, 1000)
+    return () => clearInterval(id)
+  }, [])
+  return time
+}
+
 // Code-split pages for smaller initial bundle
 const Dashboard = lazy(() => import('./pages/Dashboard'))
 const About = lazy(() => import('./pages/About'))
@@ -62,6 +82,7 @@ function Placeholder({ title, icon = 'bell', note }) {
 
 function Shell() {
   const { user, signOut, isAdmin } = useAuth()
+  const estTime = useESTClock()
   const [showSplash, setShowSplash] = useState(true)
   const [page, setPage] = useState(getPageFromHash)
   const [loginOpen, setLoginOpen] = useState(false)
@@ -171,6 +192,11 @@ function Shell() {
           <div className="flex-1">
             <div className="eyebrow">Kingdom 846 · {titles[page] || 'Page'}</div>
             <div className="font-display text-base font-bold text-gold-bright">{titles[page] || 'Page'}</div>
+          </div>
+          {/* Live EST Clock */}
+          <div className="hidden sm:flex flex-col items-end mr-2">
+            <span className="text-[9px] uppercase tracking-wider text-gold/50">Kingdom Time</span>
+            <span className="font-mono text-xs font-semibold text-gold-bright tabular-nums">{estTime}</span>
           </div>
           {isAdmin && page !== 'admin' && (
             <button onClick={() => navigate('admin')} className="hidden items-center gap-1.5 rounded-lg border border-gold/30 bg-gold/10 px-3 py-1.5 text-xs font-semibold text-gold sm:flex">

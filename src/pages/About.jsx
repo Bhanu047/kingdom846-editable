@@ -4,9 +4,9 @@ import { kingdom, kvkHistory, kvkStats, transfers, reputation } from '../data/ki
 
 function MetricCard({ label, value, sub }) {
   return (
-    <div className="panel p-4">
+    <div className="panel p-4 gold-corners">
       <div className="eyebrow mb-1">{label}</div>
-      <div className="stat-num">{value}</div>
+      <div className="stat-num gradient-gold">{value}</div>
       {sub && <div className="mt-1 text-xs text-parchment/50">{sub}</div>}
     </div>
   )
@@ -32,10 +32,10 @@ export default function About() {
   return (
     <div className="space-y-6 overflow-x-hidden">
       {/* Hero */}
-      <Panel glow className="relative overflow-hidden p-0">
+      <Panel glow className="relative overflow-hidden p-0 gold-corners">
         <div className="grid gap-0 md:grid-cols-2">
           <div className="relative h-64 md:h-full">
-            <ArtImage src="./assets/art-kingdom-status.png" alt="Kingdom 846 castle at sunset" className="h-full w-full" />
+            <ArtImage src="./assets/art-kingdom-status.png" alt="Kingdom 846 castle at sunset" className="h-full w-full drift-slow" />
           </div>
           <div className="p-7 md:p-9">
             <div className="flex items-center gap-2">
@@ -43,7 +43,7 @@ export default function About() {
               <Pill tone="blue">Global Rank #{kingdom.kvkCurrentRank}</Pill>
               <Pill tone="muted">{kingdom.atlasPercentile}</Pill>
             </div>
-            <h1 className="mt-3 font-display text-4xl font-bold gradient-gold">Kingdom 846</h1>
+            <h1 className="mt-3 font-display text-4xl font-bold gradient-gold glow-pulse">Kingdom 846</h1>
             <p className="mt-1 text-sm text-gold-bright/80">"{kingdom.motto}"</p>
             <p className="mt-3 text-sm leading-relaxed text-parchment/70">
               Kingdom 846 is an <span className="text-gold-bright">S-Tier</span> realm — a battle-hardened

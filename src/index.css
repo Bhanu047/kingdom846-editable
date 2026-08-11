@@ -1180,3 +1180,236 @@ input:focus, textarea:focus, select:focus {
   border: 1px solid rgba(212,175,55,.18);
   box-shadow: inset 0 1px 0 rgba(232,199,102,.08), inset 0 0 0 1px rgba(212,175,55,.02), 0 10px 40px -16px rgba(0,0,0,.9);
 }
+
+/* ===== ROYAL PAGE SYSTEM ===== */
+
+/* Royal page header — big title with crest glow */
+.royal-page-header {
+  position: relative;
+  padding: 1.5rem 0 1rem;
+  text-align: center;
+}
+.royal-page-header::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 50%;
+  transform: translateX(-50%);
+  width: 120px; height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(212,175,55,.6), transparent);
+}
+.royal-page-header::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 50%;
+  transform: translateX(-50%);
+  width: 200px; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(212,175,55,.3), transparent);
+}
+.royal-page-title {
+  font-family: 'Cinzel', serif;
+  font-size: clamp(1.5rem, 4vw, 2.5rem);
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  background: linear-gradient(135deg, #B8941E 0%, #E8C766 20%, #F3E8CC 40%, #E8C766 55%, #D4AF37 75%, #B8941E 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: gradient-flow 6s linear infinite;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,.5));
+  margin: 0.5rem 0;
+}
+.royal-page-subtitle {
+  font-size: 0.85rem;
+  color: rgba(212,175,55,.5);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+/* Royal plaque — for schedule items, list rows, info cards */
+.royal-plaque {
+  position: relative;
+  background: linear-gradient(135deg, rgba(22,27,48,.8) 0%, rgba(14,18,32,.9) 100%);
+  border: 1px solid rgba(212,175,55,.15);
+  border-radius: 0.75rem;
+  padding: 0.875rem 1rem;
+  transition: all 0.3s cubic-bezier(0.16,1,0.3,1);
+  overflow: hidden;
+}
+.royal-plaque::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+  background: linear-gradient(180deg, transparent, rgba(212,175,55,.5), transparent);
+  transform: scaleY(0.6);
+  transition: transform 0.3s;
+}
+.royal-plaque::after {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%;
+  width: 50%; height: 100%;
+  background: linear-gradient(100deg, transparent, rgba(212,175,55,.06), transparent);
+  transform: skewX(-15deg);
+  transition: left 0.6s cubic-bezier(0.16,1,0.3,1);
+  pointer-events: none;
+}
+.royal-plaque:hover {
+  border-color: rgba(212,175,55,.4);
+  background: linear-gradient(135deg, rgba(22,27,48,.9) 0%, rgba(14,18,32,.95) 100%);
+  box-shadow: 0 4px 20px -8px rgba(0,0,0,.6), 0 0 16px -4px rgba(212,175,55,.2);
+  transform: translateX(2px);
+}
+.royal-plaque:hover::before {
+  transform: scaleY(1);
+}
+.royal-plaque:hover::after {
+  left: 130%;
+}
+
+/* Royal time display — big gold monospace time */
+.royal-time {
+  font-family: 'Cinzel', serif;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #E8C766;
+  text-shadow: 0 0 12px rgba(212,175,55,.3);
+  letter-spacing: 0.05em;
+  font-variant-numeric: tabular-nums;
+}
+.royal-time-label {
+  font-size: 0.625rem;
+  color: rgba(212,175,55,.4);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+/* Royal badge — for alliance tags like [RYO] */
+.royal-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.25rem 0.625rem;
+  border-radius: 0.375rem;
+  border: 1px solid rgba(212,175,55,.3);
+  background: linear-gradient(135deg, rgba(212,175,55,.1), rgba(212,175,55,.03));
+  font-family: 'Cinzel', serif;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #E8C766;
+  letter-spacing: 0.08em;
+  text-shadow: 0 0 6px rgba(212,175,55,.2);
+}
+
+/* Royal event icon — circular gold-bordered icon container */
+.royal-icon-circle {
+  display: grid;
+  place-items: center;
+  width: 2.5rem; height: 2.5rem;
+  border-radius: 50%;
+  border: 1px solid rgba(212,175,55,.3);
+  background: radial-gradient(circle, rgba(212,175,55,.12), rgba(212,175,55,.02));
+  font-size: 1rem;
+  flex-shrink: 0;
+  box-shadow: inset 0 1px 0 rgba(232,199,102,.1), 0 2px 8px rgba(0,0,0,.3);
+}
+
+/* Royal section divider with ornament */
+.royal-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 1.25rem 0;
+}
+.royal-divider::before,
+.royal-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(212,175,55,.3) 30%, rgba(212,175,55,.4) 50%, rgba(212,175,55,.3) 70%, transparent);
+}
+.royal-divider-icon {
+  color: rgba(212,175,55,.5);
+  font-size: 0.75rem;
+  animation: ornament-pulse 3s ease-in-out infinite;
+}
+
+/* Royal grid card — for featured cards */
+.royal-grid-card {
+  position: relative;
+  background: linear-gradient(180deg, rgba(22,27,48,.9) 0%, rgba(14,18,32,.95) 100%);
+  border: 1px solid rgba(212,175,55,.15);
+  border-radius: 0.75rem;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.16,1,0.3,1);
+}
+.royal-grid-card:hover {
+  border-color: rgba(212,175,55,.35);
+  box-shadow: 0 8px 30px -10px rgba(0,0,0,.8), 0 0 0 1px rgba(212,175,55,.2), 0 0 30px -8px rgba(212,175,55,.25);
+  transform: translateY(-3px);
+}
+.royal-grid-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(212,175,55,.4) 30%, rgba(232,199,102,.5) 50%, rgba(212,175,55,.4) 70%, transparent);
+  z-index: 1;
+}
+
+/* Royal count box — for countdown timers */
+.royal-count {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(212,175,55,.2);
+  background: linear-gradient(180deg, rgba(30,36,64,.6), rgba(14,18,32,.6));
+  box-shadow: inset 0 1px 0 rgba(232,199,102,.05);
+}
+.royal-count-num {
+  font-family: 'Cinzel', serif;
+  font-weight: 700;
+  color: #E8C766;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 0 8px rgba(212,175,55,.25);
+}
+.royal-count-label {
+  font-size: 0.5rem;
+  color: rgba(212,175,55,.35);
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  font-weight: 600;
+}
+
+/* Royal select — styled dropdowns */
+select.royal-select {
+  background: linear-gradient(180deg, rgba(14,18,32,.9), rgba(22,27,48,.9));
+  border: 1px solid rgba(212,175,55,.25);
+  border-radius: 0.375rem;
+  padding: 0.375rem 0.625rem;
+  color: #E8C766;
+  font-family: 'Cinzel', serif;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: inset 0 1px 0 rgba(232,199,102,.05);
+}
+select.royal-select:hover {
+  border-color: rgba(212,175,55,.5);
+  box-shadow: 0 0 10px -4px rgba(212,175,55,.3);
+}
+select.royal-select:focus {
+  border-color: rgba(212,175,55,.6);
+  outline: none;
+  box-shadow: 0 0 0 1px rgba(212,175,55,.4), 0 0 12px -4px rgba(212,175,55,.4);
+}
+select.royal-select option {
+  background: #0E1220;
+  color: #F3E8CC;
+}

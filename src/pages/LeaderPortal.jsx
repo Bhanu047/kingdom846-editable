@@ -5,15 +5,19 @@ import Icon from '../components/Icon'
 import { apiJson } from '../lib/api'
 import { useAuth } from '../context/AuthContext'
 
-const EVENT_DESCRIPTIONS = {
-  'Bear Hunt -1': 'First bear hunt rally of the week',
-  'Bear Hunt-2': 'Second bear hunt rally of the week',
-  'Vikings Vengeance Tuesday': 'Tuesday Vikings Vengeance event',
-  'Vikings Vengeance Thursday': 'Thursday Vikings Vengeance event',
-  'Tri-Alliance Clash Legion-1': 'First Tri-Alliance Clash of the week',
-  'Tri-Alliance Clash Legion-2': 'Second Tri-Alliance Clash of the week',
-  'Swordland Showdown Legion-1': 'First Swordland Showdown of the week',
-  'Swordland Showdown Legion-2': 'Second Swordland Showdown of the week',
+const EVENT_META = {
+  'Bear Hunt -1': { icon: '🐻', desc: 'First bear hunt rally of the week' },
+  'Bear Hunt-2': { icon: '🐻', desc: 'Second bear hunt rally of the week' },
+  'Vikings Vengeance Tuesday': { icon: '⚔️', desc: 'Tuesday Vikings Vengeance event' },
+  'Vikings Vengeance Thursday': { icon: '⚔️', desc: 'Thursday Vikings Vengeance event' },
+  'Tri-Alliance Clash Legion-1': { icon: '🛡️', desc: 'First Tri-Alliance Clash of the week' },
+  'Tri-Alliance Clash Legion-2': { icon: '🛡️', desc: 'Second Tri-Alliance Clash of the week' },
+  'Swordland Showdown Legion-1': { icon: '🏰', desc: 'First Swordland Showdown of the week' },
+  'Swordland Showdown Legion-2': { icon: '🏰', desc: 'Second Swordland Showdown of the week' },
+}
+
+function getEventMeta(name) {
+  return EVENT_META[name] || { icon: '👑', desc: 'Recurring alliance event' }
 }
 
 const HOURS = Array.from({length: 24}, (_, i) => String(i).padStart(2, '0'))
@@ -61,7 +65,7 @@ export default function LeaderPortal() {
         <Panel>
           <div className="h-6 bg-white/5 rounded animate-pulse w-1/3 mb-3" />
           {[1,2,3,4].map(i => (
-            <div key={i} className="h-12 bg-white/5 rounded-lg animate-pulse mb-2" />
+            <div key={i} className="h-14 bg-white/5 rounded-lg animate-pulse mb-2" />
           ))}
         </Panel>
       </div>
@@ -69,7 +73,7 @@ export default function LeaderPortal() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <Panel glow className="gold-corners">
         <RoyalSectionHeader
           icon="clock"
@@ -82,28 +86,24 @@ export default function LeaderPortal() {
         </p>
       </Panel>
 
-      <Panel>
-        <div className="space-y-2">
-          {schedule.map((s, i) => (
+      <div className="royal-divider"><span className="royal-divider-icon">◆</span></div>
+
+      <div className="space-y-3">
+        {schedule.map((s, i) => {
+          const meta = getEventMeta(s.event)
+          return (
             <div
               key={s.event}
-              className="stagger-in flex items-center gap-3 rounded-lg border border-gold/15 bg-ink-2/50 p-3 hover:border-gold/30 transition"
-              style={{ animationDelay: `${Math.min(i * 0.04, 0.3)}s` }}
+              className="royal-plaque stagger-in flex items-center gap-4"
+              style={{ animationDelay: `${Math.min(i * 0.06, 0.4)}s` }}
             >
-              {/* Event icon */}
-              <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-gold/10 text-gold">
-                <Icon name="clock" size={16} />
-              </div>
+              <div className="royal-icon-circle">{meta.icon}</div>
 
-              {/* Event name + description */}
               <div className="flex-1 min-w-0">
-                <div className="text-sm font-medium text-parchment/90 truncate">{s.event}</div>
-                <div className="text-[10px] text-parchment/40 truncate">
-                  {EVENT_DESCRIPTIONS[s.event] || 'Recurring alliance event'}
-                </div>
+                <div className="text-sm font-display font-semibold text-parchment truncate">{s.event}</div>
+                <div className="text-[10px] text-parchment/40 truncate mt-0.5">{meta.desc}</div>
               </div>
 
-              {/* Time picker — 24hr dropdowns */}
               <div className="flex items-center gap-1.5">
                 <select
                   value={s.time?.split(':')[0] || ''}
@@ -111,55 +111,55 @@ export default function LeaderPortal() {
                     const mins = s.time?.split(':')[1] || '00'
                     updateTime(s.event, `${e.target.value}:${mins}`)
                   }}
-                  className="bg-ink rounded-md border border-gold/20 px-1.5 py-1.5 text-sm text-parchment outline-none focus:border-gold/50 transition cursor-pointer"
+                  className="royal-select"
                 >
                   <option value="">--</option>
                   {HOURS.map(h => <option key={h} value={h}>{h}</option>)}
                 </select>
-                <span className="text-parchment/40">:</span>
+                <span className="text-gold/40 font-bold">:</span>
                 <select
                   value={s.time?.split(':')[1] || '00'}
                   onChange={(e) => {
                     const hrs = s.time?.split(':')[0] || '00'
                     updateTime(s.event, `${hrs}:${e.target.value}`)
                   }}
-                  className="bg-ink rounded-md border border-gold/20 px-1.5 py-1.5 text-sm text-parchment outline-none focus:border-gold/50 transition cursor-pointer"
+                  className="royal-select"
                 >
                   {MINUTES.map(m => <option key={m} value={m}>{m}</option>)}
                 </select>
-                <span className="text-[10px] text-parchment/30 ml-0.5">UTC</span>
+                <span className="royal-time-label ml-1">UTC</span>
               </div>
 
-              {/* Status */}
               {s.updated && (
-                <span className="hidden sm:flex items-center gap-1 text-[9px] text-gold/40">
+                <span className="hidden sm:flex items-center gap-1 text-[9px] text-emerald-400/70">
                   <span className="pulse-dot" style={{ width: 4, height: 4 }} />
                   Updated
                 </span>
               )}
             </div>
-          ))}
-        </div>
+          )
+        })}
+      </div>
 
-        {/* Save bar */}
-        <div className="mt-4 flex items-center justify-between border-t border-gold/15 pt-3">
-          <div className="text-[10px] text-parchment/40">
-            {saved ? (
-              <span className="flex items-center gap-1 text-emerald-400">
-                <Icon name="shieldCheck" size={12} /> Saved successfully
-              </span>
-            ) : (
-              'Changes are not live until you save'
-            )}
-          </div>
-          <button
-            onClick={save}
-            disabled={saving}
-            className="btn-primary !py-1.5 !text-xs flex items-center gap-1.5"
-          >
-            <Icon name="refresh" size={12} /> {saving ? 'Saving…' : saved ? 'Saved' : 'Save Schedule'}
-          </button>
+      <div className="royal-divider"><span className="royal-divider-icon">✦</span></div>
+
+      <Panel className="flex items-center justify-between">
+        <div className="text-[11px] text-parchment/50">
+          {saved ? (
+            <span className="flex items-center gap-1.5 text-emerald-400">
+              <Icon name="shieldCheck" size={14} /> Schedule saved — changes are now live
+            </span>
+          ) : (
+            'Changes are not live until you save'
+          )}
         </div>
+        <button
+          onClick={save}
+          disabled={saving}
+          className="btn-primary btn-royal !py-2 !text-xs flex items-center gap-2"
+        >
+          <Icon name="refresh" size={14} /> {saving ? 'Saving…' : saved ? 'Saved' : 'Save Schedule'}
+        </button>
       </Panel>
     </div>
   )

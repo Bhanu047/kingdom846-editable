@@ -23,9 +23,9 @@ export default function Settings() {
 
   return (
     <div className="space-y-6">
-      <Panel glow className="lift-glow">
-        <div className="eyebrow">Account</div>
-        <h1 className="mt-1 font-display text-3xl font-bold text-parchment">Settings</h1>
+      <Panel glow className="lift-glow gold-corners">
+        <div className="eyebrow text-glow">Account</div>
+        <h1 className="mt-1 font-display text-3xl font-bold gradient-gold glow-pulse">Settings</h1>
         <p className="mt-2 text-sm text-parchment/60">Manage your profile, notifications, and preferences.</p>
       </Panel>
 

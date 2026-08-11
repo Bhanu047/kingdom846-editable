@@ -71,13 +71,13 @@ export default function Rankings() {
   return (
     <div className="space-y-6">
       {/* Hero */}
-      <Panel glow className="relative overflow-hidden p-0">
-        <div className="relative h-40">
+      <Panel glow className="relative overflow-hidden p-0 gold-corners">
+        <div className="relative h-40 hero-shimmer">
           <img src="./assets/hero-rankings.png" alt="Commander Rankings" className="h-full w-full drift-slow object-cover" loading="lazy" />
           <div className="absolute inset-0 bg-gradient-to-r from-ink via-ink/80 to-ink/20" />
           <div className="absolute inset-y-0 left-0 flex flex-col justify-center p-6 md:p-10">
-            <div className="eyebrow">Hall of Legends</div>
-            <h1 className="shimmer-text glow-pulse mt-1 font-display text-3xl font-bold md:text-4xl">Commander Rankings</h1>
+            <div className="eyebrow text-glow">Hall of Legends</div>
+            <h1 className="gradient-gold glow-pulse mt-1 font-display text-3xl font-bold md:text-4xl">Commander Rankings</h1>
             <p className="mt-1 text-sm text-parchment/60">Position and name — the kingdom's elite.</p>
           </div>
         </div>

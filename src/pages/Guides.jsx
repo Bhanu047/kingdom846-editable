@@ -27,12 +27,14 @@ export default function Guides() {
 
   return (
     <div className="space-y-4">
-      <Panel glow>
+      <Panel glow className="gold-corners">
         <RoyalSectionHeader icon="book" eyebrow="Knowledge Base" title="Strategy & Guides" />
         <p className="text-sm text-parchment/50">
           Auto-synced from Kingshot Wiki · {allGuides.length} guides available
         </p>
       </Panel>
+
+      <div className="royal-divider"><span className="royal-divider-icon">◆</span></div>
 
       {/* Compact list with inline expand */}
       <div className="space-y-2">
@@ -56,7 +58,7 @@ export default function Guides() {
             <div key={g.id} ref={isActive ? activeRef : null} className="stagger-in" style={{ animationDelay: `${Math.min(i * 0.03, 0.5)}s` }}>
               <button
                 onClick={() => setActiveId(isActive ? null : g.id)}
-                className={`guide-row w-full flex items-center gap-3 p-3 rounded-lg border transition-colors text-left group ${isActive ? 'border-gold/50 bg-ink-2' : 'border-gold/15 bg-ink-2/50 hover:bg-ink-2 hover:border-gold/40'}`}
+                className={`royal-plaque w-full flex items-center gap-3 text-left group ${isActive ? '!border-gold/50' : ''}`}
               >
                 <div className="relative flex-shrink-0">
                   <img
@@ -80,7 +82,7 @@ export default function Guides() {
 
               {/* Inline expand - no popup, no scroll */}
               {isActive && (
-                <div className="mt-1 mb-1 p-3 rounded-lg border border-gold/30 bg-ink-2 stagger-in space-y-3">
+                <div className="mt-1 mb-1 p-3 rounded-lg border border-gold/30 bg-ink-2/80 stagger-in space-y-3 gold-corners">
                   <div className="relative h-24 rounded-lg overflow-hidden">
                     <img src={g.art || './assets/guide-strategy.png'} alt="" className="w-full h-full object-cover" />
                     <div className="absolute inset-0 bg-gradient-to-t from-ink-2 via-transparent to-transparent" />

@@ -36,10 +36,10 @@ export default function Alliances() {
   const activeColor = active ? (colorMap[active.color] || colorMap.blue) : colorMap.blue
   return (
     <div className="space-y-6">
-      <Panel glow className="aurora-border">
+      <Panel glow className="aurora-border gold-corners">
         <Embers count={10} />
-        <div className="eyebrow">The Council</div>
-        <h1 className="mt-1 font-display text-3xl font-bold gradient-gold">Alliances of 846</h1>
+        <div className="eyebrow text-glow">The Council</div>
+        <h1 className="mt-1 font-display text-3xl font-bold gradient-gold glow-pulse">Alliances of 846</h1>
         <p className="mt-2 text-sm text-parchment/60">The four pillars of Kingdom 846 — the alliances and the council that hold the realm together.</p>
       </Panel>
 
@@ -47,7 +47,7 @@ export default function Alliances() {
         {alliances.map((a) => {
           const c = colorMap[a.color] || colorMap.blue
           return (
-            <button key={a.slug} onClick={() => setActive(a)} className="lift panel group overflow-hidden text-left">
+            <button key={a.slug} onClick={() => setActive(a)} className="royal-grid-card group overflow-hidden text-left cursor-pointer">
               <div className="relative h-28">
                 <ArtImage src={a.art} alt={a.name} className="h-full w-full" />
                 <div className={`absolute inset-0 bg-gradient-to-r ${c.grad}`} />
@@ -67,7 +67,10 @@ export default function Alliances() {
               </div>
               <div className="p-4">
                 <div className="text-center">
-                  <Field label="Leader" value={a.leader} />
+                  <div className="royal-plaque" style={{ padding: '0.625rem' }}>
+                    <div className="text-sm font-display font-bold text-parchment">{a.leader}</div>
+                    <div className="text-[9px] uppercase tracking-wider text-gold/50">Leader</div>
+                  </div>
                 </div>
               </div>
             </button>
@@ -93,14 +96,19 @@ export default function Alliances() {
               </div>
             </div>
             <div className="space-y-2 p-5">
+              <div className="text-[10px] uppercase tracking-[0.2em] text-gold/50 mb-2 text-center">Event Schedule (UTC)</div>
               {chunkPairs(buildSchedule(active.schedule)).map((pair, pi) => (
                 <div key={pi} className="grid grid-cols-2 gap-2">
-                  {pair.map((s, si) => (
-                    <div key={si} className="rounded-lg border border-gold/15 bg-white/5 p-3 text-center">
-                      <div className="text-[11px] font-semibold leading-tight text-parchment">{s.event}</div>
-                      <div className="mt-1 text-sm font-bold text-gold">{s.time || 'TBA'}</div>
-                    </div>
-                  ))}
+                  {pair.map((s, si) => {
+                    const meta = getEventMetaLocal(s.event)
+                    return (
+                      <div key={si} className="royal-plaque text-center" style={{ padding: '0.75rem 0.5rem' }}>
+                        <div className="text-base mb-1">{meta.icon}</div>
+                        <div className="text-[10px] font-semibold leading-tight text-parchment/80">{s.event}</div>
+                        <div className="mt-1 royal-time" style={{ fontSize: '1rem' }}>{s.time || 'TBA'}</div>
+                      </div>
+                    )
+                  })}
                 </div>
               ))}
             </div>
@@ -118,4 +126,17 @@ function Field({ label, value }) {
       <div className="text-[9px] uppercase tracking-wider text-parchment/40">{label}</div>
     </div>
   )
+}
+
+function getEventMetaLocal(name) {
+  const map = {
+    'Bear Hunt': { icon: '🐻' },
+    'Vikings': { icon: '⚔️' },
+    'Tri-Alliance': { icon: '🛡️' },
+    'Swordland': { icon: '🏰' },
+  }
+  for (const key of Object.keys(map)) {
+    if (name && name.includes(key)) return map[key]
+  }
+  return { icon: '👑' }
 }

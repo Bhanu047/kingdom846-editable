@@ -57,12 +57,13 @@ export default function Events() {
   const rest = upcoming.filter((e) => !e.featured)
   return (
     <div className="space-y-6">
-      <Panel glow className="relative overflow-hidden p-0">
-        <div className="relative h-48">
-          <ArtImage src="./assets/hero-events.png" alt="Castle battle" className="h-full w-full" />
+      <Panel glow className="relative overflow-hidden p-0 gold-corners">
+        <div className="relative h-48 hero-shimmer">
+          <ArtImage src="./assets/hero-events.png" alt="Castle battle" className="h-full w-full drift-slow" />
+          <div className="hero-overlay absolute inset-0" />
           <div className="absolute inset-0 flex flex-col justify-center p-6 md:p-10">
-            <div className="eyebrow">War Calendar</div>
-            <h1 className="mt-1 font-display text-3xl font-bold gradient-gold drop-shadow-lg">Upcoming Events</h1>
+            <div className="eyebrow text-glow">War Calendar</div>
+            <h1 className="mt-1 font-display text-3xl font-bold gradient-gold glow-pulse drop-shadow-lg">Upcoming Events</h1>
             <p className="mt-2 max-w-lg text-sm text-parchment/70">Live milestone schedule synced from the official Kingdom 846 timeline. Countdowns update in real time.</p>
           </div>
         </div>
@@ -71,14 +72,14 @@ export default function Events() {
       {featured.length > 0 && (
         <div className="grid gap-5 md:grid-cols-3">
           {featured.map((e) => (
-            <Panel key={e.id} glow className="overflow-hidden p-0">
+            <div key={e.id} className="royal-grid-card overflow-hidden">
               <div className="relative h-44">
                 <ArtImage src={e.art} alt={e.title} className="h-full w-full" />
                 <div className="absolute right-3 top-3"><Pill tone="gold">Featured</Pill></div>
               </div>
               <div className="p-5">
                 <div className="flex items-center justify-between gap-2">
-                  <h3 className="text-lg font-bold text-parchment">{e.title}</h3>
+                  <h3 className="text-lg font-display font-bold text-parchment">{e.title}</h3>
                   <Pill tone={toneFor(e.type)}>{e.type}</Pill>
                 </div>
                 {e.date && <div className="mt-1 text-xs text-parchment/40">{new Date(e.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}{e.time ? <span className="text-gold/70"> · {e.time}</span> : null}</div>}
@@ -90,7 +91,7 @@ export default function Events() {
                   <Count label="Secs" value={e.startsIn.secs} />
                 </div>
               </div>
-            </Panel>
+            </div>
           ))}
         </div>
       )}
@@ -137,9 +138,9 @@ export default function Events() {
 
 function Count({ label, value, small }) {
   return (
-    <div className={`flex flex-col items-center rounded border border-gold/20 bg-ink-3/60 ${small ? 'px-2 py-1' : 'px-2 py-2'}`}>
-      <span className={`font-display font-bold tabular-nums text-gold-bright ${small ? 'text-sm' : 'text-2xl'}`}>{String(value).padStart(small ? 1 : 2, '0')}</span>
-      <span className="text-[9px] uppercase text-parchment/40">{label}</span>
+    <div className={`royal-count ${small ? 'px-2 py-1' : 'px-2 py-2'}`}>
+      <span className={`royal-count-num ${small ? 'text-sm' : 'text-2xl'}`}>{String(value).padStart(small ? 1 : 2, '0')}</span>
+      <span className="royal-count-label">{label}</span>
     </div>
   )
 }

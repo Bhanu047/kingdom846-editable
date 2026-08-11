@@ -16,6 +16,9 @@ const EVENT_DESCRIPTIONS = {
   'Swordland Showdown Legion-2': 'Second Swordland Showdown of the week',
 }
 
+const HOURS = Array.from({length: 24}, (_, i) => String(i).padStart(2, '0'))
+const MINUTES = ['00', '15', '30', '45']
+
 export default function LeaderPortal() {
   const { user } = useAuth()
   const [schedule, setSchedule] = useState([])
@@ -100,15 +103,31 @@ export default function LeaderPortal() {
                 </div>
               </div>
 
-              {/* Time input */}
-              <div className="flex items-center gap-2">
-                <input
-                  type="time"
-                  value={s.time}
-                  onChange={(e) => updateTime(s.event, e.target.value)}
-                  className="bg-ink rounded-md border border-gold/20 px-2 py-1.5 text-sm text-parchment outline-none focus:border-gold/50 transition"
-                />
-                <span className="text-[10px] text-parchment/30">UTC</span>
+              {/* Time picker — 24hr dropdowns */}
+              <div className="flex items-center gap-1.5">
+                <select
+                  value={s.time?.split(':')[0] || ''}
+                  onChange={(e) => {
+                    const mins = s.time?.split(':')[1] || '00'
+                    updateTime(s.event, `${e.target.value}:${mins}`)
+                  }}
+                  className="bg-ink rounded-md border border-gold/20 px-1.5 py-1.5 text-sm text-parchment outline-none focus:border-gold/50 transition cursor-pointer"
+                >
+                  <option value="">--</option>
+                  {HOURS.map(h => <option key={h} value={h}>{h}</option>)}
+                </select>
+                <span className="text-parchment/40">:</span>
+                <select
+                  value={s.time?.split(':')[1] || '00'}
+                  onChange={(e) => {
+                    const hrs = s.time?.split(':')[0] || '00'
+                    updateTime(s.event, `${hrs}:${e.target.value}`)
+                  }}
+                  className="bg-ink rounded-md border border-gold/20 px-1.5 py-1.5 text-sm text-parchment outline-none focus:border-gold/50 transition cursor-pointer"
+                >
+                  {MINUTES.map(m => <option key={m} value={m}>{m}</option>)}
+                </select>
+                <span className="text-[10px] text-parchment/30 ml-0.5">UTC</span>
               </div>
 
               {/* Status */}

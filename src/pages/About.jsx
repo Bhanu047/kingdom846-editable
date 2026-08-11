@@ -34,16 +34,16 @@ export default function About() {
       {/* Hero */}
       <Panel glow className="relative overflow-hidden p-0">
         <div className="grid gap-0 md:grid-cols-2">
-          <div className="relative h-48 sm:h-64 md:h-full">
+          <div className="relative h-64 md:h-full">
             <ArtImage src="./assets/art-kingdom-status.png" alt="Kingdom 846 castle at sunset" className="h-full w-full" />
           </div>
-          <div className="p-5 sm:p-7 md:p-9">
-            <div className="flex flex-wrap items-center gap-2">
+          <div className="p-7 md:p-9">
+            <div className="flex items-center gap-2">
               <Pill tone="gold">{kingdom.tier}</Pill>
               <Pill tone="blue">Global Rank #{kingdom.kvkCurrentRank}</Pill>
               <Pill tone="muted">{kingdom.atlasPercentile}</Pill>
             </div>
-            <h1 className="mt-3 font-display text-3xl sm:text-4xl font-bold text-parchment">Kingdom 846</h1>
+            <h1 className="mt-3 font-display text-4xl font-bold text-parchment">Kingdom 846</h1>
             <p className="mt-1 text-sm text-gold-bright/80">"{kingdom.motto}"</p>
             <p className="mt-3 text-sm leading-relaxed text-parchment/70">
               Kingdom 846 is an <span className="text-gold-bright">S-Tier</span> realm — a battle-hardened
@@ -114,15 +114,15 @@ export default function About() {
           </div>
         </Panel>
 
-        <div className="space-y-6">
+        <div className="space-y-6 overflow-x-hidden">
           <Panel>
             <SectionTitle eyebrow="Mobility" title="Transfer Status" action={<Pill tone="gold">{kingdom.transferStatus}</Pill>} />
             <p className="text-xs text-parchment/60">Last transfer led the group. Kingdom 846 consistently leads its transfer bracket.</p>
             <div className="mt-3 space-y-2">
               {transfers.map((t) => (
-                <div key={t.transfer} className="flex items-center justify-between gap-2 rounded-lg bg-white/5 px-3 py-2 min-w-0">
-                  <div className="min-w-0 flex-1">
-                    <div className="text-sm font-semibold text-parchment truncate">Transfer #{t.transfer}</div>
+                <div key={t.transfer} className="flex items-center justify-between rounded-lg bg-white/5 px-3 py-2">
+                  <div>
+                    <div className="text-sm font-semibold text-parchment">Transfer #{t.transfer}</div>
                     <div className="text-[10px] uppercase tracking-wider text-parchment/40">{t.date} · Group {t.group}</div>
                   </div>
                   <Pill tone={t.status === 'Leading' ? 'gold' : 'muted'}>{t.status}</Pill>
@@ -153,11 +153,11 @@ export default function About() {
 
       {/* Lore banner */}
       <Panel glow className="relative overflow-hidden p-0">
-        <div className="relative h-48 sm:h-56">
+        <div className="relative h-56">
           <ArtImage src="./assets/art-season-opening.png" alt="Kingdom 846 season opening" className="h-full w-full" />
           <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6">
             <div className="eyebrow">The Realm</div>
-            <h2 className="mt-1 font-display text-2xl sm:text-3xl font-bold text-parchment drop-shadow-lg">Built for Victory</h2>
+            <h2 className="mt-1 font-display text-3xl font-bold text-parchment drop-shadow-lg">Built for Victory</h2>
             <p className="mt-2 max-w-xl text-sm text-parchment/80">A kingdom forged in ten wars, seven dominations, and a perfect diplomatic record. Welcome to 846.</p>
           </div>
         </div>

@@ -1,41 +1,61 @@
-import { useState } from 'react'
 import { Panel, Pill } from '../components/ui'
 import Icon from '../components/Icon'
 
 const FORMS = {
-  chief: {
+  chief_minister: {
     title: 'Chief Minister Reservation',
     url: 'https://docs.google.com/forms/d/e/1FAIpQLScM2_mDXcHPC6-rnvckvyDYBIjafHY5mP3STTRNbSBJGu295w/viewform?embedded=true',
     description: 'Reserve your Chief Minister buffs for construction or research days.',
+    art: './assets/apply-chief-minister.png',
   },
-  noble: {
+  noble_advisor: {
     title: 'Noble Advisor Reservation',
     url: 'https://docs.google.com/forms/d/e/1FAIpQLSeiyP94snSb7NJ-Ke7weQAHOovdBFtaQBYJ26IsmJwtjMeYBg/viewform?embedded=true',
     description: 'Reserve your Noble Advisor slot for troops training.',
+    art: './assets/apply-noble-advisor.png',
   },
 }
 
 export default function Apply({ type, onNavigate }) {
-  const form = FORMS[type] || null
+  const form = type ? FORMS[type] : null
 
-  // Landing page: show both options
+  // Landing page: show both options with graphics
   if (!form) {
     return (
       <div className="space-y-4">
-        <Panel glow>
-          <h1 className="font-display text-2xl font-bold text-parchment">Apply for a Role</h1>
-          <p className="mt-1 text-sm text-parchment/60">Choose a position to begin your reservation.</p>
+        <Panel glow className="relative overflow-hidden p-0">
+          <div className="relative h-40 sm:h-48">
+            <img src="./assets/apply-chief-minister.png" alt="Apply" className="h-full w-full object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-r from-ink via-ink/80 to-ink/20" />
+            <div className="absolute inset-y-0 left-0 flex flex-col justify-center p-6 md:p-10">
+              <div className="eyebrow">Kingdom 846 leadership</div>
+              <h1 className="mt-1 font-display text-2xl sm:text-3xl font-bold text-parchment">Apply for a Role</h1>
+              <p className="mt-1 text-sm text-parchment/60">Choose a position to begin your reservation.</p>
+            </div>
+          </div>
         </Panel>
         <div className="grid gap-4 sm:grid-cols-2">
-          <button onClick={() => onNavigate('apply-chief')} className="panel lift group p-5 text-left">
-            <div className="font-display text-lg font-bold text-gold">Chief Minister</div>
-            <p className="mt-1 text-xs text-parchment/60">Reserve your buff day for construction or research.</p>
-            <span className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-gold">Open form <Icon name="arrow" size={12} /></span>
+          <button onClick={() => onNavigate('apply-chief')} className="panel lift group relative overflow-hidden text-left">
+            <div className="relative h-32 overflow-hidden">
+              <img src="./assets/apply-chief-minister.png" alt="Chief Minister" className="h-full w-full object-cover opacity-80 transition group-hover:opacity-100" />
+              <div className="absolute inset-0 bg-gradient-to-t from-ink to-transparent" />
+            </div>
+            <div className="p-4">
+              <div className="font-display text-lg font-bold text-gold">Chief Minister</div>
+              <p className="mt-1 text-xs text-parchment/60">Reserve your buff day for construction or research.</p>
+              <span className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-gold">Open form <Icon name="arrow" size={12} /></span>
+            </div>
           </button>
-          <button onClick={() => onNavigate('apply-noble')} className="panel lift group p-5 text-left">
-            <div className="font-display text-lg font-bold text-gold">Noble Advisor</div>
-            <p className="mt-1 text-xs text-parchment/60">Reserve your troops training slot.</p>
-            <span className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-gold">Open form <Icon name="arrow" size={12} /></span>
+          <button onClick={() => onNavigate('apply-noble')} className="panel lift group relative overflow-hidden text-left">
+            <div className="relative h-32 overflow-hidden">
+              <img src="./assets/apply-noble-advisor.png" alt="Noble Advisor" className="h-full w-full object-cover opacity-80 transition group-hover:opacity-100" />
+              <div className="absolute inset-0 bg-gradient-to-t from-ink to-transparent" />
+            </div>
+            <div className="p-4">
+              <div className="font-display text-lg font-bold text-gold">Noble Advisor</div>
+              <p className="mt-1 text-xs text-parchment/60">Reserve your troops training slot.</p>
+              <span className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-gold">Open form <Icon name="arrow" size={12} /></span>
+            </div>
           </button>
         </div>
       </div>
@@ -44,15 +64,15 @@ export default function Apply({ type, onNavigate }) {
 
   return (
     <div className="space-y-4">
-      <Panel glow>
-        <div className="flex items-center justify-between gap-2">
-          <div>
-            <h1 className="font-display text-xl font-bold text-parchment">{form.title}</h1>
+      <Panel glow className="relative overflow-hidden p-0">
+        <div className="relative h-36 sm:h-44">
+          <img src={form.art} alt={form.title} className="h-full w-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-r from-ink via-ink/85 to-ink/30" />
+          <div className="absolute inset-y-0 left-0 flex flex-col justify-center p-6">
+            <button onClick={() => onNavigate('apply')} className="text-xs text-gold/70 hover:text-gold mb-1">← Back to roles</button>
+            <h1 className="font-display text-xl sm:text-2xl font-bold text-parchment">{form.title}</h1>
             <p className="mt-1 text-sm text-parchment/60">{form.description}</p>
           </div>
-          <button onClick={() => onNavigate('apply')} className="btn-secondary text-xs whitespace-nowrap">
-            <Icon name="arrow" size={12} /> Back
-          </button>
         </div>
       </Panel>
       <Panel className="p-0 overflow-hidden">

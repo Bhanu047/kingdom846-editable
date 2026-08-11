@@ -155,10 +155,12 @@ export default function About() {
       <Panel glow className="relative overflow-hidden p-0">
         <div className="relative h-56">
           <ArtImage src="./assets/art-season-opening.png" alt="Kingdom 846 season opening" className="h-full w-full" />
+          {/* Dark gradient overlay for readability */}
+          <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, rgba(14,18,32,0.85) 0%, rgba(14,18,32,0.6) 50%, rgba(14,18,32,0.9) 100%)' }} />
           <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6">
-            <div className="eyebrow">The Realm</div>
-            <h2 className="mt-1 font-display text-3xl font-bold gradient-gold drop-shadow-lg">Crowned in Gold</h2>
-            <p className="mt-2 max-w-xl text-sm text-parchment/80">A kingdom forged in ten wars, seven dominations, and a perfect diplomatic record. Where legends are forged in fire and crowned in gold. Welcome to 846.</p>
+            <div className="eyebrow text-gold-bright" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.8)' }}>The Realm</div>
+            <h2 className="mt-1 font-display text-3xl font-bold gradient-gold" style={{ textShadow: '0 2px 12px rgba(0,0,0,0.9), 0 0 20px rgba(212,175,55,0.3)' }}>The Forge of Legends</h2>
+            <p className="mt-2 max-w-xl text-sm text-parchment" style={{ textShadow: '0 1px 6px rgba(0,0,0,0.9)' }}>Ten wars. Seven dominations. A perfect diplomatic record. This is where alliances are tested, rivalries are forged, and legends are crowned in gold. Welcome to 846.</p>
           </div>
         </div>
       </Panel>

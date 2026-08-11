@@ -120,9 +120,9 @@ export default function About() {
             <p className="text-xs text-parchment/60">Last transfer led the group. Kingdom 846 consistently leads its transfer bracket.</p>
             <div className="mt-3 space-y-2">
               {transfers.map((t) => (
-                <div key={t.transfer} className="flex items-center justify-between rounded-lg bg-white/5 px-3 py-2">
-                  <div>
-                    <div className="text-sm font-semibold text-parchment">Transfer #{t.transfer}</div>
+                <div key={t.transfer} className="flex items-center justify-between gap-2 rounded-lg bg-white/5 px-3 py-2 min-w-0">
+                  <div className="min-w-0 flex-1">
+                    <div className="text-sm font-semibold text-parchment truncate">Transfer #{t.transfer}</div>
                     <div className="text-[10px] uppercase tracking-wider text-parchment/40">{t.date} · Group {t.group}</div>
                   </div>
                   <Pill tone={t.status === 'Leading' ? 'gold' : 'muted'}>{t.status}</Pill>

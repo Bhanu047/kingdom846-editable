@@ -188,7 +188,7 @@ function Shell() {
           )}
         </header>
 
-        <div className="flex-1 overflow-y-auto overscroll-contain p-4 md:p-6" style={{ WebkitOverflowScrolling: 'touch' }}>
+        <div className="flex-1 overflow-y-auto overflow-x-hidden overscroll-contain p-4 md:p-6" style={{ WebkitOverflowScrolling: 'touch' }}>
           <div key={page} className="page-enter mx-auto max-w-6xl">{render()}</div>
         </div>
       </main>

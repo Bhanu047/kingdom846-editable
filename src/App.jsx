@@ -41,18 +41,15 @@ const Guides = lazy(() => import('./pages/Guides'))
 const Rankings = lazy(() => import('./pages/Rankings'))
 const Transfer = lazy(() => import('./pages/Transfer'))
 const Apply = lazy(() => import('./pages/Apply'))
-const Notifications = lazy(() => import('./pages/Notifications'))
 const Admin = lazy(() => import('./pages/Admin'))
 const MasterConsole = lazy(() => import('./pages/MasterConsole'))
-const LeaderPortal = lazy(() => import('./pages/LeaderPortal'))
 const Settings = lazy(() => import('./pages/Settings'))
 
 const titles = {
   dashboard: 'Home', about: 'About Kingdom', kingdom: 'Kingdom',
   alliances: 'Alliances', events: 'Events', timeline: 'Timeline', news: 'News',
   guides: 'Guides', rankings: 'Rankings',
-  transfer: 'Transfer', 'apply-chief': 'Apply · Chief Minister', 'apply-noble': 'Apply · Noble Advisor', apply: 'Apply', admin: 'Admin Editor', console: 'Master Console', notifications: 'Notifications', settings: 'Settings',
-  'leader-portal': 'Leader Portal'
+  transfer: 'Transfer', 'apply-chief': 'Apply · Chief Minister', 'apply-noble': 'Apply · Noble Advisor', apply: 'Apply', admin: 'Admin Editor', console: 'Master Console', settings: 'Settings'
 }
 
 // Hash-based routing: #/dashboard, #/rankings, etc.
@@ -134,8 +131,6 @@ function Shell() {
         case 'apply-noble': return <Apply type="noble_advisor" onNavigate={navigate} />
         case 'admin': return isAdmin ? <Admin /> : <Placeholder title="Admin Access" icon="shieldCheck" note="Only the Sparta account can access the website editor." />
         case 'console': return isAdmin ? <MasterConsole /> : <Placeholder title="Master Console" icon="crown" note="Only the Sparta master account can access the console." />
-        case 'leader-portal': return user?.role === 'leader' ? <LeaderPortal /> : <Placeholder title="Leader Portal" icon="shield" note="Only alliance leaders can access the roster upload portal." />
-        case 'notifications': return (user?.role === 'admin' || user?.role === 'leader') ? <Notifications /> : <Placeholder title="Notifications" icon="bell" note="Sign in as a leader or the Sparta admin to view applications." />
         case 'settings': return <Settings />
         default: return <Dashboard onNavigate={navigate} />
       }

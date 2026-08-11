@@ -408,6 +408,5 @@ export const nav = [
   { id: 'guides', label: 'Guides', icon: 'book' },
   { id: 'rankings', label: 'Rankings', icon: 'trophy' },
   { id: 'transfer', label: 'Transfer', icon: 'arrow' },
-  { id: 'apply', label: 'Apply', icon: 'scroll' },
-  { id: 'notifications', label: 'Notifications', icon: 'bell', auth: 'leadership' }
+  { id: 'apply', label: 'Apply', icon: 'scroll' }
 ]

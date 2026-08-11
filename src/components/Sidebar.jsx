@@ -21,7 +21,7 @@ export default function Sidebar({ active, onNavigate, onLogin, onSignOut, user, 
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto px-2 py-3 relative">
         <div className="eyebrow px-3 pb-2">Command</div>
-        {nav.filter((n) => !n.auth || (user?.role === 'admin' || user?.role === 'leader')).map((n) => (
+        {nav.map((n) => (
           <button
             key={n.id}
             onClick={() => onNavigate(n.id)}
@@ -38,16 +38,6 @@ export default function Sidebar({ active, onNavigate, onLogin, onSignOut, user, 
             <div className="eyebrow px-3 pb-2">Admin</div>
             <button onClick={() => onNavigate('admin')} className={`nav-item w-full text-left ${active === 'admin' ? 'active' : ''}`}>
               <Icon name="sparkles" size={17} /><span>Edit Website</span>
-            </button>
-          </>
-        )}
-
-        {user?.role === 'leader' && (
-          <>
-            <div className="gold-divider my-3" />
-            <div className="eyebrow px-3 pb-2">Leader</div>
-            <button onClick={() => onNavigate('leader-portal')} className={`nav-item w-full text-left ${active === 'leader-portal' ? 'active' : ''}`}>
-              <Icon name="upload" size={17} /><span>My Roster</span>
             </button>
           </>
         )}

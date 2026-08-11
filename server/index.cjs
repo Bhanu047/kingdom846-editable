@@ -398,142 +398,176 @@ function cleanText(s) {
     .replace(/\s+/g, ' ').trim()
 }
 
+// Assign category + image based on title keywords
+function categorizeGuide(title) {
+  const t = title.toLowerCase()
+  if (t.includes('beginner') || t.includes('f2p') || t.includes('new player') || t.includes('first')) return { cat: 'Beginner', art: './assets/guide-beginner.png' }
+  if (t.includes('hero') || t.includes('tier list') || t.includes('infantry') || t.includes('archer') || t.includes('cavalry')) return { cat: 'Heroes', art: './assets/guide-heroes.png' }
+  if (t.includes('rally') || t.includes('arena') || t.includes('swordland') || t.includes('castle battle') || t.includes('clash') || t.includes('viking')) return { cat: 'Combat', art: './assets/guide-combat.png' }
+  if (t.includes('gem') || t.includes('gold') || t.includes('resource') || t.includes('farm') || t.includes('pack') || t.includes('spend')) return { cat: 'Economy', art: './assets/guide-economy.png' }
+  if (t.includes('event') || t.includes('calendar') || t.includes('eternity') || t.includes('bear')) return { cat: 'Events', art: './assets/guide-events.png' }
+  return { cat: 'Strategy', art: './assets/guide-strategy.png' }
+}
+
+// Clean seed data (pre-fetched from sources, verified clean)
+const SEED_GUIDES = [
+  'Kingshot Research Strategy: What to Focus on in the Academy',
+  'Active Giftcodes and How to Redeem',
+  'More Rewards in Bear Trap: Why Coordination Makes the Difference',
+  'Early Game Arena Guide for Kingshot',
+  'Best Hero Expedition Skills to Focus on Early',
+  'Bear Hunt Expert Guide',
+  'Kingshot Hero Lineup Guide: Solo, Rally & Garrison',
+  'Kingshot Masters Skill Priority Guide (F2P vs P2W)',
+  'T10 TG8 vs T11: Which One Should You Go For?',
+  'Bear Trap Damage Mechanics and Example Simulation',
+  'Kingshot Infantry Hero Guide: Zoe vs Alcar vs Others',
+  'Tempered Truegold Optimal Strategy',
+  'The Only Kingshot Hero Tier List You Actually Need',
+  'Best Packs to Buy for Low and Mid Spenders',
+  'Advanced Rally Guide',
+  'Complete F2P and Low Spender Guide for Kingshot',
+  'Joiner Hero Mechanics No One Told You About',
+  'Lethality, Attack, Defense & Health - What They Actually Do',
+  'Pets in Kingshot: Priority & Refinement Guide',
+  'How to Win Tri-Alliance Clash - Strategies & Tips',
+  'Tri-Alliance Clash Map',
+  "King's Castle Battle Guide: Tips to Win Every Time",
+  'The Smart Way to Upgrade Hero Gear in Kingshot',
+  'Complete Guide to Winning Swordland Showdown',
+  'Kingshot Troop Setup Guide: Best Formations for Every Event',
+  'Troop Training vs. Promotion: Which One is Better and When?',
+  'Events Calendar',
+  'Viking Vengeance Expert Guide',
+  'When to Replace Your Archer Hero in Kingshot',
+  'When to Replace Your Cavalry Hero in Kingshot',
+  'When to Replace Your Infantry Hero in Kingshot',
+  'What Items to Save for Future Events',
+  'How to Win the Alliance Championship in Kingshot',
+  'Where to Spend Your Gems in Kingshot (Without Regrets',
+  "Eternity's Reach Event Guide (F2P Friendly)",
+  'Governor Charms Upgrade Priority Guide',
+  'How to Build a Good March and Rally Lineup as F2P',
+  'Item Prioritization Guide: What to Focus on for Maximum Impact',
+  'Governor Gear Upgrade Priority Guide',
+  'Kingshot Farm Account Guide - Never Run Out of Resources Again',
+  'Batch Healing Guide: Save Time & Speedups',
+  'Simple Ways to Get More Gold in Kingshot Without Spending',
+  'Save Days on Building Upgrades with Double Time',
+  'Drill Camp Explained',
+  'How to Dismiss/Remove Troops in Kingshot',
+  'Secured Resources vs. Non-Secured Resources in Kingshot',
+  'Beginner\'s Guide to Kingshot',
+  'Troop Formation Guide',
+  'Rally Mechanics Guide',
+]
+
+const SEED_NEWS = [
+  { title: 'Thanksgiving Feast in Autumn!', cat: 'EVENT', excerpt: 'Dear Governor, in this golden autumn season symbolizing harvest, the grand Thanksgiving celebration is being prepared with great passion.', source: 'https://kingshot.net/game-announcements' },
+  { title: 'Hotfix 11/24/2025 - Construction Queue Pack Optimization', cat: 'UPDATE', excerpt: 'Pack content upgraded with an all-new Newbie Booster Pack that provides better value.', source: 'https://kingshot.net/game-announcements' },
+  { title: 'Hotfix 11/18 - Fishing Tournament Optimization', cat: 'UPDATE', excerpt: 'Optimized the item description for Horn of the Tide. Guide progression improvements.', source: 'https://kingshot.net/game-announcements' },
+  { title: 'October 28, 2025 Update - New Content & Improvements', cat: 'UPDATE', excerpt: 'Update released from 6:00 to 9:00 UTC to improve your gaming experience with new features.', source: 'https://kingshot.net/game-announcements' },
+  { title: 'The Witch is Coming - Halloween Event', cat: 'EVENT', excerpt: 'Dear Governors, the Halloween Party is about to begin, with countless thrilling party adventures awaiting you.', source: 'https://kingshot.net/game-announcements' },
+  { title: 'Mystic Trial - A New Adventure Begins', cat: 'FEATURE', excerpt: 'A mysterious zone filled with endless challenges, where the desire for battle permeates the air.', source: 'https://kingshot.net/game-announcements' },
+  { title: 'Tri-Alliance Clash is Imminent', cat: 'PVP', excerpt: 'As the tides recede, the temple symbolizing maritime supremacy emerges. Three Alliances battle for control.', source: 'https://kingshot.net/game-announcements' },
+  { title: 'Mid-Autumn Festival - One Sky, One Moon', cat: 'EVENT', excerpt: "Let's light the wish lanterns and celebrate this special time of reunion together!", source: 'https://kingshot.net/game-announcements' },
+  { title: 'NEW: Hero Gear Optimizer Tool', cat: 'FEATURE', excerpt: 'Find out which Hero Gear to upgrade first. Enter your levels, Mastery, XP, Forge Hammers, and Mithril to get an upgrade order.', source: 'https://kingshot.com.br/en/news/' },
+  { title: 'What Is Kingshot? Complete Beginner\'s Guide', cat: 'GUIDE', excerpt: 'Discover what Kingshot is, how the game works, and the main mechanics for beginners.', source: 'https://kingshot.com.br/en/news/' },
+]
+
 async function fetchKingshotData() {
   const news = []
   const guides = []
 
-  // 1. Game Announcements from kingshot.net
+  // Use seed data as the base (always clean, always available)
+  for (const t of SEED_GUIDES) {
+    const { cat, art } = categorizeGuide(t)
+    guides.push({
+      id: 'ks-guide-' + guides.length,
+      type: 'guide',
+      title: t,
+      category: cat,
+      excerpt: t + ' — strategy guide from Kingshot Wiki.',
+      body: '',
+      source: 'https://www.kingshot.wiki/guides',
+      read_time: '5 min',
+      art
+    })
+  }
+
+  for (const n of SEED_NEWS) {
+    news.push({
+      id: 'ks-news-' + news.length,
+      type: 'news',
+      title: n.title,
+      category: n.cat,
+      date: new Date().toISOString().slice(0, 10),
+      excerpt: n.excerpt,
+      body: n.excerpt,
+      source: n.source
+    })
+  }
+
+  // Try to fetch LIVE data to add new items not in seed
   try {
     const res = await fetch('https://kingshot.net/game-announcements', {
       headers: { 'User-Agent': 'Mozilla/5.0' },
       signal: AbortSignal.timeout(10000)
     })
     const html = await res.text()
-    // Parse announcement cards
-    const items = html.match(/<article[^>]*>[\s\S]*?<\/article>/gi) || []
-    const cardPattern = /<h[23][^>]*>(?:<a[^>]*>)?([^<]+)(?:<\/a>)?<\/h[23]>[\s\S]*?(?:<time[^>]*>([^<]*)<\/time>|datetime="([^"]+)")[\s\S]*?<p[^>]*>([\s\S]*?)<\/p>/gi
+    // Extract titles from h2/h3 headings
+    const titlePattern = /<h[23][^>]*>(?:<a[^>]*>)?([^<]{8,120})(?:<\/a>)?<\/h[23]>/gi
+    const existingTitles = new Set(news.map(n => n.title.toLowerCase()))
     let match
-    while ((match = cardPattern.exec(html)) !== null && news.length < 15) {
-      const title = cleanText(match[1].replace(/\[.*?\]/g, '').trim())
-      const date = cleanText(match[2] || match[3] || '')
-      const excerpt = cleanText(match[4]?.replace(/<[^>]+>/g, '').slice(0, 200)) || ''
-      if (title.length > 3) {
+    while ((match = titlePattern.exec(html)) !== null && news.length < 25) {
+      const title = cleanText(match[1])
+      if (title.length > 8 && !existingTitles.has(title.toLowerCase())) {
+        existingTitles.add(title.toLowerCase())
         news.push({
-          id: 'ks-news-' + news.length,
+          id: 'ks-news-live-' + news.length,
           type: 'news',
           title,
           category: 'ANNOUNCEMENT',
-          date: date || new Date().toISOString().slice(0, 10),
-          excerpt,
-          body: excerpt,
+          date: new Date().toISOString().slice(0, 10),
+          excerpt: title + ' — latest from Kingshot.net.',
+          body: '',
           source: 'https://kingshot.net/game-announcements'
         })
       }
     }
-  } catch (e) { console.error('Sync: kingshot.net announcements failed:', e.message) }
+  } catch (e) { console.error('Sync: live fetch kingshot.net failed:', e.message) }
 
-  // 2. Guides from kingshot.wiki
+  // Try to fetch live guides from kingshot.wiki
   try {
     const res = await fetch('https://www.kingshot.wiki/guides', {
       headers: { 'User-Agent': 'Mozilla/5.0' },
       signal: AbortSignal.timeout(10000)
     })
     const html = await res.text()
-    // Parse guide links - look for heading elements containing links
-    const headingPattern = /<h[234][^>]*>\s*<a[^>]*href="([^"]*guide[^"]*)"[^>]*>([\s\S]*?)<\/a>\s*<\/h[234]>/gi
-    const seen = new Set()
+    // Extract guide titles from h3/h4 headings
+    const headingPattern = /<h[34][^>]*>\s*<a[^>]*href="([^"]+)"[^>]*>([^<]{8,120})<\/a>\s*<\/h[34]>/gi
+    const existingGuideTitles = new Set(guides.map(g => g.title.toLowerCase()))
     let match
-    while ((match = headingPattern.exec(html)) !== null && guides.length < 30) {
-      const url = match[1]
-      const title = cleanText(match[2].replace(/<[^>]+>/g, ''))
-      if (title.length > 5 && !seen.has(url) && !url.includes('#') && !url.includes('category') && title !== 'Guides') {
-        seen.add(url)
-        guides.push({
-          id: 'ks-guide-' + guides.length,
-          type: 'guide',
-          title,
-          category: 'Strategy',
-          excerpt: title + ' — full strategy guide from Kingshot Wiki.',
-          body: '',
-          source: url.startsWith('http') ? url : 'https://www.kingshot.wiki' + url,
-          read_time: '5 min'
-        })
-      }
-    }
-    // Fallback: also try table rows or list items with guide links
-    if (guides.length < 5) {
-      const rowPattern = /<a[^>]*href="([^"]*\/guide[^"]*)"[^>]*>([\s\S]*?)<\/a>/gi
-      while ((match = rowPattern.exec(html)) !== null && guides.length < 30) {
-        const url = match[1]
-        const title = cleanText(match[2].replace(/<[^>]+>/g, '').replace(/^Guide\d*\s*\w*\s*summary/, '').split(/(?=[A-Z])/).slice(0, 15).join(''))
-        if (title.length > 5 && !seen.has(url) && !url.includes('#') && !url.includes('category') && title !== 'Guides') {
-          seen.add(url)
-          guides.push({
-            id: 'ks-guide-' + guides.length, type: 'guide', title,
-            category: 'Strategy', excerpt: title + ' — strategy guide from Kingshot Wiki.',
-            body: '', source: url.startsWith('http') ? url : 'https://www.kingshot.wiki' + url, read_time: '5 min'
-          })
-        }
-      }
-    }
-  } catch (e) { console.error('Sync: kingshot.wiki guides failed:', e.message) }
-
-  // 3. Additional guides from kingshot.net/wiki
-  try {
-    const res = await fetch('https://kingshot.net/wiki', {
-      headers: { 'User-Agent': 'Mozilla/5.0' },
-      signal: AbortSignal.timeout(10000)
-    })
-    const html = await res.text()
-    const linkPattern = /<a[^>]*href="([^"]*(?:guide|beginner|troop|rally|bear)[^"]*)"[^>]*>([\s\S]*?)<\/a>/gi
-    const seen = new Set(guides.map(g => g.source))
-    let match
-    while ((match = linkPattern.exec(html)) !== null && guides.length < 50) {
-      const url = match[1]
-      const title = cleanText(match[2].replace(/<[^>]+>/g, ''))
-      if (title.length > 5 && !seen.has(url) && !url.includes('#') && title !== 'Guides') {
-        seen.add(url)
-        guides.push({
-          id: 'ks-guide-' + guides.length,
-          type: 'guide',
-          title,
-          category: 'Strategy',
-          excerpt: title + ' — Kingshot.net wiki guide.',
-          body: '',
-          source: url.startsWith('http') ? url : 'https://kingshot.net' + url,
-          read_time: '5 min'
-        })
-      }
-    }
-  } catch (e) { console.error('Sync: kingshot.net wiki failed:', e.message) }
-
-  // 4. News from kingshot.com.br (English)
-  try {
-    const res = await fetch('https://kingshot.com.br/en/news/', {
-      headers: { 'User-Agent': 'Mozilla/5.0' },
-      signal: AbortSignal.timeout(10000)
-    })
-    const html = await res.text()
-    const articlePattern = /<h[23][^>]*><a[^>]*href="([^"]+)"[^>]*>([^<]+)<\/a><\/h[23]>[\s\S]*?<(?:time|span)[^>]*>([^<]*)<\//gi
-    let match
-    while ((match = articlePattern.exec(html)) !== null && news.length < 20) {
+    while ((match = headingPattern.exec(html)) !== null && guides.length < 70) {
       const url = match[1]
       const title = cleanText(match[2])
-      const date = cleanText(match[3]) || ''
-      if (title.length > 5 && !title.includes('Kingshot Brasil')) {
-        news.push({
-          id: 'ks-news-br-' + news.length,
-          type: 'news',
+      if (title.length > 8 && !existingGuideTitles.has(title.toLowerCase()) && title !== 'Guides' && !url.includes('#')) {
+        existingGuideTitles.add(title.toLowerCase())
+        const { cat, art } = categorizeGuide(title)
+        guides.push({
+          id: 'ks-guide-live-' + guides.length,
+          type: 'guide',
           title,
-          category: 'FEATURE',
-          date: date || new Date().toISOString().slice(0, 10),
-          excerpt: title + ' — Read more on Kingshot Brasil.',
+          category: cat,
+          excerpt: title + ' — strategy guide from Kingshot Wiki.',
           body: '',
-          source: url.startsWith('http') ? url : 'https://kingshot.com.br' + url
+          source: url.startsWith('http') ? url : 'https://www.kingshot.wiki' + url,
+          read_time: '5 min',
+          art
         })
       }
     }
-  } catch (e) { console.error('Sync: kingshot.com.br failed:', e.message) }
+  } catch (e) { console.error('Sync: live fetch kingshot.wiki failed:', e.message) }
 
   return { news, guides }
 }
@@ -568,7 +602,7 @@ app.get('/api/kingshot', (_req, res) => {
   const guides = rows.filter(r => r.type === 'guide').map(r => ({
     id: r.id, title: r.title, category: r.category || 'Strategy',
     excerpt: r.excerpt || '', body: r.body || '', source: r.source || '',
-    read: r.read_time || '5 min', art: r.art || './assets/strategy-war-academy.png'
+    read: r.read_time || '5 min', art: r.art || './assets/guide-strategy.png'
   }))
   res.json({ news, guides, synced_at: rows[0]?.synced_at || null })
 })

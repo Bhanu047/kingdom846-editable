@@ -923,7 +923,7 @@ app.post('/api/ai/chat', async (req, res) => {
     res.json({ reply })
   } catch (err) {
     console.error('AI chat error:', err.message)
-    res.status(500).json({ error: 'Something went wrong' })
+    res.status(500).json({ error: 'Something went wrong', detail: err.message })
   }
 })
 

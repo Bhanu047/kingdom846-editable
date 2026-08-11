@@ -881,7 +881,7 @@ async function callGemini(prompt, history, isAdmin) {
   // Handle function calls
   const parts = candidate.content?.parts || []
   const functionCalls = parts.filter(p => p.functionCall)
-  const textParts = parts.filter(p => p.text)
+  const textParts = parts.filter(p => p.text && typeof p.text === 'string')
 
   if (functionCalls.length > 0) {
     const results = []
@@ -1051,9 +1051,13 @@ Only include repos with 100+ stars or updated in the last 30 days. Respond ONLY 
 
     if (aiRes.ok) {
       const aiData = await aiRes.json()
-      const rawText = aiData.candidates?.[0]?.content?.parts?.[0]?.text || '[]'
+      const rawText = aiData.candidates?.[0]?.content?.parts?.map(p => p.text || '').join('') || '[]'
+      const cleaned = rawText.replace(/```json|```/g, '').trim()
+      // Extract JSON array from response (in case AI adds extra text)
+      const jsonMatch = cleaned.match(/\[[\s\S]*\]/)
+      const jsonStr = jsonMatch ? jsonMatch[0] : cleaned
       try {
-        const picks = JSON.parse(rawText.replace(/```json|```/g, '').trim())
+        const picks = JSON.parse(jsonStr)
         designBriefing = {
           date: new Date().toISOString(),
           scanned: allResults.length,
@@ -1061,7 +1065,7 @@ Only include repos with 100+ stars or updated in the last 30 days. Respond ONLY 
         }
         logAction('Design Scan', `Scanned ${allResults.length} repos, picked top ${picks.length}`)
         console.log(`[AI Agent] Design scan complete: ${picks.length} picks from ${allResults.length} repos`)
-      } catch { console.error('[AI Agent] Failed to parse design scan JSON') }
+      } catch (parseErr) { console.error('[AI Agent] Failed to parse design scan JSON:', jsonStr.substring(0, 200)) }
     }
   } catch (err) {
     console.error('[AI Agent] Design scan error:', err.message)
@@ -1094,9 +1098,11 @@ async function runAutonomousAgent() {
     })
     if (insightResponse.ok) {
       const insightData = await insightResponse.json()
-      const insightText = insightData.candidates?.[0]?.content?.parts?.[0]?.text || '[]'
+      const insightRaw = insightData.candidates?.[0]?.content?.parts?.map(p => p.text || '').join('') || '[]'
+      const insightCleaned = insightRaw.replace(/```json|```/g, '').trim()
+      const insightMatch = insightCleaned.match(/\[[\s\S]*\]/)
       try {
-        agentInsights = JSON.parse(insightText.replace(/```json|```/g, '').trim())
+        agentInsights = JSON.parse(insightMatch ? insightMatch[0] : insightCleaned)
       } catch { agentInsights = [] }
     }
 

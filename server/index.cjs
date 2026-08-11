@@ -835,118 +835,137 @@ async function executeTool(toolName, args) {
   }
 }
 
-// ===== Bulletproof AI system =====
-// Circuit breaker — stops calling Gemini when rate limited
-let geminiCooldownUntil = 0
-let geminiRequestCount = 0
-let geminiRequestWindow = Date.now()
+// ===== Kingdom Advisor — reliable database-powered chatbot =====
+// No external API calls, never crashes, always responds
 
-// Local fallback answers for common questions (works without Gemini)
-function getLocalAnswer(message) {
-  const msg = message.toLowerCase()
+function getKingdomAnswer(message) {
+  const msg = message.toLowerCase().trim()
   const alliances = db.prepare('SELECT slug, name, leader, tagline FROM alliances').all()
   const king = db.prepare('SELECT * FROM king_status WHERE id = 1').get()
+  const events = db.prepare("SELECT title, date, category FROM kingshot_sync WHERE type != 'news' ORDER BY date ASC LIMIT 5").all()
+  const news = db.prepare("SELECT title FROM kingshot_sync WHERE type = 'news' ORDER BY synced_at DESC LIMIT 3").all()
+  const guides = db.prepare("SELECT title FROM kingshot_sync WHERE type = 'guide' ORDER BY id DESC LIMIT 3").all()
+  const schedules = db.prepare('SELECT alliance_slug, event_name, event_time FROM alliance_schedules').all()
+  const transfers = db.prepare('SELECT COUNT(*) as c FROM transfers').get()
   
-  if (msg.includes('alliance') || msg.includes('guild')) {
-    const list = alliances.map(a => `- [${a.slug.toUpperCase()}] ${a.name} — Leader: ${a.leader}`).join('\n')
-    return `Kingdom 846 has ${alliances.length} alliances:\n\n${list}\n\nVisit the Alliances page for full details.`
+  // Greetings
+  if (/^(hi|hello|hey|greetings|hail|sup|yo)\b/.test(msg) || msg === 'hi' || msg === 'hello') {
+    return 'Greetings, traveler. I am the Royal Advisor of Kingdom 846.\n\nI can help you with:\n- Alliance information\n- Current ruler and kingdom status\n- Event schedules\n- How to join or transfer\n- Strategy guides\n- Latest news\n\nAsk me anything about the realm.'
   }
-  if (msg.includes('transfer') || msg.includes('join') || msg.includes('apply')) {
-    return 'To join Kingdom 846, use the Transfer form to apply to an alliance, or apply for a role as Chief Minister or Noble Advisor. Check the Transfer and Apply pages in the menu.'
+  
+  // Thanks
+  if (msg.includes('thank') || msg.includes('thx') || msg.includes('appreciate')) {
+    return 'You are most welcome. May your rallies be strong and your victories many.'
   }
-  if (msg.includes('king') || msg.includes('queen') || msg.includes('ruler') || msg.includes('leader')) {
-    if (king) return `The current ruler is ${king.king_type} ${king.name} of ${king.alliance_tag} ${king.alliance_name}.`
-    return 'The ruler information is being updated. Check the Kingdom page for the latest.'
+  
+  // Who are you
+  if (msg.includes('who are you') || msg.includes('what are you') || msg.includes('your name') || msg.includes('what can you do')) {
+    return 'I am the Royal Advisor of Kingdom 846, the official community portal for the strategy game Kingshot.\n\nI can answer questions about:\n- The four alliances and their leaders\n- The current King or Queen\n- Event schedules and timings\n- How to transfer or apply to join\n- Strategy guides and playbooks\n- Kingdom history and doctrine\n\nWhat would you like to know?'
   }
-  if (msg.includes('event') || msg.includes('schedule') || msg.includes('time')) {
-    return 'Event schedules are managed by alliance leaders. Leaders can log in and use the Event Schedule page to set their alliance event times. Check the Events page for the full schedule.'
+
+  // Alliances — detailed info
+  if (msg.includes('alliance') || msg.includes('guild') || (msg.includes('spider') || msg.includes('kzk') || msg.includes('karnival') || msg.includes('saint') || msg.includes('sinner') || msg.includes('ice') || msg.includes('hunter'))) {
+    // Check if asking about a specific alliance
+    for (const a of alliances) {
+      const slug = a.slug.toLowerCase()
+      const name = a.name.toLowerCase()
+      if (msg.includes(slug) || msg.includes(name) || (slug === 'ryo' && msg.includes('spider')) || (slug === 'kzk' && msg.includes('kamil')) || (slug === 'sas' && msg.includes('saint')) || (slug === 'ice' && msg.includes('ice'))) {
+        return `${a.name} [${a.slug.toUpperCase()}]\nLeader: ${a.leader}\nMotto: ${a.tagline || 'Not set'}\n\nVisit the Alliances page for full roster and details.`
+      }
+    }
+    // General alliance list
+    const list = alliances.map(a => `[${a.slug.toUpperCase()}] ${a.name} — Leader: ${a.leader}`).join('\n')
+    return `Kingdom 846 has ${alliances.length} alliances:\n\n${list}\n\nEach alliance has its own leader, event schedule, and culture. Visit the Alliances page for detailed information, or ask me about a specific alliance by name.`
   }
-  if (msg.includes('guide') || msg.includes('strategy') || msg.includes('tip')) {
-    return 'Check the Strategy Guides & Playbooks page for detailed game guides and strategies. New guides are synced regularly from official sources.'
+
+  // King / ruler
+  if (msg.includes('king') || msg.includes('queen') || msg.includes('ruler') || msg.includes('who rule') || msg.includes('who lead') || msg.includes('monarch') || msg.includes('throne')) {
+    if (king) {
+      return `The current ruler of Kingdom 846 is ${king.king_type} ${king.name} of ${king.alliance_tag} ${king.alliance_name}.\n\nVisit the Kingdom page for the full royal lineage and kingdom history.`
+    }
+    return 'The throne is currently being contested. Visit the Kingdom page for the latest ruler information.'
   }
-  if (msg.includes('hello') || msg.includes('hi ') || msg === 'hi' || msg.includes('hey')) {
-    return 'Greetings, traveler! I am the Royal Advisor of Kingdom 846. Ask me about alliances, events, the King, or how to join our realm.'
+
+  // Transfer / join
+  if (msg.includes('transfer') || msg.includes('join') || msg.includes('apply') || msg.includes('how do i') || msg.includes('recruit') || msg.includes('enlist')) {
+    return 'How to Join Kingdom 846:\n\n1. Transfer to an Alliance — Use the Transfer page to apply to [RYO] Spiders, [KzK] KamilKazeKarnival, [SAS] SaintsAndSinners, or [ICE] IceHunters.\n\n2. Apply for a Role — Apply for Chief Minister or Noble Advisor positions through the Apply page.\n\nBoth forms are available in the navigation menu. Leadership reviews all applications.'
   }
-  return null
+
+  // Events / schedule
+  if (msg.includes('event') || msg.includes('schedule') || msg.includes('timing') || msg.includes('time') || msg.includes('when') || msg.includes('bear') || msg.includes('viking') || msg.includes('clash') || msg.includes('swordland')) {
+    if (schedules.length > 0) {
+      const grouped = {}
+      for (const s of schedules) {
+        if (!grouped[s.alliance_slug]) grouped[s.alliance_slug] = []
+        grouped[s.alliance_slug].push(`${s.event_name}: ${s.event_time} UTC`)
+      }
+      const lines = Object.entries(grouped).map(([slug, events]) => `[${slug.toUpperCase()}]\n${events.map(e => '  ' + e).join('\n')}`).join('\n\n')
+      return `Alliance Event Schedules (UTC):\n\n${lines}\n\nAlliance leaders can update their event times through the Leader Portal. Visit the Events page for the full visual schedule.`
+    }
+    if (events.length > 0) {
+      const list = events.map(e => `- ${e.title}${e.date ? ' (' + e.date + ')' : ''}`).join('\n')
+      return `Upcoming Events:\n\n${list}\n\nVisit the Events page for the full schedule.`
+    }
+    return 'Event schedules are managed by alliance leaders. Leaders can log in and set their alliance event times through the Event Schedule page. Check the Events page for the current schedule.'
+  }
+
+  // Guides / strategy
+  if (msg.includes('guide') || msg.includes('strategy') || msg.includes('tip') || msg.includes('playbook') || msg.includes('how to play') || msg.includes('beginner')) {
+    if (guides.length > 0) {
+      const list = guides.map(g => `- ${g.title}`).join('\n')
+      return `Strategy Guides:\n\n${list}\n\nVisit the Guides page for the full collection of playbooks and strategies.`
+    }
+    return 'Visit the Strategy Guides & Playbooks page for detailed guides on bear hunts, Viking Vengeance, Tri-Alliance Clash, Swordland Showdown, and more. New guides are synced regularly from official sources.'
+  }
+
+  // News
+  if (msg.includes('news') || msg.includes('update') || msg.includes('latest') || msg.includes('what\'s new') || msg.includes('whats new')) {
+    if (news.length > 0) {
+      const list = news.map(n => `- ${n.title}`).join('\n')
+      return `Latest News:\n\n${list}\n\nVisit the News page for all updates and announcements.`
+    }
+    return 'Visit the News page for the latest Kingdom 846 announcements and game updates.'
+  }
+
+  // Kingdom info / about
+  if (msg.includes('about') || msg.includes('kingdom 846') || msg.includes('what is') || msg.includes('tell me about') || msg.includes('history') || msg.includes('doctrine') || msg.includes('motto')) {
+    return 'Kingdom 846 — One Crown. Four Alliances. Endless Glory.\n\nA kingdom forged in ten wars, seven dominations, and a perfect diplomatic record. Four alliances stand united under one crown:\n\n- [RYO] Spiders — Led by Shoni\n- [KzK] KamilKazeKarnival — Led by Lovely Khaos\n- [SAS] SaintsAndSinners — Led by Lady Charlotte\n- [ICE] IceHunters — Led by Dunngeon\n\nWhere legends are forged in fire and crowned in gold. Visit the About page for the full kingdom history and doctrine.'
+  }
+
+  // Season
+  if (msg.includes('season') || msg.includes('fire tyrant') || msg.includes('current season')) {
+    return 'Kingdom 846 is currently in the Season of the Fire Tyrant. Check the Events page for season-specific event schedules and the Kingdom page for season standings.'
+  }
+
+  // Leader login
+  if (msg.includes('leader') && (msg.includes('login') || msg.includes('access') || msg.includes('portal'))) {
+    return 'Alliance leaders can log in using their leader account credentials. Once logged in, a Leader section appears in the sidebar with access to the Event Schedule Manager, where leaders can set their alliance event times in UTC.\n\nIf you are a leader and need login credentials, contact the Kingdom admin.'
+  }
+
+  // Admin
+  if (msg.includes('admin') || msg.includes('spartan') || msg.includes('manage') || msg.includes('edit') && msg.includes('website')) {
+    return 'The Kingdom 846 admin portal is accessible to the Spartan account. Admins can edit website content, manage the king status, sync data, and view activity logs. Log in with the admin account to access these features.'
+  }
+
+  // Stats
+  if (msg.includes('stat') || msg.includes('how many') || msg.includes('count')) {
+    return `Kingdom 846 Statistics:\n- Alliances: ${alliances.length}\n- Transfer applications: ${transfers.c}\n- Event schedules: ${schedules.length} entries\n- Strategy guides: ${guides.length}+\n\nVisit the Rankings page for player rankings and the Kingdom page for full kingdom stats.`
+  }
+
+  // Help
+  if (msg.includes('help') || msg.includes('what can') || msg.includes('options') || msg.includes('commands')) {
+    return 'I can help you with:\n\n- Alliances (names, leaders, info)\n- The current King or Queen\n- Event schedules and timings\n- How to transfer or join\n- Strategy guides and tips\n- Latest news and updates\n- Kingdom history and doctrine\n- Leader and admin access\n\nJust ask me a question about Kingdom 846.'
+  }
+
+  // Default — suggest topics
+  return 'I am not sure about that, but I can help you with:\n\n- Alliances and their leaders\n- The current King or Queen\n- Event schedules\n- How to transfer or apply\n- Strategy guides\n- Latest news\n- Kingdom history\n\nTry asking about one of these topics.'
 }
 
-// Safe Gemini wrapper — never throws, returns { ok, text, reason }
-async function callGeminiSafe(prompt, history) {
-  // Circuit breaker check
-  if (Date.now() < geminiCooldownUntil) {
-    return { ok: false, reason: 'cooldown' }
-  }
-  // Self-imposed rate limit (below Google's 20/min)
-  const now = Date.now()
-  if (now - geminiRequestWindow > 60000) {
-    geminiRequestCount = 0
-    geminiRequestWindow = now
-  }
-  if (geminiRequestCount >= 10) {
-    geminiCooldownUntil = now + 30000
-    return { ok: false, reason: 'rate_limit' }
-  }
-  geminiRequestCount++
-  
-  const systemContext = buildKingdomContext()
-  const fullPrompt = `${systemContext}\n\nUser question: ${prompt}`
-  
-  // Build conversation — must end with user turn
-  const historyParts = (history || []).slice(-4).map(h => ({
-    role: h.role === 'assistant' ? 'model' : 'user',
-    parts: [{ text: h.content }]
-  }))
-  while (historyParts.length > 0 && historyParts[historyParts.length - 1].role === 'model') {
-    historyParts.pop()
-  }
-  const contents = [...historyParts, { role: 'user', parts: [{ text: fullPrompt }] }]
-  // Merge consecutive same-role turns
-  const merged = []
-  for (const turn of contents) {
-    const last = merged[merged.length - 1]
-    if (last && last.role === turn.role) {
-      last.parts[0].text += '\n' + turn.parts[0].text
-    } else {
-      merged.push({ ...turn, parts: [{ text: turn.parts[0].text }] })
-    }
-  }
-  
-  try {
-    const response = await fetch(GEMINI_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: merged,
-        generationConfig: { temperature: 0.7, maxOutputTokens: 500 },
-      }),
-      signal: AbortSignal.timeout(15000)
-    })
-    
-    if (response.status === 429) {
-      geminiCooldownUntil = Date.now() + 60000
-      console.log('[AI] Rate limited — cooldown 60s')
-      return { ok: false, reason: 'rate_limit' }
-    }
-    if (!response.ok) {
-      console.error('[AI] Gemini error:', response.status)
-      return { ok: false, reason: 'error' }
-    }
-    
-    const data = await response.json()
-    const text = data.candidates?.[0]?.content?.parts?.map(p => p.text || '').join('') || ''
-    if (!text) return { ok: false, reason: 'empty' }
-    return { ok: true, text }
-  } catch (err) {
-    console.error('[AI] Call failed:', err.message)
-    return { ok: false, reason: 'timeout' }
-  }
-}
-
-// Public chat endpoint — never returns 500, always returns a response
-app.post('/api/ai/chat', async (req, res) => {
-  const { message, history = [] } = req.body
+// Chat endpoint — pure database-powered, never crashes
+app.post('/api/ai/chat', (req, res) => {
+  const { message } = req.body
   if (!message || typeof message !== 'string') {
-    return res.status(200).json({ reply: 'Please ask a question about Kingdom 846.' })
+    return res.json({ reply: 'Please ask a question about Kingdom 846.' })
   }
   
   // Rate limit per IP
@@ -954,50 +973,24 @@ app.post('/api/ai/chat', async (req, res) => {
   const now = Date.now()
   if (!aiRateLimit.has(ip)) aiRateLimit.set(ip, [])
   const times = aiRateLimit.get(ip).filter(t => now - t < 60000)
-  if (times.length >= 10) {
-    return res.status(200).json({ reply: 'You are asking questions too quickly. Please wait a moment and try again.' })
+  if (times.length >= 15) {
+    return res.json({ reply: 'You are asking questions too quickly. Please wait a moment and try again.' })
   }
   times.push(now)
   aiRateLimit.set(ip, times)
 
-  // Try Gemini first
-  if (GEMINI_API_KEY) {
-    const result = await callGeminiSafe(message, history)
-    if (result.ok) {
-      return res.json({ reply: result.text, source: 'ai' })
-    }
-    console.log(`[AI] Gemini unavailable (${result.reason}), using fallback`)
-  }
-  
-  // Fallback: local answers from database
-  const local = getLocalAnswer(message)
-  if (local) {
-    return res.json({ reply: local, source: 'local' })
-  }
-  
-  // Final fallback
-  return res.json({ 
-    reply: 'The Royal Advisor is busy right now. Try asking about: alliances, events, the King, transfers, or guides. Or check the relevant pages in the menu.',
-    source: 'fallback'
-  })
+  const reply = getKingdomAnswer(message)
+  res.json({ reply })
 })
 
 const aiRateLimit = new Map()
 
-// Admin AI — uses same safe wrapper
-app.post('/api/ai/admin', auth, adminOnly, async (req, res) => {
+// Admin chat — same reliable system
+app.post('/api/ai/admin', auth, adminOnly, (req, res) => {
   const { message } = req.body
-  if (!message) return res.status(200).json({ reply: 'Please enter a message.' })
-
-  if (GEMINI_API_KEY) {
-    const result = await callGeminiSafe(message, [])
-    if (result.ok) {
-      return res.json({ reply: result.text })
-    }
-  }
-  
-  const local = getLocalAnswer(message)
-  return res.json({ reply: local || 'The Royal Advisor is busy. Try again in a moment.' })
+  if (!message) return res.json({ reply: 'Please enter a message.' })
+  const reply = getKingdomAnswer(message)
+  res.json({ reply })
 })
 
 // --- Autonomous AI Agent ---

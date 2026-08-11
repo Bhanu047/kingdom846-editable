@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import Icon from '../components/Icon'
 import { buildSchedule } from '../data/kingdom'
 
-const SECTIONS = ['Alliances', 'Players', 'News', 'Events', 'Guides']
+const SECTIONS = ['Alliances', 'Players', 'Events']
 
 function Field({ label, value, onChange, textarea }) {
   return (
@@ -119,7 +119,6 @@ export default function Admin() {
                     <Field label="Leader" value={a.leader} onChange={(v) => update(['alliances', i, 'leader'], v)} />
                     <Field label="Language" value={a.lang} onChange={(v) => update(['alliances', i, 'lang'], v)} />
                     <div className="sm:col-span-2"><Field label="Tagline" value={a.tagline} onChange={(v) => update(['alliances', i, 'tagline'], v)} /></div>
-                    <div className="sm:col-span-2"><Field label="Description" textarea value={a.desc} onChange={(v) => update(['alliances', i, 'desc'], v)} /></div>
                     <div className="sm:col-span-2 space-y-2">
                       <span className="text-[10px] uppercase tracking-wider text-parchment/50">Event Schedule (UTC)</span>
                       <div className="grid gap-2 sm:grid-cols-2">
@@ -175,21 +174,6 @@ export default function Admin() {
               </div>
             )}
 
-            {section === 'News' && (
-              <div className="space-y-3">
-                {draft.news.map((n, i) => (
-                  <Row key={i} onDelete={() => setDraft((p) => { const next = structuredClone(p); next.news.splice(i, 1); return next })}>
-                    <Field label="Title" value={n.title} onChange={(v) => update(['news', i, 'title'], v)} />
-                    <Field label="Date" value={n.date} onChange={(v) => update(['news', i, 'date'], v)} />
-                    <div className="sm:col-span-2"><Field label="Excerpt" textarea value={n.excerpt} onChange={(v) => update(['news', i, 'excerpt'], v)} /></div>
-                    <div className="sm:col-span-2"><Field label="Full Dispatch Text" textarea value={n.body} onChange={(v) => update(['news', i, 'body'], v)} /></div>
-                  </Row>
-                ))}
-                <button onClick={() => setDraft((p) => { const next = structuredClone(p); next.news.push({ id: 'n' + Date.now(), title: 'New article', date: 'Today', excerpt: '', body: '' }); return next })}
-                  className="btn-secondary">+ Add Article</button>
-              </div>
-            )}
-
             {section === 'Events' && (
               <div className="space-y-3">
                 {draft.events.map((ev, i) => (
@@ -198,18 +182,6 @@ export default function Admin() {
                     <Field label="Category" value={ev.category} onChange={(v) => update(['events', i, 'category'], v)} />
                     <Field label="Date" value={ev.date} onChange={(v) => update(['events', i, 'date'], v)} />
                     <div className="sm:col-span-2"><Field label="Description" textarea value={ev.desc} onChange={(v) => update(['events', i, 'desc'], v)} /></div>
-                  </Row>
-                ))}
-              </div>
-            )}
-
-            {section === 'Guides' && (
-              <div className="space-y-3">
-                {draft.guides.map((g, i) => (
-                  <Row key={i}>
-                    <Field label="Title" value={g.title} onChange={(v) => update(['guides', i, 'title'], v)} />
-                    <Field label="Category" value={g.category} onChange={(v) => update(['guides', i, 'category'], v)} />
-                    <div className="sm:col-span-2"><Field label="Excerpt" textarea value={g.excerpt} onChange={(v) => update(['guides', i, 'excerpt'], v)} /></div>
                   </Row>
                 ))}
               </div>

@@ -51,7 +51,7 @@ export default function Dashboard({ onNavigate }) {
       <Panel glow className="relative overflow-hidden p-0">
         <div className="relative h-64 md:h-80">
           <ArtImage src="./assets/hero-throne-room.png" alt="Kingdom 846" className="h-full w-full" />
-          <div className="absolute inset-0 bg-gradient-to-r from-ink via-ink/80 to-ink/20" />
+          <div className="hero-overlay absolute inset-0" />
           <div className="absolute inset-y-0 left-0 flex max-w-xl flex-col justify-center p-6 md:p-10">
             <div className="eyebrow">{kingdom.season}</div>
             <h1 className="mt-2 font-display text-4xl font-bold tracking-wide text-parchment drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)] md:text-6xl">KINGDOM 846</h1>

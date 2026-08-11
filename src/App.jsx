@@ -141,7 +141,16 @@ function Shell() {
   return (
     <>
       {showSplash && <SplashScreen onEnter={() => setShowSplash(false)} />}
-      <div className="flex h-screen overflow-hidden">
+      {/* Ambient gold dust particles */}
+      <div className="ambient-particles">
+        <div className="ambient-particle" style={{ left: '10%', animationDelay: '0s' }} />
+        <div className="ambient-particle" style={{ left: '25%', animationDelay: '3s' }} />
+        <div className="ambient-particle" style={{ left: '45%', animationDelay: '6s' }} />
+        <div className="ambient-particle" style={{ left: '65%', animationDelay: '2s' }} />
+        <div className="ambient-particle" style={{ left: '80%', animationDelay: '5s' }} />
+        <div className="ambient-particle" style={{ left: '90%', animationDelay: '8s' }} />
+      </div>
+      <div className="flex h-screen overflow-hidden relative z-10">
       <div className="hidden md:flex">
         <Sidebar active={page} onNavigate={navigate} user={sidebarUser} onLogin={() => { setLoginMode('admin'); setLoginOpen(true) }} onSignOut={handleSignOut} isAdmin={isAdmin} />
       </div>
@@ -156,13 +165,14 @@ function Shell() {
       )}
 
       <main className="flex flex-1 flex-col overflow-hidden">
-        <header className="flex items-center gap-3 border-b border-gold/15 bg-ink/60 px-4 py-3 md:px-6">
+        <header className="royal-header flex items-center gap-3 px-4 py-3 md:px-6">
           <button onClick={() => setMobileNav(true)} className="text-parchment/70 hover:text-parchment md:hidden">
             <Icon name="home" size={20} />
           </button>
+          <img src="./assets/crest-846.png" alt="" className="crest-pulse h-8 w-8 hidden sm:block" />
           <div className="flex-1">
             <div className="eyebrow">Kingdom 846 · {titles[page] || 'Page'}</div>
-            <div className="font-display text-base font-bold text-parchment">{titles[page] || 'Page'}</div>
+            <div className="font-display text-base font-bold text-gold-bright">{titles[page] || 'Page'}</div>
           </div>
           {isAdmin && page !== 'admin' && (
             <button onClick={() => navigate('admin')} className="hidden items-center gap-1.5 rounded-lg border border-gold/30 bg-gold/10 px-3 py-1.5 text-xs font-semibold text-gold sm:flex">

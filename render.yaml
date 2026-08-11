@@ -1,0 +1,22 @@
+# Render Blueprint — one-click deploy with a persistent disk for the SQLite database
+# Docs: https://render.com/docs/blueprint-spec
+services:
+  - type: web
+    name: kingdom-846
+    env: node
+    plan: starter            # $7/mo — includes a persistent disk; free tier has no disks
+    buildCommand: npm ci --include=dev && npm run build
+    startCommand: node server/index.cjs
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: SESSION_SECRET     # auto-generates a strong secret; rotate anytime
+        generateValue: true
+      - key: DB_PATH
+        value: /var/data/data.db
+    disk:
+      name: kingdom-data
+      mountPath: /var/data      # persistent — the SQLite DB survives redeploy/restart
+      sizeGB: 1

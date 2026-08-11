@@ -82,21 +82,15 @@ export default function Dashboard({ onNavigate }) {
       )}
 
       {/* Cinematic Hero */}
-      <Panel glow className="hero-frame relative overflow-hidden p-0 gold-corners">
+      <Panel glow className="hero-frame relative overflow-hidden p-0">
         <div className="relative h-64 md:h-96 hero-shimmer">
-          <ArtImage src="./assets/hero-throne-room.png" alt="Kingdom 846" className="h-full w-full drift-slow" />
+          <ArtImage src="./assets/hero-throne-room.png" alt="Kingdom 846" className="h-full w-full" />
           <div className="hero-overlay absolute inset-0" />
           {/* Rune circle decoration */}
           <div className="rune-circle" style={{ right: '10%', top: '20%' }} />
-          {/* Ambient embers in hero */
-          <div className="ember-field">
-            {[20, 40, 60, 80, 30, 70].map((left, i) => (
-              <span key={i} className="ember" style={{ left: `${left}%`, animationDelay: `${i * 1.2}s` }} />
-            ))}
-          </div>
           <div className="absolute inset-y-0 left-0 flex max-w-xl flex-col justify-center p-6 md:p-10">
             <div className="eyebrow text-glow">{kingdom.season}</div>
-            <h1 className="mt-2 font-display text-4xl font-bold tracking-wide text-parchment drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)] md:text-6xl gradient-gold glow-pulse">KINGDOM 846</h1>
+            <h1 className="mt-2 font-display text-4xl font-bold tracking-wide text-parchment drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)] md:text-6xl gradient-gold">KINGDOM 846</h1>
             <p className="mt-1 font-display text-sm tracking-[0.15em] text-gold md:text-base text-glow">One Crown. Four Alliances. Endless Glory.</p>
             <div className="mt-5 flex flex-wrap gap-2">
               <button onClick={() => onNavigate('alliances')} className="btn-primary btn-royal sparkle-btn"><Icon name="shield" size={14} /> View Alliances</button>

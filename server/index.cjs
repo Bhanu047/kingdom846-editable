@@ -876,15 +876,23 @@ async function callGemini(prompt, history, isAdmin) {
     ]
   }
 
-  const response = await fetch(GEMINI_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body)
-  })
-
-  if (!response.ok) {
+  // Retry with backoff for rate limits (free tier: 20 req/min)
+  let response, lastErr
+  for (let attempt = 0; attempt < 3; attempt++) {
+    response = await fetch(GEMINI_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    })
+    if (response.ok) break
+    if (response.status === 429 && attempt < 2) {
+      const waitMs = (attempt + 1) * 15000 // 15s, 30s
+      console.log(`[AI] Rate limited, retrying in ${waitMs/1000}s...`)
+      await new Promise(r => setTimeout(r, waitMs))
+      continue
+    }
     const err = await response.text()
-    console.error('Gemini API error:', err)
+    console.error('Gemini API error:', err.substring(0, 300))
     throw new Error('AI service unavailable')
   }
 
@@ -1123,13 +1131,8 @@ async function runAutonomousAgent() {
     lastAgentRun = new Date().toISOString()
     logAction('Auto-sync', `Synced ${all.length} items, generated ${agentInsights.length} insights`)
 
-    // 3. Run design intelligence scan (daily — only on first run of each day)
-    const today = new Date().toDateString()
-    const lastScanDay = designBriefing ? new Date(designBriefing.date).toDateString() : null
-    if (today !== lastScanDay) {
-      await runDesignScan()
-    }
-
+    // 3. Run design scan only if explicitly requested (skip on auto-runs to save quota)
+    // Design scan is triggered manually via admin panel
     console.log(`[AI Agent] Complete at ${lastAgentRun}`)
   } catch (err) {
     console.error('[AI Agent] Error:', err.message)
@@ -1227,7 +1230,7 @@ const isProduction = process.env.NODE_ENV === 'production'
     console.log(`Kingdom 846 backend listening on ${PORT} (${isProduction ? 'production' : 'dev'})`)
     // Start autonomous AI agent — runs on startup then every 4 hours
     if (GEMINI_API_KEY) {
-      setTimeout(() => runAutonomousAgent(), 10000) // 10s delay after startup
+      setTimeout(() => runAutonomousAgent(), 30000) // 30s delay after startup
       setInterval(() => runAutonomousAgent(), AGENT_INTERVAL)
       console.log('[AI Agent] Autonomous agent scheduled (every 4 hours)')
     } else {

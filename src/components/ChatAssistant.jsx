@@ -9,38 +9,22 @@ import { apiJson } from '../lib/api'
  * AI action badges, glow pulse on new message, auto-scroll.
  */
 
-// Royal Crown SVG — fits the Kingdom theme
+// Royal Crown SVG — clean, fits the Kingdom theme
 const OrbIcon = ({ size = 28, online = false }) => (
-  <svg width={size} height={size} viewBox="0 0 32 32" fill="none">
-    <defs>
-      <linearGradient id="crownGrad" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0%" stopColor={online ? '#E8C766' : '#6B5B2E'} />
-        <stop offset="100%" stopColor={online ? '#D4AF37' : '#4A3F22'} />
-      </linearGradient>
-      <filter id="crownGlow">
-        <feGaussianBlur stdDeviation={online ? '1' : '0'} result="blur" />
-        <feMerge>
-          <feMergeNode in="blur" />
-          <feMergeNode in="SourceGraphic" />
-        </feMerge>
-      </filter>
-    </defs>
-    {/* Crown base */}
-    <path d="M6 22 L8 12 L12 16 L16 8 L20 16 L24 12 L26 22 Z" fill="url(#crownGrad)" filter="url(#crownGlow)" stroke={online ? '#E8C766' : '#5C4A1F'} strokeWidth="0.5" />
-    {/* Crown band */}
-    <rect x="6" y="22" width="20" height="4" rx="1" fill={online ? '#B8941F' : '#3A3320'} stroke={online ? '#D4AF37' : '#5C4A1F'} strokeWidth="0.5" />
-    {/* Gems */}
-    <circle cx="12" cy="24" r="1.2" fill={online ? '#4ade80' : '#2A2415'} />
-    <circle cx="16" cy="24" r="1.2" fill={online ? '#60a5fa' : '#2A2415'} />
-    <circle cx="20" cy="24" r="1.2" fill={online ? '#f87171' : '#2A2415'} />
-    {/* Top jewel */}
-    <circle cx="16" cy="8" r="1.5" fill={online ? '#E8C766' : '#2A2415'} />
-    {/* Sparkles when online */}
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <path d="M3 18h18l-1.5-9-4.5 3.75L12 6l-3 6.75L4.5 9z" 
+      fill={online ? '#D4AF37' : '#3A3320'} 
+      stroke={online ? '#E8C766' : '#5C4A1F'} 
+      strokeWidth="1" 
+      strokeLinejoin="round"
+    />
+    <rect x="3" y="18" width="18" height="3" rx="0.5" 
+      fill={online ? '#B8941F' : '#2A2415'} 
+      stroke={online ? '#D4AF37' : '#5C4A1F'} 
+      strokeWidth="0.5"
+    />
     {online && (
-      <>
-        <circle cx="9" cy="14" r="0.5" fill="#E8C766" opacity="0.7" />
-        <circle cx="23" cy="14" r="0.5" fill="#E8C766" opacity="0.7" />
-      </>
+      <circle cx="12" cy="7" r="1" fill="#E8C766" />
     )}
   </svg>
 )

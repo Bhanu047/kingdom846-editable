@@ -651,7 +651,7 @@ async function fetchKingshotData() {
 // Sync endpoint (called by cron with secret key)
 // --- AI Chat Assistant (Google Gemini) ---
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY || ''
-const GEMINI_MODEL = 'gemini-2.0-flash'
+const GEMINI_MODEL = 'gemini-2.5-flash'
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`
 
 // Kingdom context for the AI

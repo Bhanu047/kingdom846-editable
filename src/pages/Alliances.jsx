@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Panel, ArtImage } from '../components/ui'
+import Icon from '../components/Icon'
 import { Embers } from '../components/Embers'
 import { Modal } from '../components/RosterPending'
 import { useSiteData } from '../context/SiteDataContext'

@@ -78,34 +78,34 @@ export default function Alliances() {
         })}
       </div>
 
-      <Modal open={!!active} onClose={() => setActive(null)}>
+      <Modal open={!!active} onClose={() => setActive(null)} noScroll>
         {active && (
           <div className="-m-5 mb-0">
-            <div className="relative h-32">
+            <div className="relative h-24">
               <ArtImage src={active.art} alt={active.name} className="h-full w-full" />
-              <div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/70 to-ink/10" />
-              <button onClick={() => setActive(null)} className="absolute right-3 top-3 rounded-full bg-ink/60 p-1.5 text-parchment/70  hover:text-parchment">
-                <Icon name="chevron" size={16} className="rotate-90" />
+              <div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/60 to-ink/10" />
+              <button onClick={() => setActive(null)} className="absolute right-3 top-2 rounded-full bg-ink/60 p-1.5 text-parchment/70 hover:text-parchment">
+                <Icon name="chevron" size={14} className="rotate-90" />
               </button>
-              <div className="absolute inset-x-0 bottom-0 p-4">
+              <div className="absolute inset-x-0 bottom-0 px-4 pb-2">
                 <div className="flex items-center gap-2">
-                  <span className={`font-display text-xl font-bold ${activeColor.text}`}>{active.tag}</span>
-                  <span className="text-base font-semibold text-parchment">{active.name}</span>
+                  <span className={`font-display text-lg font-bold ${activeColor.text}`}>{active.tag}</span>
+                  <span className="text-sm font-semibold text-parchment">{active.name}</span>
                 </div>
-                <div className="text-[11px] uppercase tracking-wider text-gold/60">Event Schedule (UTC)</div>
+                <div className="text-[10px] uppercase tracking-wider text-gold/60">Event Schedule (UTC)</div>
               </div>
             </div>
-            <div className="p-4">
-              <div className="grid grid-cols-2 gap-2">
+            <div className="p-3">
+              <div className="grid grid-cols-2 gap-1.5">
                 {buildSchedule(active.schedule).map((s, si) => {
                   const meta = getEventMetaLocal(s.event)
                   return (
-                    <div key={si} className="royal-plaque text-center" style={{ padding: '0.625rem 0.5rem' }}>
-                      <div className="royal-icon-circle mx-auto mb-1" style={{ width: '1.75rem', height: '1.75rem' }}>
-                        <Icon name={meta.icon} size={13} className="text-gold-bright" />
+                    <div key={si} className="royal-plaque text-center" style={{ padding: '0.5rem 0.375rem' }}>
+                      <div className="royal-icon-circle mx-auto mb-0.5" style={{ width: '1.5rem', height: '1.5rem' }}>
+                        <Icon name={meta.icon} size={11} className="text-gold-bright" />
                       </div>
-                      <div className="text-[9px] font-semibold leading-tight text-parchment/80">{s.event}</div>
-                      <div className="mt-0.5 royal-time" style={{ fontSize: '0.875rem' }}>{s.time || 'TBA'}</div>
+                      <div className="text-[8px] font-semibold leading-tight text-parchment/80">{s.event}</div>
+                      <div className="mt-0.5 royal-time" style={{ fontSize: '0.75rem' }}>{s.time || 'TBA'}</div>
                     </div>
                   )
                 })}

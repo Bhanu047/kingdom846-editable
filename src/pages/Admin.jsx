@@ -226,7 +226,7 @@ function AdminAI() {
       })
       setMessages(prev => [...prev, { role: 'assistant', content: res.reply }])
     } catch (err) {
-      setMessages(prev => [...prev, { role: 'assistant', content: 'AI not configured. Set GEMINI_API_KEY in Render environment variables.' }])
+      setMessages(prev => [...prev, { role: 'assistant', content: 'The Royal Advisor encountered an error. Please try again.' }])
     } finally {
       setLoading(false)
     }

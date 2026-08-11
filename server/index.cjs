@@ -145,6 +145,27 @@ function auth(req, res, next) {
 const adminOnly = (req, res, next) => req.user.role === 'admin' ? next() : res.status(403).json({ error: 'Admin only' })
 const leadershipOnly = (req, res, next) => (req.user.role === 'admin' || req.user.role === 'leader') ? next() : res.status(403).json({ error: 'Leadership only' })
 
+// --- Rate limiting (in-memory, per-IP) ---
+const loginAttempts = new Map()
+const RL_WINDOW = 5 * 60 * 1000  // 5 minutes
+const RL_MAX = 10  // max 10 attempts per window
+function checkRateLimit(ip) {
+  const now = Date.now()
+  const entry = loginAttempts.get(ip)
+  if (!entry || now > entry.resetAt) {
+    loginAttempts.set(ip, { count: 1, resetAt: now + RL_WINDOW })
+    return { allowed: true }
+  }
+  entry.count++
+  if (entry.count > RL_MAX) {
+    return { allowed: false, retryAfter: Math.ceil((entry.resetAt - now) / 1000) }
+  }
+  return { allowed: true }
+}
+function clearRateLimit(ip) {
+  loginAttempts.delete(ip)
+}
+
 // --- Routes ---
 app.get('/api/health', (_req, res) => res.json({ ok: true, ts: Date.now() }))
 

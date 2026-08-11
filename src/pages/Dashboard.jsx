@@ -184,8 +184,8 @@ export default function Dashboard({ onNavigate }) {
         {/* Kingdom Status — King + leading-alliance banner, tall card */}
         <Panel glow className="relative overflow-hidden lg:col-span-1 min-h-[460px]" >
           <div className="absolute inset-0 z-0">
-            <img src={kingBanner} alt={`${kingAlliance.name} banner`} className="h-full w-full object-cover opacity-80" style={{ filter: 'brightness(1.3)! contrast(1.12) saturate(1.25)' }} loading="lazy" />
-            <div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/80 to-ink/25" />
+            <img src={kingBanner} alt={`${kingAlliance.name} banner`} className="h-full w-full object-cover" style={{ filter: 'brightness(1.4) contrast(1.15) saturate(1.3)' }} loading="lazy" />
+            <div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/50 to-transparent" />
             <div className="absolute inset-0 ring-1 ring-inset ring-gold/15" />
           </div>
           <div className="relative z-10 flex h-full min-h-[460px] flex-col p-5">

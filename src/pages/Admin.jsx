@@ -289,7 +289,30 @@ function AdminAI() {
         <span className="text-[10px] text-parchment/40">
           {agentStatus?.configured ? 'AI Online' : 'AI Offline — set GEMINI_API_KEY in Render'}
         </span>
+        {agentStatus?.next_run && (
+          <span className="text-[10px] text-parchment/30 ml-auto">
+            Next auto-run: {new Date(agentStatus.next_run).toLocaleTimeString()}
+          </span>
+        )}
       </div>
+
+      {/* AI Activity Log */}
+      {agentStatus?.activity_log?.length > 0 && (
+        <div className="mb-3 rounded-lg border border-gold/10 bg-ink-2/50 p-2">
+          <div className="mb-1.5 flex items-center gap-1 text-[9px] uppercase tracking-wider text-gold/40">
+            <span>⚙</span> AI Activity Log
+          </div>
+          <div className="max-h-24 overflow-y-auto space-y-1">
+            {agentStatus.activity_log.map((log, i) => (
+              <div key={i} className="flex items-start gap-2 text-[10px] text-parchment/50">
+                <span className="text-gold/40 shrink-0">{new Date(log.time).toLocaleTimeString()}</span>
+                <span className="shrink-0 text-gold/60 font-medium">{log.action}</span>
+                <span className="truncate">{log.detail}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {messages.length > 0 && (
         <div className="mb-3 max-h-48 overflow-y-auto space-y-2">

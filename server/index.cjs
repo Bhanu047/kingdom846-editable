@@ -697,6 +697,7 @@ const AI_TOOLS = [
 
 // Execute a tool call
 async function executeTool(toolName, args) {
+  logAction('Tool: ' + toolName, JSON.stringify(args))
   switch (toolName) {
     case 'sync_kingshot': {
       try {
@@ -894,6 +895,15 @@ app.post('/api/ai/admin', auth, adminOnly, async (req, res) => {
 // Runs every 4 hours automatically: syncs data, checks status, generates insights
 let lastAgentRun = null
 let agentInsights = []
+let agentLog = [] // Activity log
+const MAX_LOG = 20
+
+function logAction(action, detail) {
+  const entry = { action, detail, time: new Date().toISOString() }
+  agentLog.unshift(entry)
+  if (agentLog.length > MAX_LOG) agentLog.pop()
+  console.log(`[AI Agent] ${action}: ${detail}`)
+}
 
 async function runAutonomousAgent() {
   if (!GEMINI_API_KEY) return
@@ -928,6 +938,7 @@ async function runAutonomousAgent() {
     }
 
     lastAgentRun = new Date().toISOString()
+    logAction('Auto-sync', `Synced ${all.length} items, generated ${agentInsights.length} insights`)
     console.log(`[AI Agent] Complete at ${lastAgentRun}`)
   } catch (err) {
     console.error('[AI Agent] Error:', err.message)
@@ -943,6 +954,7 @@ app.get('/api/ai/status', (_req, res) => {
     configured: !!GEMINI_API_KEY,
     last_run: lastAgentRun,
     insights: agentInsights,
+    activity_log: agentLog.slice(0, 10),
     next_run: lastAgentRun ? new Date(new Date(lastAgentRun).getTime() + AGENT_INTERVAL).toISOString() : null
   })
 })

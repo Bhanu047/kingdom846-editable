@@ -1,5 +1,4 @@
-import { Panel, SectionTitle, Pill, ArtImage, GoldBar } from '../components/ui'
-import Icon from '../components/Icon'
+import { Panel, SectionTitle, Pill, ArtImage } from '../components/ui'
 import { kingdom, kvkHistory, kvkStats, transfers, reputation } from '../data/kingdom'
 
 function MetricCard({ label, value, sub }) {

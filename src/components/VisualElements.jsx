@@ -76,21 +76,3 @@ export function GraphicTile({ image, label, sublabel, icon, onClick, badge }) {
     </button>
   )
 }
-
-/**
- * RankMedal — colored medal badge for rankings.
- */
-export function RankMedal({ rank }) {
-  const medals = {
-    1: { bg: 'from-yellow-300 to-yellow-500', text: 'text-ink', emoji: '🥇' },
-    2: { bg: 'from-slate-200 to-slate-400', text: 'text-ink', emoji: '🥈' },
-    3: { bg: 'from-orange-400 to-orange-600', text: 'text-ink', emoji: '🥉' },
-  }
-  const m = medals[rank]
-  if (!m) return <span className="grid h-7 w-7 place-items-center rounded-full bg-white/5 border border-gold/15 text-xs font-bold text-parchment/50">{rank}</span>
-  return (
-    <span className={`grid h-7 w-7 place-items-center rounded-full bg-gradient-to-b ${m.bg} ${m.text} text-xs font-bold border border-white/20 shadow-md`}>
-      {rank}
-    </span>
-  )
-}

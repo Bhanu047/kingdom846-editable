@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Panel, SectionTitle, Pill, ArtImage } from '../components/ui'
 import Icon from '../components/Icon'
-import { RoyalSectionHeader, GraphicTile, StatusRibbon } from '../components/VisualElements'
+import { RoyalSectionHeader, GraphicTile } from '../components/VisualElements'
 import { kingdom, countdownTo, BANNERS } from '../data/kingdom'
 import { apiJson } from '../lib/api'
 import { useAuth } from '../context/AuthContext'

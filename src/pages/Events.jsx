@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { Panel, SectionTitle, Pill, ArtImage, ArtCard } from '../components/ui'
-import { RoyalSectionHeader, StatusRibbon } from '../components/VisualElements'
+import { Panel, Pill, ArtImage, ArtCard } from '../components/ui'
+import { RoyalSectionHeader } from '../components/VisualElements'
 import { timeline, countdownTo, kingdom } from '../data/kingdom'
 import { useSiteData } from '../context/SiteDataContext'
 

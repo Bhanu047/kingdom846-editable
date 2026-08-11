@@ -60,7 +60,7 @@ export const stats = [
 ]
 
 // Recurring alliance event names, in pairs — times are set per-alliance via Admin → Alliances.
-export const eventScheduleTemplate = [
+const eventScheduleTemplate = [
   { event: 'Bear Hunt -1' },
   { event: 'Bear Hunt-2' },
   { event: 'Vikings Vengeance Tuesday' },
@@ -148,26 +148,6 @@ export const players = [
   { rank: 5, name: 'ShadowBlade', tag: '[RYO]', slug: 'ryo', alliance: 'Spiders' },
 ]
 
-export const defaultKing = {
-  kingType: 'King',
-  name: 'Oliver',
-  allianceTag: '[SAS]',
-  allianceName: 'SaintsAndSinners'
-}
-
-// Ministry roles open for application (replicates kingdom855.com apply flow)
-export const applyRoles = [
-  {
-    id: 'chief_minister', label: 'Chief Minister', glyph: '♛',
-    tagline: 'Help organize Kingdom 846, coordinate leadership and keep our realm moving in the same direction.',
-    art: './assets/apply-chief-minister.png'
-  },
-  {
-    id: 'noble_advisor', label: 'Noble Advisor', glyph: '♜',
-    tagline: 'Support kingdom appointments, coordination and event planning as part of the Kingdom 846 leadership team.',
-    art: './assets/apply-noble-advisor.png'
-  }
-]
 
 // Kingdom Chronicle — derived from REAL timeline milestones and KvK results.
 export const news = [

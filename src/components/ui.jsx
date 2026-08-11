@@ -41,17 +41,6 @@ export function ArtImage({ src, alt, className = '' }) {
   )
 }
 
-export function GoldBar({ value, max, color }) {
-  const pct = Math.min(100, Math.round((value / max) * 100))
-  return (
-    <div className="h-2 w-full overflow-hidden rounded-full bg-white/5">
-      <div
-        className="h-full rounded-full"
-        style={{ width: `${pct}%`, background: `linear-gradient(90deg, ${color || '#8c6417'}, #f6cf61)` }}
-      />
-    </div>
-  )
-}
 
 export function ArtCard({ src, alt, title, children, action }) {
   return (
@@ -70,4 +59,3 @@ export function ArtCard({ src, alt, title, children, action }) {
   )
 }
 
-export { Icon }

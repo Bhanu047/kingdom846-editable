@@ -1,8 +1,7 @@
 import { useState } from 'react'
-import { Panel, SectionTitle, Pill, ArtImage } from '../components/ui'
+import { Panel, ArtImage } from '../components/ui'
 import { Embers } from '../components/Embers'
 import { Modal } from '../components/RosterPending'
-import Icon from '../components/Icon'
 import { useSiteData } from '../context/SiteDataContext'
 import { buildSchedule } from '../data/kingdom'
 

@@ -206,7 +206,7 @@ export default function SplashScreen({ onEnter }) {
           fontSize: 'clamp(1.7rem, 5.5vw, 3.5rem)', fontWeight: 'bold',
           color: '#E8C766', margin: 0, letterSpacing: '0.02em',
           textShadow: '0 0 30px rgba(212,175,55,0.5), 0 0 60px rgba(212,175,55,0.25), 0 2px 10px rgba(0,0,0,0.9)',
-        }}>Welcome to Kingdom 846</h1>
+        }}>Welcome to<br /><span style={{ fontSize: '1.2em' }}>Kingdom 846</span></h1>
 
         {/* Subtitle */}
         <p style={{

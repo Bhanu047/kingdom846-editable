@@ -9,24 +9,9 @@ import { apiJson } from '../lib/api'
  * AI action badges, glow pulse on new message, auto-scroll.
  */
 
-// Royal Crown SVG — clean, fits the Kingdom theme
+// Crown icon — clean emoji, fits Kingdom theme
 const OrbIcon = ({ size = 28, online = false }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-    <path d="M3 18h18l-1.5-9-4.5 3.75L12 6l-3 6.75L4.5 9z" 
-      fill={online ? '#D4AF37' : '#3A3320'} 
-      stroke={online ? '#E8C766' : '#5C4A1F'} 
-      strokeWidth="1" 
-      strokeLinejoin="round"
-    />
-    <rect x="3" y="18" width="18" height="3" rx="0.5" 
-      fill={online ? '#B8941F' : '#2A2415'} 
-      stroke={online ? '#D4AF37' : '#5C4A1F'} 
-      strokeWidth="0.5"
-    />
-    {online && (
-      <circle cx="12" cy="7" r="1" fill="#E8C766" />
-    )}
-  </svg>
+  <span style={{ fontSize: size * 0.8, lineHeight: 1, filter: online ? 'drop-shadow(0 0 4px rgba(212,175,55,0.6))' : 'grayscale(0.7) opacity(0.5)' }}>👑</span>
 )
 
 export default function ChatAssistant() {

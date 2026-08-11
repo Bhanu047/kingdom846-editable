@@ -63,6 +63,19 @@ db.exec(`
     created_at TEXT DEFAULT (datetime('now'))
   );
   CREATE UNIQUE INDEX IF NOT EXISTS idx_roster_unique ON roster_members(alliance_slug, governor_id) WHERE governor_id IS NOT NULL;
+  CREATE TABLE IF NOT EXISTS kingshot_sync (
+    id TEXT PRIMARY KEY,
+    type TEXT NOT NULL,
+    title TEXT NOT NULL,
+    category TEXT,
+    date TEXT,
+    excerpt TEXT,
+    body TEXT,
+    source TEXT,
+    art TEXT,
+    read_time TEXT,
+    synced_at TEXT DEFAULT (datetime('now'))
+  );
 `)
 // Seed default king
 if (!db.prepare('SELECT id FROM king_status WHERE id = ?').get(1)) {
@@ -370,6 +383,170 @@ app.get('/api/roster', (_req, res) => {
     (byAlliance[r.alliance_slug] ||= []).push({ name: r.name, position: r.position })
   }
   res.json({ rosters: byAlliance })
+})
+
+// --- Kingshot auto-sync ---
+const SYNC_KEY = process.env.SYNC_KEY || 'k846-sync-a7f3e9c2b1'
+
+// Fetch and parse Kingshot sources
+async function fetchKingshotData() {
+  const news = []
+  const guides = []
+
+  // 1. Game Announcements from kingshot.net
+  try {
+    const res = await fetch('https://kingshot.net/game-announcements', {
+      headers: { 'User-Agent': 'Mozilla/5.0' },
+      signal: AbortSignal.timeout(10000)
+    })
+    const html = await res.text()
+    // Parse announcement cards
+    const items = html.match(/<article[^>]*>[\s\S]*?<\/article>/gi) || []
+    const cardPattern = /<h[23][^>]*>(?:<a[^>]*>)?([^<]+)(?:<\/a>)?<\/h[23]>[\s\S]*?(?:<time[^>]*>([^<]*)<\/time>|datetime="([^"]+)")[\s\S]*?<p[^>]*>([\s\S]*?)<\/p>/gi
+    let match
+    while ((match = cardPattern.exec(html)) !== null && news.length < 15) {
+      const title = match[1].trim().replace(/\[.*?\]/g, '').trim()
+      const date = match[2] || match[3] || ''
+      const excerpt = match[4]?.replace(/<[^>]+>/g, '').trim().slice(0, 200) || ''
+      if (title.length > 3) {
+        news.push({
+          id: 'ks-news-' + news.length,
+          type: 'news',
+          title,
+          category: 'ANNOUNCEMENT',
+          date: date || new Date().toISOString().slice(0, 10),
+          excerpt,
+          body: excerpt,
+          source: 'https://kingshot.net/game-announcements'
+        })
+      }
+    }
+  } catch (e) { console.error('Sync: kingshot.net announcements failed:', e.message) }
+
+  // 2. Guides from kingshot.wiki
+  try {
+    const res = await fetch('https://www.kingshot.wiki/guides', {
+      headers: { 'User-Agent': 'Mozilla/5.0' },
+      signal: AbortSignal.timeout(10000)
+    })
+    const html = await res.text()
+    // Parse guide links
+    const linkPattern = /<a[^>]*href="([^"]*guide[^"]*)"[^>]*>([
+\s\S]*?)<\/a>/gi
+    const seen = new Set()
+    let match
+    while ((match = linkPattern.exec(html)) !== null && guides.length < 30) {
+      const url = match[1]
+      const title = match[2].replace(/<[^>]+>/g, '').trim()
+      if (title.length > 5 && !seen.has(url) && !url.includes('#') && !url.includes('category')) {
+        seen.add(url)
+        guides.push({
+          id: 'ks-guide-' + guides.length,
+          type: 'guide',
+          title,
+          category: 'Strategy',
+          excerpt: title + ' — full strategy guide from Kingshot Wiki.',
+          body: '',
+          source: url.startsWith('http') ? url : 'https://www.kingshot.wiki' + url,
+          read_time: '5 min'
+        })
+      }
+    }
+  } catch (e) { console.error('Sync: kingshot.wiki guides failed:', e.message) }
+
+  // 3. Additional guides from kingshot.net/wiki
+  try {
+    const res = await fetch('https://kingshot.net/wiki', {
+      headers: { 'User-Agent': 'Mozilla/5.0' },
+      signal: AbortSignal.timeout(10000)
+    })
+    const html = await res.text()
+    const linkPattern = /<a[^>]*href="([^"]*(?:guide|beginner|troop|rally|bear)[^"]*)"[^>]*>([\s\S]*?)<\/a>/gi
+    const seen = new Set(guides.map(g => g.source))
+    let match
+    while ((match = linkPattern.exec(html)) !== null && guides.length < 50) {
+      const url = match[1]
+      const title = match[2].replace(/<[^>]+>/g, '').trim()
+      if (title.length > 5 && !seen.has(url) && !url.includes('#')) {
+        seen.add(url)
+        guides.push({
+          id: 'ks-guide-' + guides.length,
+          type: 'guide',
+          title,
+          category: 'Strategy',
+          excerpt: title + ' — Kingshot.net wiki guide.',
+          body: '',
+          source: url.startsWith('http') ? url : 'https://kingshot.net' + url,
+          read_time: '5 min'
+        })
+      }
+    }
+  } catch (e) { console.error('Sync: kingshot.net wiki failed:', e.message) }
+
+  // 4. News from kingshot.com.br (English)
+  try {
+    const res = await fetch('https://kingshot.com.br/en/news/', {
+      headers: { 'User-Agent': 'Mozilla/5.0' },
+      signal: AbortSignal.timeout(10000)
+    })
+    const html = await res.text()
+    const articlePattern = /<h[23][^>]*><a[^>]*href="([^"]+)"[^>]*>([^<]+)<\/a><\/h[23]>[\s\S]*?<(?:time|span)[^>]*>([^<]*)<\//gi
+    let match
+    while ((match = articlePattern.exec(html)) !== null && news.length < 20) {
+      const url = match[1]
+      const title = match[2].trim()
+      const date = match[3]?.trim() || ''
+      if (title.length > 5) {
+        news.push({
+          id: 'ks-news-br-' + news.length,
+          type: 'news',
+          title,
+          category: 'FEATURE',
+          date: date || new Date().toISOString().slice(0, 10),
+          excerpt: title + ' — Read more on Kingshot Brasil.',
+          body: '',
+          source: url.startsWith('http') ? url : 'https://kingshot.com.br' + url
+        })
+      }
+    }
+  } catch (e) { console.error('Sync: kingshot.com.br failed:', e.message) }
+
+  return { news, guides }
+}
+
+// Sync endpoint (called by cron with secret key)
+app.post('/api/sync-kingshot', async (req, res) => {
+  const key = req.query.key || req.headers['x-sync-key']
+  if (key !== SYNC_KEY) return res.status(403).json({ error: 'Invalid sync key' })
+  try {
+    const { news, guides } = await fetchKingshotData()
+    const all = [...news, ...guides]
+    // Clear old synced data and insert fresh
+    db.prepare('DELETE FROM kingshot_sync').run()
+    const stmt = db.prepare('INSERT OR REPLACE INTO kingshot_sync (id, type, title, category, date, excerpt, body, source, art, read_time, synced_at) VALUES (?,?,?,?,?,?,?,?,?,?,datetime(\'now\'))')
+    for (const item of all) {
+      stmt.run(item.id, item.type, item.title, item.category || null, item.date || null, item.excerpt || null, item.body || null, item.source || null, item.art || null, item.read_time || null)
+    }
+    res.json({ ok: true, synced: all.length, news: news.length, guides: guides.length, at: new Date().toISOString() })
+  } catch (e) {
+    res.status(500).json({ error: 'Sync failed: ' + e.message })
+  }
+})
+
+// Public endpoint — returns synced Kingshot news and guides
+app.get('/api/kingshot', (_req, res) => {
+  const rows = db.prepare('SELECT * FROM kingshot_sync ORDER BY synced_at DESC').all()
+  const news = rows.filter(r => r.type === 'news').map(r => ({
+    id: r.id, title: r.title, category: r.category || 'FEATURE',
+    date: r.date || '', excerpt: r.excerpt || '', body: r.body || r.excerpt || '',
+    source: r.source || ''
+  }))
+  const guides = rows.filter(r => r.type === 'guide').map(r => ({
+    id: r.id, title: r.title, category: r.category || 'Strategy',
+    excerpt: r.excerpt || '', body: r.body || '', source: r.source || '',
+    read: r.read_time || '5 min', art: r.art || './assets/strategy-war-academy.png'
+  }))
+  res.json({ news, guides, synced_at: rows[0]?.synced_at || null })
 })
 
 const PORT = process.env.PORT || 5000

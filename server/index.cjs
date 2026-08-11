@@ -671,7 +671,7 @@ const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GE
 function buildKingdomContext() {
   const kingRow = db.prepare('SELECT * FROM king_status WHERE id = 1').get()
   const alliances = db.prepare('SELECT slug, name, leader, language, tagline FROM alliances').all()
-  const events = db.prepare('SELECT title, date, time, category, description FROM kingshot_sync WHERE type != "news" ORDER BY date ASC LIMIT 10').all()
+  const events = db.prepare('SELECT title, date, category, excerpt FROM kingshot_sync WHERE type != "news" ORDER BY date ASC LIMIT 10').all()
   const news = db.prepare('SELECT title, excerpt, category FROM kingshot_sync WHERE type = "news" ORDER BY synced_at DESC LIMIT 5').all()
   const guides = db.prepare('SELECT title, category, excerpt FROM kingshot_sync WHERE type = "guide" ORDER BY id DESC LIMIT 10').all()
   const transfers = db.prepare('SELECT name, alliance, status FROM transfers ORDER BY created_at DESC LIMIT 5').all()
@@ -690,7 +690,7 @@ ALLIANCES:
 ${alliances.map(a => `- [${a.slug}] ${a.name} — Leader: ${a.leader}, Language: ${a.language}, Tagline: ${a.tagline || 'none'}`).join('\n')}
 
 UPCOMING EVENTS:
-${events.length ? events.map(e => `- ${e.title} (${e.date} ${e.time || ''}) — ${e.description}`).join('\n') : 'None scheduled'}
+${events.length ? events.map(e => `- ${e.title} (${e.date}) — ${e.excerpt || ''}`).join('\n') : 'None scheduled'}
 
 RECENT NEWS:
 ${news.length ? news.map(n => `- ${n.title}`).join('\n') : 'None'}

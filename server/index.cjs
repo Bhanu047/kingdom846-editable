@@ -389,6 +389,15 @@ app.get('/api/roster', (_req, res) => {
 const SYNC_KEY = process.env.SYNC_KEY || 'k846-sync-a7f3e9c2b1'
 
 // Fetch and parse Kingshot sources
+function cleanText(s) {
+  if (!s) return ''
+  return s
+    .replace(/&amp;/g, '&').replace(/&#39;|&apos;/g, "'").replace(/&quot;/g, '"')
+    .replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&nbsp;/g, ' ')
+    .replace(/&#\d+;/g, '')
+    .replace(/\s+/g, ' ').trim()
+}
+
 async function fetchKingshotData() {
   const news = []
   const guides = []
@@ -405,9 +414,9 @@ async function fetchKingshotData() {
     const cardPattern = /<h[23][^>]*>(?:<a[^>]*>)?([^<]+)(?:<\/a>)?<\/h[23]>[\s\S]*?(?:<time[^>]*>([^<]*)<\/time>|datetime="([^"]+)")[\s\S]*?<p[^>]*>([\s\S]*?)<\/p>/gi
     let match
     while ((match = cardPattern.exec(html)) !== null && news.length < 15) {
-      const title = match[1].trim().replace(/\[.*?\]/g, '').trim()
-      const date = match[2] || match[3] || ''
-      const excerpt = match[4]?.replace(/<[^>]+>/g, '').trim().slice(0, 200) || ''
+      const title = cleanText(match[1].replace(/\[.*?\]/g, '').trim())
+      const date = cleanText(match[2] || match[3] || '')
+      const excerpt = cleanText(match[4]?.replace(/<[^>]+>/g, '').slice(0, 200)) || ''
       if (title.length > 3) {
         news.push({
           id: 'ks-news-' + news.length,
@@ -430,14 +439,14 @@ async function fetchKingshotData() {
       signal: AbortSignal.timeout(10000)
     })
     const html = await res.text()
-    // Parse guide links
-    const linkPattern = /<a[^>]*href="([^"]*guide[^"]*)"[^>]*>([\s\S]*?)<\/a>/gi
+    // Parse guide links - look for heading elements containing links
+    const headingPattern = /<h[234][^>]*>\s*<a[^>]*href="([^"]*guide[^"]*)"[^>]*>([\s\S]*?)<\/a>\s*<\/h[234]>/gi
     const seen = new Set()
     let match
-    while ((match = linkPattern.exec(html)) !== null && guides.length < 30) {
+    while ((match = headingPattern.exec(html)) !== null && guides.length < 30) {
       const url = match[1]
-      const title = match[2].replace(/<[^>]+>/g, '').trim()
-      if (title.length > 5 && !seen.has(url) && !url.includes('#') && !url.includes('category')) {
+      const title = cleanText(match[2].replace(/<[^>]+>/g, ''))
+      if (title.length > 5 && !seen.has(url) && !url.includes('#') && !url.includes('category') && title !== 'Guides') {
         seen.add(url)
         guides.push({
           id: 'ks-guide-' + guides.length,
@@ -449,6 +458,22 @@ async function fetchKingshotData() {
           source: url.startsWith('http') ? url : 'https://www.kingshot.wiki' + url,
           read_time: '5 min'
         })
+      }
+    }
+    // Fallback: also try table rows or list items with guide links
+    if (guides.length < 5) {
+      const rowPattern = /<a[^>]*href="([^"]*\/guide[^"]*)"[^>]*>([\s\S]*?)<\/a>/gi
+      while ((match = rowPattern.exec(html)) !== null && guides.length < 30) {
+        const url = match[1]
+        const title = cleanText(match[2].replace(/<[^>]+>/g, '').replace(/^Guide\d*\s*\w*\s*summary/, '').split(/(?=[A-Z])/).slice(0, 15).join(''))
+        if (title.length > 5 && !seen.has(url) && !url.includes('#') && !url.includes('category') && title !== 'Guides') {
+          seen.add(url)
+          guides.push({
+            id: 'ks-guide-' + guides.length, type: 'guide', title,
+            category: 'Strategy', excerpt: title + ' — strategy guide from Kingshot Wiki.',
+            body: '', source: url.startsWith('http') ? url : 'https://www.kingshot.wiki' + url, read_time: '5 min'
+          })
+        }
       }
     }
   } catch (e) { console.error('Sync: kingshot.wiki guides failed:', e.message) }
@@ -465,8 +490,8 @@ async function fetchKingshotData() {
     let match
     while ((match = linkPattern.exec(html)) !== null && guides.length < 50) {
       const url = match[1]
-      const title = match[2].replace(/<[^>]+>/g, '').trim()
-      if (title.length > 5 && !seen.has(url) && !url.includes('#')) {
+      const title = cleanText(match[2].replace(/<[^>]+>/g, ''))
+      if (title.length > 5 && !seen.has(url) && !url.includes('#') && title !== 'Guides') {
         seen.add(url)
         guides.push({
           id: 'ks-guide-' + guides.length,
@@ -493,9 +518,9 @@ async function fetchKingshotData() {
     let match
     while ((match = articlePattern.exec(html)) !== null && news.length < 20) {
       const url = match[1]
-      const title = match[2].trim()
-      const date = match[3]?.trim() || ''
-      if (title.length > 5) {
+      const title = cleanText(match[2])
+      const date = cleanText(match[3]) || ''
+      if (title.length > 5 && !title.includes('Kingshot Brasil')) {
         news.push({
           id: 'ks-news-br-' + news.length,
           type: 'news',

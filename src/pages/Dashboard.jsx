@@ -44,6 +44,12 @@ export default function Dashboard({ onNavigate }) {
   // Live king status (editable by Sparta via Master Console) — falls back to static defaults
   const [liveKing, setLiveKing] = useState(null)
   useEffect(() => { apiJson('/api/king-status').then(setLiveKing).catch(() => {}) }, [])
+  // Live synced news + guides from API (same source as Guides & News pages)
+  const [liveData, setLiveData] = useState(null)
+  useEffect(() => { apiJson('/api/kingshot').then(setLiveData).catch(() => {}) }, [])
+  // Merge: prefer live synced data, fall back to static
+  const displayNews = liveData?.news?.length ? liveData.news : news
+  const displayGuides = liveData?.guides?.length ? liveData.guides : guides
   const kingSlug = (liveKing?.alliance_tag || kingdom.kingTag || '').replace(/[\[\]]/g, '').toLowerCase()
   const kingAlliance = alliances.find(a => a.slug === kingSlug) || alliances.find(a => a.slug === kingdom.kingAllianceSlug) || alliances[0]
   const kingBanner = BANNERS[kingSlug] || BANNERS[kingdom.kingAllianceSlug] || BANNERS.ryo
@@ -241,7 +247,7 @@ export default function Dashboard({ onNavigate }) {
         <Panel className="lg:col-span-1">
           <SectionTitle eyebrow="Realm" title="Kingdom News" action={<button onClick={() => onNavigate('news')} className="text-xs text-gold hover:underline">All →</button>} />
           <div className="space-y-3">
-            {news.slice(0, 4).map((n) => (
+            {displayNews.slice(0, 4).map((n) => (
               <button key={n.id} onClick={() => onNavigate('news')} className="block w-full text-left">
                 <div className="flex items-center gap-2">
                   <Pill tone="muted">{n.category}</Pill>
@@ -256,7 +262,7 @@ export default function Dashboard({ onNavigate }) {
         <Panel className="lg:col-span-2">
           <SectionTitle eyebrow="Strategy" title="Guides & Playbooks" action={<button onClick={() => onNavigate('guides')} className="text-xs text-gold hover:underline">All →</button>} />
           <div className="grid gap-4 md:grid-cols-3">
-            {guides.slice(0, 3).map((g) => (
+            {displayGuides.slice(0, 3).map((g) => (
               <button key={g.id} onClick={() => onNavigate('guides')} className="panel overflow-hidden text-left transition hover:panel-glow">
                 <div className="relative h-24">
                   <ArtImage src={g.art} alt={g.title} className="h-full w-full" />

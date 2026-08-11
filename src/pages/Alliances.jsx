@@ -61,7 +61,7 @@ export default function Alliances() {
                     <div className="text-[11px] text-parchment/70">{a.tagline}</div>
                   </div>
                 </div>
-                <div className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-ink/60 px-2 py-1 text-[10px] text-parchment/70 backdrop-blur">
+                <div className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-ink/60 px-2 py-1 text-[10px] text-parchment/70 ">
                   <Icon name="clock" size={11} /> Event Times
                 </div>
               </div>
@@ -81,7 +81,7 @@ export default function Alliances() {
             <div className="relative h-32">
               <ArtImage src={active.art} alt={active.name} className="h-full w-full" />
               <div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/70 to-ink/10" />
-              <button onClick={() => setActive(null)} className="absolute right-3 top-3 rounded-full bg-ink/60 p-1.5 text-parchment/70 backdrop-blur hover:text-parchment">
+              <button onClick={() => setActive(null)} className="absolute right-3 top-3 rounded-full bg-ink/60 p-1.5 text-parchment/70  hover:text-parchment">
                 <Icon name="chevron" size={16} className="rotate-90" />
               </button>
               <div className="absolute inset-x-0 bottom-0 p-4">

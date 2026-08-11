@@ -23,7 +23,7 @@ export default function Login({ onClose, onSuccess, mode = 'leader' }) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70  p-4" onClick={onClose}>
       <div className="page-enter panel aurora-border w-full max-w-sm p-6" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-gold">

@@ -141,7 +141,7 @@ export default function Dashboard({ onNavigate }) {
           <div className="relative z-10 flex h-full min-h-[460px] flex-col p-5">
             <SectionTitle eyebrow="Realm" title="Kingdom Status" action={isAdmin ? <button onClick={() => onNavigate('console')} className="text-xs text-gold hover:underline" data-testid="button-edit-king-status">Edit →</button> : undefined} />
             <div className="flex flex-1 flex-col justify-center gap-!3 py-4">
-              <div className="inline-flex items-center gap-2 rounded-full border border-gold/40 bg-ink/70 px-3 py-1 backdrop-blur">
+              <div className="inline-flex items-center gap-2 rounded-full border border-gold/40 bg-ink/70 px-3 py-1 ">
                 <Icon name="crown" size={14} className="text-gold" />
                 <span className="text-[10px] uppercase tracking-[0.2em] text-gold/90">{kingTitle}</span>
               </div>
@@ -174,7 +174,7 @@ export default function Dashboard({ onNavigate }) {
                         <div className="absolute inset-0 bg-gradient-to-r from-ink/85 via-ink/35 to-transparent" />
                       </div>
                       <div className="relative z-10 flex items-center gap-3 p-3">
-                        <div className="badge-shine grid h-9 w-9 flex-shrink-0 place-items-center rounded-lg border border-gold/40 bg-ink/70 font-display text-sm font-bold text-gold backdrop-blur">#{p.rank}</div>
+                        <div className="badge-shine grid h-9 w-9 flex-shrink-0 place-items-center rounded-lg border border-gold/40 bg-ink/70 font-display text-sm font-bold text-gold ">#{p.rank}</div>
                         <div className="min-w-0 flex-1">
                           <div className="truncate font-display text-base font-bold text-parchment drop-shadow"><span className="text-gold">{p.tag}</span>{p.name}</div>
                           <div className="truncate text-[11px] font-medium text-parchment drop-shadow-[0_1px_3px_rgba(0,0,0,0.9)]">{p.alliance}</div>

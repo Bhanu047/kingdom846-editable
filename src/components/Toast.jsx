@@ -42,7 +42,7 @@ export function ToastProvider({ children }) {
         {toasts.map((t) => (
           <div
             key={t.id}
-            className={`page-enter flex items-center gap-2 rounded-lg border px-4 py-3 backdrop-blur-md shadow-lg ${colors[t.type] || colors.info}`}
+            className={`page-enter flex items-center gap-2 rounded-lg border px-4 py-3  shadow-lg ${colors[t.type] || colors.info}`}
           >
             <Icon name={icons[t.type] || icons.info} size={16} />
             <span className="text-sm font-medium">{t.message}</span>

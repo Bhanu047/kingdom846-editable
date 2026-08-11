@@ -50,7 +50,7 @@ export function RosterPending({ title, schema, icon = 'users', description }) {
 export function Modal({ open, onClose, title, eyebrow, children, footer }) {
   if (!open) return null
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-ink/80 p-4 backdrop-blur" onClick={onClose}>
+    <div className="fixed inset-0 z-50 grid place-items-center bg-ink/80 p-4 " onClick={onClose}>
       <div className="w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
         <div className="panel panel-glow max-h-[85vh] overflow-y-auto">
           {(title || eyebrow) && (

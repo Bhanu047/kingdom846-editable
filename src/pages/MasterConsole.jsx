@@ -168,7 +168,7 @@ export default function MasterConsole() {
 
       {/* Reset modal */}
       {resetId && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-ink/80 p-4 backdrop-blur" onClick={() => setResetId(null)}>
+        <div className="fixed inset-0 z-50 grid place-items-center bg-ink/80 p-4 " onClick={() => setResetId(null)}>
           <div className="w-full max-w-sm panel panel-glow p-6" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between">
               <h3 className="font-display text-lg font-bold text-gold">Reset Leader Login</h3>

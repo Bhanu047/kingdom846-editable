@@ -3,7 +3,7 @@ import { nav } from '../data/kingdom'
 
 export default function Sidebar({ active, onNavigate, onLogin, onSignOut, user, isAdmin }) {
   return (
-    <aside className="flex h-full w-64 flex-col border-r border-gold/15 bg-ink-2/60 backdrop-blur">
+    <aside className="flex h-full w-64 flex-col border-r border-gold/15 bg-ink-2/90">
       {/* Brand */}
       <div className="flex items-center gap-3 px-4 py-5">
         <img src="./assets/crest-846.png" alt="Kingdom 846 crest" className="h-10 w-10 rounded-md" />

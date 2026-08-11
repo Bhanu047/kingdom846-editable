@@ -5,6 +5,8 @@ import ErrorBoundary from './components/ErrorBoundary'
 import { ToastProvider } from './components/Toast'
 import { PageSkeleton } from './components/Skeleton'
 import SplashScreen from './components/SplashScreen'
+import ParticleField from './components/ParticleField'
+import ScrollProgress from './components/ScrollProgress'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { SiteDataProvider } from './context/SiteDataContext'
 import { nav, timeline, guides, news } from './data/kingdom'
@@ -141,15 +143,9 @@ function Shell() {
   return (
     <>
       {showSplash && <SplashScreen onEnter={() => setShowSplash(false)} />}
-      {/* Ambient gold dust particles */}
-      <div className="ambient-particles">
-        <div className="ambient-particle" style={{ left: '10%', animationDelay: '0s' }} />
-        <div className="ambient-particle" style={{ left: '25%', animationDelay: '3s' }} />
-        <div className="ambient-particle" style={{ left: '45%', animationDelay: '6s' }} />
-        <div className="ambient-particle" style={{ left: '65%', animationDelay: '2s' }} />
-        <div className="ambient-particle" style={{ left: '80%', animationDelay: '5s' }} />
-        <div className="ambient-particle" style={{ left: '90%', animationDelay: '8s' }} />
-      </div>
+      {/* Canvas particle system + mouse glow */}
+      <ParticleField />
+      <ScrollProgress />
       <div className="flex h-screen overflow-hidden relative z-10">
       <div className="hidden md:flex">
         <Sidebar active={page} onNavigate={navigate} user={sidebarUser} onLogin={() => { setLoginMode('admin'); setLoginOpen(true) }} onSignOut={handleSignOut} isAdmin={isAdmin} />

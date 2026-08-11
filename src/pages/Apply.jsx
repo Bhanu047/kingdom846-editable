@@ -25,36 +25,36 @@ export default function Apply({ type, onNavigate }) {
   if (!form) {
     return (
       <div className="space-y-4">
-        <Panel glow className="relative overflow-hidden p-0">
+        <Panel glow className="hero-frame relative overflow-hidden p-0">
           <div className="relative h-40 sm:h-48">
-            <img src="./assets/apply-chief-minister.png" alt="Apply" className="h-full w-full object-cover" />
-            <div className="absolute inset-0 bg-gradient-to-r from-ink via-ink/80 to-ink/20" />
+            <img src="./assets/hero-apply-chief.png" alt="Apply" className="h-full w-full object-cover" />
+            <div className="hero-overlay absolute inset-0" />
             <div className="absolute inset-y-0 left-0 flex flex-col justify-center p-6 md:p-10">
               <div className="eyebrow">Kingdom 846 leadership</div>
-              <h1 className="mt-1 font-display text-2xl sm:text-3xl font-bold text-parchment">Apply for a Role</h1>
+              <h1 className="mt-1 font-display text-2xl sm:text-3xl font-bold gradient-gold">Apply for a Role</h1>
               <p className="mt-1 text-sm text-parchment/60">Choose a position to begin your reservation.</p>
             </div>
           </div>
         </Panel>
         <div className="grid gap-4 sm:grid-cols-2">
-          <button onClick={() => onNavigate('apply-chief')} className="panel lift group relative overflow-hidden text-left">
+          <button onClick={() => onNavigate('apply-chief')} className="panel lift-glow gold-border-hover img-zoom group relative overflow-hidden text-left stagger-in">
             <div className="relative h-32 overflow-hidden">
-              <img src="./assets/apply-chief-minister.png" alt="Chief Minister" className="h-full w-full object-cover opacity-80 transition group-hover:opacity-100" />
+              <img src="./assets/hero-apply-chief.png" alt="Chief Minister" className="h-full w-full object-cover opacity-80 transition" />
               <div className="absolute inset-0 bg-gradient-to-t from-ink to-transparent" />
             </div>
             <div className="p-4">
-              <div className="font-display text-lg font-bold text-gold">Chief Minister</div>
+              <div className="font-display text-lg font-bold gradient-gold">Chief Minister</div>
               <p className="mt-1 text-xs text-parchment/60">Reserve your buff day for construction or research.</p>
               <span className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-gold">Open form <Icon name="arrow" size={12} /></span>
             </div>
           </button>
-          <button onClick={() => onNavigate('apply-noble')} className="panel lift group relative overflow-hidden text-left">
+          <button onClick={() => onNavigate('apply-noble')} className="panel lift-glow gold-border-hover img-zoom group relative overflow-hidden text-left stagger-in">
             <div className="relative h-32 overflow-hidden">
-              <img src="./assets/apply-noble-advisor.png" alt="Noble Advisor" className="h-full w-full object-cover opacity-80 transition group-hover:opacity-100" />
+              <img src="./assets/hero-apply-noble.png" alt="Noble Advisor" className="h-full w-full object-cover opacity-80 transition" />
               <div className="absolute inset-0 bg-gradient-to-t from-ink to-transparent" />
             </div>
             <div className="p-4">
-              <div className="font-display text-lg font-bold text-gold">Noble Advisor</div>
+              <div className="font-display text-lg font-bold gradient-gold">Noble Advisor</div>
               <p className="mt-1 text-xs text-parchment/60">Reserve your troops training slot.</p>
               <span className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-gold">Open form <Icon name="arrow" size={12} /></span>
             </div>
@@ -66,31 +66,33 @@ export default function Apply({ type, onNavigate }) {
 
   return (
     <div className="space-y-4">
-      <Panel glow className="relative overflow-hidden p-0">
+      <Panel glow className="hero-frame gold-corners relative overflow-hidden p-0">
         <div className="relative h-36 sm:h-44">
           <img src={form.art} alt={form.title} className="h-full w-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-r from-ink via-ink/85 to-ink/30" />
+          <div className="hero-overlay absolute inset-0" />
           <div className="absolute inset-y-0 left-0 flex flex-col justify-center p-6">
             <button onClick={() => onNavigate('apply')} className="text-xs text-gold/70 hover:text-gold mb-1">← Back to roles</button>
-            <h1 className="font-display text-xl sm:text-2xl font-bold text-parchment">{form.title}</h1>
+            <h1 className="font-display text-xl sm:text-2xl font-bold gradient-gold">{form.title}</h1>
           </div>
         </div>
       </Panel>
 
-      {/* Embed form */}
-      <Panel className="p-0 overflow-hidden">
-        <iframe
-          src={form.embed}
-          width="100%"
-          height="700"
-          frameBorder="0"
-          marginHeight="0"
-          marginWidth="0"
-          title={form.title}
-          style={{ border: 'none', minHeight: '700px' }}
-        >
-          Loading…
-        </iframe>
+      {/* Embed form with ornate frame */}
+      <Panel className="gold-corners p-0 overflow-hidden glass-panel">
+        <div className="px-1 pt-1">
+          <iframe
+            src={form.embed}
+            width="100%"
+            height="700"
+            frameBorder="0"
+            marginHeight="0"
+            marginWidth="0"
+            title={form.title}
+            style={{ border: 'none', minHeight: '700px', borderRadius: '0.5rem' }}
+          >
+            Loading…
+          </iframe>
+        </div>
       </Panel>
 
       {/* Check signup status + fallback link */}

@@ -61,7 +61,7 @@ export default function Events() {
           <ArtImage src="./assets/hero-events.png" alt="Castle battle" className="h-full w-full" />
           <div className="absolute inset-0 flex flex-col justify-center p-6 md:p-10">
             <div className="eyebrow">War Calendar</div>
-            <h1 className="mt-1 font-display text-3xl font-bold text-parchment drop-shadow-lg">Upcoming Events</h1>
+            <h1 className="mt-1 font-display text-3xl font-bold gradient-gold drop-shadow-lg">Upcoming Events</h1>
             <p className="mt-2 max-w-lg text-sm text-parchment/70">Live milestone schedule synced from the official Kingdom 846 timeline. Countdowns update in real time.</p>
           </div>
         </div>

@@ -48,17 +48,19 @@ export default function Dashboard({ onNavigate }) {
   return (
     <div className="space-y-6">
       {/* Cinematic Hero */}
-      <Panel glow className="relative overflow-hidden p-0">
-        <div className="relative h-64 md:h-80">
+      <Panel glow className="hero-frame relative overflow-hidden p-0">
+        <div className="relative h-64 md:h-96 hero-shimmer">
           <ArtImage src="./assets/hero-throne-room.png" alt="Kingdom 846" className="h-full w-full" />
           <div className="hero-overlay absolute inset-0" />
+          {/* Rune circle decoration */}
+          <div className="rune-circle" style={{ right: '10%', top: '20%' }} />
           <div className="absolute inset-y-0 left-0 flex max-w-xl flex-col justify-center p-6 md:p-10">
-            <div className="eyebrow">{kingdom.season}</div>
-            <h1 className="mt-2 font-display text-4xl font-bold tracking-wide text-parchment drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)] md:text-6xl">KINGDOM 846</h1>
-            <p className="mt-1 font-display text-sm tracking-[0.2em] text-gold md:text-base">UNITED WE RISE, BUILT FOR VICTORY.</p>
+            <div className="eyebrow text-glow">{kingdom.season}</div>
+            <h1 className="mt-2 font-display text-4xl font-bold tracking-wide text-parchment drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)] md:text-6xl gradient-gold">KINGDOM 846</h1>
+            <p className="mt-1 font-display text-sm tracking-[0.2em] text-gold md:text-base text-glow">UNITED WE RISE, BUILT FOR VICTORY.</p>
             <div className="mt-5 flex flex-wrap gap-2">
-              <button onClick={() => onNavigate('alliances')} className="btn-primary"><Icon name="shield" size={14} /> View Alliances</button>
-              <button onClick={() => onNavigate('about')} className="btn-secondary"><Icon name="castle" size={14} /> Kingdom</button>
+              <button onClick={() => onNavigate('alliances')} className="btn-primary btn-royal sparkle-btn"><Icon name="shield" size={14} /> View Alliances</button>
+              <button onClick={() => onNavigate('about')} className="btn-secondary gold-border-hover"><Icon name="castle" size={14} /> Kingdom</button>
             </div>
           </div>
         </div>

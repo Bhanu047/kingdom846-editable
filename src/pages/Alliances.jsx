@@ -39,7 +39,7 @@ export default function Alliances() {
       <Panel glow className="aurora-border">
         <Embers count={10} />
         <div className="eyebrow">The Council</div>
-        <h1 className="mt-1 font-display text-3xl font-bold text-parchment">Alliances of 846</h1>
+        <h1 className="mt-1 font-display text-3xl font-bold gradient-gold">Alliances of 846</h1>
         <p className="mt-2 text-sm text-parchment/60">The four pillars of Kingdom 846 — the alliances and the council that hold the realm together.</p>
       </Panel>
 

@@ -43,7 +43,7 @@ export default function About() {
               <Pill tone="blue">Global Rank #{kingdom.kvkCurrentRank}</Pill>
               <Pill tone="muted">{kingdom.atlasPercentile}</Pill>
             </div>
-            <h1 className="mt-3 font-display text-4xl font-bold text-parchment">Kingdom 846</h1>
+            <h1 className="mt-3 font-display text-4xl font-bold gradient-gold">Kingdom 846</h1>
             <p className="mt-1 text-sm text-gold-bright/80">"{kingdom.motto}"</p>
             <p className="mt-3 text-sm leading-relaxed text-parchment/70">
               Kingdom 846 is an <span className="text-gold-bright">S-Tier</span> realm — a battle-hardened
@@ -157,7 +157,7 @@ export default function About() {
           <ArtImage src="./assets/art-season-opening.png" alt="Kingdom 846 season opening" className="h-full w-full" />
           <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6">
             <div className="eyebrow">The Realm</div>
-            <h2 className="mt-1 font-display text-3xl font-bold text-parchment drop-shadow-lg">Built for Victory</h2>
+            <h2 className="mt-1 font-display text-3xl font-bold gradient-gold drop-shadow-lg">Built for Victory</h2>
             <p className="mt-2 max-w-xl text-sm text-parchment/80">A kingdom forged in ten wars, seven dominations, and a perfect diplomatic record. Welcome to 846.</p>
           </div>
         </div>

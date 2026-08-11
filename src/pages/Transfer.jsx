@@ -28,11 +28,11 @@ export default function Transfer() {
     <div className="space-y-4">
       <Panel glow className="relative overflow-hidden p-0">
         <div className="relative h-36 sm:h-44">
-          <img src="./assets/banner-icehunters.png" alt="Transfer to 846" className="h-full w-full object-cover" />
+          <img src="./assets/hero-transfer.png" alt="Transfer to 846" className="h-full w-full object-cover" />
           <div className="hero-overlay absolute inset-0" />
           <div className="absolute inset-y-0 left-0 flex flex-col justify-center p-6">
             <div className="eyebrow">Recruitment Open</div>
-            <h1 className="mt-1 font-display text-2xl sm:text-3xl font-bold text-parchment drop-shadow-lg">Transfer to Kingdom 846</h1>
+            <h1 className="mt-1 font-display text-2xl sm:text-3xl font-bold gradient-gold drop-shadow-lg">Transfer to Kingdom 846</h1>
             <p className="mt-1 text-sm text-gold/90">Your power deserves a better home</p>
           </div>
         </div>

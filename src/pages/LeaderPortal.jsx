@@ -6,12 +6,12 @@ import { apiJson } from '../lib/api'
 import { useAuth } from '../context/AuthContext'
 
 const EVENT_META = {
-  'Bear Hunt -1': { icon: 'crosshair', desc: 'First bear hunt rally of the week' },
-  'Bear Hunt-2': { icon: 'crosshair', desc: 'Second bear hunt rally of the week' },
-  'Vikings Vengeance Tuesday': { icon: 'zap', desc: 'Tuesday Vikings Vengeance event' },
-  'Vikings Vengeance Thursday': { icon: 'zap', desc: 'Thursday Vikings Vengeance event' },
-  'Tri-Alliance Clash Legion-1': { icon: 'layers', desc: 'First Tri-Alliance Clash of the week' },
-  'Tri-Alliance Clash Legion-2': { icon: 'layers', desc: 'Second Tri-Alliance Clash of the week' },
+  'Bear Hunt -1': { icon: 'paw', desc: 'First bear hunt rally of the week' },
+  'Bear Hunt-2': { icon: 'paw', desc: 'Second bear hunt rally of the week' },
+  'Vikings Vengeance Tuesday': { icon: 'axe', desc: 'Tuesday Vikings Vengeance event' },
+  'Vikings Vengeance Thursday': { icon: 'axe', desc: 'Thursday Vikings Vengeance event' },
+  'Tri-Alliance Clash Legion-1': { icon: 'shield', desc: 'First Tri-Alliance Clash of the week' },
+  'Tri-Alliance Clash Legion-2': { icon: 'shield', desc: 'Second Tri-Alliance Clash of the week' },
   'Swordland Showdown Legion-1': { icon: 'swords', desc: 'First Swordland Showdown of the week' },
   'Swordland Showdown Legion-2': { icon: 'swords', desc: 'Second Swordland Showdown of the week' },
 }

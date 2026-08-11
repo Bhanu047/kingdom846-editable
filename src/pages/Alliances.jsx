@@ -129,9 +129,9 @@ function Field({ label, value }) {
 
 function getEventMetaLocal(name) {
   const map = {
-    'Bear Hunt': { icon: 'crosshair' },
-    'Vikings': { icon: 'zap' },
-    'Tri-Alliance': { icon: 'layers' },
+    'Bear Hunt': { icon: 'paw' },
+    'Vikings': { icon: 'axe' },
+    'Tri-Alliance': { icon: 'shield' },
     'Swordland': { icon: 'swords' },
   }
   for (const key of Object.keys(map)) {

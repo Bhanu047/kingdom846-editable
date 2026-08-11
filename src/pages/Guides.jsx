@@ -72,9 +72,9 @@ export default function Guides() {
 
       {/* Guide detail popup */}
       {active && (
-        <div className="fixed inset-0 z-50 flex items-start justify-center p-4 bg-black/70" onClick={() => setActive(null)}>
-          <Panel glow className="max-w-lg w-full mt-8 stagger-in" >
-            <div className="relative h-32 mb-3 rounded-lg overflow-hidden">
+        <div className="fixed inset-0 z-50 flex items-start justify-center p-3 bg-black/70" onClick={() => setActive(null)}>
+          <Panel glow className="max-w-lg w-full stagger-in" >
+            <div className="relative h-24 mb-2 rounded-lg overflow-hidden">
               <img src={active.art || './assets/guide-strategy.png'} alt="" className="w-full h-full object-cover" />
               <div className="absolute inset-0 bg-gradient-to-t from-ink-2 via-transparent to-transparent" />
               <button onClick={() => setActive(null)} className="absolute top-2 right-2 w-7 h-7 grid place-items-center rounded-full bg-ink/80 text-parchment/60 hover:text-parchment text-lg leading-none">×</button>

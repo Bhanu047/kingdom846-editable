@@ -378,15 +378,16 @@
 }
 
 /* Ornate button shine */
-.btn-primary { position: relative; overflow: hidden; }
+.btn-primary { position: relative; }
 .btn-primary::after {
   content: '';
   position: absolute;
   top: 0; left: -100%;
   width: 50%; height: 100%;
-  background: linear-gradient(100deg, transparent, rgba(255,255,255,.3), transparent);
+  background: linear-gradient(100deg, transparent, rgba(255,255,255,.15), transparent);
   transform: skewX(-15deg);
   transition: left .5s;
+  pointer-events: none;
 }
 .btn-primary:hover::after { left: 120%; }
 
@@ -770,17 +771,17 @@
 /* Royal button with animated border */
 .btn-royal {
   position: relative;
-  background: linear-gradient(135deg, rgba(212,175,55,.15), rgba(140,43,58,.1));
-  border: 1px solid rgba(212,175,55,.3);
   overflow: hidden;
+  border: 1px solid rgba(212,175,55,.5) !important;
 }
 .btn-royal::before {
   content: '';
   position: absolute;
   inset: 0;
-  background: linear-gradient(90deg, transparent, rgba(212,175,55,.2), transparent);
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.15), transparent);
   background-size: 200% 100%;
   animation: royal-sweep 3s linear infinite;
+  pointer-events: none;
 }
 @keyframes royal-sweep {
   to { background-position: 200% 0; }

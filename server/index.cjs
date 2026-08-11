@@ -63,6 +63,13 @@ db.exec(`
     created_at TEXT DEFAULT (datetime('now'))
   );
   CREATE UNIQUE INDEX IF NOT EXISTS idx_roster_unique ON roster_members(alliance_slug, governor_id) WHERE governor_id IS NOT NULL;
+  CREATE TABLE IF NOT EXISTS alliance_schedules (
+    alliance_slug TEXT NOT NULL,
+    event_name TEXT NOT NULL,
+    event_time TEXT,
+    updated_at TEXT DEFAULT (datetime('now')),
+    PRIMARY KEY (alliance_slug, event_name)
+  )
   CREATE TABLE IF NOT EXISTS kingshot_sync (
     id TEXT PRIMARY KEY,
     type TEXT NOT NULL,
@@ -167,6 +174,48 @@ function clearRateLimit(ip) {
 }
 
 // --- Routes ---
+// Alliance event schedule — leaders can view and update their own alliance's event times
+const ALLIANCE_EVENTS = [
+  'Bear Hunt -1', 'Bear Hunt-2',
+  'Vikings Vengeance Tuesday', 'Vikings Vengeance Thursday',
+  'Tri-Alliance Clash Legion-1', 'Tri-Alliance Clash Legion-2',
+  'Swordland Showdown Legion-1', 'Swordland Showdown Legion-2'
+]
+
+// Public: get all alliance schedules (for Events/Alliances pages)
+app.get('/api/alliance-schedules', (_req, res) => {
+  const rows = db.prepare('SELECT * FROM alliance_schedules').all()
+  res.json(rows)
+})
+
+// Leader: get their alliance's event schedule
+app.get('/api/leader/schedule', auth, leaderOnly, (req, res) => {
+  const slug = req.user.alliance_slug
+  const rows = db.prepare('SELECT event_name, event_time, updated_at FROM alliance_schedules WHERE alliance_slug = ?').all(slug)
+  // Merge with template so all events show even if not yet set
+  const schedule = ALLIANCE_EVENTS.map(event => {
+    const match = rows.find(r => r.event_name === event)
+    return { event, time: match?.event_time || '', updated: match?.updated_at || null }
+  })
+  res.json({ alliance_slug: slug, schedule })
+})
+
+// Leader: update their alliance's event schedule
+app.put('/api/leader/schedule', auth, leaderOnly, (req, res) => {
+  const slug = req.user.alliance_slug
+  const { schedule } = req.body
+  if (!Array.isArray(schedule)) return res.status(400).json({ error: 'Schedule array required' })
+  
+  const stmt = db.prepare("INSERT INTO alliance_schedules (alliance_slug, event_name, event_time, updated_at) VALUES (?,?,?,datetime('now')) ON CONFLICT(alliance_slug, event_name) DO UPDATE SET event_time=excluded.event_time, updated_at=datetime('now')")
+  
+  for (const item of schedule) {
+    if (item.event && ALLIANCE_EVENTS.includes(item.event)) {
+      stmt.run(slug, item.event, item.time || '')
+    }
+  }
+  res.json({ ok: true, alliance_slug: slug, updated: schedule.length })
+})
+
 app.get('/api/health', (_req, res) => res.json({ ok: true, ts: Date.now() }))
 
 app.post('/api/login', (req, res) => {

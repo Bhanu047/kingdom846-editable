@@ -41,6 +41,16 @@ export default function Sidebar({ active, onNavigate, onLogin, onSignOut, user, 
             </button>
           </>
         )}
+
+        {user?.role === 'leader' && (
+          <>
+            <div className="gold-divider my-3" />
+            <div className="eyebrow px-3 pb-2">Leader</div>
+            <button onClick={() => onNavigate('leader-portal')} className={`nav-item w-full text-left ${active === 'leader-portal' ? 'active nav-glow' : ''}`}>
+              <Icon name="clock" size={17} /><span>Event Schedule</span>
+            </button>
+          </>
+        )}
       </nav>
 
       {/* User / Login */}

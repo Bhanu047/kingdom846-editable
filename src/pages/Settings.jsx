@@ -88,7 +88,7 @@ export default function Settings() {
       <Panel className="p-5">
         <SectionTitle eyebrow="About" title="Kingdom 846 Portal" icon="crown" />
         <div className="mt-3 space-y-2 text-sm text-parchment/60">
-          <p>This portal is the official community hub for Kingdom 846 (United We Rise) in the game Kingshot.</p>
+          <p>This portal is the official community hub for Kingdom 846 (One Crown, Four Alliances) in the game Kingshot.</p>
           <p className="text-xs text-parchment/40">Built with React + Vite + Tailwind CSS · Express + SQLite backend</p>
         </div>
       </Panel>

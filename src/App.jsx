@@ -221,18 +221,18 @@ function Shell() {
         <div className="flex-1 overflow-y-auto overflow-x-hidden overscroll-contain p-4 md:p-6" style={{ WebkitOverflowScrolling: 'touch' }}>
           <div key={page} className="page-enter mx-auto max-w-6xl">{render()}</div>
           {/* Footer */}
-          <footer className="mt-12 border-t border-gold/10 pt-4 pb-2">
+          <footer className="mt-12 border-t-2 border-gold/15 pt-5 pb-3">
             <div className="flex flex-col items-center gap-2 text-center">
-              <div className="flex items-center gap-2 text-gold/60">
-                <span className="text-lg">👑</span>
-                <span className="font-serif text-sm tracking-wide gradient-gold font-semibold">Kingdom 846</span>
-                <span className="text-lg">👑</span>
+              <div className="flex items-center gap-2.5">
+                <span className="text-xl">👑</span>
+                <span className="font-serif text-base tracking-wider gradient-gold font-bold">Kingdom 846</span>
+                <span className="text-xl">👑</span>
               </div>
-              <p className="text-[11px] text-parchment/30 italic">Where legends are forged in fire and crowned in gold</p>
-              <div className="mt-1 flex items-center gap-1.5 text-[10px] text-parchment/25">
+              <p className="text-[12px] text-gold/40 italic font-serif">Where legends are forged in fire and crowned in gold</p>
+              <div className="mt-1.5 flex items-center gap-2 text-[11px] text-parchment/40">
                 <span>Crafted by</span>
-                <span className="text-gold/40 font-medium">Spartan</span>
-                <span>·</span>
+                <span className="text-gold/60 font-semibold">Spartan</span>
+                <span className="text-gold/20">·</span>
                 <span>Forged for the realm</span>
               </div>
             </div>

@@ -91,7 +91,7 @@ export default function Dashboard({ onNavigate }) {
           <div className="absolute inset-y-0 left-0 flex max-w-xl flex-col justify-center p-6 md:p-10">
             <div className="eyebrow text-glow">{kingdom.season}</div>
             <h1 className="mt-2 font-display text-4xl font-bold tracking-wide text-parchment drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)] md:text-6xl gradient-gold">KINGDOM 846</h1>
-            <p className="mt-1 font-display text-sm tracking-[0.2em] text-gold md:text-base text-glow">UNITED WE RISE, BUILT FOR VICTORY.</p>
+            <p className="mt-1 font-display text-sm tracking-[0.15em] text-gold md:text-base text-glow">One Crown. Four Alliances. Endless Glory.</p>
             <div className="mt-5 flex flex-wrap gap-2">
               <button onClick={() => onNavigate('alliances')} className="btn-primary btn-royal sparkle-btn"><Icon name="shield" size={14} /> View Alliances</button>
               <button onClick={() => onNavigate('about')} className="btn-secondary gold-border-hover"><Icon name="castle" size={14} /> Kingdom</button>

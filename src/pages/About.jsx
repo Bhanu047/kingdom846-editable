@@ -135,13 +135,13 @@ export default function About() {
 
       {/* Kingdom Doctrine */}
       <Panel glow>
-        <SectionTitle eyebrow="Kingdom Doctrine" title="United We Rise" />
+        <SectionTitle eyebrow="Kingdom Doctrine" title="The Crown's Code" />
         <div className="grid gap-4 md:grid-cols-2">
           {[
-            { title: 'United We Rise', body: 'No alliance fights alone. Rallies are shared, intelligence is pooled, and the kingdom moves as one body in war.' },
-            { title: 'Discipline Wins Wars', body: 'Shield coverage, march discipline, and prep-phase compliance are non-negotiable. The 80% win rate is built in preparation.' },
+            { title: 'One Crown', body: 'Four alliances, one kingdom. Every decision serves the realm first. No alliance fights alone — rallies are shared, intelligence is pooled, and the kingdom moves as one body in war.' },
+            { title: 'Discipline Wins Wars', body: 'Shield coverage, march discipline, and prep-phase compliance are non-negotiable. The 80% win rate is built in preparation, not luck.' },
             { title: 'Honor in Diplomacy', body: 'A 5.0/5.0 rival reputation is sacred. NAPs are honored, comms are clean, and rivals become allies.' },
-            { title: 'Take What Is Ours', body: 'We do not wait for glory. We organize, we strike, and we hold what we conquer.' },
+            { title: 'Forged in Fire', body: 'Ten wars. Seven dominations. A perfect diplomatic record. We do not wait for glory — we organize, we strike, and we hold what we conquer.' },
           ].map((d) => (
             <div key={d.title} className="rounded-lg border border-gold/15 bg-white/5 p-5">
               <div className="font-display text-lg font-bold text-gold-bright">{d.title}</div>
@@ -157,8 +157,8 @@ export default function About() {
           <ArtImage src="./assets/art-season-opening.png" alt="Kingdom 846 season opening" className="h-full w-full" />
           <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6">
             <div className="eyebrow">The Realm</div>
-            <h2 className="mt-1 font-display text-3xl font-bold gradient-gold drop-shadow-lg">Built for Victory</h2>
-            <p className="mt-2 max-w-xl text-sm text-parchment/80">A kingdom forged in ten wars, seven dominations, and a perfect diplomatic record. Welcome to 846.</p>
+            <h2 className="mt-1 font-display text-3xl font-bold gradient-gold drop-shadow-lg">Crowned in Gold</h2>
+            <p className="mt-2 max-w-xl text-sm text-parchment/80">A kingdom forged in ten wars, seven dominations, and a perfect diplomatic record. Where legends are forged in fire and crowned in gold. Welcome to 846.</p>
           </div>
         </div>
       </Panel>

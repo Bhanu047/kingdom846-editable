@@ -1009,5 +1009,15 @@ const isProduction = process.env.NODE_ENV === 'production'
     const vite = await createViteServer({ server: { middlewareMode: true }, appType: 'spa' })
     app.use(vite.middlewares)
   }
-  app.listen(PORT, '0.0.0.0', () => console.log(`Kingdom 846 backend listening on ${PORT} (${isProduction ? 'production' : 'dev'})`))
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Kingdom 846 backend listening on ${PORT} (${isProduction ? 'production' : 'dev'})`)
+    // Start autonomous AI agent — runs on startup then every 4 hours
+    if (GEMINI_API_KEY) {
+      setTimeout(() => runAutonomousAgent(), 10000) // 10s delay after startup
+      setInterval(() => runAutonomousAgent(), AGENT_INTERVAL)
+      console.log('[AI Agent] Autonomous agent scheduled (every 4 hours)')
+    } else {
+      console.log('[AI Agent] No GEMINI_API_KEY set — AI features disabled')
+    }
+  })
 })()

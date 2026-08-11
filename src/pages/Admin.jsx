@@ -204,6 +204,14 @@ function AdminAI() {
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [syncing, setSyncing] = useState(false)
+  const [agentStatus, setAgentStatus] = useState(null)
+
+  // Fetch AI agent status on load
+  useEffect(() => {
+    apiJson('/api/ai/status').then(setAgentStatus).catch(() => {})
+    const id = setInterval(() => apiJson('/api/ai/status').then(setAgentStatus).catch(() => {}), 30000)
+    return () => clearInterval(id)
+  }, [])
 
   async function send() {
     const text = input.trim()
@@ -248,10 +256,40 @@ function AdminAI() {
   return (
     <div className="panel gold-corners p-4">
       <RoyalSectionHeader icon="sparkles" eyebrow="AI Powered" title="Admin Assistant" action={
-        <button onClick={syncNow} disabled={syncing} className="btn-secondary !py-1 !text-xs">
-          <Icon name="refresh" size={12} /> {syncing ? 'Syncing…' : 'Sync Now'}
-        </button>
+        <div className="flex items-center gap-2">
+          {agentStatus?.last_run && (
+            <span className="text-[10px] text-parchment/40">Last run: {new Date(agentStatus.last_run).toLocaleTimeString()}</span>
+          )}
+          <button onClick={async () => {
+            setSyncing(true)
+            try { await apiJson('/api/ai/run-agent', { method: 'POST' }); setMessages(prev => [...prev, { role: 'assistant', content: 'Agent triggered manually. Check back in a moment for insights.' }]) }
+            catch { setMessages(prev => [...prev, { role: 'assistant', content: 'Failed to trigger agent.' }]) }
+            finally { setSyncing(false) }
+          }} disabled={syncing} className="btn-secondary !py-1 !text-xs">
+            <Icon name="refresh" size={12} /> {syncing ? 'Running…' : 'Run Agent'}
+          </button>
+        </div>
       } />
+
+      {/* Agent insights */}
+      {agentStatus?.insights?.length > 0 && (
+        <div className="mb-3 space-y-1">
+          {agentStatus.insights.map((insight, i) => (
+            <div key={i} className="flex items-start gap-2 rounded-lg border border-gold/10 bg-gold/5 px-3 py-2">
+              <span className="text-gold text-xs mt-0.5">◆</span>
+              <span className="text-xs text-parchment/70">{insight}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* AI status badge */}
+      <div className="mb-3 flex items-center gap-2">
+        <span className={`pulse-dot ${agentStatus?.configured ? '' : 'opacity-30'}`} style={{ width: 6, height: 6 }} />
+        <span className="text-[10px] text-parchment/40">
+          {agentStatus?.configured ? 'AI Online' : 'AI Offline — set GEMINI_API_KEY in Render'}
+        </span>
+      </div>
 
       {messages.length > 0 && (
         <div className="mb-3 max-h-48 overflow-y-auto space-y-2">

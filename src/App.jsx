@@ -220,6 +220,23 @@ function Shell() {
 
         <div className="flex-1 overflow-y-auto overflow-x-hidden overscroll-contain p-4 md:p-6" style={{ WebkitOverflowScrolling: 'touch' }}>
           <div key={page} className="page-enter mx-auto max-w-6xl">{render()}</div>
+          {/* Footer */}
+          <footer className="mt-12 border-t border-gold/10 pt-4 pb-2">
+            <div className="flex flex-col items-center gap-2 text-center">
+              <div className="flex items-center gap-2 text-gold/60">
+                <span className="text-lg">👑</span>
+                <span className="font-serif text-sm tracking-wide gradient-gold font-semibold">Kingdom 846</span>
+                <span className="text-lg">👑</span>
+              </div>
+              <p className="text-[11px] text-parchment/30 italic">Where legends are forged in fire and crowned in gold</p>
+              <div className="mt-1 flex items-center gap-1.5 text-[10px] text-parchment/25">
+                <span>Crafted by</span>
+                <span className="text-gold/40 font-medium">Spartan</span>
+                <span>·</span>
+                <span>Forged for the realm</span>
+              </div>
+            </div>
+          </footer>
         </div>
       </main>
 

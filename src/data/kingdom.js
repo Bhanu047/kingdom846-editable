@@ -11,8 +11,8 @@
 export const kingdom = {
   id: 846,
   name: 'Kingdom 846',
-  motto: "United We Rise, Built for Victory.",
-  tagline: "We don't wait for glory. We take it.",
+  motto: "One Crown. Four Alliances. Endless Glory.",
+  tagline: "Where legends are forged in fire and crowned in gold.",
   season: 'Season of the Fire Tyrant',
   // Kingdom status (real)
   king: 'Oliver',

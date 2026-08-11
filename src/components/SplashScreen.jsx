@@ -198,7 +198,7 @@ export default function SplashScreen({ onEnter }) {
           fontSize: 'clamp(10px, 1.5vw, 13px)', fontWeight: 600, textTransform: 'uppercase',
           letterSpacing: '0.5em', color: '#D4AF37', marginBottom: '0.5rem',
           textShadow: '0 0 12px rgba(212,175,55,0.4)', paddingLeft: '0.5em',
-        }}>United We Rise</p>
+        }}>One Crown. Four Alliances.</p>
 
         {/* Title */}
         <h1 style={{
@@ -212,7 +212,7 @@ export default function SplashScreen({ onEnter }) {
         <p style={{
           marginTop: '0.5rem', fontSize: 'clamp(0.85rem, 2vw, 1.05rem)',
           color: 'rgba(243,232,204,0.6)', fontStyle: 'italic',
-        }}>A realm forged in fire, built for victory</p>
+        }}>A realm forged in fire, crowned in gold</p>
 
         {/* Divider */}
         <div style={{

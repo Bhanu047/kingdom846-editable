@@ -835,25 +835,72 @@ async function executeTool(toolName, args) {
   }
 }
 
-// Call Gemini with function calling support
-async function callGemini(prompt, history, isAdmin) {
-  const systemContext = buildKingdomContext()
-  const fullPrompt = isAdmin
-    ? `${systemContext}\n\nYou are the Kingdom 846 Admin AI. You can use tools to DO things automatically. When the admin asks you to do something, USE the appropriate tool. Don't just tell them to do it manually — DO IT YOURSELF.\n\nAdmin request: ${prompt}`
-    : `${systemContext}\n\nUser question: ${prompt}`
+// ===== Bulletproof AI system =====
+// Circuit breaker — stops calling Gemini when rate limited
+let geminiCooldownUntil = 0
+let geminiRequestCount = 0
+let geminiRequestWindow = Date.now()
 
-  // Build conversation — must end with user turn (Gemini requirement)
-  const historyParts = (history || []).slice(-6).map(h => ({
+// Local fallback answers for common questions (works without Gemini)
+function getLocalAnswer(message) {
+  const msg = message.toLowerCase()
+  const alliances = db.prepare('SELECT slug, name, leader, tagline FROM alliances').all()
+  const king = db.prepare('SELECT * FROM king_status WHERE id = 1').get()
+  
+  if (msg.includes('alliance') || msg.includes('guild')) {
+    const list = alliances.map(a => `- [${a.slug.toUpperCase()}] ${a.name} — Leader: ${a.leader}`).join('\n')
+    return `Kingdom 846 has ${alliances.length} alliances:\n\n${list}\n\nVisit the Alliances page for full details.`
+  }
+  if (msg.includes('transfer') || msg.includes('join') || msg.includes('apply')) {
+    return 'To join Kingdom 846, use the Transfer form to apply to an alliance, or apply for a role as Chief Minister or Noble Advisor. Check the Transfer and Apply pages in the menu.'
+  }
+  if (msg.includes('king') || msg.includes('queen') || msg.includes('ruler') || msg.includes('leader')) {
+    if (king) return `The current ruler is ${king.king_type} ${king.name} of ${king.alliance_tag} ${king.alliance_name}.`
+    return 'The ruler information is being updated. Check the Kingdom page for the latest.'
+  }
+  if (msg.includes('event') || msg.includes('schedule') || msg.includes('time')) {
+    return 'Event schedules are managed by alliance leaders. Leaders can log in and use the Event Schedule page to set their alliance event times. Check the Events page for the full schedule.'
+  }
+  if (msg.includes('guide') || msg.includes('strategy') || msg.includes('tip')) {
+    return 'Check the Strategy Guides & Playbooks page for detailed game guides and strategies. New guides are synced regularly from official sources.'
+  }
+  if (msg.includes('hello') || msg.includes('hi ') || msg === 'hi' || msg.includes('hey')) {
+    return 'Greetings, traveler! I am the Royal Advisor of Kingdom 846. Ask me about alliances, events, the King, or how to join our realm.'
+  }
+  return null
+}
+
+// Safe Gemini wrapper — never throws, returns { ok, text, reason }
+async function callGeminiSafe(prompt, history) {
+  // Circuit breaker check
+  if (Date.now() < geminiCooldownUntil) {
+    return { ok: false, reason: 'cooldown' }
+  }
+  // Self-imposed rate limit (below Google's 20/min)
+  const now = Date.now()
+  if (now - geminiRequestWindow > 60000) {
+    geminiRequestCount = 0
+    geminiRequestWindow = now
+  }
+  if (geminiRequestCount >= 10) {
+    geminiCooldownUntil = now + 30000
+    return { ok: false, reason: 'rate_limit' }
+  }
+  geminiRequestCount++
+  
+  const systemContext = buildKingdomContext()
+  const fullPrompt = `${systemContext}\n\nUser question: ${prompt}`
+  
+  // Build conversation — must end with user turn
+  const historyParts = (history || []).slice(-4).map(h => ({
     role: h.role === 'assistant' ? 'model' : 'user',
     parts: [{ text: h.content }]
   }))
-  // Remove trailing model turns so it ends with user
   while (historyParts.length > 0 && historyParts[historyParts.length - 1].role === 'model') {
     historyParts.pop()
   }
-  // Merge consecutive same-role turns and add the new prompt as final user turn
   const contents = [...historyParts, { role: 'user', parts: [{ text: fullPrompt }] }]
-  // Remove duplicate consecutive user turns by merging
+  // Merge consecutive same-role turns
   const merged = []
   for (const turn of contents) {
     const last = merged[merged.length - 1]
@@ -863,122 +910,94 @@ async function callGemini(prompt, history, isAdmin) {
       merged.push({ ...turn, parts: [{ text: turn.parts[0].text }] })
     }
   }
-
-  const body = {
-    contents: merged,
-    tools: [{ functionDeclarations: AI_TOOLS }],
-    generationConfig: { temperature: 0.7, maxOutputTokens: 800, topP: 0.9 },
-    safetySettings: [
-      { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
-      { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
-      { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
-      { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
-    ]
-  }
-
-  // Retry with backoff for rate limits (free tier: 20 req/min)
-  let response, lastErr
-  for (let attempt = 0; attempt < 3; attempt++) {
-    response = await fetch(GEMINI_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
-    })
-    if (response.ok) break
-    if (response.status === 429 && attempt < 2) {
-      const waitMs = (attempt + 1) * 15000 // 15s, 30s
-      console.log(`[AI] Rate limited, retrying in ${waitMs/1000}s...`)
-      await new Promise(r => setTimeout(r, waitMs))
-      continue
-    }
-    const err = await response.text()
-    console.error('Gemini API error:', err.substring(0, 300))
-    throw new Error('AI service unavailable')
-  }
-
-  const data = await response.json()
-  const candidate = data.candidates?.[0]
-  if (!candidate) throw new Error('No response from AI')
-
-  // Handle function calls
-  const parts = candidate.content?.parts || []
-  const functionCalls = parts.filter(p => p.functionCall)
-  const textParts = parts.filter(p => p.text && typeof p.text === 'string')
-
-  if (functionCalls.length > 0) {
-    const results = []
-    for (const fc of functionCalls) {
-      const { name, args } = fc.functionCall
-      console.log(`AI executing tool: ${name}`, args)
-      const result = await executeTool(name, args || {})
-      results.push(`[Tool: ${name}] ${result}`)
-    }
-    
-    // Call Gemini again with the tool results so it can summarize
-    const followUpContents = [
-      ...merged,
-      { role: 'model', parts: functionCalls.map(fc => ({ functionCall: fc.functionCall })) },
-      { role: 'user', parts: [{ text: 'Tool results:\n' + results.join('\n') + '\n\nNow summarize what happened for the user in 2-3 sentences.' }] }
-    ]
-    const followUp = await fetch(GEMINI_URL, {
+  
+  try {
+    const response = await fetch(GEMINI_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        contents: followUpContents,
-        generationConfig: { temperature: 0.6, maxOutputTokens: 400 }
-      })
+        contents: merged,
+        generationConfig: { temperature: 0.7, maxOutputTokens: 500 },
+      }),
+      signal: AbortSignal.timeout(15000)
     })
-    const followData = await followUp.json()
-    const summary = followData.candidates?.[0]?.content?.parts?.[0]?.text || results.join('\n')
-    return summary
+    
+    if (response.status === 429) {
+      geminiCooldownUntil = Date.now() + 60000
+      console.log('[AI] Rate limited — cooldown 60s')
+      return { ok: false, reason: 'rate_limit' }
+    }
+    if (!response.ok) {
+      console.error('[AI] Gemini error:', response.status)
+      return { ok: false, reason: 'error' }
+    }
+    
+    const data = await response.json()
+    const text = data.candidates?.[0]?.content?.parts?.map(p => p.text || '').join('') || ''
+    if (!text) return { ok: false, reason: 'empty' }
+    return { ok: true, text }
+  } catch (err) {
+    console.error('[AI] Call failed:', err.message)
+    return { ok: false, reason: 'timeout' }
   }
-
-  return textParts.map(p => p.text).join('') || 'I have no response for that.'
 }
 
-// Public chat endpoint (visitors can ask, AI can use read-only tools)
+// Public chat endpoint — never returns 500, always returns a response
 app.post('/api/ai/chat', async (req, res) => {
-  if (!GEMINI_API_KEY) {
-    return res.status(503).json({ error: 'AI not configured. Admin needs to set GEMINI_API_KEY.' })
-  }
   const { message, history = [] } = req.body
   if (!message || typeof message !== 'string') {
-    return res.status(400).json({ error: 'Message required' })
+    return res.status(200).json({ reply: 'Please ask a question about Kingdom 846.' })
   }
+  
+  // Rate limit per IP
   const ip = req.ip
   const now = Date.now()
   if (!aiRateLimit.has(ip)) aiRateLimit.set(ip, [])
   const times = aiRateLimit.get(ip).filter(t => now - t < 60000)
-  if (times.length >= 30) return res.status(429).json({ error: 'Too many requests. Slow down!' })
+  if (times.length >= 10) {
+    return res.status(200).json({ reply: 'You are asking questions too quickly. Please wait a moment and try again.' })
+  }
   times.push(now)
   aiRateLimit.set(ip, times)
 
-  try {
-    const reply = await callGemini(message, history, false)
-    res.json({ reply })
-  } catch (err) {
-    console.error('AI chat error:', err.message)
-    res.status(500).json({ error: 'Something went wrong', detail: err.message })
+  // Try Gemini first
+  if (GEMINI_API_KEY) {
+    const result = await callGeminiSafe(message, history)
+    if (result.ok) {
+      return res.json({ reply: result.text, source: 'ai' })
+    }
+    console.log(`[AI] Gemini unavailable (${result.reason}), using fallback`)
   }
+  
+  // Fallback: local answers from database
+  const local = getLocalAnswer(message)
+  if (local) {
+    return res.json({ reply: local, source: 'local' })
+  }
+  
+  // Final fallback
+  return res.json({ 
+    reply: 'The Royal Advisor is busy right now. Try asking about: alliances, events, the King, transfers, or guides. Or check the relevant pages in the menu.',
+    source: 'fallback'
+  })
 })
 
 const aiRateLimit = new Map()
 
-// Admin AI — full tool access, can DO things
+// Admin AI — uses same safe wrapper
 app.post('/api/ai/admin', auth, adminOnly, async (req, res) => {
-  if (!GEMINI_API_KEY) {
-    return res.status(503).json({ error: 'AI not configured. Set GEMINI_API_KEY environment variable.' })
-  }
   const { message } = req.body
-  if (!message) return res.status(400).json({ error: 'Message required' })
+  if (!message) return res.status(200).json({ reply: 'Please enter a message.' })
 
-  try {
-    const reply = await callGemini(message, [], true)
-    res.json({ reply })
-  } catch (err) {
-    console.error('Admin AI error:', err.message)
-    res.status(500).json({ error: 'Something went wrong' })
+  if (GEMINI_API_KEY) {
+    const result = await callGeminiSafe(message, [])
+    if (result.ok) {
+      return res.json({ reply: result.text })
+    }
   }
+  
+  const local = getLocalAnswer(message)
+  return res.json({ reply: local || 'The Royal Advisor is busy. Try again in a moment.' })
 })
 
 // --- Autonomous AI Agent ---

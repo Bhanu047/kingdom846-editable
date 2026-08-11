@@ -842,16 +842,30 @@ async function callGemini(prompt, history, isAdmin) {
     ? `${systemContext}\n\nYou are the Kingdom 846 Admin AI. You can use tools to DO things automatically. When the admin asks you to do something, USE the appropriate tool. Don't just tell them to do it manually — DO IT YOURSELF.\n\nAdmin request: ${prompt}`
     : `${systemContext}\n\nUser question: ${prompt}`
 
-  const contents = [
-    { role: 'user', parts: [{ text: fullPrompt }] },
-    ...(history || []).slice(-6).map(h => ({
-      role: h.role === 'assistant' ? 'model' : 'user',
-      parts: [{ text: h.content }]
-    }))
-  ]
+  // Build conversation — must end with user turn (Gemini requirement)
+  const historyParts = (history || []).slice(-6).map(h => ({
+    role: h.role === 'assistant' ? 'model' : 'user',
+    parts: [{ text: h.content }]
+  }))
+  // Remove trailing model turns so it ends with user
+  while (historyParts.length > 0 && historyParts[historyParts.length - 1].role === 'model') {
+    historyParts.pop()
+  }
+  // Merge consecutive same-role turns and add the new prompt as final user turn
+  const contents = [...historyParts, { role: 'user', parts: [{ text: fullPrompt }] }]
+  // Remove duplicate consecutive user turns by merging
+  const merged = []
+  for (const turn of contents) {
+    const last = merged[merged.length - 1]
+    if (last && last.role === turn.role) {
+      last.parts[0].text += '\n' + turn.parts[0].text
+    } else {
+      merged.push({ ...turn, parts: [{ text: turn.parts[0].text }] })
+    }
+  }
 
   const body = {
-    contents,
+    contents: merged,
     tools: [{ functionDeclarations: AI_TOOLS }],
     generationConfig: { temperature: 0.7, maxOutputTokens: 800, topP: 0.9 },
     safetySettings: [
@@ -894,7 +908,7 @@ async function callGemini(prompt, history, isAdmin) {
     
     // Call Gemini again with the tool results so it can summarize
     const followUpContents = [
-      ...contents,
+      ...merged,
       { role: 'model', parts: functionCalls.map(fc => ({ functionCall: fc.functionCall })) },
       { role: 'user', parts: [{ text: 'Tool results:\n' + results.join('\n') + '\n\nNow summarize what happened for the user in 2-3 sentences.' }] }
     ]

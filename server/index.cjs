@@ -600,37 +600,252 @@ const GEMINI_MODEL = 'gemini-2.0-flash'
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`
 
 // Kingdom context for the AI
-function buildKingdomContext(req) {
+function buildKingdomContext() {
   const kingRow = db.prepare('SELECT * FROM king_status WHERE id = 1').get()
   const alliances = db.prepare('SELECT slug, name, leader, language, tagline FROM alliances').all()
-  const events = db.prepare('SELECT title, date, time, category, description FROM kingshot_items WHERE category != "News" ORDER BY date ASC LIMIT 10').all()
-  const news = db.prepare('SELECT title, excerpt, category FROM kingshot_items WHERE category = "News" ORDER BY date DESC LIMIT 5').all()
-  const guides = db.prepare('SELECT title, category, excerpt FROM kingshot_items WHERE category != "News" ORDER BY id DESC LIMIT 10').all()
+  const events = db.prepare('SELECT title, date, time, category, description FROM kingshot_sync WHERE type != "news" ORDER BY date ASC LIMIT 10').all()
+  const news = db.prepare('SELECT title, excerpt, category FROM kingshot_sync WHERE type = "news" ORDER BY synced_at DESC LIMIT 5').all()
+  const guides = db.prepare('SELECT title, category, excerpt FROM kingshot_sync WHERE type = "guide" ORDER BY id DESC LIMIT 10').all()
+  const transfers = db.prepare('SELECT name, alliance, status FROM transfers ORDER BY created_at DESC LIMIT 5').all()
+  const applications = db.prepare('SELECT type, nickname, status FROM applications ORDER BY created_at DESC LIMIT 5').all()
   
-  return `You are the Royal Advisor for Kingdom 846, a gaming community for the strategy game Kingshot. 
-You help players with alliance info, events, guides, and kingdom questions.
+  return `You are the Royal Advisor AI for Kingdom 846, a gaming community for the strategy game Kingshot.
+You can DO things, not just talk. You have tools to sync data, update king status, manage alliances, add events, and view reports.
 Keep answers concise (2-4 sentences). Be friendly and use medieval/royal tone.
 
 KINGDOM DATA:
 - Kingdom: 846
 - Season: KvK Season 4
-- King: ${kingRow ? kingRow.name : 'Not set'} (${kingRow ? kingRow.alliance_tag : ''})
+- King: ${kingRow ? kingRow.name : 'Not set'} (${kingRow ? kingRow.king_type : ''}) (${kingRow ? kingRow.alliance_tag : ''})
 
 ALLIANCES:
-${alliances.map(a => `- [${a.slug}] ${a.name} — Leader: ${a.leader}, Language: ${a.language}`).join('\n')}
+${alliances.map(a => `- [${a.slug}] ${a.name} — Leader: ${a.leader}, Language: ${a.language}, Tagline: ${a.tagline || 'none'}`).join('\n')}
 
 UPCOMING EVENTS:
-${events.map(e => `- ${e.title} (${e.date} ${e.time || ''}) — ${e.description}`).join('\n')}
+${events.length ? events.map(e => `- ${e.title} (${e.date} ${e.time || ''}) — ${e.description}`).join('\n') : 'None scheduled'}
 
 RECENT NEWS:
-${news.map(n => `- ${n.title}`).join('\n')}
+${news.length ? news.map(n => `- ${n.title}`).join('\n') : 'None'}
 
 GUIDES:
-${guides.map(g => `- ${g.title} (${g.category})`).join('\n')}
+${guides.length ? guides.map(g => `- ${g.title} (${g.category})`).join('\n') : 'None'}
+
+RECENT TRANSFERS:
+${transfers.length ? transfers.map(t => `- ${t.name} -> ${t.alliance || 'unassigned'} (${t.status})`).join('\n') : 'None'}
+
+RECENT APPLICATIONS:
+${applications.length ? applications.map(a => `- ${a.nickname} applied for ${a.type} (${a.status})`).join('\n') : 'None'}
 `
 }
 
-// Public chat endpoint (no auth — visitors can ask)
+// AI Tools — functions the AI can call to actually DO things
+const AI_TOOLS = [
+  {
+    name: 'sync_kingshot',
+    description: 'Sync latest news and guides from Kingshot sources. Fetches fresh content and updates the database.',
+    parameters: { type: 'object', properties: {} }
+  },
+  {
+    name: 'update_king_status',
+    description: 'Update the king/queen status. Changes who rules the kingdom.',
+    parameters: {
+      type: 'object',
+      properties: {
+        king_type: { type: 'string', enum: ['High King', 'King', 'High Queen', 'Queen'] },
+        name: { type: 'string', description: 'Name of the ruler' },
+        alliance_tag: { type: 'string', description: 'Alliance tag e.g. [RYO]' },
+        alliance_name: { type: 'string', description: 'Alliance name e.g. Spiders' }
+      },
+      required: ['king_type', 'name']
+    }
+  },
+  {
+    name: 'get_kingdom_stats',
+    description: 'Get full kingdom statistics including alliance count, event count, transfer count, application count.',
+    parameters: { type: 'object', properties: {} }
+  },
+  {
+    name: 'get_transfers',
+    description: 'Get list of all transfer applications with status.',
+    parameters: { type: 'object', properties: {} }
+  },
+  {
+    name: 'get_applications',
+    description: 'Get list of all role applications (Chief Minister, Noble Advisor) with status.',
+    parameters: { type: 'object', properties: {} }
+  },
+  {
+    name: 'update_alliance',
+    description: 'Update an alliance details (leader, language, tagline).',
+    parameters: {
+      type: 'object',
+      properties: {
+        slug: { type: 'string', description: 'Alliance slug e.g. spiders' },
+        leader: { type: 'string' },
+        language: { type: 'string' },
+        tagline: { type: 'string' }
+      },
+      required: ['slug']
+    }
+  },
+  {
+    name: 'get_alliances',
+    description: 'Get full list of all alliances with details.',
+    parameters: { type: 'object', properties: {} }
+  }
+]
+
+// Execute a tool call
+async function executeTool(toolName, args) {
+  switch (toolName) {
+    case 'sync_kingshot': {
+      try {
+        const { news, guides } = await fetchKingshotData()
+        const all = [...news, ...guides]
+        db.prepare('DELETE FROM kingshot_sync').run()
+        const stmt = db.prepare('INSERT OR REPLACE INTO kingshot_sync (id, type, title, category, date, excerpt, body, source, art, read_time, synced_at) VALUES (?,?,?,?,?,?,?,?,?,?,datetime(\'now\'))')
+        for (const item of all) {
+          stmt.run(item.id, item.type, item.title, item.category || null, item.date || null, item.excerpt || null, item.body || null, item.source || null, item.art || null, item.read_time || null)
+        }
+        return `Sync complete! ${all.length} items (${news.length} news, ${guides.length} guides) updated successfully.`
+      } catch (e) {
+        return `Sync failed: ${e.message}`
+      }
+    }
+    case 'update_king_status': {
+      db.prepare("UPDATE king_status SET king_type=?, name=?, alliance_tag=?, alliance_name=?, updated_at=datetime('now') WHERE id=1").run(
+        args.king_type || 'King', args.name || 'Unknown', args.alliance_tag || '', args.alliance_name || ''
+      )
+      return `King status updated: ${args.king_type} ${args.name} (${args.alliance_tag || 'no alliance'}) has been crowned!`
+    }
+    case 'get_kingdom_stats': {
+      const allianceCount = db.prepare('SELECT COUNT(*) as c FROM alliances').get()
+      const eventCount = db.prepare('SELECT COUNT(*) as c FROM kingshot_sync WHERE type != "news"').get()
+      const newsCount = db.prepare('SELECT COUNT(*) as c FROM kingshot_sync WHERE type = "news"').get()
+      const transferCount = db.prepare('SELECT COUNT(*) as c FROM transfers').get()
+      const appCount = db.prepare('SELECT COUNT(*) as c FROM applications').get()
+      const guideCount = db.prepare('SELECT COUNT(*) as c FROM kingshot_sync WHERE type = "guide"').get()
+      const king = db.prepare('SELECT * FROM king_status WHERE id = 1').get()
+      return `Kingdom Stats:
+- Ruler: ${king ? king.king_type + ' ' + king.name : 'Not set'}
+- Alliances: ${allianceCount.c}
+- Events: ${eventCount.c}
+- News articles: ${newsCount.c}
+- Guides: ${guideCount.c}
+- Transfer applications: ${transferCount.c}
+- Role applications: ${appCount.c}`
+    }
+    case 'get_transfers': {
+      const transfers = db.prepare('SELECT name, game_id, discord, alliance, status, created_at FROM transfers ORDER BY created_at DESC').all()
+      if (!transfers.length) return 'No transfer applications.'
+      return transfers.map(t => `- ${t.name} (ID: ${t.game_id}) -> ${t.alliance || 'unassigned'} — ${t.status} (${t.created_at})`).join('\n')
+    }
+    case 'get_applications': {
+      const apps = db.prepare('SELECT type, nickname, request_kind, day, status, created_at FROM applications ORDER BY created_at DESC').all()
+      if (!apps.length) return 'No role applications.'
+      return apps.map(a => `- ${a.nickname} applied for ${a.type} (${a.request_kind || 'general'}) — ${a.status} (${a.created_at})`).join('\n')
+    }
+    case 'update_alliance': {
+      const existing = db.prepare('SELECT * FROM alliances WHERE slug = ?').get(args.slug)
+      if (!existing) return `Alliance '${args.slug}' not found.`
+      const updates = {}
+      if (args.leader) updates.leader = args.leader
+      if (args.language) updates.language = args.language
+      if (args.tagline) updates.tagline = args.tagline
+      const setClause = Object.keys(updates).map(k => `${k} = ?`).join(', ')
+      if (!setClause) return 'No updates provided.'
+      db.prepare(`UPDATE alliances SET ${setClause} WHERE slug = ?`).run(...Object.values(updates), args.slug)
+      return `Alliance ${args.slug} updated: ${Object.entries(updates).map(([k,v]) => `${k}=${v}`).join(', ')}`
+    }
+    case 'get_alliances': {
+      const alliances = db.prepare('SELECT slug, name, leader, language, tagline FROM alliances').all()
+      return alliances.map(a => `- [${a.slug}] ${a.name} — Leader: ${a.leader}, Language: ${a.language}, Tagline: ${a.tagline || 'none'}`).join('\n')
+    }
+    default:
+      return `Unknown tool: ${toolName}`
+  }
+}
+
+// Call Gemini with function calling support
+async function callGemini(prompt, history, isAdmin) {
+  const systemContext = buildKingdomContext()
+  const fullPrompt = isAdmin
+    ? `${systemContext}\n\nYou are the Kingdom 846 Admin AI. You can use tools to DO things automatically. When the admin asks you to do something, USE the appropriate tool. Don't just tell them to do it manually — DO IT YOURSELF.\n\nAdmin request: ${prompt}`
+    : `${systemContext}\n\nUser question: ${prompt}`
+
+  const contents = [
+    { role: 'user', parts: [{ text: fullPrompt }] },
+    ...(history || []).slice(-6).map(h => ({
+      role: h.role === 'assistant' ? 'model' : 'user',
+      parts: [{ text: h.content }]
+    }))
+  ]
+
+  const body = {
+    contents,
+    tools: [{ functionDeclarations: AI_TOOLS }],
+    generationConfig: { temperature: 0.7, maxOutputTokens: 800, topP: 0.9 },
+    safetySettings: [
+      { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+      { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+      { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+      { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
+    ]
+  }
+
+  const response = await fetch(GEMINI_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  })
+
+  if (!response.ok) {
+    const err = await response.text()
+    console.error('Gemini API error:', err)
+    throw new Error('AI service unavailable')
+  }
+
+  const data = await response.json()
+  const candidate = data.candidates?.[0]
+  if (!candidate) throw new Error('No response from AI')
+
+  // Handle function calls
+  const parts = candidate.content?.parts || []
+  const functionCalls = parts.filter(p => p.functionCall)
+  const textParts = parts.filter(p => p.text)
+
+  if (functionCalls.length > 0) {
+    const results = []
+    for (const fc of functionCalls) {
+      const { name, args } = fc.functionCall
+      console.log(`AI executing tool: ${name}`, args)
+      const result = await executeTool(name, args || {})
+      results.push(`[Tool: ${name}] ${result}`)
+    }
+    
+    // Call Gemini again with the tool results so it can summarize
+    const followUpContents = [
+      ...contents,
+      { role: 'model', parts: functionCalls.map(fc => ({ functionCall: fc.functionCall })) },
+      { role: 'user', parts: [{ text: 'Tool results:\n' + results.join('\n') + '\n\nNow summarize what happened for the user in 2-3 sentences.' }] }
+    ]
+    const followUp = await fetch(GEMINI_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: followUpContents,
+        generationConfig: { temperature: 0.6, maxOutputTokens: 400 }
+      })
+    })
+    const followData = await followUp.json()
+    const summary = followData.candidates?.[0]?.content?.parts?.[0]?.text || results.join('\n')
+    return summary
+  }
+
+  return textParts.map(p => p.text).join('') || 'I have no response for that.'
+}
+
+// Public chat endpoint (visitors can ask, AI can use read-only tools)
 app.post('/api/ai/chat', async (req, res) => {
   if (!GEMINI_API_KEY) {
     return res.status(503).json({ error: 'AI not configured. Admin needs to set GEMINI_API_KEY.' })
@@ -639,55 +854,16 @@ app.post('/api/ai/chat', async (req, res) => {
   if (!message || typeof message !== 'string') {
     return res.status(400).json({ error: 'Message required' })
   }
-  // Rate limit: max 30 requests per minute per IP
   const ip = req.ip
   const now = Date.now()
   if (!aiRateLimit.has(ip)) aiRateLimit.set(ip, [])
   const times = aiRateLimit.get(ip).filter(t => now - t < 60000)
-  if (times.length >= 30) {
-    return res.status(429).json({ error: 'Too many requests. Slow down!' })
-  }
+  if (times.length >= 30) return res.status(429).json({ error: 'Too many requests. Slow down!' })
   times.push(now)
   aiRateLimit.set(ip, times)
 
   try {
-    const systemContext = buildKingdomContext(req)
-    const contents = [
-      { role: 'user', parts: [{ text: systemContext + '\n\nUser question: ' + message }] },
-      ...history.slice(-6).map(h => ({
-        role: h.role === 'assistant' ? 'model' : 'user',
-        parts: [{ text: h.content }]
-      })),
-      { role: 'user', parts: [{ text: message }] }
-    ]
-
-    const response = await fetch(GEMINI_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents,
-        generationConfig: {
-          temperature: 0.7,
-          maxOutputTokens: 500,
-          topP: 0.9,
-        },
-        safetySettings: [
-          { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
-          { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
-          { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
-          { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_MEDIUM_AND_ABOVE' },
-        ]
-      })
-    })
-
-    if (!response.ok) {
-      const err = await response.text()
-      console.error('Gemini API error:', err)
-      return res.status(502).json({ error: 'AI service unavailable' })
-    }
-
-    const data = await response.json()
-    const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || 'I have no response for that.'
+    const reply = await callGemini(message, history, false)
     res.json({ reply })
   } catch (err) {
     console.error('AI chat error:', err.message)
@@ -697,7 +873,7 @@ app.post('/api/ai/chat', async (req, res) => {
 
 const aiRateLimit = new Map()
 
-// Admin AI — can perform actions (sync, update content)
+// Admin AI — full tool access, can DO things
 app.post('/api/ai/admin', auth, adminOnly, async (req, res) => {
   if (!GEMINI_API_KEY) {
     return res.status(503).json({ error: 'AI not configured. Set GEMINI_API_KEY environment variable.' })
@@ -705,39 +881,79 @@ app.post('/api/ai/admin', auth, adminOnly, async (req, res) => {
   const { message } = req.body
   if (!message) return res.status(400).json({ error: 'Message required' })
 
-  const systemContext = buildKingdomContext(req)
-  const adminPrompt = `${systemContext}
-
-You are the Kingdom 846 Admin AI Assistant. The admin asked: "${message}"
-
-You can help with:
-- Answering questions about kingdom data
-- Suggesting what to update
-- Summarizing alliance status, events, transfers
-- Providing recommendations
-
-Respond concisely. If the admin wants to sync data, tell them to use the Sync button.`
-
   try {
-    const response = await fetch(GEMINI_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ role: 'user', parts: [{ text: adminPrompt }] }],
-        generationConfig: { temperature: 0.6, maxOutputTokens: 600 }
-      })
-    })
-
-    if (!response.ok) {
-      return res.status(502).json({ error: 'AI service unavailable' })
-    }
-
-    const data = await response.json()
-    const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || 'No response.'
+    const reply = await callGemini(message, [], true)
     res.json({ reply })
   } catch (err) {
     console.error('Admin AI error:', err.message)
     res.status(500).json({ error: 'Something went wrong' })
+  }
+})
+
+// --- Autonomous AI Agent ---
+// Runs every 4 hours automatically: syncs data, checks status, generates insights
+let lastAgentRun = null
+let agentInsights = []
+
+async function runAutonomousAgent() {
+  if (!GEMINI_API_KEY) return
+  console.log('[AI Agent] Running autonomous check...')
+  try {
+    // 1. Auto-sync Kingshot data
+    const { news, guides } = await fetchKingshotData()
+    const all = [...news, ...guides]
+    db.prepare('DELETE FROM kingshot_sync').run()
+    const stmt = db.prepare('INSERT OR REPLACE INTO kingshot_sync (id, type, title, category, date, excerpt, body, source, art, read_time, synced_at) VALUES (?,?,?,?,?,?,?,?,?,?,datetime(\'now\'))')
+    for (const item of all) {
+      stmt.run(item.id, item.type, item.title, item.category || null, item.date || null, item.excerpt || null, item.body || null, item.source || null, item.art || null, item.read_time || null)
+    }
+    console.log(`[AI Agent] Synced ${all.length} items`)
+
+    // 2. Generate AI insights
+    const context = buildKingdomContext()
+    const insightResponse = await fetch(GEMINI_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ role: 'user', parts: [{ text: `${context}\n\nAs the Kingdom 846 autonomous AI agent, generate 3 brief insights about the kingdom status. Format as a JSON array of strings. Each insight should be 1 sentence about: 1) Data freshness/content status 2) Upcoming events or recommendations 3) Alliance or transfer status. Respond ONLY with the JSON array.` }] }],
+        generationConfig: { temperature: 0.5, maxOutputTokens: 300 }
+      })
+    })
+    if (insightResponse.ok) {
+      const insightData = await insightResponse.json()
+      const insightText = insightData.candidates?.[0]?.content?.parts?.[0]?.text || '[]'
+      try {
+        agentInsights = JSON.parse(insightText.replace(/```json|```/g, '').trim())
+      } catch { agentInsights = [] }
+    }
+
+    lastAgentRun = new Date().toISOString()
+    console.log(`[AI Agent] Complete at ${lastAgentRun}`)
+  } catch (err) {
+    console.error('[AI Agent] Error:', err.message)
+  }
+}
+
+// Run agent on startup, then every 4 hours
+const AGENT_INTERVAL = 4 * 60 * 60 * 1000 // 4 hours
+
+// Get AI agent status and insights
+app.get('/api/ai/status', (_req, res) => {
+  res.json({
+    configured: !!GEMINI_API_KEY,
+    last_run: lastAgentRun,
+    insights: agentInsights,
+    next_run: lastAgentRun ? new Date(new Date(lastAgentRun).getTime() + AGENT_INTERVAL).toISOString() : null
+  })
+})
+
+// Trigger agent manually (admin only)
+app.post('/api/ai/run-agent', auth, adminOnly, async (_req, res) => {
+  try {
+    await runAutonomousAgent()
+    res.json({ ok: true, last_run: lastAgentRun, insights: agentInsights })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
   }
 })
 

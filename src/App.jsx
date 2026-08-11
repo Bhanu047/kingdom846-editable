@@ -17,13 +17,11 @@ function useESTClock() {
   useEffect(() => {
     function update() {
       const now = new Date()
-      const est = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }))
-      const h = est.getHours()
-      const m = est.getMinutes()
-      const s = est.getSeconds()
-      const ampm = h >= 12 ? 'PM' : 'AM'
-      const h12 = h % 12 || 12
-      setTime(`${h12}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')} ${ampm} EST`)
+      const utc = new Date(now.toLocaleString('en-US', { timeZone: 'UTC' }))
+      const h = utc.getHours()
+      const m = utc.getMinutes()
+      const s = utc.getSeconds()
+      setTime(`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')} UTC`)
     }
     update()
     const id = setInterval(update, 1000)

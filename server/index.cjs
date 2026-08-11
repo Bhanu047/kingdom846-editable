@@ -431,8 +431,7 @@ async function fetchKingshotData() {
     })
     const html = await res.text()
     // Parse guide links
-    const linkPattern = /<a[^>]*href="([^"]*guide[^"]*)"[^>]*>([
-\s\S]*?)<\/a>/gi
+    const linkPattern = /<a[^>]*href="([^"]*guide[^"]*)"[^>]*>([\s\S]*?)<\/a>/gi
     const seen = new Set()
     let match
     while ((match = linkPattern.exec(html)) !== null && guides.length < 30) {

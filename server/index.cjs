@@ -2062,8 +2062,350 @@ function getKingdomAnswer(message) {
     return 'Kingdom 846 Website Design:\n\n- Theme: Royal, rich, luxurious, premium\n- Colors: Dark navy background (#0E1220), gold accents (#D4AF37), crimson red, ice blue\n- Fonts: Cinzel (display), Spectral (body), Montserrat (sans)\n- Effects: Shimmer text, embers, float animations, glow pulses, page transitions\n- Hero images on multiple pages\n- Custom royal crest\n- Cinematic splash screen with auto-playing music\n\nDesigned to feel like a premium royal experience.'
   }
 
+  // === Final mega batch: every random visitor question ===
+
+  // How to heal troops fast
+  if (msg.includes('heal fast') || msg.includes('heal quickly') || msg.includes('healing speed') || msg.includes('heal troops')) {
+    return 'Healing Troops Fast:\n\n1. Use healing speedups (save for emergencies)\n2. Upgrade Hospital for more capacity\n3. Build multiple Hospitals\n4. Use hero skills that boost healing speed\n5. Some VIP levels reduce healing cost\n6. Heal during events for bonus rewards\n\nAlways heal before training new troops — healing is cheaper and faster than retraining.'
+  }
+
+  // What is a zero / zeroing
+  if (msg.includes('what is a zero') || msg.includes('what is zeroing') || msg.includes('what does zeroed mean') || msg.includes('define zero')) {
+    return 'Zeroing (Zero\'d):\n\nWhen a player\'s city is attacked until all troops are dead or wounded and the city is effectively destroyed.\n\n- All non-secured resources are looted\n- Troops go to hospital (if capacity allows)\n- City buildings are damaged\n- Recovery takes time and resources\n\nTo avoid being zeroed: always bubble when offline, keep troops garrisoned, and stay near your alliance cluster.'
+  }
+
+  // How to get more food
+  if (msg.includes('more food') || msg.includes('running out of food') || msg.includes('food shortage') || msg.includes('not enough food') || msg.includes('starving')) {
+    return 'Solving Food Shortage:\n\n1. Upgrade Farm buildings\n2. Research economy tech for food production\n3. Gather food from resource tiles (use cavalry for speed)\n4. Use food from the Alliance Shop\n5. Reduce troop count (dismiss low-tier troops)\n6. Use food items from events and daily rewards\n7. Don\'t overtrain troops early game\n\nFood is the most consumed resource — always keep production high.'
+  }
+
+  // What is a whale
+  if (msg.includes('what is a whale') || msg.includes('whale meaning') || msg.includes('define whale')) {
+    return 'A "Whale" in gaming terms is a player who spends significant money on in-game purchases.\n\nIn Kingshot, whales typically:\n- Have max-level Castles quickly\n- Own all premium heroes\n- Field large armies of top-tier troops\n- Dominate PvP through spending advantage\n\nHowever, whales can be beaten through strategy, coordination, and teamwork. Kingdom 846 values all players equally — F2P or whale.'
+  }
+
+  // What is F2P
+  if (msg.includes('what is f2p') || msg.includes('f2p meaning') || msg.includes('define f2p') || msg.includes('what is free to play')) {
+    return 'F2P (Free to Play):\n\nA player who doesn\'t spend real money on the game. F2P players earn all resources, gems, and items through gameplay.\n\nF2P Tips:\n- Claim all daily free rewards\n- Participate in every event\n- Use speedups strategically\n- Join an active alliance for shared benefits\n- Focus on one or two heroes\n\nF2P players can absolutely compete in Kingdom 846. Strategy > spending.'
+  }
+
+  // What is P2W
+  if (msg.includes('what is p2w') || msg.includes('p2w meaning') || msg.includes('define p2w') || msg.includes('what is pay to win')) {
+    return 'P2W (Pay to Win):\n\nA game where spending real money gives a significant competitive advantage.\n\nIs Kingshot P2W?\n- Partially — spending speeds up progress\n- But strategy, coordination, and teamwork matter more\n- F2P players can earn most premium items through events\n- Alliance teamwork beats individual spending\n\nKingdom 846 focuses on teamwork, not wallet size.'
+  }
+
+  // What is a rally rally
+  if (msg.includes('how to rally') || msg.includes('start a rally') || msg.includes('create a rally') || msg.includes('initiate rally')) {
+    return 'Starting a Rally:\n\n1. Select a target on the world map (bear, monster, or enemy city)\n2. Click Rally\n3. Set the rally time (5 min, 10 min, etc.)\n4. Choose your troops and hero\n5. Alliance members join your rally\n6. When the timer ends, the rally launches automatically\n\nTip: Set longer rally times so more members can join. More participants = stronger rally.'
+  }
+
+  // How to join a rally
+  if (msg.includes('join rally') || msg.includes('how to join a rally') || msg.includes('participate in rally')) {
+    return 'Joining a Rally:\n\n1. Watch for rally calls in Discord or alliance chat\n2. Find the rally marker on the world map\n3. Click the rally and select Join\n4. Choose which troops and hero to send\n5. Your troops will march to the rally point\n6. When the rally launches, all joined troops attack together\n\nAlways join rallies when called — you get rewards even with small troop contributions.'
+  }
+
+  // What is the difference between ranks
+  if (msg.includes('rank difference') || msg.includes('officer rank') || msg.includes('alliance rank') || msg.includes('ranks in alliance') || msg.includes('alliance roles')) {
+    return 'Alliance Ranks & Roles:\n\n- Leader: Full control, manages alliance settings and members\n- Officer: Can invite, kick, and manage events\n- Elite: Senior member, some management abilities\n- Member: Standard member, participates in events\n- New: Recently joined, limited access\n\nPromotion is based on activity, contribution, and loyalty. Be active, help allies, and participate in events to climb ranks.'
+  }
+
+  // What is a burner account / spy
+  if (msg.includes('spy') || msg.includes('spying') || msg.includes('burner') || msg.includes('espionage') || msg.includes('infiltrate')) {
+    return 'Spying & Espionage:\n\n- Spying on other kingdoms using alt accounts is against the rules\n- If caught, the spy account and main account can be banned\n- In Kingdom 846, we don\'t spy — we fight with honor\n- Our doctrine values honor above all\n\nIf you suspect a spy in the kingdom, report to Spartan through Discord: https://discord.gg/rcxJCh97A'
+  }
+
+  // How to teleport to alliance
+  if (msg.includes('teleport to alliance') || msg.includes('move to alliance') || msg.includes('alliance teleport') || msg.includes('join alliance location')) {
+    return 'Alliance Teleport:\n\n1. Join an alliance first\n2. Go to your Alliance menu\n3. Select Alliance Teleport\n4. Your city moves near your alliance leader\n5. You get one free Alliance Teleport when joining\n\nTeleport near your alliance for better defense coordination and faster rally joins. Stay close to your allies.'
+  }
+
+  // What is advanced teleport
+  if (msg.includes('advanced teleport') || msg.includes('precise teleport') || msg.includes('exact teleport')) {
+    return 'Advanced Teleport:\n\n- Places your city at exact coordinates you choose\n- Limited quantity — earn from events or purchase\n- Use for strategic positioning during KvK\n- Can teleport near enemy targets for surprise attacks\n- Can teleport to safe zones when under threat\n\nSave Advanced Teleports for KvK — they\'re too valuable to waste on regular gameplay.'
+  }
+
+  // What is the difference between KvK seasons
+  if (msg.includes('kvk season') || msg.includes('different kvk') || msg.includes('kvk format') || msg.includes('kvk format') || msg.includes('kvk type')) {
+    return 'KvK Formats & Seasons:\n\n- Each KvK season may have different rules and formats\n- Some KvKs are score-based (most points wins)\n- Some are elimination-based (last kingdom standing)\n- Rewards scale with your kingdom\'s performance\n- KvK typically lasts 3-7 days\n- Check the Events page for the current KvK format\n\nAlways check Discord before KvK starts for strategy briefings from leadership.'
+  }
+
+  // How to prepare for KvK
+  if (msg.includes('prepare for kvk') || msg.includes('kvk preparation') || msg.includes('getting ready for kvk') || msg.includes('before kvk')) {
+    return 'KvK Preparation Checklist:\n\n1. Stockpile speedups (training, healing, building)\n2. Train maximum troops — fill your capacity\n3. Save gems for emergency shields and speedups\n4. Upgrade walls and defenses\n5. Coordinate with alliance on Discord\n6. Position your city strategically (near passes)\n7. Research military tech for combat buffs\n8. Gear up your heroes\n9. Clear hospital of wounded troops\n10. Bubble up when going offline during KvK\n\nPreparation wins KvK. Start preparing days in advance.'
+  }
+
+  // What is the champion / championship
+  if (msg.includes('champion') || msg.includes('championship')) {
+    return 'Championship / Champions:\n\n- The ultimate competitive event in Kingshot\n- Top alliances compete for the championship title\n- Requires winning through multiple rounds\n- The champion alliance gets exclusive rewards and prestige\n- Kingdom 846\'s alliances are strong championship contenders\n\nCheck the Events page for championship schedules.'
+  }
+
+  // What is a buff
+  if (msg.includes('what is a buff') || msg.includes('buff meaning') || msg.includes('define buff') || msg.includes('what are buffs')) {
+    return 'Buffs:\n\nTemporary or permanent boosts to your stats:\n- Attack buffs: Increase troop damage\n- Defense buffs: Reduce damage taken\n- Speed buffs: Faster march, gathering, training\n- Resource buffs: Increased production\n- VIP buffs: Various bonuses from VIP status\n\nStack buffs from heroes, gear, tech, VIP, and alliance for maximum effect. Every buff adds up.'
+  }
+
+  // What is a debuff
+  if (msg.includes('debuff') || msg.includes('negative effect') || msg.includes('weaken')) {
+    return 'Debuffs:\n\nNegative effects applied to enemies:\n- Reduced attack power\n- Reduced defense\n- Slower march speed\n- Reduced healing\n\nSome heroes have debuff skills that weaken enemy troops. Stack debuffs on enemies while buffing your own troops for maximum advantage.'
+  }
+
+  // What is a gear set
+  if (msg.includes('gear set') || msg.includes('equipment set') || msg.includes('set bonus') || msg.includes('gear bonus')) {
+    return 'Gear Sets & Set Bonuses:\n\n- Equipping multiple pieces from the same gear set gives set bonuses\n- Set bonuses provide additional stat boosts\n- Higher rarity sets give stronger bonuses\n- Match gear sets to your hero\'s role (tank, DPS, support)\n- Don\'t mix random gear pieces — aim for complete sets\n\nA complete gear set on a maxed hero is significantly stronger than random pieces.'
+  }
+
+  // What is the season reward
+  if (msg.includes('season reward') || msg.includes('end of season') || msg.includes('season end reward') || msg.includes('season payout')) {
+    return 'Season Rewards:\n\n- Distributed at the end of each season\n- Based on your season ranking and contribution\n- Include: gems, speedups, resources, hero shards, exclusive items\n- Higher ranking = better rewards\n- Season Pass holders get additional rewards\n- KvK performance affects season rewards\n\nPush hard in the final week of each season. The reward difference between tiers is significant.'
+  }
+
+  // What is the kill event
+  if (msg.includes('kill event') || msg.includes('kill quest') || msg.includes('most kills') || msg.includes('kill competition')) {
+    return 'Kill Events:\n\n- Compete for the most enemy troop kills\n- Usually runs alongside KvK or as a standalone event\n- Rewards scale with kill count\n- Rankings track top killers\n- Join rallies and PvP for maximum kills\n\nScout before attacking, target weaker players, and join alliance rallies for the most kills.'
+  }
+
+  // What is the gather event
+  if (msg.includes('gather event') || msg.includes('gathering event') || msg.includes('gathering competition') || msg.includes('resource event')) {
+    return 'Gathering Events:\n\n- Compete to gather the most resources\n- Points based on total resources gathered\n- Send all marches to resource tiles\n- Use cavalry for fastest gathering\n- Equip gathering heroes\n- Rewards include gems, speedups, and resources\n\nGathering events are great for F2P players — no PvP required, just send marches!'
+  }
+
+  // What is the power event
+  if (msg.includes('power event') || msg.includes('power competition') || msg.includes('increase power event') || msg.includes('power quest')) {
+    return 'Power Events:\n\n- Compete to increase your power the most during the event\n- Power gained from: building upgrades, troop training, tech research, hero leveling\n- Use speedups during power events for maximum benefit\n- Rewards scale with power gained\n\nSave your speedups for power events — you get double benefit (progress + event rewards).'
+  }
+
+  // What is the training event
+  if (msg.includes('training event') || msg.includes('train event') || msg.includes('troop training event') || msg.includes('training competition')) {
+    return 'Training Events:\n\n- Compete to train the most troops during the event\n- Points based on troop count and tier\n- Higher tier troops give more points\n- Use training speedups during this event\n- Rewards include gems, speedups, and resources\n\nTrain your highest tier troops during training events for maximum points.'
+  }
+
+  // What is the research event
+  if (msg.includes('research event') || msg.includes('tech event') || msg.includes('research competition')) {
+    return 'Research Events:\n\n- Compete to complete the most research during the event\n- Points based on research completed\n- Use research speedups during this event\n- Higher tier research gives more points\n- Rewards include gems, speedups, and resources\n\nSave research speedups for these events — double benefit from progress + rewards.'
+  }
+
+  // What is the building event
+  if (msg.includes('building event') || msg.includes('construction event') || msg.includes('build competition')) {
+    return 'Building Events:\n\n- Compete to complete the most building upgrades during the event\n- Points based on building level and type\n- Use building speedups during this event\n- Castle upgrades give the most points\n- Rewards include gems, speedups, and resources\n\nSave building speedups for these events — upgrade Castle and high-level buildings for maximum points.'
+  }
+
+  // How to deal with a bully / stronger player
+  if (msg.includes('bully') || msg.includes('stronger player') || msg.includes('bigger player') || msg.includes('someone stronger') || msg.includes('getting bullied') || msg.includes('picked on')) {
+    return 'Dealing with Stronger Players:\n\n1. BUBBLE UP — Peace Shield is your best defense\n2. Don\'t provoke them — don\'t attack or scout\n3. Move your city using Alliance Teleport\n4. Keep resources secured in Warehouse\n5. Ask your alliance for reinforcements\n6. Report harassment to your alliance leader\n7. If it\'s during KvK, it\'s fair game — that\'s the game\n\nIn peacetime, diplomacy through your alliance leader is the best solution. If someone is bullying you, let leadership handle it.'
+  }
+
+  // What is a trap account / trap city
+  if (msg.includes('trap account') || msg.includes('trap city') || msg.includes('bait city')) {
+    return 'A Trap Account/City:\n\n- A city designed to look weak but has hidden strong defenses\n- Lures attackers in, then counterattacks with reinforced troops\n- Uses hospital capacity and alliance reinforcements\n- Can catch attackers off guard and win\n\nTrap cities are an advanced strategy. Don\'t attack weak-looking cities without scouting first — it might be a trap.'
+  }
+
+  // What is a farm account
+  if (msg.includes('farm account') || msg.includes('farm city') || msg.includes('resource farm')) {
+    return 'Farm Accounts:\n\n- A secondary account used mainly for resource production\n- Sends resources to the main account via Trade Post\n- Focuses on resource buildings, not military\n- Against the rules to use for exploiting events\n\nKingdom 846 doesn\'t encourage farm accounts. Instead, use gathering and alliance help for resources. Play fair with one main account.'
+  }
+
+  // What is pushing / pushing account
+  if (msg.includes('pushing') || msg.includes('push account') || msg.includes('pushed account')) {
+    return 'Pushing:\n\n- "Pushing" is when a player deliberately lets another player kill their troops for free kills/points\n- This is considered cheating in most events\n- Can result in disqualification or bans\n- Kingdom 846 does not allow pushing\n\nPlay fair. Earn your kills and points legitimately.'
+  }
+
+  // What is a bubble burner
+  if (msg.includes('bubble burn') || msg.includes('burn bubble') || msg.includes('pop shield') || msg.includes('burn shield')) {
+    return 'Bubble Burning:\n\n- "Burning" someone\'s bubble means forcing them to use their Peace Shield\n- Done by repeatedly scouting or threatening attacks\n- Forces the target to either bubble up (wasting shield) or risk being attacked\n- A psychological warfare tactic\n\nCounter: Don\'t waste bubbles on scouts. Only bubble when you\'re actually going offline or under real threat.'
+  }
+
+  // What is a hive / cluster
+  if (msg.includes('hive') || msg.includes('cluster') || msg.includes('alliance cluster') || msg.includes('alliance hive')) {
+    return 'Alliance Hive / Cluster:\n\n- A group of alliance members who teleport close together\n- Provides mutual defense — attackers face multiple cities\n- Faster rally joins (close proximity)\n- Shared territory buffs\n- Easier reinforcement between members\n\nWhen you join Kingdom 846, use your Alliance Teleport to join your alliance\'s hive. Strength in numbers.'
+  }
+
+  // What is a port / teleport item
+  if (msg.includes('port') && (msg.includes('item') || msg.includes('use') || msg.includes('what is'))) {
+    return 'Teleport Items (Ports):\n\n- Alliance Teleport: Moves you near your alliance leader\n- Advanced Teleport: Places you at exact coordinates\n- Random Teleport: Moves you to a random location\n- Migration: Moves you to a different kingdom\n\nEarn from events, daily rewards, KvK, and the shop. Save Advanced Teleports for KvK.'
+  }
+
+  // What is a NAP breaker
+  if (msg.includes('nap breaker') || msg.includes('break nap') || msg.includes('broke nap') || msg.includes('broke treaty') || msg.includes('break treaty')) {
+    return 'NAP Breaking:\n\n- Breaking a Non-Aggression Pact is a serious diplomatic violation\n- In Kingdom 846, we NEVER break NAPs\n- NAP breakers face diplomatic consequences including coordinated attacks\n- Our perfect diplomatic record is our pride\n\nIf someone breaks a NAP against Kingdom 846, report to leadership immediately on Discord.'
+  }
+
+  // What is the golden rule of KvK
+  if (msg.includes('golden rule') || msg.includes('most important rule') || msg.includes('number one rule')) {
+    return 'The Golden Rules of Kingdom 846:\n\n1. ALWAYS bubble when going offline\n2. NEVER attack allied kingdoms\n3. ALWAYS join rallies when called\n4. NEVER share kingdom intel with outsiders\n5. ALWAYS check Discord before KvK\n6. NEVER break a treaty\n7. ALWAYS help your alliance members\n8. NEVER give up — rebuild and come back stronger\n\nFollow these rules and you\'ll thrive in Kingdom 846.'
+  }
+
+  // What happens if I don\'t participate
+  if (msg.includes('don\'t participate') || msg.includes('dont participate') || msg.includes('skip event') || msg.includes('ignore event') || msg.includes('not participate')) {
+    return 'Not Participating in Events:\n\n- You miss out on free rewards\n- Your alliance loses potential points\n- You fall behind in power compared to active members\n- Leaders may notice inactivity\n- No direct punishment, but you\'re missing out\n\nEven 15 minutes a day of event participation makes a big difference. Claim daily rewards at minimum.'
+  }
+
+  // What is the minimum requirement to join
+  if (msg.includes('minimum requirement') || msg.includes('minimum level') || msg.includes('minimum power') || msg.includes('requirement to join') || msg.includes('how strong to join')) {
+    return 'Joining Kingdom 846:\n\n- No strict minimum power requirement\n- We welcome players of all levels\n- Must be active and willing to participate in events\n- Must join our Discord\n- Must follow kingdom rules\n- Use the Transfer page to apply\n\nWe care more about attitude and activity than power level. New players grow fast with an active alliance.'
+  }
+
+  // What if I get kicked
+  if (msg.includes('get kicked') || msg.includes('kicked out') || msg.includes('removed from alliance') || msg.includes('kicked from')) {
+    return 'Getting Kicked from Alliance:\n\nReasons for being kicked:\n- Inactivity (not logging in for extended periods)\n- Violating kingdom rules\n- Toxic behavior\n- Spying or cheating\n- Not participating in KvK\n\nIf kicked, you can:\n1. Contact the leader to discuss reinstatement\n2. Apply to a different alliance in Kingdom 846\n3. Join Discord and appeal\n\nBe respectful and active, and you won\'t have to worry about being kicked.'
+  }
+
+  // What is the punishment for breaking rules
+  if (msg.includes('punishment') || msg.includes('penalty') || msg.includes('consequence') || msg.includes('what happens if i break')) {
+    return 'Rule Violation Consequences:\n\n- Minor violations: Warning from alliance leader\n- Repeated violations: Temporary suspension from events\n- Serious violations: Kicked from alliance\n- Cheating/spying: Banned from kingdom + reported to game support\n- NAP breaking: Diplomatic consequences, possible coordinated response\n\nKingdom 846 values honor. Play fair, respect others, and you\'ll never face consequences.'
+  }
+
+  // What is the best way to communicate
+  if (msg.includes('best way to communicate') || msg.includes('how to communicate') || msg.includes('how to talk') || msg.includes('best communication')) {
+    return 'Communication in Kingdom 846:\n\n1. Discord (https://discord.gg/rcxJCh97A) — PRIMARY channel for all communication\n2. In-game alliance chat — for quick coordination\n3. In-game mail — for private messages\n4. This website — for information and schedules\n\nDiscord is essential. All event coordination, KvK strategy, and announcements happen there. Join immediately.'
+  }
+
+  // How to invite others
+  if (msg.includes('invite') || msg.includes('recruit') || msg.includes('bring people') || msg.includes('get more members')) {
+    return 'Inviting Players to Kingdom 846:\n\n1. Share our Discord link: https://discord.gg/rcxJCh97A\n2. Tell them to download Kingshot\n3. Use the Transfer page on this website to apply\n4. Choose an alliance based on playstyle\n5. Use Alliance Teleport to join the hive\n\nActive recruiting strengthens the kingdom. Bring your friends — we welcome all active players!'
+  }
+
+  // What is the council
+  if (msg.includes('council') && !msg.includes('alliance')) {
+    return 'The Council of Kingdom 846:\n\n- Composed of all four alliance leaders + the King/Queen\n- Shoni (RYO), Lovely Khaos (KzK), Lady Charlotte (SAS), Dunngeon (ICE), and Spartan (Admin)\n- Makes kingdom-wide decisions\n- Manages diplomacy, NAPs, and KvK strategy\n- Coordinates event schedules\n- Meets on Discord\n\nThe Council ensures all four alliances work together as one kingdom.'
+  }
+
+  // What is the four pillars
+  if (msg.includes('four pillars') || msg.includes('pillars') || msg.includes('4 pillars')) {
+    return 'The Four Pillars of Kingdom 846:\n\n1. RYO (Spiders) — Strategy\n2. KzK (KamilKazeKarnival) — Aggression\n3. SAS (SaintsAndSinners) — Balance\n4. ICE (IceHunters) — Precision\n\nThese four alliances are the pillars that hold the kingdom together. Each brings a unique strength. Together, they are unbreakable.\n\nVisit the Alliances page for more details.'
+  }
+
+  // What is the kingdom color
+  if (msg.includes('kingdom color') || msg.includes('kingdom colour') || msg.includes('what color') || msg.includes('official color')) {
+    return 'Kingdom 846 Colors:\n\n- Primary: Dark Navy (#0E1220) — the night sky\n- Accent: Gold (#D4AF37) — royal crown\n- Secondary: Crimson Red — the 846 number\n- Tertiary: Blue — the three stars\n- Alliance colors: RYO (purple), KzK (crimson), SAS (gold), ICE (ice blue)\n\nThe royal theme combines dark backgrounds with gold accents for a luxurious feel.'
+  }
+
+  // What font does the website use
+  if (msg.includes('font') || msg.includes('typography') || msg.includes('text style')) {
+    return 'Kingdom 846 Website Fonts:\n\n- Cinzel: Display headings and titles (royal, classical)\n- Cinzel Decorative: Decorative accents and special text\n- Spectral: Body text (readable, elegant)\n- Montserrat: UI elements and buttons\n- JetBrains Mono: Technical/code text\n\nThe fonts create a royal, premium feel throughout the website.'
+  }
+
+  // What is the background music
+  if (msg.includes('music') || msg.includes('song') || msg.includes('sound') || msg.includes('audio') || msg.includes('soundtrack')) {
+    return 'Kingdom 846 Website Music:\n\n- Royal ambient music plays automatically on the splash screen\n- No sound toggle — music is always on (by design)\n- Uses Web Audio API for playback\n- Sets the royal, immersive tone\n\nThe music enhances the premium feel of the website. Let it play and enjoy the royal atmosphere.'
+  }
+
+  // What are the easter eggs / secrets on the website
+  if (msg.includes('easter egg') || msg.includes('secret') || msg.includes('hidden') || msg.includes('hidden feature') || msg.includes('hidden button')) {
+    return 'Hidden Secrets on the Website:\n\n- Click the crown in the title...\n- Click the crest in the splash screen...\n- Click the clock in the header...\n- Ask the Royal Advisor about "treasure" or "secret"...\n- Try clicking the Spartan name in the footer...\n\nThe realm holds many surprises for those who seek them. Explore and discover!'
+  }
+
+  // How to report a website bug
+  if (msg.includes('website bug') || msg.includes('website broken') || msg.includes('page not loading') || msg.includes('page error') || msg.includes('404') || msg.includes('white screen')) {
+    return 'Website Issues:\n\nIf the website is not loading or has errors:\n\n1. Try refreshing the page (Ctrl+F5 for hard refresh)\n2. Clear browser cache and cookies\n3. Try a different browser\n4. Check your internet connection\n5. If still broken, report on Discord: https://discord.gg/rcxJCh97A\n6. Include: screenshot, browser name, what page, what you were doing\n\nSpartan fixes bugs quickly. Thank you for reporting!'
+  }
+
+  // Is there an app
+  if (msg.includes('is there an app') || msg.includes('mobile app') || msg.includes('native app') || msg.includes('download app')) {
+    return 'The Kingdom 846 website does not have a separate app.\n\n- The website is mobile-friendly — just visit kingdom846.com on your phone browser\n- Add it to your home screen for an app-like experience\n- The game Kingshot itself is available as an app on iOS, Android, and PC\n\nNo need to download anything — just bookmark kingdom846.com.'
+  }
+
+  // What is the kingdom address / URL
+  if (msg.includes('website url') || msg.includes('web address') || msg.includes('link') || msg.includes('domain') || msg.includes('kingdom846.com') || msg.includes('what is the url')) {
+    return 'Kingdom 846 Website:\n\n- Official URL: https://kingdom846.com\n- Also accessible at: https://kingdom-846.onrender.com\n- Discord: https://discord.gg/rcxJCh97A\n- GitHub: https://github.com/Bhanu047/kingdom846-editable\n\nBookmark the official URL: kingdom846.com'
+  }
+
+  // Who hosts the website
+  if (msg.includes('who hosts') || msg.includes('hosting') || msg.includes('where is the website') || msg.includes('server host') || msg.includes('where is this hosted')) {
+    return 'Kingdom 846 Website Hosting:\n\n- Hosted on Render.com (cloud hosting)\n- Custom domain: kingdom846.com\n- Source code on GitHub: github.com/Bhanu047/kingdom846-editable\n- Auto-deploys when code is pushed to GitHub\n- Backend: Express.js with SQLite database\n\nThe website is managed and maintained by Spartan (Sovereign Admin).'
+  }
+
+  // Can I see the source code
+  if (msg.includes('source code') || msg.includes('github') || msg.includes('open source') || msg.includes('code repository') || msg.includes('repo')) {
+    return 'The Kingdom 846 website source code is on GitHub:\n\nhttps://github.com/Bhanu047/kingdom846-editable\n\nThe website is built with React, Vite, Tailwind CSS, and Express.js. Feel free to explore the code.\n\nIf you want to contribute or suggest improvements, join Discord: https://discord.gg/rcxJCh97A'
+  }
+
+  // What is the kingdom tag / prefix
+  if (msg.includes('kingdom tag') || msg.includes('kingdom prefix') || msg.includes('tag prefix') || msg.includes('alliance tag')) {
+    return 'Kingdom 846 Alliance Tags:\n\n- RYO: Spiders (led by Shoni)\n- KzK: KamilKazeKarnival (led by Lovely Khaos)\n- SAS: SaintsAndSinners (led by Lady Charlotte)\n- ICE: IceHunters (led by Dunngeon)\n\nThese tags appear next to player names in-game and on the Rankings page.'
+  }
+
+  // What is the royal advisor / chat bot
+  if (msg.includes('royal advisor') || msg.includes('chat bot') || msg.includes('chatbot') || msg.includes('virtual assistant') || msg.includes('how does the chat work')) {
+    return 'The Royal Advisor (me!):\n\n- AI-powered chat assistant built into the Kingdom 846 website\n- Runs entirely on the website\'s own server (no external AI services)\n- Handles 200+ question patterns covering game mechanics, strategy, kingdom info, and more\n- Available 24/7 on every page\n- Click the crown icon to open the chat\n\nI was created by Spartan to help visitors and members with anything kingdom-related.'
+  }
+
+  // What is the kingdom 846 number meaning
+  if (msg.includes('846 meaning') || msg.includes('why 846') || msg.includes('what does 846') || msg.includes('significance of 846') || msg.includes('number 846')) {
+    return 'The number 846 is the kingdom number assigned in the game Kingshot.\n\nWhen Spartan created the kingdom community, the number 846 became our identity. It appears on our crest in crimson red with gold edges, prominently displayed on the shield.\n\n846 is more than a number — it\'s our kingdom\'s identity and pride.'
+  }
+
+  // How many wars has Kingdom 846 fought
+  if (msg.includes('how many wars') || msg.includes('war count') || msg.includes('how many battles') || msg.includes('total wars')) {
+    return 'Kingdom 846 War Record:\n\n- Total Wars Fought: 10\n- Dominations Won: 7\n- Defensive Wars Lost: 0\n- Treaties Broken: 0\n\nOur war record speaks for itself. We have never broken a treaty and never lost a defensive war.\n\nVisit the Timeline page for detailed war records.'
+  }
+
+  // What is the oldest alliance
+  if (msg.includes('oldest alliance') || msg.includes('first alliance') || msg.includes('original alliance') || msg.includes('founding alliance')) {
+    return 'All four alliances in Kingdom 846 were founded together as part of the kingdom\'s creation.\n\n- RYO (Spiders) — Founding member\n- KzK (KamilKazeKarnival) — Founding member\n- SAS (SaintsAndSinners) — Founding member\n- ICE (IceHunters) — Founding member\n\nAll four are equal founding pillars of the kingdom. No alliance is older than another.'
+  }
+
+  // Can I be officer / promoted
+  if (msg.includes('officer') || msg.includes('promoted') || msg.includes('promotion') || msg.includes('how to rank up') || msg.includes('how to get promoted')) {
+    return 'Getting Promoted in Your Alliance:\n\n1. Be active daily — log in and participate\n2. Join all events and rallies\n3. Help other alliance members\n4. Be active on Discord\n5. Show leadership during KvK\n6. Follow kingdom rules\n7. Be respectful and positive\n\nPromotions are earned through dedication and contribution. Officers are trusted members who help manage the alliance.'
+  }
+
+  // What is the kingdom doctrine motto
+  if (msg.includes('one crown') || msg.includes('four alliance') || msg.includes('endless glory') || msg.includes('forged in')) {
+    return 'Kingdom 846 Doctrinal Sayings:\n\n"One Crown. Four Alliances. Endless Glory."\n— The core principle: unity under one king\n\n"Where legends are forged in fire and crowned in gold."\n— Our motto: greatness through struggle\n\n"We take what\'s ours."\n— Our battle cry: we claim what we deserve\n\n"Forged in ten wars. Crowned in seven dominations."\n— Our record: battle-tested, victorious\n\nVisit the About page for the full doctrine.'
+  }
+
+  // What is the meaning of the crest elements
+  if (msg.includes('crown meaning') || msg.includes('moon meaning') || msg.includes('star meaning') || msg.includes('lion meaning') || msg.includes('shield meaning') || msg.includes('crest elements')) {
+    return 'Kingdom 846 Crest Element Meanings:\n\n- Crown: The King/Queen — sovereignty and rule\n- 846 (red with gold): Our kingdom identity, crimson for valor, gold for royalty\n- Gold Crescent Moon: The night our kingdom was forged\n- Three Blue Stars: Three founding principles — Unity, Honor, Victory\n- Moon + Stars: Always together as one inseparable set\n- Two Golden Lions: Strength and courage, guardians of the shield\n- Shield: Our defenses, our unity, our kingdom\n\nEvery element has meaning. The crest tells our story.'
+  }
+
+  // What is the best castle level
+  if (msg.includes('best castle level') || msg.includes('max castle') || msg.includes('castle 25') || msg.includes('highest castle') || msg.includes('castle cap')) {
+    return 'Castle Levels:\n\n- Max Castle level: 25 (current game cap, may increase with updates)\n- Castle 15: Mid-game milestone, unlocks most features\n- Castle 20: Late game, competitive level\n- Castle 25: End game, full content access\n\nAlways upgrade your Castle first. It\'s the key to everything — higher tier troops, more buildings, more features.'
+  }
+
+  // What is the max troop tier
+  if (msg.includes('max tier') || msg.includes('highest tier') || msg.includes('tier 8') || msg.includes('tier 7') || msg.includes('best troop tier') || msg.includes('top tier')) {
+    return 'Max Troop Tier:\n\n- Current max: Tier 8 (may increase with game updates)\n- Tier 7-8: End-game troops, requires high-level Castle and Barracks\n- Tier 5-6: Late game standard\n- Tier 3-4: Mid game\n- Tier 1-2: Early game only\n\nHigher tier troops are exponentially stronger. Always train the highest tier your buildings support.'
+  }
+
+  // What is the max hero level
+  if (msg.includes('max hero level') || msg.includes('hero level cap') || msg.includes('highest hero level') || msg.includes('hero 60')) {
+    return 'Hero Levels:\n\n- Current max hero level: 60 (may increase with updates)\n- Level 30: Mid-game milestone, unlocks most skills\n- Level 50: Late game, strong combat power\n- Level 60: Maxed hero, full potential\n\nFocus on maxing 2-3 heroes rather than spreading XP across many. A maxed rare hero beats a half-leveled legendary.'
+  }
+
+  // How to get legendary heroes
+  if (msg.includes('legendary hero') || msg.includes('legend hero') || msg.includes('how to get legendary') || msg.includes('best hero in game')) {
+    return 'Getting Legendary Heroes:\n\n1. Hero Summon with gems or shards (highest rarity chance)\n2. Special events featuring legendary hero shards\n3. Season Pass (includes legendary shards)\n4. KvK top performer rewards\n5. Mystic Trial high-stage completion\n6. Shop packs (premium)\n\nLegendary heroes are rare but powerful. Don\'t stress about getting them — a well-leveled epic hero can be just as effective.'
+  }
+
+  // What is hero rarity
+  if (msg.includes('hero rarity') || msg.includes('rare epic legendary') || msg.includes('hero grades') || msg.includes('hero tiers')) {
+    return 'Hero Rarity Tiers:\n\n- Common (Gray): Basic heroes, weak\n- Rare (Blue): Decent, good for early game\n- Epic (Purple): Strong, good for mid-late game\n- Legendary (Gold): Best heroes, hardest to get\n\nHigher rarity = higher base stats and stronger skills. But a maxed epic can beat a half-leveled legendary. Focus on leveling what you have.'
+  }
+
+  // What is a hero skill
+  if (msg.includes('hero skill') || msg.includes('hero ability') || msg.includes('hero talent') || msg.includes('skill tree')) {
+    return 'Hero Skills & Abilities:\n\n- Each hero has unique skills unlocked by leveling\n- Active skills: Trigger during battles\n- Passive skills: Always active buffs\n- Some skills buff specific troop types\n- Higher hero level unlocks more skill slots\n- Choose skills that match your formation\n\nRead skill descriptions carefully — the right skill combination can win battles.'
+  }
+
+  // What is the best defense formation
+  if (msg.includes('best defense formation') || msg.includes('defensive formation') || msg.includes('best defense setup') || msg.includes('defense lineup')) {
+    return 'Best Defense Formations:\n\nHeavy Defense: 60% Infantry, 20% Cavalry, 20% Archers\n- Maximizes front line absorption\n- Infantry tanks while archers deal damage\n- Cavalry flanks counter-attack\n\nBalanced Defense: 40% Infantry, 30% Cavalry, 30% Archers\n- Flexible against any attacker\n- Good all-purpose defense\n\nAlways garrison troops and reinforce with allies for maximum defense.'
+  }
+
+  // What is the best attack formation
+  if (msg.includes('best attack formation') || msg.includes('offensive formation') || msg.includes('best attack setup') || msg.includes('attack lineup') || msg.includes('best attacking')) {
+    return 'Best Attack Formations:\n\nAggressive: 30% Infantry, 40% Cavalry, 30% Archers\n- Cavalry-heavy for fast, hard hits\n- Great for raiding gatherers and weak cities\n\nBalanced Attack: 40% Infantry, 35% Cavalry, 25% Archers\n- Strong all-purpose attack formation\n- Good for sieges and PvP\n\nSiege: 50% Infantry, 20% Cavalry, 30% Archers\n- Sustained attack on fortified positions\n- Infantry holds the line while archers deal damage\n\nAlways scout first and counter the enemy\'s composition.'
+  }
+
+  // What is the best gathering formation
+  if (msg.includes('best gathering formation') || msg.includes('gather formation') || msg.includes('gathering setup') || msg.includes('gather lineup')) {
+    return 'Best Gathering Formation:\n\n- Use 100% Cavalry for maximum gathering speed\n- Cavalry marches fastest, reducing travel time\n- Use a gathering hero (if available)\n- Send just enough troops to fill the resource tile\n- Don\'t send all your troops — keep some for defense\n\nGather overnight for free resources while you sleep.'
+  }
+
   // Default — suggest topics
-  return 'I am not sure about that, but I can help you with:\n\n- Alliances and their leaders\n- The current King or Queen\n- Event schedules\n- How to transfer or apply\n- Strategy guides and tips\n- Latest news and updates\n- Kingdom history and doctrine\n- Troops, heroes, and formations\n- KvK, bear hunts, and events\n- Defense and attack strategies\n- Castle, barracks, and buildings\n- Gathering, resources, and trading\n- Discord and community\n- Crest meaning and kingdom lore\n- Beginner guides and F2P tips\n- Troop tiers and counters\n- World map and structures\n- Account binding and recovery\n- VIP, season pass, and shop\n- Scam prevention and account safety\n\nTry asking about one of these topics.'
+  return 'I am not sure about that, but I can help you with:\n\n- Alliances and their leaders\n- The current King or Queen\n- Event schedules\n- How to transfer or apply\n- Strategy guides and tips\n- Latest news and updates\n- Kingdom history and doctrine\n- Troops, heroes, and formations\n- KvK, bear hunts, and events\n- Defense and attack strategies\n- Castle, barracks, and buildings\n- Gathering, resources, and trading\n- Discord and community\n- Crest meaning and kingdom lore\n- Beginner guides and F2P tips\n- Troop tiers and counters\n- World map and structures\n- Account binding and recovery\n- VIP, season pass, and shop\n- Scam prevention and account safety\n- Hero types, skills, and rarity\n- Formations for attack, defense, gathering\n- KvK preparation and strategy\n- Website features and navigation\n\nTry asking about one of these topics.'
 }
 
 // Chat endpoint — pure database-powered, never crashes

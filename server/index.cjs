@@ -1284,7 +1284,7 @@ function getKingdomAnswer(message, reqIp) {
     let idx
     do { idx = Math.floor(Math.random() * jokes.length) } while (tracker.told.includes(idx))
     tracker.told.push(idx)
-    return jokes[idx] + '\n\n(Joke ' + tracker.told.length + ' of ' + jokes.length + ' — ask again for another!)'
+    return jokes[idx]
   }
 
   // Secret / sparta easter egg

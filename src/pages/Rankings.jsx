@@ -47,7 +47,7 @@ export default function Rankings() {
       setEggMsg('To be first is to be a target. Stay sharp, champion. The realm watches.')
       setTimeout(() => setEggMsg(null), 6000)
     }
-    setTimeout(() => { if (rank1ClicksRef.current > 0) rank1ClicksRef.current = 0 }, 3000)
+    setTimeout(() => { if (rank1ClicksRef.current > 0) rank1ClicksRef.current = 0 }, 5000)
   }, [])
 
   // Keep in sync with admin edits (Website Editor → Players)

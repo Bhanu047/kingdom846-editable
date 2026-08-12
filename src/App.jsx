@@ -202,7 +202,7 @@ function Shell() {
             <div className="font-display text-base font-bold text-gold-bright">{titles[page] || 'Page'}</div>
           </div>
           {/* Live EST Clock */}
-          <div className="hidden sm:flex flex-col items-end mr-2" onClick={clockEgg.onClick} style={{ cursor: 'pointer' }}>
+          <div className="flex flex-col items-end mr-2" onClick={clockEgg.onClick} style={{ cursor: 'pointer' }}>
             <span className="text-[9px] uppercase tracking-wider text-gold/50">Kingdom Time</span>
             <span className="font-mono text-xs font-semibold text-gold-bright tabular-nums">{estTime}</span>
           </div>

@@ -43,17 +43,24 @@ export default function Alliances() {
   const allianceClickCountsRef = useRef({})
 
   const onAllianceClick = useCallback((alliance) => {
+    const slug = alliance.slug
+
     // Track click order for banner sequence egg
-    clickOrderRef.current.push(alliance.slug)
+    clickOrderRef.current.push(slug)
     if (clickOrderRef.current.length > 4) clickOrderRef.current.shift()
+
+    // Check sequence egg first
     if (clickOrderRef.current.length === 4 && clickOrderRef.current.join(',') === expectedOrder.join(',')) {
       setEggMsg('United we stand. The four pillars of 846 shall not fall.')
       setTimeout(() => setEggMsg(null), 6000)
       clickOrderRef.current = []
+      allianceClickCountsRef.current = {}
+      return // Don't open modal
     }
-    // Track per-alliance clicks for the 3x egg
-    const slug = alliance.slug
+
+    // Track per-alliance clicks for 3x egg
     allianceClickCountsRef.current[slug] = (allianceClickCountsRef.current[slug] || 0) + 1
+
     if (allianceClickCountsRef.current[slug] >= 3) {
       const mottos = {
         ryo: 'RYO: Weaving victory through shadows. The spiders strike unseen.',
@@ -64,10 +71,19 @@ export default function Alliances() {
       setEggMsg(mottos[slug] || 'A worthy alliance.')
       setTimeout(() => setEggMsg(null), 6000)
       allianceClickCountsRef.current[slug] = 0
+      clickOrderRef.current = []
+      return // Don't open modal
     }
-    setTimeout(() => { allianceClickCountsRef.current[slug] = 0 }, 3000)
-    // Still open the modal
-    setActive(alliance)
+
+    // Reset click count after 5 seconds of inactivity
+    setTimeout(() => {
+      if (allianceClickCountsRef.current[slug]) allianceClickCountsRef.current[slug] = 0
+    }, 5000)
+
+    // Only open modal on first click of an alliance (not on 2nd/3rd for egg)
+    if (allianceClickCountsRef.current[slug] === 1) {
+      setActive(alliance)
+    }
   }, [])
 
   return (

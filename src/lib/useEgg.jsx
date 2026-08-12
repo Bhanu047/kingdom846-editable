@@ -1,4 +1,19 @@
-import { useState, useRef, useCallback, useEffect } from 'react'
+import { useState, useRef, useCallback } from 'react'
+
+// Shared AudioContext so multiple useEgg instances don't hit browser limits
+let _sharedAudioCtx = null
+function getAudioCtx() {
+  if (!_sharedAudioCtx) {
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext
+      if (AudioCtx) _sharedAudioCtx = new AudioCtx()
+    } catch (e) { /* ignore */ }
+  }
+  if (_sharedAudioCtx && _sharedAudioCtx.state !== 'running') {
+    try { _sharedAudioCtx.resume() } catch (e) { /* ignore */ }
+  }
+  return _sharedAudioCtx
+}
 
 /**
  * Reusable easter egg hook for any page.
@@ -17,18 +32,12 @@ export function useEgg({ clicks = 3, message, sound = true, cooldown = 8000 } = 
   const [eggMsg, setEggMsg] = useState(null)
   const countRef = useRef(0)
   const lastTriggerRef = useRef(0)
-  const audioCtxRef = useRef(null)
 
   const playChord = useCallback(() => {
     if (!sound) return
     try {
-      if (!audioCtxRef.current) {
-        const AudioCtx = window.AudioContext || window.webkitAudioContext
-        if (!AudioCtx) return
-        audioCtxRef.current = new AudioCtx()
-      }
-      const ctx = audioCtxRef.current
-      if (ctx.state !== 'running') ctx.resume()
+      const ctx = getAudioCtx()
+      if (!ctx) return
       const now = ctx.currentTime
       const master = ctx.createGain()
       master.gain.value = 0.15
@@ -65,7 +74,7 @@ export function useEgg({ clicks = 3, message, sound = true, cooldown = 8000 } = 
       countRef.current = 0
       trigger()
     }
-    setTimeout(() => { if (countRef.current > 0) countRef.current = 0 }, 3000)
+    setTimeout(() => { if (countRef.current > 0) countRef.current = 0 }, 5000)
   }, [clicks, trigger])
 
   return { eggMsg, onClick, trigger }

@@ -12,52 +12,6 @@
   <link rel="icon" type="image/png" href="./favicon.png" />
 </head>
 <body>
-  <!-- Fanfare audio: starts muted autoplay before React loads, then unmutes -->
-  <audio id="fanfare-audio" autoplay muted preload="auto">
-    <source src="./assets/fanfare.wav" type="audio/wav" />
-  </audio>
-  <script>
-    // Aggressive unmute: try to unmute at multiple points for max success rate
-    (function() {
-      var audio = document.getElementById('fanfare-audio');
-      if (!audio) return;
-      audio.volume = 0.7;
-      
-      var unmuted = false;
-      function tryUnmute() {
-        if (unmuted) return;
-        if (!audio.paused) {
-          audio.muted = false;
-          unmuted = true;
-        }
-      }
-      
-      // Try unmuting at multiple intervals
-      audio.addEventListener('playing', tryUnmute);
-      audio.addEventListener('timeupdate', tryUnmute);
-      setTimeout(tryUnmute, 50);
-      setTimeout(tryUnmute, 200);
-      setTimeout(tryUnmute, 500);
-      setTimeout(tryUnmute, 1000);
-      requestAnimationFrame(tryUnmute);
-      
-      // If muted autoplay was blocked, try playing unmuted directly
-      audio.play().catch(function() {
-        audio.muted = false;
-        audio.play().catch(function() {
-          // Last resort: play on first interaction
-          function playNow() {
-            audio.muted = false;
-            audio.currentTime = 0;
-            audio.play().catch(function(){});
-          }
-          document.addEventListener('click', playNow, { once: true });
-          document.addEventListener('touchstart', playNow, { once: true, passive: true });
-          document.addEventListener('keydown', playNow, { once: true });
-        });
-      });
-    })();
-  </script>
   <div id="root"></div>
   <script type="module" src="/src/main.jsx"></script>
 </body>

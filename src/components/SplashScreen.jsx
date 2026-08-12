@@ -1,24 +1,166 @@
 import { useState, useEffect, useRef } from 'react'
 
+// Generate fanfare using Web Audio API oscillators
+function playFanfare(ctx) {
+  const now = ctx.currentTime
+  
+  // Master gain
+  const master = ctx.createGain()
+  master.gain.value = 0.3
+  master.connect(ctx.destination)
+  
+  // Reverb-like delay
+  const delay = ctx.createDelay()
+  delay.delayTime.value = 0.15
+  const delayGain = ctx.createGain()
+  delayGain.gain.value = 0.25
+  delay.connect(delayGain)
+  delayGain.connect(ctx.destination)
+  delayGain.connect(delay)
+  master.connect(delay)
+  
+  function note(freq, start, dur, vol = 0.15, type = 'sawtooth') {
+    const osc = ctx.createOscillator()
+    const gain = ctx.createGain()
+    osc.type = type
+    osc.frequency.value = freq
+    gain.gain.setValueAtTime(0, now + start)
+    gain.gain.linearRampToValueAtTime(vol, now + start + 0.02)
+    gain.gain.setValueAtTime(vol, now + start + dur - 0.1)
+    gain.gain.linearRampToValueAtTime(0, now + start + dur)
+    osc.connect(gain)
+    gain.connect(master)
+    osc.start(now + start)
+    osc.stop(now + start + dur)
+  }
+  
+  // Drum hit
+  function drum(start, vol = 0.4) {
+    const osc = ctx.createOscillator()
+    const gain = ctx.createGain()
+    osc.type = 'sine'
+    osc.frequency.setValueAtTime(150, now + start)
+    osc.frequency.exponentialRampToValueAtTime(40, now + start + 0.3)
+    gain.gain.setValueAtTime(vol, now + start)
+    gain.gain.exponentialRampToValueAtTime(0.001, now + start + 0.3)
+    osc.connect(gain)
+    gain.connect(master)
+    osc.start(now + start)
+    osc.stop(now + start + 0.3)
+  }
+  
+  // Royal fanfare: ascending trumpets + drum
+  drum(0, 0.4)
+  note(523.25, 0.0, 0.4, 0.12, 'sawtooth')   // C5
+  note(659.25, 0.12, 0.4, 0.10, 'sawtooth')   // E5
+  note(783.99, 0.24, 0.5, 0.10, 'sawtooth')   // G5
+  note(1046.50, 0.36, 0.6, 0.08, 'sawtooth')  // C6
+  
+  // Grand chord
+  note(523.25, 0.6, 1.5, 0.10, 'sawtooth')   // C5
+  note(659.25, 0.6, 1.5, 0.08, 'sawtooth')   // E5
+  note(783.99, 0.6, 1.5, 0.08, 'sawtooth')   // G5
+  note(1046.50, 0.6, 1.5, 0.06, 'sawtooth')  // C6
+  
+  // Shimmer finish
+  note(1046.50, 1.8, 0.4, 0.05, 'sine')
+  note(1318.51, 1.9, 0.4, 0.04, 'sine')
+}
+
+// Generate enter sound using Web Audio API
+function playEnterSound(ctx) {
+  const now = ctx.currentTime
+  
+  const master = ctx.createGain()
+  master.gain.value = 0.35
+  master.connect(ctx.destination)
+  
+  function note(freq, start, dur, vol = 0.15, type = 'sawtooth') {
+    const osc = ctx.createOscillator()
+    const gain = ctx.createGain()
+    osc.type = type
+    osc.frequency.value = freq
+    gain.gain.setValueAtTime(0, now + start)
+    gain.gain.linearRampToValueAtTime(vol, now + start + 0.02)
+    gain.gain.setValueAtTime(vol, now + start + dur - 0.1)
+    gain.gain.linearRampToValueAtTime(0, now + start + dur)
+    osc.connect(gain)
+    gain.connect(master)
+    osc.start(now + start)
+    osc.stop(now + start + dur)
+  }
+  
+  function drum(start, vol = 0.4) {
+    const osc = ctx.createOscillator()
+    const gain = ctx.createGain()
+    osc.type = 'sine'
+    osc.frequency.setValueAtTime(150, now + start)
+    osc.frequency.exponentialRampToValueAtTime(40, now + start + 0.3)
+    gain.gain.setValueAtTime(vol, now + start)
+    gain.gain.exponentialRampToValueAtTime(0.001, now + start + 0.3)
+    osc.connect(gain)
+    gain.connect(master)
+    osc.start(now + start)
+    osc.stop(now + start + 0.3)
+  }
+  
+  // Enter: bright triumphant chord with drum
+  drum(0, 0.5)
+  note(523.25, 0.0, 0.4, 0.12)   // C5
+  note(659.25, 0.08, 0.4, 0.10)  // E5
+  note(783.99, 0.16, 0.5, 0.10)  // G5
+  
+  note(523.25, 0.4, 1.0, 0.10)   // C5
+  note(659.25, 0.4, 1.0, 0.08)   // E5
+  note(783.99, 0.4, 1.0, 0.08)   // G5
+  note(1046.50, 0.4, 1.0, 0.06)  // C6
+  
+  note(1046.50, 1.0, 0.4, 0.05, 'sine')
+  note(1318.51, 1.1, 0.4, 0.04, 'sine')
+}
+
 export default function SplashScreen({ onEnter }) {
   const [fading, setFading] = useState(false)
-  const [entered, setEntered] = useState(false)
-  const enterAudioRef = useRef(null)
+  const audioCtxRef = useRef(null)
 
   useEffect(() => {
     document.body.style.overflow = 'hidden'
+    
+    // Create AudioContext immediately
+    const AudioCtx = window.AudioContext || window.webkitAudioContext
+    if (AudioCtx) {
+      audioCtxRef.current = new AudioCtx()
+      
+      // Try to play fanfare immediately
+      const ctx = audioCtxRef.current
+      if (ctx.state === 'running') {
+        playFanfare(ctx)
+      } else {
+        // Resume context (may work if browser allows it)
+        ctx.resume().then(() => {
+          if (ctx.state === 'running') {
+            playFanfare(ctx)
+          }
+        }).catch(() => {})
+      }
+    }
+    
     return () => { document.body.style.overflow = '' }
   }, [])
 
   const enter = () => {
     if (fading) return
-    setEntered(true)
-    // Play enter sound
-    if (enterAudioRef.current) {
-      enterAudioRef.current.volume = 0.8
-      enterAudioRef.current.currentTime = 0
-      enterAudioRef.current.play().catch(() => {})
+    
+    // Play enter sound - this WILL work because it's a direct user click
+    const ctx = audioCtxRef.current
+    if (ctx) {
+      if (ctx.state !== 'running') {
+        ctx.resume().then(() => playEnterSound(ctx)).catch(() => {})
+      } else {
+        playEnterSound(ctx)
+      }
     }
+    
     setFading(true)
     setTimeout(() => {
       document.body.style.overflow = ''
@@ -31,12 +173,6 @@ export default function SplashScreen({ onEnter }) {
       className={`fixed inset-0 z-[100] flex items-center justify-center overflow-hidden ${fading ? 'splash-fade-out' : ''}`}
       style={{ background: '#060810' }}
     >
-      {/* Fanfare audio is in index.html for earliest autoplay */}
-      {/* Enter sound - plays when user taps Enter the Realm */}
-      <audio ref={enterAudioRef} preload="auto">
-        <source src="./assets/enter-sound.wav" type="audio/wav" />
-      </audio>
-
       {/* Cinematic throne room background */}
       <img
         src="./assets/royal-bg.jpg"
@@ -52,7 +188,7 @@ export default function SplashScreen({ onEnter }) {
         }}
       />
 
-      {/* Dark gradient overlay for text readability */}
+      {/* Dark gradient overlay */}
       <div style={{
         position: 'absolute', inset: 0, zIndex: 2,
         background: 'radial-gradient(ellipse at 50% 50%, rgba(6,8,16,0.3) 0%, rgba(6,8,16,0.75) 70%, rgba(6,8,16,0.92) 100%)',
@@ -237,10 +373,10 @@ export default function SplashScreen({ onEnter }) {
         @keyframes dot-pulse { 0%,80%,100% { opacity: 0.2; transform: scale(1); } 40% { opacity: 1; transform: scale(1.5); } }
         @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
         @media (max-width: 768px) {
-          .splash-fade-out img[alt="Kingdom 846 Royal Crest"] { max-height: 28vh !important; }
+          img[alt="Kingdom 846 Royal Crest"] { max-height: 28vh !important; }
         }
         @media (max-width: 480px) {
-          .splash-fade-out img[alt="Kingdom 846 Royal Crest"] { max-height: 22vh !important; }
+          img[alt="Kingdom 846 Royal Crest"] { max-height: 22vh !important; }
         }
       `}</style>
     </div>

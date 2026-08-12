@@ -879,7 +879,7 @@ function getKingdomAnswer(message) {
   }
 
   // Alliance-specific event timing (bear, KvK, clash, etc.)
-  if (msg.includes('timing') || msg.includes('schedule') || msg.includes('when') || (msg.includes('bear') && (msg.includes('time') || msg.includes('when'))) || (msg.includes('event') && (msg.includes('time') || msg.includes('when')))) {
+  if (msg.includes('timing') || msg.includes('schedule') || (msg.includes('when') && (msg.includes('bear') || msg.includes('event') || msg.includes('clash') || msg.includes('viking') || msg.includes('sword') || msg.includes('kvk'))) || (msg.includes('bear') && (msg.includes('time') || msg.includes('when')))) {
     // Check if asking about a specific alliance's schedule
     const allianceSlugs = { ryo: 'ryo', kzk: 'kzk', sas: 'sas', ice: 'ice', spider: 'ryo', spiders: 'ryo', kamil: 'kzk', kamikaze: 'kzk', karnival: 'kzk', saint: 'sas', sinner: 'sas', icchunter: 'ice', hunter: 'ice' }
     let askedAlliance = null
@@ -887,11 +887,22 @@ function getKingdomAnswer(message) {
       if (msg.includes(key)) { askedAlliance = slug; break }
     }
     if (askedAlliance) {
-      const allianceSchedules = db.prepare('SELECT event_name, event_time, updated_at FROM alliance_schedules WHERE alliance_slug = ?').all(askedAlliance)
       const allianceInfo = alliances.find(a => a.slug === askedAlliance)
       const aName = allianceInfo ? `${allianceInfo.name} [${askedAlliance.toUpperCase()}]` : `[${askedAlliance.toUpperCase()}]`
+      
+      // Get schedules from DB, fall back to defaults
+      let allianceSchedules = db.prepare('SELECT event_name, event_time, updated_at FROM alliance_schedules WHERE alliance_slug = ?').all(askedAlliance)
+      const defaults = SCHEDULE_DEFAULTS[askedAlliance] || {}
+      const isCustom = allianceSchedules.length > 0
+      
+      // If no DB rows, use defaults
+      if (!isCustom) {
+        allianceSchedules = Object.entries(defaults).map(([event_name, event_time]) => ({
+          event_name, event_time, updated_at: null
+        }))
+      }
+      
       if (allianceSchedules.length > 0) {
-        // Check if asking about a specific event type
         const askingBear = msg.includes('bear')
         const askingKvk = msg.includes('kvk') || msg.includes('kingdom vs')
         const askingClash = msg.includes('clash') || msg.includes('tri-alliance')
@@ -899,41 +910,49 @@ function getKingdomAnswer(message) {
         const askingSwordland = msg.includes('swordland') || msg.includes('showdown')
         
         if (askingBear) {
-          const bear = allianceSchedules.find(s => s.event_name.toLowerCase().includes('bear'))
-          if (bear) {
-            return `${aName} — Bear Hunt Timing:\n\n${bear.event_name}: ${bear.event_time} UTC\n\nLast updated: ${bear.updated_at}\n\nVisit the Events page for the full schedule.`
+          const bears = allianceSchedules.filter(s => s.event_name.toLowerCase().includes('bear'))
+          if (bears.length > 0) {
+            const list = bears.map(s => `${s.event_name}: ${s.event_time} UTC`).join('\n')
+            const updated = isCustom ? `\nLast updated: ${bears[0].updated_at}` : '\n(Default schedule — leader has not set custom times yet)'
+            return `${aName} — Bear Hunt Timings (UTC):\n\n${list}${updated}\n\nVisit the Events page for the full schedule.`
           }
-          return `${aName} — No bear hunt timing has been set yet.\n\nThe alliance leader can update event times through the Leader Portal. Check the Events page or Discord (https://discord.gg/rcxJCh97A) for the latest schedule.`
         }
         if (askingKvk) {
-          const kvk = allianceSchedules.find(s => s.event_name.toLowerCase().includes('kvk') || s.event_name.toLowerCase().includes('kingdom'))
-          if (kvk) {
-            return `${aName} — KvK Timing:\n\n${kvk.event_name}: ${kvk.event_time} UTC\n\nLast updated: ${kvk.updated_at}`
-          }
+          // KvK doesn't have a specific schedule entry, but show all events since KvK is kingdom-wide
+          const list = allianceSchedules.map(s => `${s.event_name}: ${s.event_time} UTC`).join('\n')
+          const updated = isCustom ? `\nLast updated: ${allianceSchedules[0].updated_at}` : '\n(Default schedule — leader has not set custom times yet)'
+          return `${aName} — Event Schedule (UTC):\n\n${list}${updated}\n\nKvK is a kingdom-wide event. Check Discord for KvK coordination: https://discord.gg/rcxJCh97A`
         }
         if (askingClash) {
-          const clash = allianceSchedules.find(s => s.event_name.toLowerCase().includes('clash'))
-          if (clash) {
-            return `${aName} — Clash Timing:\n\n${clash.event_name}: ${clash.event_time} UTC\n\nLast updated: ${clash.updated_at}`
+          const clashes = allianceSchedules.filter(s => s.event_name.toLowerCase().includes('clash'))
+          if (clashes.length > 0) {
+            const list = clashes.map(s => `${s.event_name}: ${s.event_time} UTC`).join('\n')
+            const updated = isCustom ? `\nLast updated: ${clashes[0].updated_at}` : '\n(Default schedule — leader has not set custom times yet)'
+            return `${aName} — Tri-Alliance Clash Timings (UTC):\n\n${list}${updated}`
           }
         }
         if (askingViking) {
-          const viking = allianceSchedules.find(s => s.event_name.toLowerCase().includes('viking'))
-          if (viking) {
-            return `${aName} — Viking Vengeance Timing:\n\n${viking.event_name}: ${viking.event_time} UTC\n\nLast updated: ${viking.updated_at}`
+          const vikings = allianceSchedules.filter(s => s.event_name.toLowerCase().includes('viking'))
+          if (vikings.length > 0) {
+            const list = vikings.map(s => `${s.event_name}: ${s.event_time} UTC`).join('\n')
+            const updated = isCustom ? `\nLast updated: ${vikings[0].updated_at}` : '\n(Default schedule — leader has not set custom times yet)'
+            return `${aName} — Viking Vengeance Timings (UTC):\n\n${list}${updated}`
           }
         }
         if (askingSwordland) {
-          const sword = allianceSchedules.find(s => s.event_name.toLowerCase().includes('sword') || s.event_name.toLowerCase().includes('showdown'))
-          if (sword) {
-            return `${aName} — Swordland Showdown Timing:\n\n${sword.event_name}: ${sword.event_time} UTC\n\nLast updated: ${sword.updated_at}`
+          const swords = allianceSchedules.filter(s => s.event_name.toLowerCase().includes('sword') || s.event_name.toLowerCase().includes('showdown'))
+          if (swords.length > 0) {
+            const list = swords.map(s => `${s.event_name}: ${s.event_time} UTC`).join('\n')
+            const updated = isCustom ? `\nLast updated: ${swords[0].updated_at}` : '\n(Default schedule — leader has not set custom times yet)'
+            return `${aName} — Swordland Showdown Timings (UTC):\n\n${list}${updated}`
           }
         }
         // Return all schedules for this alliance
         const list = allianceSchedules.map(s => `${s.event_name}: ${s.event_time} UTC`).join('\n')
-        return `${aName} — Event Schedule (UTC):\n\n${list}\n\nLast updated: ${allianceSchedules[0].updated_at}\n\nVisit the Events page for the full visual schedule.`
+        const updated = isCustom ? `\nLast updated: ${allianceSchedules[0].updated_at}` : '\n(Default schedule — leader has not set custom times yet)'
+        return `${aName} — Event Schedule (UTC):\n\n${list}${updated}\n\nVisit the Events page for the full visual schedule.`
       }
-      return `${aName} — No event timings have been set yet.\n\nThe alliance leader can update event times through the Leader Portal. Check the Events page or join Discord (https://discord.gg/rcxJCh97A) for the latest schedule.`
+      return `${aName} — No event timings available.\n\nThe alliance leader can update event times through the Leader Portal. Check the Events page or join Discord (https://discord.gg/rcxJCh97A) for the latest schedule.`
     }
   }
 
@@ -1002,7 +1021,7 @@ function getKingdomAnswer(message) {
   }
 
   // Kingdom info / about
-  if (msg.includes('about') || msg.includes('kingdom 846') || msg.includes('what is') || msg.includes('tell me about') || msg.includes('history') || msg.includes('doctrine') || msg.includes('motto')) {
+  if (msg.includes('about the kingdom') || msg.includes('about 846') || msg.includes('kingdom history') || msg.includes('kingdom info') || msg.includes('tell me about the kingdom') || msg.includes('kingdom doctrine') || msg.includes('kingdom motto') || msg.includes('about this kingdom') || msg.includes('lore') && msg.includes('kingdom')) {
     return 'Kingdom 846 — One Crown. Four Alliances. Endless Glory.\n\nA kingdom forged in ten wars, seven dominations, and a perfect diplomatic record. Four alliances stand united under one crown:\n\n- [RYO] Spiders — Led by Shoni\n- [KzK] KamilKazeKarnival — Led by Lovely Khaos\n- [SAS] SaintsAndSinners — Led by Lady Charlotte\n- [ICE] IceHunters — Led by Dunngeon\n\nWhere legends are forged in fire and crowned in gold. Visit the About page for the full kingdom history and doctrine.'
   }
 

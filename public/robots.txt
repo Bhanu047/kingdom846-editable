@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://kingdom846.com/sitemap.xml

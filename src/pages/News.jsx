@@ -26,7 +26,7 @@ export default function News() {
       {/* Hero banner */}
       <Panel glow className="hero-frame relative overflow-hidden p-0">
         <div className="relative h-36 sm:h-44">
-          <img src="./assets/hero-news.png" alt="News" className="h-full w-full object-cover" />
+          <img src="./assets/hero-news.webp" alt="News" className="h-full w-full object-cover" />
           <div className="hero-overlay absolute inset-0" />
           <div className="absolute inset-y-0 left-0 flex flex-col justify-center p-6">
             <div className="eyebrow">Kingdom Chronicle</div>

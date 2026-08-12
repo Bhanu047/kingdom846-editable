@@ -87,7 +87,7 @@ export default function Rankings() {
       {/* Hero */}
       <Panel glow className="relative overflow-hidden p-0 gold-corners">
         <div className="relative h-40 hero-shimmer">
-          <img src="./assets/hero-rankings.png" alt="Commander Rankings" className="h-full w-full drift-slow object-cover" loading="lazy" />
+          <img src="./assets/hero-rankings.webp" alt="Commander Rankings" className="h-full w-full drift-slow object-cover" loading="lazy" />
           <div className="absolute inset-0 bg-gradient-to-r from-ink via-ink/80 to-ink/20" />
           <div className="absolute inset-y-0 left-0 flex flex-col justify-center p-6 md:p-10">
             <div className="eyebrow text-glow">Hall of Legends</div>
@@ -137,6 +137,16 @@ export default function Rankings() {
                     <div className={`badge-shine relative grid h-10 w-10 flex-shrink-0 place-items-center rounded-lg font-display text-base font-bold ${isTop3 ? s.badge : 'border border-gold/30 bg-ink/70 text-parchment/80'}`}>
                       {isTop3 && s.crown && <Icon name="crown" size={12} className="absolute -top-2 left-1/2 -translate-x-1/2 text-gold" />}
                       {p.rank}
+                    </div>
+
+                    {/* Avatar */}
+                    <div className="flex-shrink-0">
+                      <img
+                        src={`./assets/avatars/${p.avatar || 'warrior'}.webp`}
+                        alt={p.name}
+                        className="h-10 w-10 rounded-lg object-cover ring-1 ring-gold/30"
+                        loading="lazy"
+                      />
                     </div>
 
                     {/* Name + alliance */}

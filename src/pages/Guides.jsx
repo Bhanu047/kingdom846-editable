@@ -8,6 +8,7 @@ export default function Guides() {
   const [activeId, setActiveId] = useState(null)
   const [synced, setSynced] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [filter, setFilter] = useState('All')
   const activeRef = useRef(null)
 
   useEffect(() => {
@@ -17,6 +18,8 @@ export default function Guides() {
   }, [])
 
   const allGuides = synced?.guides || []
+  const categories = ['All', ...new Set(allGuides.map(g => g.category))].filter(Boolean)
+  const filteredGuides = filter === 'All' ? allGuides : allGuides.filter(g => g.category === filter)
 
   // Scroll the expanded item into view smoothly
   useEffect(() => {
@@ -30,11 +33,26 @@ export default function Guides() {
       <Panel glow className="gold-corners">
         <RoyalSectionHeader icon="book" eyebrow="Knowledge Base" title="Strategy & Guides" />
         <p className="text-sm text-parchment/50">
-          Auto-synced from Kingshot Wiki · {allGuides.length} guides available
+          Auto-synced from Kingshot Wiki · {filteredGuides.length} guides available
         </p>
       </Panel>
 
       <div className="royal-divider"><span className="royal-divider-icon">◆</span></div>
+
+      {/* Category filter */}
+      {categories.length > 1 && (
+        <div className="flex flex-wrap gap-2">
+          {categories.map((c) => (
+            <button
+              key={c}
+              onClick={() => setFilter(c)}
+              className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition ${filter === c ? 'bg-gold/20 text-gold-bright border border-gold/50' : 'bg-white/5 text-parchment/50 border border-gold/15 hover:text-parchment'}`}
+            >
+              {c}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Compact list with inline expand */}
       <div className="space-y-2">
@@ -52,7 +70,7 @@ export default function Guides() {
         {!loading && allGuides.length === 0 && (
           <Panel><p className="text-sm text-parchment/50 text-center py-4">No guides available yet.</p></Panel>
         )}
-        {allGuides.map((g, i) => {
+        {filteredGuides.map((g, i) => {
           const isActive = activeId === g.id
           return (
             <div key={g.id} ref={isActive ? activeRef : null} className="stagger-in" style={{ animationDelay: `${Math.min(i * 0.03, 0.5)}s` }}>
@@ -74,7 +92,7 @@ export default function Guides() {
                   <div className="flex items-center gap-2 mt-0.5">
                     <span className="text-[10px] uppercase tracking-wider text-gold/60 font-semibold">{g.category}</span>
                     <span className="text-parchment/20">·</span>
-                    <span className="text-[10px] text-parchment/40">{g.read || '5 min'}</span>
+                    <span className="text-[10px] text-parchment/40">{g.read || (g.readTime || '5 min')}</span>
                   </div>
                 </div>
                 <Icon name="arrow" size={14} className={`text-gold/30 transition-transform flex-shrink-0 ${isActive ? 'rotate-90' : ''}`} />

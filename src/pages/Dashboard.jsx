@@ -87,7 +87,7 @@ export default function Dashboard({ onNavigate }) {
 
       <Panel glow className="hero-frame relative overflow-hidden p-0 gold-corners">
         <div className="relative h-64 md:h-96 hero-shimmer">
-          <ArtImage src="./assets/hero-throne-room.png" alt="Kingdom 846" className="h-full w-full drift-slow" />
+          <ArtImage src="./assets/hero-throne-room.webp" alt="Kingdom 846" className="h-full w-full drift-slow" />
           <div className="hero-overlay absolute inset-0" />
           <div className="rune-circle" style={{ right: '10%', top: '20%' }} />
           <div className="ember-field">
@@ -112,10 +112,10 @@ export default function Dashboard({ onNavigate }) {
 
       {/* Quick Action Tiles */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <GraphicTile image="./assets/hero-alliances.png" label="Alliances" sublabel="View ranks" icon="shield" onClick={() => onNavigate('alliances')} />
-        <GraphicTile image="./assets/hero-events.png" label="Events" sublabel="Next countdown" icon="calendar" onClick={() => onNavigate('events')} badge={{ label: 'Live', tone: 'red' }} />
-        <GraphicTile image="./assets/hero-apply-chief.png" label="Apply" sublabel="Chief / Noble" icon="crown" onClick={() => onNavigate('apply')} />
-        <GraphicTile image="./assets/hero-transfer.png" label="Transfer" sublabel="Join 846" icon="castle" onClick={() => onNavigate('transfer')} />
+        <GraphicTile image="./assets/hero-alliances.webp" label="Alliances" sublabel="View ranks" icon="shield" onClick={() => onNavigate('alliances')} />
+        <GraphicTile image="./assets/hero-events.webp" label="Events" sublabel="Next countdown" icon="calendar" onClick={() => onNavigate('events')} badge={{ label: 'Live', tone: 'red' }} />
+        <GraphicTile image="./assets/hero-apply-chief.webp" label="Apply" sublabel="Chief / Noble" icon="crown" onClick={() => onNavigate('apply')} />
+        <GraphicTile image="./assets/hero-transfer.webp" label="Transfer" sublabel="Join 846" icon="castle" onClick={() => onNavigate('transfer')} />
       </div>
 
       {/* Apply CTA */}

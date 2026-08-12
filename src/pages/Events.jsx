@@ -59,7 +59,7 @@ export default function Events() {
     <div className="space-y-6">
       <Panel glow className="relative overflow-hidden p-0 gold-corners">
         <div className="relative h-48 hero-shimmer">
-          <ArtImage src="./assets/hero-events.png" alt="Castle battle" className="h-full w-full drift-slow" />
+          <ArtImage src="./assets/hero-events.webp" alt="Castle battle" className="h-full w-full drift-slow" />
           <div className="hero-overlay absolute inset-0" />
           <div className="absolute inset-0 flex flex-col justify-center p-6 md:p-10">
             <div className="eyebrow text-glow">War Calendar</div>

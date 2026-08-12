@@ -246,6 +246,8 @@ function Shell() {
                 <span className="text-gold/70 font-semibold" onClick={footerEgg.onClick} style={{ cursor: 'pointer' }}>Spartan</span>
                 <span className="text-gold/30">◆</span>
                 <span>Forged for the realm</span>
+                <span className="text-gold/30">◆</span>
+                <a href="https://discord.gg/rcxJCh97A" target="_blank" rel="noreferrer" className="text-gold/60 hover:text-gold-bright transition">Discord</a>
               </div>
             </div>
           </footer>

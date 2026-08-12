@@ -173,7 +173,7 @@ export default function About() {
       </Panel>
 
       <p className="text-center text-[10px] text-parchment/30">
-        Kingdom data from <a href={kingdom.source} target="_blank" rel="noreferrer" className="text-gold/70 hover:text-gold-bright underline">Kingshot Atlas</a> & <a href={kingdom.kvkSource} target="_blank" rel="noreferrer" className="text-gold/70 hover:text-gold-bright underline">Kingshot Optimizer</a>. Some alliance and commander details are illustrative pending live roster import.
+        Kingdom data from <a href={kingdom.source} target="_blank" rel="noreferrer" className="text-gold/70 hover:text-gold-bright underline">Kingshot Atlas</a> & <a href={kingdom.kvkSource} target="_blank" rel="noreferrer" className="text-gold/70 hover:text-gold-bright underline">Kingshot Optimizer</a>.
       </p>
       <EggToast message={titleEgg.eggMsg || crownEgg.eggMsg} />
     </div>

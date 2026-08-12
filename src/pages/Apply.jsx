@@ -27,7 +27,7 @@ export default function Apply({ type, onNavigate }) {
       <div className="space-y-4">
         <Panel glow className="hero-frame relative overflow-hidden p-0">
           <div className="relative h-40 sm:h-48">
-            <img src="./assets/hero-apply-chief.png" alt="Apply" className="h-full w-full object-cover" />
+            <img src="./assets/hero-apply-chief.webp" alt="Apply" className="h-full w-full object-cover" />
             <div className="hero-overlay absolute inset-0" />
             <div className="absolute inset-y-0 left-0 flex flex-col justify-center p-6 md:p-10">
               <div className="eyebrow">Kingdom 846 leadership</div>
@@ -39,7 +39,7 @@ export default function Apply({ type, onNavigate }) {
         <div className="grid gap-4 sm:grid-cols-2">
           <button onClick={() => onNavigate('apply-chief')} className="panel lift-glow gold-border-hover img-zoom group relative overflow-hidden text-left stagger-in">
             <div className="relative h-32 overflow-hidden">
-              <img src="./assets/hero-apply-chief.png" alt="Chief Minister" className="h-full w-full object-cover opacity-80 transition" />
+              <img src="./assets/hero-apply-chief.webp" alt="Chief Minister" className="h-full w-full object-cover opacity-80 transition" />
               <div className="absolute inset-0 bg-gradient-to-t from-ink to-transparent" />
             </div>
             <div className="p-4">
@@ -50,7 +50,7 @@ export default function Apply({ type, onNavigate }) {
           </button>
           <button onClick={() => onNavigate('apply-noble')} className="panel lift-glow gold-border-hover img-zoom group relative overflow-hidden text-left stagger-in">
             <div className="relative h-32 overflow-hidden">
-              <img src="./assets/hero-apply-noble.png" alt="Noble Advisor" className="h-full w-full object-cover opacity-80 transition" />
+              <img src="./assets/hero-apply-noble.webp" alt="Noble Advisor" className="h-full w-full object-cover opacity-80 transition" />
               <div className="absolute inset-0 bg-gradient-to-t from-ink to-transparent" />
             </div>
             <div className="p-4">

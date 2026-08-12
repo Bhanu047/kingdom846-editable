@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useSiteData } from '../context/SiteDataContext'
 import { useAuth } from '../context/AuthContext'
 import Icon from '../components/Icon'
-import { buildSchedule } from '../data/kingdom'
+import { buildSchedule, AVATAR_OPTIONS } from '../data/kingdom'
 import { apiJson } from '../lib/api'
 import { RoyalSectionHeader } from '../components/VisualElements'
 
@@ -155,6 +155,16 @@ export default function Admin() {
                   <Row key={i} onDelete={() => setDraft((prev) => { const next = structuredClone(prev); next.players.splice(i, 1); return next })}>
                     <Field label="Position (#)" value={p.rank} onChange={(v) => update(['players', i, 'rank'], Number(v) || v)} />
                     <Field label="Name" value={p.name} onChange={(v) => update(['players', i, 'name'], v)} />
+                    <div>
+                      <label className="text-[10px] uppercase tracking-wider text-parchment/50">Avatar</label>
+                      <select
+                        value={p.avatar || 'warrior'}
+                        onChange={(e) => update(['players', i, 'avatar'], e.target.value)}
+                        className="mt-1 w-full rounded-lg border border-gold/20 bg-ink/60 px-3 py-2 text-sm text-parchment outline-none focus:border-gold/60"
+                      >
+                        {AVATAR_OPTIONS.map((a) => <option key={a} value={a}>{a.charAt(0).toUpperCase() + a.slice(1)}</option>)}
+                      </select>
+                    </div>
                     <div className="sm:col-span-2">
                       <Select
                         label="Alliance (sets tag + background banner)"
@@ -174,7 +184,7 @@ export default function Admin() {
                     </div>
                   </Row>
                 ))}
-                <button onClick={() => setDraft((prev) => { const next = structuredClone(prev); next.players.push({ rank: next.players.length + 1, name: 'New Player', tag: '', alliance: '', slug: '' }); return next })}
+                <button onClick={() => setDraft((prev) => { const next = structuredClone(prev); next.players.push({ rank: next.players.length + 1, name: 'New Player', tag: '', alliance: '', slug: '', avatar: 'warrior' }); return next })}
                   className="btn-secondary">+ Add Player</button>
               </div>
             )}

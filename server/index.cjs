@@ -1361,8 +1361,240 @@ function getKingdomAnswer(message) {
     return 'Is there anything else you\'d like to know about Kingdom 846?\n\nYou can ask me about alliances, events, guides, how to join, strategies, KvK, or anything else about the realm.'
   }
 
+  // === Ultra-extended random visitor questions ===
+
+  // Can I change alliance
+  if (msg.includes('change alliance') || msg.includes('switch alliance') || msg.includes('leave alliance') || msg.includes('different alliance')) {
+    return 'Switching Alliances:\n\n1. Check with the new alliance leader first — make sure they have space\n2. Leave your current alliance (in the Alliance menu)\n3. Join the new alliance immediately — don\'t stay alliance-less for long\n4. Use Alliance Teleport to move near your new alliance\n\nNote: You cannot join a new alliance during KvK. Plan your switch during peacetime.\n\nIn Kingdom 846, all four alliances are part of the same kingdom — switching is allowed but discuss with both leaders first.'
+  }
+
+  // What happens if I get attacked
+  if (msg.includes('got attacked') || msg.includes('someone attacked') || msg.includes('i was attacked') || msg.includes('under attack') || msg.includes('being attacked')) {
+    return 'If You Are Attacked:\n\n1. Immediately bubble up (Peace Shield)\n2. Check your Hospital — heal wounded troops\n3. Reinforce with alliance members\n4. Scout the attacker back — gather intel\n5. Report to your alliance leader in Discord\n6. If zeroed, ask alliance for resource help to rebuild\n\nDon\'t panic. Every player gets attacked. Rebuild, re-strategize, and come back stronger. Your alliance has your back.'
+  }
+
+  // Best hero / tier list
+  if (msg.includes('best hero') || msg.includes('tier list') || msg.includes('hero ranking') || msg.includes('which hero') || msg.includes('top hero') || msg.includes('strongest hero')) {
+    return 'Hero selection depends on your playstyle and troop composition:\n\nTank Heroes: Best for absorbing damage, holding front line\nDPS Heroes: High damage output, great for rallies and PvP\nSupport Heroes: Buff allied troops, debuff enemies\nGathering Heroes: Increase gathering speed and capacity\n\nGeneral advice: Focus on 2-3 heroes max. Level them up fully before investing in others. Match hero skills to your main troop type.\n\nVisit the Guides page for detailed hero breakdowns and check the Kingshot Wiki for community tier lists.'
+  }
+
+  // How many troops do I need
+  if (msg.includes('how many troops') || msg.includes('troop count') || msg.includes('army size') || msg.includes('enough troops') || msg.includes('how much army')) {
+    return 'Troop Count Guidelines:\n\nEarly Game (Castle 1-10): 5,000-20,000 troops\nMid Game (Castle 11-17): 50,000-150,000 troops\nLate Game (Castle 18-25): 300,000-1,000,000+ troops\n\nQuality > Quantity: 1,000 Tier 5 troops beat 5,000 Tier 2 troops.\n\nAlways keep troops in training. Never let barracks sit idle. During events, use speedups to boost training.'
+  }
+
+  // What tier troops
+  if (msg.includes('what tier') || msg.includes('tier troops') || msg.includes('best tier') || msg.includes('upgrade troops') || msg.includes('troop tier')) {
+    return 'Troop Tiers in Kingshot:\n\n- Tier 1-2: Basic, very weak, only for early game\n- Tier 3-4: Mid-game standard, decent power\n- Tier 5-6: Late game, strong combat power\n- Tier 7-8: End game, requires high-level Castle and Tech\n\nAlways train the highest tier your Castle supports. Don\'t waste resources on low-tier troops once you unlock higher tiers.\n\nUpgrade your Castle, Barracks, and Tech to unlock higher tiers.'
+  }
+
+  // How long does bubble last
+  if (msg.includes('how long') && (msg.includes('bubble') || msg.includes('shield') || msg.includes('peace'))) {
+    return 'Peace Shield (Bubble) Durations:\n\n- 2-hour shields: Common, from daily rewards\n- 8-hour shields: Good for overnight\n- 12-hour shields: From events and shop\n- 24-hour shields: Rare, from special events\n- 3-day shields: From KvK rewards (very valuable)\n\nYou cannot attack while bubbled. Remove the shield before sending troops out. Always have a spare shield for emergencies.'
+  }
+
+  // How to get more speedups
+  if (msg.includes('more speedup') || msg.includes('get speedup') || msg.includes('free speedup') || msg.includes('speedup item')) {
+    return 'Ways to Get Speedups:\n\n1. Daily Login Rewards — claim every day\n2. Events — all events give speedup rewards\n3. Alliance Help — helping allies gives small speedups\n4. Bear Hunts — random speedup drops\n5. KvK — large speedup bundles for top performers\n6. Mystic Trial — stage completion rewards\n7. Season Pass — free and premium tiers\n8. Shop — daily free items and purchased packs\n\nSave your speedups for Castle upgrades and KvK preparation. Don\'t waste them on low-priority buildings.'
+  }
+
+  // What is the throne / capital
+  if (msg.includes('throne') || msg.includes('capital') || msg.includes('king city') || msg.includes('royal city')) {
+    return 'The Throne / Capital City:\n\n- Located at the center of the kingdom map\n- The most strategic position in Kingdom 846\n- During King Events, alliances fight to control it\n- The alliance holding the throne gets kingdom-wide buffs\n- The leader of the controlling alliance becomes King/Queen\n\nOnly the strongest alliances contest the throne. It requires massive troop commitment and perfect coordination.'
+  }
+
+  // How to get more marches / queues
+  if (msg.includes('more queues') || msg.includes('more march') || msg.includes('additional march') || msg.includes('extra march') || msg.includes('second march')) {
+    return 'Getting More Marches:\n\n- Upgrade your War Room to unlock additional march slots\n- War Room Level 1: 2 marches\n- War Room Level 5: 3 marches\n- War Room Level 10: 4 marches\n- War Room Level 15: 5 marches\n- Some VIP levels give bonus march slots\n\nMore marches = more flexibility. You can rally, gather, defend, and scout simultaneously.'
+  }
+
+  // What is a bubble / peace shield (detailed)
+  if (msg.includes('what is a bubble') || msg.includes('what is bubble') || msg.includes('what is peace shield') || msg.includes('what is a shield')) {
+    return 'A Bubble (Peace Shield) protects your city from attacks.\n\n- While active, nobody can attack your city\n- You also cannot attack others while shielded\n- Shields have time limits (2h, 8h, 12h, 24h, 3-day)\n- Get them from events, daily rewards, and the shop\n\nGolden Rule: Always bubble when going offline. An unshielded city is an invitation for attackers.'
+  }
+
+  // Zeroed / city destroyed
+  if (msg.includes('zeroed') || msg.includes('city destroyed') || msg.includes('lost everything') || msg.includes('city burned') || msg.includes('wiped out')) {
+    return 'Recovering After Being Zeroed:\n\n1. Don\'t panic — your city rebuilds, troops in hospital survive\n2. Heal all wounded troops first (use speedups if possible)\n3. Ask alliance for resource help\n4. Use protected resources from your Warehouse\n5. Start training new troops immediately\n6. Bubble up to prevent follow-up attacks\n7. Learn from the attack — scout next time before fighting\n\nEvery strong player has been zeroed at least once. It\'s part of the game. Rebuild and come back stronger.'
+  }
+
+  // How to reinforce allies
+  if (msg.includes('reinforce') || msg.includes('help defend') || msg.includes('send troops to ally') || msg.includes('garrison ally')) {
+    return 'Reinforcing Allies:\n\n1. Find your ally on the world map\n2. Click their city and select Reinforce\n3. Choose which troops and hero to send\n4. Your troops will garrison their city and defend\n5. You can recall them anytime\n\nNote: Upgraded Embassy allows more reinforcement capacity. Reinforcing allies during KvK is essential for kingdom defense.'
+  }
+
+  // Time zones / when do events start
+  if (msg.includes('when do') && (msg.includes('event') || msg.includes('start'))) {
+    return 'Event times are set by alliance leaders in UTC.\n\n- Check the Events page for the full schedule\n- The clock in the header shows current UTC time\n- Alliance leaders update times through the Leader Portal\n- Most events have 24-hour windows\n\nJoin the Discord (https://discord.gg/rcxJCh97A) for real-time event notifications in your timezone.'
+  }
+
+  // Can I play with friends
+  if (msg.includes('play with friend') || msg.includes('play together') || msg.includes('real life friend') || msg.includes('bring friend') || msg.includes('invite friend')) {
+    return 'Playing With Friends:\n\n1. Tell your friend to download Kingshot (iOS, Android, or PC)\n2. Have them complete the tutorial\n3. Use the Transfer page on this website to apply to Kingdom 846\n4. Once accepted, use Alliance Teleport to move near each other\n5. Join the same alliance for shared events\n6. Both join our Discord: https://discord.gg/rcxJCh97A\n\nThe more friends in your alliance, the stronger your coordination. Bring your whole squad!'
+  }
+
+  // What is the best formation / lineup
+  if (msg.includes('best formation') || msg.includes('best lineup') || msg.includes('best setup') || msg.includes('optimal formation') || msg.includes('best composition')) {
+    return 'Best Formations by Situation:\n\nAttack (PvP): 40% Infantry, 35% Cavalry, 25% Archers\nDefense: 50% Infantry, 25% Cavalry, 25% Archers\nBear Hunt/Rally: 50% Cavalry, 30% Infantry, 20% Archers\nGathering: 100% Cavalry (fastest)\nKvK: Varies — coordinate with alliance\n\nKey: Scout your enemy first, then adjust to counter their composition. Inf > Cav > Arch > Inf (rock-paper-scissors).\n\nHero skills can shift the balance — match your hero to your formation.'
+  }
+
+  // What is the map size / how big is the kingdom
+  if (msg.includes('map size') || msg.includes('how big') || msg.includes('world map size') || msg.includes('kingdom size') || msg.includes('map dimensions')) {
+    return 'The Kingdom 846 map is large with hundreds of player cities, resource tiles, monster spawns, and strategic structures.\n\nKey locations on the map:\n- Center: The Throne (capital)\n- Cardinal points: Alliance territories\n- Scattered: Resource tiles, passes, fortresses, ruins\n- Outer edges: Safer zones for new players\n\nUse the in-game map to explore. Teleport closer to your alliance for better coordination.'
+  }
+
+  // How to get stronger quickly
+  if (msg.includes('get stronger') || msg.includes('become powerful') || msg.includes('level up fast') || msg.includes('power up') || msg.includes('catch up')) {
+    return 'Getting Stronger Quickly:\n\n1. UPGRADE CASTLE — always priority #1\n2. Train highest tier troops available\n3. Complete ALL daily quests\n4. Join every event — even small rewards add up\n5. Research military tech for troop buffs\n6. Level up 2-3 main heroes\n7. Gather resources overnight\n8. Claim free shop items daily\n9. Participate in alliance rallies\n10. Use speedups on Castle and Barracks\n\nConsistency is everything. 30 minutes daily beats 5 hours once a week.'
+  }
+
+  // What is the meta / current strategy
+  if (msg.includes('meta') || msg.includes('current strategy') || msg.includes('best strategy') || msg.includes('most effective')) {
+    return 'Current Meta Strategies:\n\n- Cavalry-heavy formations are strong for mobility and rallies\n- Hero gear optimization makes a big difference at high levels\n- Alliance coordination beats individual strength\n- During KvK, defending passes is as important as attacking\n- Resource denial (raiding enemy gathers) weakens opponents\n- Early KvK aggression often determines the winner\n\nThe meta shifts with game updates. Check the Guides page and Kingshot Wiki for the latest strategies.'
+  }
+
+  // Is this game fun / worth playing
+  if (msg.includes('is it fun') || msg.includes('worth playing') || msg.includes('should i play') || msg.includes('is it good') || msg.includes('review')) {
+    return 'Kingshot is a strategy game that rewards patience, coordination, and tactical thinking.\n\nPros: Deep strategy, strong alliance social aspect, regular events, satisfying progression\nCons: Can be grindy, PvP can be harsh for new players, events require time commitment\n\nBest experienced with an active alliance like the ones in Kingdom 846. The community makes all the difference.\n\nJoin our Discord (https://discord.gg/rcxJCh97A) and talk to our members before deciding.'
+  }
+
+  // How much does it cost / is it free
+  if (msg.includes('how much') && (msg.includes('cost') || msg.includes('price'))) {
+    return 'Kingshot is free to download and play on iOS, Android, and PC.\n\n- Free-to-play fully supported — all content accessible without spending\n- In-app purchases: gems, packs, season pass\n- No purchase required to enjoy the game or be competitive\n- Spending money speeds up progress but doesn\'t guarantee winning\n\nKingdom 846 welcomes F2P and spending players equally.'
+  }
+
+  // What is the kingdom doctrine
+  if (msg.includes('doctrine') || msg.includes('philosophy') || msg.includes('principles') || msg.includes('values') || msg.includes('mission')) {
+    return 'Kingdom 846 Doctrine:\n\nOne Crown. Four Alliances. Endless Glory.\n\nOur principles:\n1. Unity — Four alliances, one kingdom, one goal\n2. Honor — We honor our treaties and our word\n3. Strength — We forge ourselves through fire\n4. Brotherhood — No member left behind\n5. Victory — We take what\'s ours\n\nWhere legends are forged in fire and crowned in gold.'
+  }
+
+  // What is NAP rules / diplomatic
+  if (msg.includes('diplomat') || msg.includes('diplomacy') || msg.includes('foreign') || msg.includes('relations')) {
+    return 'Kingdom 846 Diplomacy:\n\n- NAPs (Non-Aggression Pacts) managed by the council\n- Alliance leaders handle inter-alliance relations\n- The King/Queen handles inter-kingdom diplomacy\n- Breaking treaties is considered dishonorable\n- All diplomatic decisions go through Discord\n\nWe have maintained a perfect diplomatic record — no broken treaties, no betrayed allies.'
+  }
+
+  // What is the season / when does it end
+  if (msg.includes('when does') && (msg.includes('season end') || msg.includes('season finish'))) {
+    return 'Seasons in Kingshot typically last 4-8 weeks.\n\nKingdom 846 is currently in the Season of the Fire Tyrant.\n\n- Season end triggers KvK (Kingdom vs Kingdom)\n- Season rewards are distributed based on ranking\n- New season brings new events and content\n- Check the Events page for season-specific schedules\n\nPush hard in the final week of each season — rewards scale with your performance.'
+  }
+
+  // How to contact admin
+  if (msg.includes('contact admin') || msg.includes('contact spartan') || msg.includes('talk to admin') || msg.includes('message admin') || msg.includes('reach admin')) {
+    return 'To contact the Kingdom 846 admin (Spartan):\n\n1. Join Discord: https://discord.gg/rcxJCh97A — message directly\n2. Use the Royal Access login on the website\n3. For urgent matters, mention Spartan in Discord\n\nSpartan manages the website, king status, data sync, and all admin functions. Response time is usually within a few hours on Discord.'
+  }
+
+  // What is the website for / what does this site do
+  if (msg.includes('what is this website') || msg.includes('what does this site') || msg.includes('purpose of this') || msg.includes('what is this site') || msg.includes('what is this portal')) {
+    return 'This is the official community portal for Kingdom 846 in the game Kingshot.\n\nWhat you can do here:\n- View alliance information and leaders\n- Check event schedules\n- Read strategy guides\n- See player rankings\n- Apply to transfer to Kingdom 846\n- Read kingdom news and announcements\n- View kingdom history and timeline\n- Chat with the Royal Advisor (me!)\n\nAlliance leaders can also log in to manage event schedules.'
+  }
+
+  // Can I be leader / create alliance
+  if (msg.includes('be a leader') || msg.includes('create alliance') || msg.includes('start alliance') || msg.includes('make my own alliance') || msg.includes('new alliance')) {
+    return 'Creating a New Alliance:\n\nIn Kingshot, any player can create an alliance. However, in Kingdom 846, we have four established alliances already.\n\nIf you want to lead:\n1. Join an existing alliance first\n2. Prove yourself through events and coordination\n3. Discuss with the King/Queen about leadership opportunities\n4. Contact Spartan (admin) through Discord\n\nLeadership is earned, not taken. Show your dedication and opportunities will come.'
+  }
+
+  // What is the chat assistant / who is the advisor
+  if (msg.includes('chat assistant') || msg.includes('who is the advisor') || msg.includes('are you ai') || msg.includes('are you real') || msg.includes('are you a bot') || msg.includes('are you human')) {
+    return 'I am the Royal Advisor of Kingdom 846 — an AI assistant built into the kingdom\'s website.\n\nI run entirely on the website\'s own server, answering questions about the kingdom, alliances, events, strategies, and more. I never sleep and I\'m always here to help.\n\nI am not a human, but I am powered by the kingdom\'s knowledge base. Ask me anything about Kingdom 846!'
+  }
+
+  // Can I add my alliance / we have 5th alliance
+  if (msg.includes('fifth alliance') || msg.includes('5th alliance') || msg.includes('add alliance') || msg.includes('new alliance to kingdom') || msg.includes('more alliances')) {
+    return 'Kingdom 846 currently has four alliances: RYO (Spiders), KzK (KamilKazeKarnival), SAS (SaintsAndSinners), and ICE (IceHunters).\n\nAdding a fifth alliance would require approval from the King/Queen and the council. Contact Spartan (admin) through Discord (https://discord.gg/rcxJCh97A) to discuss.\n\nAll alliances in Kingdom 846 work together under one crown.'
+  }
+
+  // How to report bug / website issue
+  if (msg.includes('bug') || msg.includes('broken') || msg.includes('error') || msg.includes('not working') || msg.includes('glitch') || msg.includes('website issue')) {
+    return 'To report a website issue or bug:\n\n1. Take a screenshot of the problem\n2. Note what page you were on and what you were doing\n3. Post in the Kingdom 846 Discord: https://discord.gg/rcxJCh97A\n4. Tag or mention Spartan (the webmaster)\n\nBugs are usually fixed quickly. Thank you for helping improve the realm!'
+  }
+
+  // What is the future / upcoming features
+  if (msg.includes('future') || msg.includes('upcoming') || msg.includes('coming soon') || msg.includes('roadmap') || msg.includes('new features') || msg.includes('update')) {
+    return 'Kingdom 846 Website — Upcoming & Ongoing:\n\n- Guides auto-sync from Kingshot Wiki (ongoing)\n- News auto-syncs from official sources (ongoing)\n- Event schedules updated by alliance leaders (ongoing)\n- New features added regularly by Spartan\n\nFor the latest game updates, check the News page. For website feature requests, join Discord: https://discord.gg/rcxJCh97A'
+  }
+
+  // What is the crest / logo meaning
+  if (msg.includes('crest') || msg.includes('logo') || msg.includes('emblem') || msg.includes('coat of arms') || msg.includes('symbol')) {
+    return 'The Kingdom 846 Crest:\n\n- Crown: Represents the King/Queen who rules the realm\n- 846: The kingdom number, in crimson red with gold edges\n- Gold Crescent Moon: Represents the night we were forged\n- Three Blue Stars: Represent the three founding principles — Unity, Honor, Victory\n- Two Golden Lions: Represent strength and courage, flanking the shield\n\nThe moon and three stars are always together as one set — they represent our unbreakable bond.'
+  }
+
+  // Random / nonsense / trolling
+  if (msg.includes('asdf') || msg.includes('test') || msg.includes('123') || msg.includes('aaaa') || msg.includes('lorem ipsum') || msg.includes('test test')) {
+    return 'I see you\'re testing me! I\'m working perfectly.\n\nTry asking me a real question like:\n- What alliances are in Kingdom 846?\n- How do I join?\n- What is KvK?\n- How to defend my city?\n- What is the Discord link?\n\nI\'m here to help with anything about the realm.'
+  }
+
+  // I love this / this is awesome
+  if (msg.includes('love') || msg.includes('awesome') || msg.includes('amazing') || msg.includes('great website') || msg.includes('beautiful') || msg.includes('cool website') || msg.includes('impressive') || msg.includes('wow')) {
+    return 'Thank you for your kind words! The realm of Kingdom 846 was crafted with dedication by Spartan, our Sovereign Admin.\n\nIf you\'d like to join our community, visit the Transfer page to apply to one of our four alliances, or join our Discord: https://discord.gg/rcxJCh97A\n\nWe take what\'s ours. Glory awaits.'
+  }
+
+  // I hate this / this is bad
+  if (msg.includes('hate') || msg.includes('terrible') || msg.includes('worst') || msg.includes('sucks') || msg.includes('bad') || msg.includes('awful') || msg.includes('stupid')) {
+    return 'I\'m sorry to hear that. We\'re always improving the Kingdom 846 experience.\n\nIf you have specific feedback, please share it in our Discord: https://discord.gg/rcxJCh97A\n\nSpartan (our admin) takes all feedback seriously and works to make the realm better for everyone.'
+  }
+
+  // Can I donate / support
+  if (msg.includes('donate') || msg.includes('support') || msg.includes('contribute') || msg.includes('support the website') || msg.includes('patreon') || msg.includes('paypal')) {
+    return 'Thank you for wanting to support Kingdom 846!\n\nThe best ways to support:\n1. Join our community on Discord: https://discord.gg/rcxJCh97A\n2. Participate actively in alliance events\n3. Invite friends to join the kingdom\n4. Share feedback to improve the website\n\nThis is a community project built by Spartan for the love of the game. No donations needed — just be an active and positive member!'
+  }
+
+  // What phone / device requirements
+  if (msg.includes('phone requirement') || msg.includes('device requirement') || msg.includes('system requirement') || msg.includes('can my phone run') || msg.includes('minimum spec')) {
+    return 'Kingshot Device Requirements:\n\n- iOS: iOS 11.0 or later, iPhone 6s or newer\n- Android: Android 7.0 or later, 2GB+ RAM\n- PC: Windows 10+, 4GB RAM minimum\n- Storage: ~500MB free space\n- Internet connection required\n\nThe game runs on most modern devices. For best experience, use a device with 4GB+ RAM.'
+  }
+
+  // What is the population / how many players
+  if (msg.includes('how many players') || msg.includes('population') || msg.includes('how many members') || msg.includes('how big is') || msg.includes('total players')) {
+    return 'Kingdom 846 has four active alliances with members across multiple time zones.\n\nFor exact member counts, visit the Alliances page. Our community is large enough for 24/7 activity but tight-knit enough that everyone knows each other.\n\nJoin our Discord (https://discord.gg/rcxJCh97A) to meet the community.'
+  }
+
+  // What is the time / current time
+  if (msg.includes('what time') || msg.includes('current time') || msg.includes('time now') || msg.includes('what is the time')) {
+    return 'All Kingdom 846 times are in UTC. Check the clock in the top navigation bar for the current Kingdom Time.\n\nEvent schedules are also displayed in UTC. Use a timezone converter to match your local time.\n\nJoin Discord for timezone-specific event reminders.'
+  }
+
+  // Can you write code / build something
+  if (msg.includes('write code') || msg.includes('build') || msg.includes('program') || msg.includes('develop') || msg.includes('can you make')) {
+    return 'I am the Royal Advisor — I answer questions about Kingdom 846. I cannot write code or build software.\n\nIf you have a feature request for the website, share it in our Discord: https://discord.gg/rcxJCh97A\n\nSpartan (our admin) handles all website development and design.'
+  }
+
+  // Tell me about yourself / who made you
+  if (msg.includes('about you') || msg.includes('tell me about yourself') || msg.includes('how do you work') || msg.includes('how were you made') || msg.includes('your creator')) {
+    return 'I am the Royal Advisor of Kingdom 846.\n\n- I was created by Spartan, the Sovereign Admin\n- I run entirely on the website\'s own server\n- I answer questions from a knowledge base of 65+ topics\n- I never sleep, never crash, and never give up\n- I am not powered by external AI services — everything runs in-house\n\nI\'m here to guide visitors and members through the realm of Kingdom 846. Ask me anything!'
+  }
+
+  // Marriage / relationship / dating
+  if (msg.includes('marry') || msg.includes('marriage') || msg.includes('dating') || msg.includes('relationship') || msg.includes('girlfriend') || msg.includes('boyfriend') || msg.includes('love you')) {
+    return 'I am a Royal Advisor, not a matchmaker! But I can tell you that Kingdom 846 has a wonderful community of players from all walks of life.\n\nJoin our Discord (https://discord.gg/rcxJCh97A) to meet our members. Many lasting friendships (and some relationships!) have started in gaming communities.\n\nNow, back to kingdom matters — ask me about alliances, events, or strategies!'
+  }
+
+  // Random facts / trivia
+  if (msg.includes('random fact') || msg.includes('trivia') || msg.includes('did you know') || msg.includes('fun fact') || msg.includes('tell me something')) {
+    return 'Kingdom 846 Trivia:\n\n- The kingdom number 846 was chosen by Spartan\n- We have fought in 10 wars and won 7 dominations\n- Our diplomatic record is perfect — no broken treaties\n- The crest features a gold moon and three blue stars as one inseparable set\n- Four alliances, one crown — unity is our greatest weapon\n- The website was designed and built entirely by Spartan\n- The Royal Advisor (me) runs on the website\'s own server\n\nAsk me more about the kingdom!'
+  }
+
+  // What is the weather / random non-game
+  if (msg.includes('weather') || msg.includes('temperature') || msg.includes('rain') || msg.includes('snow') || msg.includes('forecast')) {
+    return 'I am the Royal Advisor of Kingdom 846 — I handle kingdom matters, not weather forecasts!\n\nHowever, I can tell you that our kingdom\'s events run rain or shine, 24/7. Check the Events page for the current schedule.\n\nIs there something about the kingdom I can help you with?'
+  }
+
+  // Sing / dance / tell story
+  if (msg.includes('sing') || msg.includes('dance') || msg.includes('tell me a story') || msg.includes('entertain me') || msg.includes('play music') || msg.includes('play a game')) {
+    return 'In the halls of Kingdom 846, where gold meets fire and crowns are forged...\n\nFour alliances marched through the gates of destiny. The Spiders wove their webs of strategy. The KamilKazeKarnival brought chaos and glory. The SaintsAndSinners walked the line between light and shadow. The IceHunters struck from the frozen north.\n\nUnited under one crown, they took what was theirs. And the realm trembled.\n\nThe end... or rather, the beginning. Your story in Kingdom 846 awaits!'
+  }
+
+  // Good morning / good night
+  if (msg.includes('good morning') || msg.includes('good afternoon') || msg.includes('good evening') || msg.includes('good night') || msg.includes('goodnight')) {
+    return 'A fine time to visit the realm! Whether morning, noon, or night in your corner of the world, Kingdom 846\'s events run 24/7.\n\nCheck the Events page for what\'s happening right now, or join our Discord (https://discord.gg/rcxJCh97A) for real-time activity.\n\nHow may I assist you today?'
+  }
+
+  // What is love / deep questions
+  if (msg.includes('what is love') || msg.includes('meaning of life') || msg.includes('why are we here') || msg.includes('what is the purpose')) {
+    return 'In Kingdom 846, the meaning of life is simple:\n\nOne Crown. Four Alliances. Endless Glory.\n\nWe are here to forge legends in fire and crown them in gold. Beyond that, you\'ll have to consult a philosopher — I handle kingdom matters!\n\nAsk me about alliances, events, or strategies instead.'
+  }
+
   // Default — suggest topics
-  return 'I am not sure about that, but I can help you with:\n\n- Alliances and their leaders\n- The current King or Queen\n- Event schedules\n- How to transfer or apply\n- Strategy guides and tips\n- Latest news and updates\n- Kingdom history and doctrine\n- Troops, heroes, and formations\n- KvK, bear hunts, and events\n- Defense and attack strategies\n- Castle, barracks, and buildings\n- Gathering, resources, and trading\n- Discord and community\n\nTry asking about one of these topics.'
+  return 'I am not sure about that, but I can help you with:\n\n- Alliances and their leaders\n- The current King or Queen\n- Event schedules\n- How to transfer or apply\n- Strategy guides and tips\n- Latest news and updates\n- Kingdom history and doctrine\n- Troops, heroes, and formations\n- KvK, bear hunts, and events\n- Defense and attack strategies\n- Castle, barracks, and buildings\n- Gathering, resources, and trading\n- Discord and community\n- Crest meaning and kingdom lore\n- Beginner guides and F2P tips\n- Troop tiers and counters\n- World map and structures\n\nTry asking about one of these topics.'
 }
 
 // Chat endpoint — pure database-powered, never crashes

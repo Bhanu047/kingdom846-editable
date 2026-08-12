@@ -24,15 +24,6 @@ const SECRETS = [
     icon: '◆',
   },
   {
-    id: '846',
-    trigger: 'type',
-    word: '846',
-    title: 'The Crown Remembers',
-    message: '8 Battles Won. 4 Alliances. 1 Crown. The identity of Kingdom 846 lives on.',
-    effect: 'confetti',
-    icon: '✦',
-  },
-  {
     id: 'crown',
     trigger: 'type',
     word: 'crown',

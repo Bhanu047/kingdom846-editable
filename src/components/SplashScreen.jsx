@@ -128,7 +128,6 @@ export default function SplashScreen({ onEnter }) {
   const crestClicksRef = useRef(0)
   const titleHoldsRef = useRef(0)
   const konamiRef = useRef([])
-  const typeBufferRef = useRef('')
 
   // Detect mobile for performance
   const isMobile = useMemo(() => {
@@ -173,13 +172,6 @@ export default function SplashScreen({ onEnter }) {
       if (konamiRef.current.length > konami.length) konamiRef.current.shift()
       if (konamiRef.current.join(',').toLowerCase() === konami.join(',').toLowerCase()) {
         triggerEgg('konami')
-      }
-      // Type "846"
-      typeBufferRef.current += e.key.toLowerCase()
-      if (typeBufferRef.current.length > 3) typeBufferRef.current = typeBufferRef.current.slice(-3)
-      if (typeBufferRef.current === '846') {
-        triggerEgg('846')
-        typeBufferRef.current = ''
       }
     }
     document.addEventListener('keydown', onKey)

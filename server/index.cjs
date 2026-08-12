@@ -126,6 +126,10 @@ const verifyToken = (token) => {
 const cols = db.prepare("PRAGMA table_info(users)").all()
 if (!cols.some((c) => c.name === 'display_name')) db.exec('ALTER TABLE users ADD COLUMN display_name TEXT')
 if (!cols.some((c) => c.name === 'alliance_tag')) db.exec('ALTER TABLE users ADD COLUMN alliance_tag TEXT')
+if (!cols.some((c) => c.name === 'must_change_password')) {
+  db.exec('ALTER TABLE users ADD COLUMN must_change_password INTEGER DEFAULT 0')
+  db.prepare("UPDATE users SET must_change_password = 1 WHERE role = 'leader'").run()
+}
 
 // Migrate: add preferred_date + preferred_slot to transfers (30-min appointment booking)
 const tcols = db.prepare("PRAGMA table_info(transfers)").all()
@@ -202,10 +206,10 @@ app.post('/api/login', (req, res) => {
   if (mode === 'admin' && user.role !== 'admin') return res.status(403).json({ error: 'This login is for the Sparta master account only.' })
   if (mode === 'leader' && user.role !== 'leader') return res.status(403).json({ error: 'Leader login only. Sparta uses Royal Access.' })
   clearRateLimit(ip)
-  res.json({ token: makeToken(user.id), user: { id: user.id, username: user.username, role: user.role, alliance_slug: user.alliance_slug, display_name: user.display_name, alliance_tag: user.alliance_tag } })
+  res.json({ token: makeToken(user.id), user: { id: user.id, username: user.username, role: user.role, alliance_slug: user.alliance_slug, display_name: user.display_name, alliance_tag: user.alliance_tag, must_change_password: !!user.must_change_password } })
 }),
 
-app.get('/api/me', auth, (req, res) => res.json({ id: req.user.id, username: req.user.username, role: req.user.role, alliance_slug: req.user.alliance_slug, display_name: req.user.display_name, alliance_tag: req.user.alliance_tag }))
+app.get('/api/me', auth, (req, res) => res.json({ id: req.user.id, username: req.user.username, role: req.user.role, alliance_slug: req.user.alliance_slug, display_name: req.user.display_name, alliance_tag: req.user.alliance_tag, must_change_password: !!req.user.must_change_password }))
 
 // Transfers — public submit (with 30-min slot booking), leadership view
 // Generate 30-min slots across 24h (UTC): 00:00, 00:30, ... 23:30
@@ -356,8 +360,19 @@ app.patch('/api/me/credentials', auth, (req, res) => {
   res.json({ ok: true })
 })
 
+// First-time password set (forced after login or admin reset)
+app.post('/api/me/set-password', auth, (req, res) => {
+  const user = db.prepare('SELECT * FROM users WHERE id = ?').get(req.user.id)
+  if (!user) return res.status(404).json({ error: 'User not found' })
+  if (!user.must_change_password) return res.status(403).json({ error: 'Password already set. Use Settings to change it.' })
+  const newPw = String(req.body.new_password || '').trim()
+  if (newPw.length < 6) return res.status(400).json({ error: 'Password must be at least 6 characters' })
+  db.prepare('UPDATE users SET password_hash=?, must_change_password=0 WHERE id=?').run(hash(newPw), user.id)
+  res.json({ ok: true })
+})
+
 app.get('/api/admin/leaders', auth, adminOnly, (_req, res) => {
-  res.json(db.prepare("SELECT id, username, display_name, alliance_tag, alliance_slug, role FROM users WHERE role='leader' ORDER BY alliance_slug").all())
+  res.json(db.prepare("SELECT id, username, display_name, alliance_tag, alliance_slug, role, must_change_password FROM users WHERE role='leader' ORDER BY alliance_slug").all())
 })
 
 app.patch('/api/admin/leaders/:id/credentials', auth, adminOnly, (req, res) => {
@@ -373,7 +388,7 @@ app.patch('/api/admin/leaders/:id/credentials', auth, adminOnly, (req, res) => {
   if (new_password && new_password.length < 6) return res.status(400).json({ error: 'Password must be at least 6 characters' })
   const finalUser = username || leader.username
   const finalHash = new_password ? hash(new_password) : leader.password_hash
-  db.prepare('UPDATE users SET username=?, password_hash=? WHERE id=?').run(finalUser, finalHash, id)
+  db.prepare('UPDATE users SET username=?, password_hash=?, must_change_password=1 WHERE id=?').run(finalUser, finalHash, id)
   res.json({ ok: true })
 })
 

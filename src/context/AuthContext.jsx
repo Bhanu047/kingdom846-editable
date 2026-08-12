@@ -23,7 +23,7 @@ export function AuthProvider({ children }) {
       })
       setAuthToken(data.token)
       setUser(data.user)
-      return { error: null }
+      return { error: null, user: data.user }
     } catch (err) {
       return { error: { message: err.message } }
     }
@@ -69,10 +69,24 @@ export function AuthProvider({ children }) {
     return res.json()
   }, [])
 
+  const setFirstPassword = useCallback(async (newPassword) => {
+    const res = await apiFetch('/api/me/set-password', {
+      method: 'POST',
+      body: JSON.stringify({ new_password: newPassword }),
+    })
+    if (!res.ok) {
+      let msg = `Request failed (${res.status})`
+      try { msg = (await res.json()).error || msg } catch {}
+      throw new Error(msg)
+    }
+    setUser((prev) => prev ? { ...prev, must_change_password: false } : prev)
+    return res.json()
+  }, [])
+
   const isAdmin = user?.role === 'admin'
 
   return (
-    <AuthContext.Provider value={{ user, loading, signIn, signOut, isAdmin, changeOwnCredentials, listLeaders, resetLeader, getMyRoster, uploadRoster, getRoster }}>
+    <AuthContext.Provider value={{ user, loading, signIn, signOut, isAdmin, changeOwnCredentials, setFirstPassword, listLeaders, resetLeader, getMyRoster, uploadRoster, getRoster }}>
       {children}
     </AuthContext.Provider>
   )

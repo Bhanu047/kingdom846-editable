@@ -81,7 +81,7 @@ export default function MasterConsole() {
     setRSaving(true)
     try {
       await resetLeader(resetId, rUser, rPw)
-      setRMsg(`Credentials updated for ${rUser}. They can now log in with the new details.`)
+      setRMsg(`Password reset for ${rUser}. They must set their own password on next login.`)
       setRPw('')
       refresh()
     } catch (err) { setRErr(err.message) }
@@ -157,6 +157,9 @@ export default function MasterConsole() {
                 <div className="truncate font-semibold text-parchment">{l.display_name} <span className="text-parchment/40">· {l.username}</span></div>
                 <div className="text-[11px] text-parchment/40">{l.alliance_tag} {l.alliance_slug?.toUpperCase()}</div>
               </div>
+              <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${l.must_change_password ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' : 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/25'}`}>
+                {l.must_change_password ? 'Must Set Password' : 'Password Set'}
+              </span>
               <button onClick={() => openReset(l)} className="rounded-lg border border-gold/30 bg-gold/10 px-3 py-1.5 text-xs font-semibold text-gold hover:bg-gold/20" data-testid={`button-reset-${l.id}`}>
                 <Icon name="refresh" size={13} className="mr-1 inline" /> Reset
               </button>

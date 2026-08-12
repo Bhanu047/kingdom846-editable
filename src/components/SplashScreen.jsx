@@ -176,7 +176,7 @@ export default function SplashScreen({ onEnter }) {
       }
       // Type "846"
       typeBufferRef.current += e.key.toLowerCase()
-      if (typeBufferRef.current.length > 3) typeBufferRef.current.current = typeBufferRef.current.slice(-3)
+      if (typeBufferRef.current.length > 3) typeBufferRef.current = typeBufferRef.current.slice(-3)
       if (typeBufferRef.current === '846') {
         triggerEgg('846')
         typeBufferRef.current = ''

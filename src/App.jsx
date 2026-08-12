@@ -5,6 +5,7 @@ import ErrorBoundary from './components/ErrorBoundary'
 import { ToastProvider } from './components/Toast'
 import { PageSkeleton } from './components/Skeleton'
 import SplashScreen from './components/SplashScreen'
+import EasterEggs from './components/EasterEggs'
 import ParticleField from './components/ParticleField'
 import ScrollProgress from './components/ScrollProgress'
 import ChatAssistant from './components/ChatAssistant'
@@ -165,6 +166,7 @@ function Shell() {
       <ParticleField />
       <ScrollProgress />
       <ChatAssistant />
+      <EasterEggs />
       <div className="flex h-screen overflow-hidden relative z-10">
       <div className="hidden md:flex">
         <Sidebar active={page} onNavigate={navigate} user={sidebarUser} onLogin={() => { setLoginMode('admin'); setLoginOpen(true) }} onSignOut={handleSignOut} isAdmin={isAdmin} />

@@ -24,7 +24,7 @@ export default function Timeline() {
     <div className="space-y-6">
       {/* Hero with next milestone countdown */}
       {next && (
-        <Panel className="reveal" glow className="relative overflow-hidden p-0">
+        <Panel glow className="relative overflow-hidden p-0">
           <div className="relative h-52 md:h-64">
             <ArtImage src={next.art || './assets/art-castle-rotation.png'} alt={next.name} className="h-full w-full" />
             <div className="absolute inset-0 bg-gradient-to-r from-ink via-ink/70 to-transparent" />

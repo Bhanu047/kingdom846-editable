@@ -85,7 +85,7 @@ export default function Rankings() {
   return (
     <div className="space-y-6">
       {/* Hero */}
-      <Panel className="reveal" glow className="relative overflow-hidden p-0 gold-corners">
+      <Panel glow className="relative overflow-hidden p-0 gold-corners">
         <div className="relative h-40 hero-shimmer">
           <img src="./assets/hero-rankings.webp" alt="Commander Rankings" className="h-full w-full drift-slow object-cover" loading="lazy" />
           <div className="absolute inset-0 bg-gradient-to-r from-ink via-ink/80 to-ink/20" />
@@ -124,7 +124,7 @@ export default function Rankings() {
                   data-testid={`rank-row-${p.rank}`}
                   onClick={p.rank === 1 ? onRank1Click : undefined}
                   style={p.rank === 1 ? { cursor: 'pointer' } : undefined}
-                  className={`lift relative overflow-hidden rounded-xl ring-1 ${isTop3 ? s.ring + ' ' + s.grad : 'ring-gold/15'} bg-gradient-to-r p-3 transition hover:ring-gold/40 ${p.rank <= 3 ? `rank-glow-${p.rank}` : ''}`}
+                  className={`lift relative overflow-hidden rounded-xl ring-1 ${isTop3 ? s.ring + ' ' + s.grad : 'ring-gold/15'} bg-gradient-to-r p-3 transition hover:ring-gold/40`}
                 >
                   {/* Alliance banner background */}
                   <div className="absolute inset-0 z-0">

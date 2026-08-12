@@ -69,7 +69,7 @@ export default function Dashboard({ onNavigate }) {
     <div className="space-y-6">
       {/* AI insights banner (if available) */}
       {agentStatus?.insights?.length > 0 && (
-        <Panel className="reveal" glow className="gold-corners">
+        <Panel glow className="gold-corners">
           <div className="flex items-center gap-2 mb-2">
             <span className="pulse-dot" style={{ width: 6, height: 6 }} />
             <span className="text-[10px] uppercase tracking-wider text-gold/60">AI Advisor Insights</span>

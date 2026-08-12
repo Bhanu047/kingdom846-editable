@@ -57,7 +57,7 @@ export default function Events() {
   const rest = upcoming.filter((e) => !e.featured)
   return (
     <div className="space-y-6">
-      <Panel className="reveal" glow className="relative overflow-hidden p-0 gold-corners">
+      <Panel glow className="relative overflow-hidden p-0 gold-corners">
         <div className="relative h-48 hero-shimmer">
           <ArtImage src="./assets/hero-events.webp" alt="Castle battle" className="h-full w-full drift-slow" />
           <div className="hero-overlay absolute inset-0" />

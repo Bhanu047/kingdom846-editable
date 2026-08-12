@@ -24,7 +24,7 @@ export default function News() {
   return (
     <div className="space-y-4">
       {/* Hero banner */}
-      <Panel className="reveal" glow className="hero-frame relative overflow-hidden p-0">
+      <Panel glow className="hero-frame relative overflow-hidden p-0">
         <div className="relative h-36 sm:h-44">
           <img src="./assets/hero-news.webp" alt="News" className="h-full w-full object-cover" />
           <div className="hero-overlay absolute inset-0" />

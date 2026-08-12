@@ -1174,8 +1174,195 @@ function getKingdomAnswer(message) {
     return 'There are hidden secrets scattered across this realm...\n\nTry searching for "treasure" or "secret" in the search bar. Or click the crown in the title, the crest in the splash screen, or the clock in the header. The realm holds many surprises for those who seek them.'
   }
 
+  // === Extended visitor questions ===
+
+  // Castle / main building
+  if (msg.includes('castle') || msg.includes('main building') || msg.includes('city hall') || msg.includes('headquarters')) {
+    return 'Your Castle is the most important building.\n\n- Determines your max troop count\n- Unlocks new buildings and features at each level\n- Always upgrade your Castle first\n- Higher Castle = higher tier troops available\n- Required level to unlock: Embassy (3), Alliance Hall (5), War Room (7)\n\nFocus all your speedups on Castle upgrades early game.'
+  }
+
+  // Barracks / training
+  if (msg.includes('barracks') || msg.includes('train') || msg.includes('draft')) {
+    return 'Barracks are where you train troops.\n\n- Upgrade barracks to train higher tier troops\n- Higher tier troops are significantly stronger\n- Never let your barracks sit idle — always be training\n- Use training speedups during events for bonus rewards\n- Balance your troop types for best results\n\nSee the Guides page for troop training strategies.'
+  }
+
+  // Hospital / healing
+  if (msg.includes('hospital') || msg.includes('infirmary') || msg.includes('heal') || msg.includes('wounded') || msg.includes('injured')) {
+    return 'Hospitals heal your wounded troops.\n\n- Wounded troops go to the hospital instead of dying\n- Upgrade hospitals to increase capacity\n- Healing is cheaper and faster than retraining\n- Always heal before sending troops back to battle\n- During KvK, keep hospitals upgraded — you will need them\n\nTip: Multiple hospitals increase total wounded capacity. Build several.'
+  }
+
+  // Embassy / alliance
+  if (msg.includes('embassy') || msg.includes('alliance hall') || msg.includes('alliance center')) {
+    return 'The Embassy is your connection to your alliance.\n\n- Build it to join an alliance\n- Upgrade to receive more reinforcement troops from allies\n- Higher level = more allied troops can garrison your city\n- Alliance Hall unlocks alliance events and rallies\n\nBuild and upgrade your Embassy as soon as possible — being in an alliance is essential in Kingshot.'
+  }
+
+  // War room / marches
+  if (msg.includes('war room') || msg.includes('march') || msg.includes('queue') || msg.includes('how many marches')) {
+    return 'The War Room controls how many marches (armies) you can send simultaneously.\n\n- Level 1: 2 marches\n- Level 5: 3 marches\n- Level 10: 4 marches\n- Higher level = more simultaneous attacks/gathers\n\nMore marches means more flexibility — you can rally, gather, and defend at the same time.'
+  }
+
+  // Scout / scouting
+  if (msg.includes('scout') || msg.includes('spy') || msg.includes('recon') || msg.includes('intelligence')) {
+    return 'Scouting lets you see enemy city details before attacking.\n\n- Build a Scout Camp to unlock scouting\n- Higher level scouts reveal more info\n- Always scout before attacking to check troop counts\n- If enemy has more troops than expected, cancel the attack\n\nKnowledge is power. Never attack blind.'
+  }
+
+  // Gathering / resource tiles
+  if (msg.includes('gather') || msg.includes('gathering') || msg.includes('resource tile') || msg.includes('farming')) {
+    return 'Gathering sends troops to collect resources from map tiles.\n\n- Send troops to resource tiles on the world map\n- Higher level tiles give more resources\n- Cavalry gathers fastest due to speed\n- Use gathering speedup gear on heroes\n- Always gather overnight — free resources while you sleep\n\nTip: Don\'t gather with all your troops — keep some for defense.'
+  }
+
+  // Warehouse / protected resources
+  if (msg.includes('warehouse') || msg.includes('protected') || msg.includes('secured') || msg.includes('safe resources') || msg.includes('non-secured')) {
+    return 'Secured vs Non-Secured Resources:\n\n- Secured resources (in warehouse) cannot be stolen by attackers\n- Non-secured resources can be looted when your city is attacked\n- Upgrade your Warehouse to protect more resources\n- Keep most resources secured — only keep what you need for immediate use outside\n\nA high-level Warehouse is your best defense against resource loss.'
+  }
+
+  // Drill camp
+  if (msg.includes('drill') || msg.includes('drill camp')) {
+    return 'The Drill Camp lets you train troops in bulk over time.\n\n- Set a training queue that runs automatically\n- Great for training troops while offline\n- Upgrade to increase training capacity\n- Combine with speedups during events\n\nNever let your Drill Camp sit empty — always have troops in the queue.'
+  }
+
+  // Dismiss troops
+  if (msg.includes('dismiss') || msg.includes('remove troops') || msg.includes('delete troops')) {
+    return 'To dismiss troops:\n\n1. Go to your Barracks\n2. Select the troop type\n3. Use the dismiss function\n4. Dismissed troops are gone permanently — be careful\n\nOnly dismiss low-tier troops when you need population space for higher tier ones. Never dismiss troops you might need.'
+  }
+
+  // Arena / PvP
+  if (msg.includes('arena') || msg.includes('pvp') || msg.includes('duel') || msg.includes('1v1')) {
+    return 'The Arena is a PvP mode where you fight other players 1-on-1.\n\n- Test your hero and troop compositions\n- Earn ranking points and rewards\n- No troop loss in arena battles\n- Great for practicing strategies\n\nUse the Arena to experiment with different formations before using them in real battles.'
+  }
+
+  // Mystic trial
+  if (msg.includes('mystic') || msg.includes('mystic trial') || msg.includes('trial')) {
+    return 'Mystic Trial is a PvE adventure mode.\n\n- Progress through increasingly difficult stages\n- Each stage gives rewards\n- Tests your hero and troop strength\n- Rewards include hero shards, gems, and gear materials\n\nPush as far as you can each day. It resets regularly so you can try again.'
+  }
+
+  // Mithril / forge hammer
+  if (msg.includes('mithril') || msg.includes('forge hammer') || msg.includes('hammer') || msg.includes('crafting material')) {
+    return 'Mithril and Forge Hammers are used to upgrade hero gear.\n\n- Mithril: Required for high-tier gear upgrades\n- Forge Hammers: Required to forge new gear\n- Earn from events, bear hunts, and mystic trials\n- Use wisely — prioritize your best heroes\'s gear first\n\nThe Hero Gear Optimizer (in-game) helps you decide what to upgrade first.'
+  }
+
+  // Hero mastery
+  if (msg.includes('mastery') || msg.includes('hero level') || msg.includes('hero xp') || msg.includes('level up hero')) {
+    return 'Hero Mastery increases your heroes\' power.\n\n- Gain XP through battles and events\n- Use XP items to level up faster\n- Higher hero level = stronger skills and stats\n- Mastery unlocks additional skill slots\n- Focus on 2-3 main heroes rather than spreading XP\n\nVisit the Guides page for hero tier lists and mastery strategies.'
+  }
+
+  // Trade post / sending resources
+  if (msg.includes('trade') || msg.includes('send resource') || msg.includes('help alliance') || msg.includes('donate')) {
+    return 'Sending Resources to Allies:\n\n1. Build a Trade Post\n2. Select an alliance member on the map\n3. Choose resources to send\n4. Troops carry the resources (use cavalry for speed)\n\nHelping allies with resources builds alliance strength. Always help when asked — they\'ll help you back.'
+  }
+
+  // Pass / fortress / world map
+  if (msg.includes('pass') || msg.includes('fortress') || msg.includes('ruin') || msg.includes('world map') || msg.includes('territory')) {
+    return 'World Map Structures:\n\n- Passes: Strategic chokepoints — control them to block enemy movement\n- Fortresses: Alliance-held structures that provide buffs\n- Ruins: PvE challenges with rewards\n- Territory: Controlled area around alliance structures\n\nDuring KvK, capturing passes and fortresses is critical to kingdom strategy.'
+  }
+
+  // Becoming king
+  if (msg.includes('become king') || msg.includes('how to be king') || msg.includes('take the throne') || msg.includes('become ruler')) {
+    return 'Becoming King or Queen:\n\n1. You must be an alliance leader (or supported by one)\n2. The throne is located at the center of the kingdom map\n3. During the King Event, alliances fight for control of the throne\n4. The alliance that holds the throne longest wins\n5. The winning alliance\'s leader becomes King/Queen\n\nIt requires a powerful alliance, strong coordination, and significant troop investment.'
+  }
+
+  // Dominance
+  if (msg.includes('dominance') || msg.includes('domination')) {
+    return 'Dominance is a kingdom-level score that reflects overall strength and territory control.\n\n- Earned by holding passes, fortresses, and the throne\n- Higher dominance = stronger kingdom ranking\n- Affects KvK matchmaking\n- Kingdom 846 has achieved 70%+ domination rate in past seasons\n\nVisit the About page for Kingdom 846\'s full dominance history.'
+  }
+
+  // Season pass / battle pass
+  if (msg.includes('season pass') || msg.includes('battle pass') || msg.includes('pass reward')) {
+    return 'The Season Pass gives rewards as you complete seasonal objectives.\n\n- Free tier: Available to all players\n- Premium tier: Additional rewards (requires purchase)\n- Earn points through events, battles, and daily tasks\n- Rewards include gems, speedups, hero shards, and exclusive items\n\nThe free tier is still very rewarding — always claim your season rewards.'
+  }
+
+  // Daily rewards / login
+  if (msg.includes('daily') || msg.includes('login reward') || msg.includes('free gift') || msg.includes('check in')) {
+    return 'Daily Rewards in Kingshot:\n\n- Daily Login: Free resources and items every day\n- Daily Quests: Complete tasks for XP and gems\n- Alliance Help: Assist allies for mutual rewards\n- Free Shop Items: Check the shop daily for free gifts\n\nLog in every day — even if just to collect rewards. Consistency is key to growing fast.'
+  }
+
+  // Alliance shop / kingdom shop
+  if (msg.includes('alliance shop') || msg.includes('kingdom shop') || msg.includes('token shop') || msg.includes('alliance token')) {
+    return 'Alliance Shop & Kingdom Shop:\n\n- Alliance Shop: Use alliance tokens (earned from events) to buy items\n- Kingdom Shop: Use kingdom tokens (earned from KvK) for exclusive items\n- Both offer speedups, resources, and exclusive gear\n- Save tokens for high-value items\n\nParticipate in events to earn tokens — don\'t let them go to waste.'
+  }
+
+  // Honor
+  if (msg.includes('honor') || msg.includes('honor point') || msg.includes('prestige')) {
+    return 'Honor Points are earned through PvP combat.\n\n- Earn by attacking and defending against other players\n- Higher honor = better ranking rewards\n- Used in the Honor Shop for exclusive items\n- Resets each season\n\nBalance honor farming with alliance event participation for maximum rewards.'
+  }
+
+  // Counter strategies
+  if (msg.includes('counter') || msg.includes('how to beat') || msg.includes('how to defeat')) {
+    return 'Troop Counters in Kingshot:\n\n- Infantry beats Cavalry (spears stop charges)\n- Cavalry beats Archers (fast charge closes distance)\n- Archers beat Infantry (ranged damage from safety)\n\nGeneral tips:\n- Scout to see enemy composition\n- Adjust your formation to counter theirs\n- Hero skills can shift the balance\n- Higher tier troops always have an advantage\n\nRock-paper-scissors: Inf > Cav > Arch > Inf. Scout and adapt.'
+  }
+
+  // Offline / away
+  if (msg.includes('offline') || msg.includes('going away') || msg.includes('inactive') || msg.includes('vacation') || msg.includes('sleep')) {
+    return 'Going Offline? Do this first:\n\n1. Activate your Peace Shield (bubble) — prevents attacks\n2. Send troops to gather on far tiles\n3. Set your Drill Camp training queue\n4. Claim daily rewards before leaving\n5. Let your alliance know in Discord\n\nA bubble is your best friend when offline. Never leave your city unprotected.'
+  }
+
+  // New player / beginner guide
+  if (msg.includes('new player') || msg.includes('beginner') || msg.includes('just started') || msg.includes('newbie') || msg.includes('noob')) {
+    return 'Welcome to Kingdom 846! Here\'s your beginner checklist:\n\n1. Complete the tutorial\n2. Upgrade your Castle first\n3. Join an alliance (use our Transfer page)\n4. Build and upgrade your Embassy\n5. Train troops constantly\n6. Participate in alliance events\n7. Join our Discord: https://discord.gg/rcxJCh97A\n8. Check the Guides page for detailed strategies\n\nDon\'t worry about being small — every player starts somewhere. Your alliance will help you grow.'
+  }
+
+  // F2P / free to play strategy
+  if (msg.includes('f2p') || msg.includes('free to play') || msg.includes('no money') || msg.includes('without paying')) {
+    return 'Free-to-Play Strategy for Kingdom 846:\n\n1. Log in daily — claim all free rewards\n2. Participate in EVERY event — even small contributions count\n3. Focus on one or two heroes rather than spreading resources\n4. Always use your bubble when offline\n5. Join rallies — you get rewards even with small troops\n6. Gather resources overnight\n7. Use the Alliance Shop for free items\n\nF2P players can absolutely compete. Strategy and consistency beat money every time.'
+  }
+
+  // Whale / P2W
+  if (msg.includes('whale') || msg.includes('p2w') || msg.includes('pay to win') || msg.includes('spender') || msg.includes('money')) {
+    return 'About Pay-to-Win:\n\nKingshot does have premium purchases, but:\n- Strategy and coordination matter more than spending\n- Alliance teamwork beats individual spending\n- F2P players can earn most premium items through events\n- Kingdom 846 values all members regardless of spending\n\nWe focus on teamwork, not wallet size. Join us and see for yourself.'
+  }
+
+  // Mail / inbox
+  if (msg.includes('mail') || msg.includes('inbox') || msg.includes('message') || msg.includes('notification in game')) {
+    return 'The in-game Mail system handles:\n\n- Battle reports (attack and defense results)\n- Alliance announcements\n- System notifications (events, rewards)\n- Player messages\n\nCheck your mail regularly — important battle reports and reward claims are there. Don\'t miss out on unclaimed rewards in your mail.'
+  }
+
+  // Dragon / boss / world boss
+  if (msg.includes('dragon') || msg.includes('boss') || msg.includes('world boss') || msg.includes('monster')) {
+    return 'World Bosses and Monsters:\n\n- Random bosses spawn on the world map\n- Rally with your alliance to defeat them\n- Higher level bosses give better rewards\n- Some bosses drop exclusive hero shards\n- Dragon bosses are the rarest and most rewarding\n\nAlways join boss rallies when called — great rewards for minimal effort.'
+  }
+
+  // Dark forest / mysterious cave
+  if (msg.includes('dark forest') || msg.includes('mysterious cave') || msg.includes('mercenary') || msg.includes('ancient ruin')) {
+    return 'Special Map Locations:\n\n- Dark Forest: PvE challenges with mystery rewards\n- Mysterious Cave: Explore for resources and items\n- Mercenary Camp: Hire special troops\n- Ancient Ruins: Historical PvE content with lore\n\nThese locations appear on the world map and respawn regularly. Explore them when you see them.'
+  }
+
+  // Language / other languages
+  if (msg.includes('language') || msg.includes('español') || msg.includes('french') || msg.includes('spanish') || msg.includes('translate')) {
+    return 'Kingdom 846 communicates primarily in English. However, our community includes players from around the world.\n\nJoin our Discord (https://discord.gg/rcxJCh97A) and ask if there are players who speak your language — our alliances are diverse and welcoming.'
+  }
+
+  // Age / kids / family
+  if (msg.includes('age') || msg.includes('kid') || msg.includes('child') || msg.includes('family friendly') || msg.includes('how old')) {
+    return 'Kingshot is rated for ages 12+ and Kingdom 846 is a family-friendly community. We maintain respectful communication and do not tolerate harassment or inappropriate content.\n\nAll members are expected to follow our code of conduct on both the website and Discord.'
+  }
+
+  // Quit / leaving / refund
+  if (msg.includes('quit') || msg.includes('leaving') || msg.includes('refund') || msg.includes('delete account')) {
+    return 'If you\'re considering leaving the game or kingdom:\n\n1. Talk to your alliance leader first — they may be able to help\n2. Send your resources to alliance members before leaving\n3. Join our Discord and share your feedback: https://discord.gg/rcxJCh97A\n\nFor account deletion or refunds, contact Kingshot support through the in-game settings. We\'re sorry to see you go and wish you well.'
+  }
+
+  // Who is online / active now
+  if (msg.includes('online now') || msg.includes('who is on') || msg.includes('active right now') || msg.includes('playing now')) {
+    return 'I can\'t see who is currently online, but Kingdom 846 has active members across multiple time zones.\n\nFor real-time activity, join our Discord (https://discord.gg/rcxJCh97A) — you\'ll always find members chatting and coordinating there. Alliance leaders are especially active during event hours.'
+  }
+
+  // Weather / lore / story
+  if (msg.includes('lore') || msg.includes('story') || msg.includes('background story') || msg.includes('history of the game')) {
+    return 'Kingdom 846 Lore:\n\nForged in ten wars and seven dominations, Kingdom 846 stands as one of the most battle-tested kingdoms in the realm. Four alliances united under one crown, we have never broken a treaty and never lost a defensive war.\n\n- Motto: Where legends are forged in fire and crowned in gold\n- Doctrine: One Crown. Four Alliances. Endless Glory.\n\nVisit the About page for the full kingdom history and Timeline page for war records.'
+  }
+
+  // Farewell
+  if (msg.includes('bye') || msg.includes('goodbye') || msg.includes('farewell') || msg.includes('see you') || msg.includes('later')) {
+    return 'Farewell, traveler. May your walls stand strong, your troops march victorious, and your rallies never fail.\n\nReturn whenever you seek counsel — the Royal Advisor is always here. Forging glory awaits you.'
+  }
+
+  // Yes / no / ok
+  if (msg === 'yes' || msg === 'no' || msg === 'ok' || msg === 'okay' || msg === 'sure' || msg === 'cool' || msg === 'nice' || msg === 'great') {
+    return 'Is there anything else you\'d like to know about Kingdom 846?\n\nYou can ask me about alliances, events, guides, how to join, strategies, KvK, or anything else about the realm.'
+  }
+
   // Default — suggest topics
-  return 'I am not sure about that, but I can help you with:\n\n- Alliances and their leaders\n- The current King or Queen\n- Event schedules\n- How to transfer or apply\n- Strategy guides and tips\n- Latest news and updates\n- Kingdom history and doctrine\n- Troops, heroes, and formations\n- KvK, bear hunts, and events\n- Defense and attack strategies\n- Discord and community\n\nTry asking about one of these topics.'
+  return 'I am not sure about that, but I can help you with:\n\n- Alliances and their leaders\n- The current King or Queen\n- Event schedules\n- How to transfer or apply\n- Strategy guides and tips\n- Latest news and updates\n- Kingdom history and doctrine\n- Troops, heroes, and formations\n- KvK, bear hunts, and events\n- Defense and attack strategies\n- Castle, barracks, and buildings\n- Gathering, resources, and trading\n- Discord and community\n\nTry asking about one of these topics.'
 }
 
 // Chat endpoint — pure database-powered, never crashes

@@ -141,11 +141,11 @@ export const alliances = [
 // Top players — seed data for Hall of Legends display.
 // Leaders can upload real rosters via the Leader Portal to replace this.
 export const AVATAR_OPTIONS = [
-  'king', 'queen', 'warrior', 'knight', 'mage', 'shieldmaiden', 'sorceress', 'archer', 'berserker'
+  'king', 'queen', 'warrior', 'knight', 'mage', 'shieldmaiden', 'sorceress', 'archer', 'berserker', 'spartan'
 ]
 
 export const players = [
-  { rank: 1, name: 'SpartanWarrior', tag: '[RYO]', slug: 'ryo', alliance: 'Spiders', avatar: 'king' },
+  { rank: 1, name: 'SpartanWarrior', tag: '[RYO]', slug: 'ryo', alliance: 'Spiders', avatar: 'spartan' },
   { rank: 2, name: 'DragonSlayer', tag: '[KzK]', slug: 'kzk', alliance: 'KamilKazeKarnival', avatar: 'berserker' },
   { rank: 3, name: 'IronFist', tag: '[SAS]', slug: 'sas', alliance: 'SaintsAndSinners', avatar: 'warrior' },
   { rank: 4, name: 'FrostBite', tag: '[ICE]', slug: 'ice', alliance: 'IceHunters', avatar: 'knight' },

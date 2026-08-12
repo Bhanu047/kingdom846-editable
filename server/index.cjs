@@ -1593,8 +1593,477 @@ function getKingdomAnswer(message) {
     return 'In Kingdom 846, the meaning of life is simple:\n\nOne Crown. Four Alliances. Endless Glory.\n\nWe are here to forge legends in fire and crown them in gold. Beyond that, you\'ll have to consult a philosopher — I handle kingdom matters!\n\nAsk me about alliances, events, or strategies instead.'
   }
 
+  // === Mega batch: real visitor questions ===
+
+  // Account binding / linking
+  if (msg.includes('bind') || msg.includes('link account') || msg.includes('connect account') || msg.includes('save account') || msg.includes('guest account') || msg.includes('guest login')) {
+    return 'Binding Your Account:\n\n1. Go to Settings in-game\n2. Select Account\n3. Bind to Google, Apple, or Facebook\n4. Your progress is now saved\n\nIMPORTANT: Bind your account immediately! Guest accounts can be lost if you uninstall or clear data. Always bind to prevent losing your progress.'
+  }
+
+  // Lost account / recover
+  if (msg.includes('lost account') || msg.includes('lost my') || msg.includes('recover') || msg.includes('restore') || msg.includes('can\'t login') || msg.includes('cant login') || msg.includes('deleted my account') || msg.includes('lost progress')) {
+    return 'Recovering a Lost Account:\n\n1. Reinstall Kingshot\n2. On the login screen, select the platform you bound to (Google/Apple/Facebook)\n3. If you didn\'t bind your account, contact Kingshot support through the in-game Settings > Help\n4. Provide your old username, kingdom number, and approximate power level\n\nTip: Always bind your account to prevent this. If you never bound it, recovery is difficult but not impossible — contact support.'
+  }
+
+  // Multiple accounts / alt accounts
+  if (msg.includes('alt account') || msg.includes('second account') || msg.includes('multiple account') || msg.includes('multi account') || msg.includes('can i have two') || msg.includes('smurf')) {
+    return 'Multiple Accounts:\n\n- Kingshot allows one account per device\n- Alt accounts are technically possible on separate devices\n- Multi-accounting to exploit events is against the rules\n- Using alts to spy on other kingdoms is bannable\n\nPlay fair — one main account is the best way to enjoy the game.'
+  }
+
+  // Sell / buy account / trading
+  if (msg.includes('sell') || msg.includes('buy account') || msg.includes('trade account') || msg.includes('account for sale') || msg.includes('buying account') || msg.includes('account selling')) {
+    return 'Account Selling & Trading:\n\n- Selling or buying accounts is AGAINST Kingshot\'s Terms of Service\n- Account trading can result in permanent bans\n- Scams are common in account trading — never trust sellers\n- You cannot trade items between accounts\n\nPlay fair. Build your own kingdom — it\'s more rewarding and much safer.'
+  }
+
+  // Scam prevention
+  if (msg.includes('scam') || msg.includes('hack') || msg.includes('cheat') || msg.includes('cheats') || msg.includes('hacking') || msg.includes('phishing') || msg.includes('free gems hack')) {
+    return 'Scam & Cheat Prevention:\n\n- There are NO working gem hacks or cheats — they are all scams\n- Never share your account password with anyone\n- Never enter your credentials on third-party sites\n- "Free gems" websites steal your account\n- Kingshot support will NEVER ask for your password\n- Only download the game from official stores\n\nIf it sounds too good to be true, it is. Stay safe.'
+  }
+
+  // BlueStacks / emulator / PC
+  if (msg.includes('bluestacks') || msg.includes('emulator') || msg.includes('play on pc') || msg.includes('play on computer') || msg.includes('play on laptop') || msg.includes('play on mac') || msg.includes('play on windows')) {
+    return 'Playing on PC:\n\n- Kingshot is officially available on PC\n- You can also use BlueStacks or similar Android emulators\n- BlueStacks is free and works well with Kingshot\n- Download BlueStacks from bluestacks.com (official site only)\n- Install Kingshot through the Google Play Store within BlueStacks\n\nPlaying on PC gives a bigger screen and better performance. Same account works on mobile and PC.'
+  }
+
+  // Best way to spend gems
+  if (msg.includes('spend gems') || msg.includes('use gems') || msg.includes('best way to gems') || msg.includes('what to do with gems') || msg.includes('should i save') || msg.includes('save gems') || msg.includes('invest gems')) {
+    return 'Best Ways to Spend Gems:\n\n1. VIP points — best long-term investment\n2. Extra builder queue — permanent benefit\n3. Speedups during events — maximizes event rewards\n4. Castle upgrades — when you\'re close to a level up\n5. Emergency shields — when under attack\n\nDON\'T spend gems on:\n- Resources (you can gather for free)\n- Low-tier troop training (use speedups instead)\n- Cosmetic items (save for gameplay benefits)\n\nSave gems for events and VIP. Patience pays off.'
+  }
+
+  // Building priority / what to upgrade first
+  if (msg.includes('upgrade first') || msg.includes('building priority') || msg.includes('what to upgrade') || msg.includes('most important building') || msg.includes('priority') || msg.includes('what should i build')) {
+    return 'Building Upgrade Priority:\n\n1. Castle — always #1, unlocks everything\n2. Barracks — train higher tier troops\n3. War Room — more marches\n4. Embassy — alliance reinforcement capacity\n5. Hospital — wounded troop capacity\n6. Warehouse — protected resource capacity\n7. Scout Camp — intelligence gathering\n8. Tech buildings (Academy) — research buffs\n\nRule: If your Castle can upgrade, upgrade it. Everything else follows.'
+  }
+
+  // How to get more heroes / unlock heroes
+  if (msg.includes('get more heroes') || msg.includes('unlock hero') || msg.includes('how to get hero') || msg.includes('new hero') || msg.includes('summon hero') || msg.includes('hero summon') || msg.includes('gacha')) {
+    return 'Getting New Heroes:\n\n1. Hero Summon — use Hero Shards or gems to summon\n2. Events — many events reward hero shards\n3. Mystic Trial — stage completion gives shards\n4. Bear Hunts — random shard drops\n5. KvK — top performers earn hero shards\n6. Shop — daily shard packs (save gems for this)\n7. Season Pass — includes hero shards\n\nFocus on getting shards for 2-3 heroes rather than spreading across many. A maxed-out rare hero beats a half-leveled legendary.'
+  }
+
+  // Hero shards
+  if (msg.includes('hero shard') || msg.includes('shards') || msg.includes('fragment')) {
+    return 'Hero Shards:\n\n- Collect enough shards to summon or upgrade a hero\n- Different heroes need different amounts of shards\n- Higher rarity heroes need more shards\n- Earn shards from events, mystic trials, bear hunts, KvK, and the shop\n\nTip: Save shards for heroes that match your main troop type. Don\'t summon every hero — be strategic.'
+  }
+
+  // Increase march size / troop capacity
+  if (msg.includes('march size') || msg.includes('troop capacity') || msg.includes('population cap') || msg.includes('how many troops can') || msg.includes('army capacity') || msg.includes('increase capacity')) {
+    return 'Increasing March Size & Troop Capacity:\n\n- Upgrade Castle — increases total troop capacity\n- Upgrade War Room — increases march size (troops per march)\n- Research Tech — military tech boosts capacity\n- Hero skills — some heroes increase march size\n- VIP levels — some give bonus capacity\n\nBigger marches = stronger rallies and defenses. Prioritize Castle and War Room upgrades.'
+  }
+
+  // Weekly / monthly quests
+  if (msg.includes('weekly') || msg.includes('monthly quest') || msg.includes('weekly quest') || msg.includes('weekly mission') || msg.includes('monthly mission')) {
+    return 'Weekly & Monthly Quests:\n\n- Weekly Quests: Reset every Monday, give resources and speedups\n- Monthly Quests: Reset on the 1st, give larger rewards including gems\n- Complete daily tasks to progress weekly/monthly objectives\n- Rewards scale with completion level\n\nAlways check your quest tab — unclaimed rewards are wasted rewards.'
+  }
+
+  // Achievements
+  if (msg.includes('achievement') || msg.includes('milestone')) {
+    return 'Achievements in Kingshot:\n\n- Permanent goals that reward gems, resources, and items\n- Categories: Combat, Economy, Hero, Alliance, Kingdom\n- Some achievements are hidden — discover them by playing\n- Achievement rewards are one-time but significant\n\nCheck your achievement list regularly. Completing them gives a nice power boost.'
+  }
+
+  // Climb rankings / get more kills
+  if (msg.includes('climb') || msg.includes('more kills') || msg.includes('get kills') || msg.includes('kill count') || msg.includes('ranking up') || msg.includes('higher rank')) {
+    return 'Climbing the Rankings:\n\n1. Participate in every KvK — kills are the main ranking metric\n2. Join all rallies — shared kills count\n3. Scout before attacking — pick targets you can win\n4. Use cavalry for fast PvP raids on gatherers\n5. Defend your city — defense kills count too\n6. Use hero skills that boost PvP damage\n7. Upgrade troops to higher tiers\n\nConsistency in KvK events is the #1 way to climb the kill ranking.'
+  }
+
+  // Comeback / returning player
+  if (msg.includes('comeback') || msg.includes('returning') || msg.includes('stopped playing') || msg.includes('haven\'t played') || msg.includes('took a break') || msg.includes('quit and came back') || msg.includes('return player')) {
+    return 'Welcome back to Kingdom 846!\n\nReturning Player Checklist:\n1. Check your city — heal any wounded troops\n2. Claim any accumulated rewards in your mail\n3. Check the Events page for current events\n4. Join our Discord: https://discord.gg/rcxJCh97A\n5. Message your alliance leader — they\'ll help you catch up\n6. Use accumulated speedups to upgrade your Castle\n\nThe kingdom has likely evolved since you left. Ask your alliance leader what\'s changed.'
+  }
+
+  // Is the game/kingdom dead or active
+  if (msg.includes('dead') || msg.includes('dying') || msg.includes('still active') || msg.includes('still playing') || msg.includes('is it over') || msg.includes('end of game')) {
+    return 'Kingdom 846 is very much alive! All four alliances are active daily with events, rallies, bear hunts, and Discord activity.\n\nThe game Kingshot is also continuously updated with new content. Join our Discord (https://discord.gg/rcxJCh97A) to see real-time activity — you\'ll find members online 24/7 across multiple time zones.'
+  }
+
+  // Social media
+  if (msg.includes('youtube') || msg.includes('twitch') || msg.includes('reddit') || msg.includes('facebook') || msg.includes('twitter') || msg.includes('instagram') || msg.includes('tiktok') || msg.includes('social media')) {
+    return 'Kingdom 846 Social Media:\n\n- Discord: https://discord.gg/rcxJCh97A (primary community)\n- This website: https://kingdom846.com (official portal)\n\nFor the game Kingshot\'s official channels, check their website at kingshot.net.\n\nOur main community hub is Discord — join for real-time chat, event coordination, and announcements.'
+  }
+
+  // Switch kingdoms / change server
+  if (msg.includes('switch kingdom') || msg.includes('change server') || msg.includes('change kingdom') || msg.includes('different server') || msg.includes('move to another kingdom') || msg.includes('leave 846')) {
+    return 'Switching Kingdoms:\n\n1. Use Migration items (earned from events or purchased)\n2. Select a new kingdom from the world map\n3. Confirm migration — your city moves to the new kingdom\n4. You keep all your troops, resources, and progress\n5. You cannot migrate during KvK\n\nNote: Once you leave Kingdom 846, you\'ll need a new migration item to return. Make sure you really want to leave before migrating. We\'d hate to see you go!'
+  }
+
+  // Start over / restart / reset
+  if (msg.includes('start over') || msg.includes('restart') || msg.includes('reset account') || msg.includes('new account') || msg.includes('fresh start') || msg.includes('can i restart')) {
+    return 'Starting Over:\n\nKingshot does not have a restart button. To start fresh:\n\n1. Create a new account on a different platform (e.g., if you used Google, try Apple)\n2. Start a new game with a new guest account\n3. Bind the new account immediately\n4. Use a Transfer to join Kingdom 846\n\nWarning: You cannot merge accounts. Your old progress stays on the old account. Think carefully before starting over.'
+  }
+
+  // Strongest alliance / which is best
+  if (msg.includes('strongest alliance') || msg.includes('most powerful alliance') || msg.includes('which is best') || msg.includes('which alliance is best') || msg.includes('which is the best') || msg.includes('top alliance')) {
+    return 'All four alliances in Kingdom 846 are strong in different ways:\n\n- RYO (Spiders): Best at strategy and coordination\n- KzK (KamilKazeKarnival): Best at aggressive PvP\n- SAS (SaintsAndSinners): Best at balanced gameplay\n- ICE (IceHunters): Best at focused execution\n\nThere is no "best" alliance — each excels in its own way. The real strength of Kingdom 846 is that all four work together under one crown.\n\nChoose the alliance that matches your playstyle.'
+  }
+
+  // How to win PvP
+  if (msg.includes('win pvp') || msg.includes('win battles') || msg.includes('win fights') || msg.includes('how to win') || msg.includes('winning strategy')) {
+    return 'Winning PvP Battles:\n\n1. SCOUT FIRST — always know what you\'re attacking\n2. Counter enemy troop composition (Inf > Cav > Arch > Inf)\n3. Use the right hero for your formation\n4. Higher tier troops win — upgrade your barracks\n5. Use cavalry for quick raids on gatherers\n6. Use infantry-heavy formation for sieges\n7. Time attacks when enemy is offline (no bubble)\n8. Join rallies — group attacks overpower solo defenders\n\nKnowledge + troop quality + timing = victory.'
+  }
+
+  // How to win KvK
+  if (msg.includes('win kvk') || msg.includes('how to win kvk') || msg.includes('kvk strategy') || msg.includes('kvk tips') || msg.includes('kingdom war strategy')) {
+    return 'Winning KvK:\n\n1. COORDINATE — join Discord and follow alliance leader commands\n2. Defend passes — losing passes lets enemies into your territory\n3. Raid enemy gatherers — starve their economy\n4. Stack rallies — massive coordinated attacks\n5. Bubble when offline — don\'t feed the enemy kills\n6. Use all speedups during KvK for maximum output\n7. Hold passes and fortresses for points\n8. Communication is everything — stay in Discord\n\nKingdom 846 has a strong KvK record. Follow leadership and we win together.'
+  }
+
+  // What to spend gems on / best investment
+  if (msg.includes('best investment') || msg.includes('best value') || msg.includes('worth it') || msg.includes('should i buy') || msg.includes('best pack') || msg.includes('best purchase')) {
+    return 'Best Investments in Kingshot:\n\n1. Extra Builder Queue — permanent, massive QoL improvement\n2. VIP levels — permanent buffs and daily rewards\n3. Season Pass — best value for active players\n4. Gem packs during special events — bonus gems\n\nNot worth it:\n- Resource packs (gather for free)\n- Single-use items (temporary)\n- Cosmetic-only purchases\n\nSpend on permanent upgrades first. Temporary boosts are for whales.'
+  }
+
+  // Not getting raided / protect from attacks
+  if (msg.includes('not get raided') || msg.includes('stop getting attacked') || msg.includes('prevent attack') || msg.includes('avoid attack') || msg.includes('stop being attacked') || msg.includes('not get attacked')) {
+    return 'Preventing Attacks:\n\n1. ALWAYS bubble (Peace Shield) when offline\n2. Keep resources in Warehouse (secured)\n3. Don\'t hoard non-secured resources — use or send to allies\n4. Join a strong alliance — deterrence through numbers\n5. Upgrade walls and defenses\n6. Keep troops garrisoned when online\n7. Teleport near your alliance cluster\n8. Don\'t provoke stronger players\n\nAn unshielded city with lots of resources is a magnet for raiders. Bubble up.'
+  }
+
+  // What is the VIP system
+  if (msg.includes('vip level') || msg.includes('how to get vip') || msg.includes('vip points') || msg.includes('vip system') || msg.includes('what does vip do') || msg.includes('vip buff')) {
+    return 'VIP System:\n\n- VIP gives permanent buffs: faster building, more resources, better rewards\n- Earn VIP points from daily login, events, and purchases\n- Higher VIP levels unlock more perks and bonus march slots\n- VIP items from the shop grant temporary VIP status\n- Free players can still earn VIP time through events\n\nTip: Use VIP activation items during KvK or big events for maximum benefit.'
+  }
+
+  // Season pass worth it
+  if (msg.includes('season pass worth') || msg.includes('battle pass worth') || msg.includes('pass worth it') || msg.includes('should i get pass')) {
+    return 'Is the Season Pass Worth It?\n\nFree Tier: Absolutely — claim it every season. You get gems, speedups, and resources just for playing.\n\nPremium Tier: Worth it if you play daily. The rewards far exceed the cost if you complete all tiers. You get exclusive hero shards, large gem bundles, and rare gear materials.\n\nVerdict: Free tier = always. Premium tier = yes if you\'re active daily.'
+  }
+
+  // Latest update / what\'s new
+  if (msg.includes('latest update') || msg.includes('what\'s new') || msg.includes('whats new') || msg.includes('new update') || msg.includes('patch') || msg.includes('changelog') || msg.includes('what changed')) {
+    return 'For the latest game updates:\n\n1. Check the News page on this website — auto-syncs from official sources\n2. Visit the Kingshot official website: kingshot.net\n3. Join our Discord for community discussions about updates: https://discord.gg/rcxJCh97A\n4. Check in-game mail for patch notes after each update\n\nGame updates typically add new heroes, events, balance changes, and quality-of-life improvements.'
+  }
+
+  // How to stay updated / get notifications
+  if (msg.includes('stay updated') || msg.includes('get notified') || msg.includes('get alerts') || msg.includes('notifications') || msg.includes('how to know') || msg.includes('keep track')) {
+    return 'Staying Updated:\n\n1. Bookmark this website and check the News page regularly\n2. Join our Discord: https://discord.gg/rcxJCh97A — enable notifications\n3. Check in-game mail for announcements\n4. Follow the Events page for schedules\n5. Enable push notifications in Kingshot settings\n\nDiscord is the fastest way to get real-time updates from Kingdom 846.'
+  }
+
+  // Can I trade items
+  if (msg.includes('trade item') || msg.includes('trade with') || msg.includes('swap item') || msg.includes('exchange item') || msg.includes('give item')) {
+    return 'Item Trading:\n\n- You cannot trade items between players in Kingshot\n- You CAN send resources to alliance members via the Trade Post\n- You CAN send speedups through Alliance Help\n- Hero shards, gear, and gems are non-transferable\n\nFor helping allies: send resources and use Alliance Help. That\'s the extent of trading.'
+  }
+
+  // What is the difference between alliances
+  if (msg.includes('difference between') && (msg.includes('alliance') || msg.includes('ryo') || msg.includes('kzk') || msg.includes('sas') || msg.includes('ice'))) {
+    return 'Differences Between Kingdom 846 Alliances:\n\nRYO (Spiders): Led by Shoni. Strategic, disciplined, web-like coordination. Focus on calculated attacks.\n\nKzK (KamilKazeKarnival): Led by Lovely Khaos. Aggressive, fast-paced, high-energy PvP. Focus on overwhelming offense.\n\nSAS (SaintsAndSinners): Led by Lady Charlotte. Balanced tactics, strong defense + offense. Focus on adaptability.\n\nICE (IceHunters): Led by Dunngeon. Focused, efficient, precise execution. Focus on targeted operations.\n\nAll four are part of the same kingdom and fight together in KvK.'
+  }
+
+  // Specific alliance questions
+  if (msg.includes('ryo') && !msg.includes('ryo-lord')) {
+    return 'RYO (Spiders):\n\n- Leader: Shoni\n- Tagline: Weaving webs of strategy\n- Playstyle: Strategic and disciplined\n- Strength: Calculated attacks, strong coordination\n- Alliance color: Purple/Amethyst\n\nVisit the Alliances page for more details or use the Transfer page to apply.'
+  }
+
+  if (msg.includes('kzk') || msg.includes('kamikaze') || msg.includes('kamilkaze')) {
+    return 'KzK (KamilKazeKarnival):\n\n- Leader: Lovely Khaos\n- Tagline: Chaos crowned in glory\n- Playstyle: Aggressive and fast-paced\n- Strength: Overwhelming PvP offense\n- Alliance color: Crimson\n\nVisit the Alliances page for more details or use the Transfer page to apply.'
+  }
+
+  if (msg.includes('sas') && !msg.includes('class') && !msg.includes('password')) {
+    return 'SAS (SaintsAndSinners):\n\n- Leader: Lady Charlotte\n- Tagline: Walking the line between light and shadow\n- Playstyle: Balanced and adaptable\n- Strength: Strong defense and offense\n- Alliance color: Gold\n\nVisit the Alliances page for more details or use the Transfer page to apply.'
+  }
+
+  if (msg.includes('ice') && !msg.includes('notice') && !msg.includes('device') && !msg.includes('service') && !msg.includes('practice')) {
+    return 'ICE (IceHunters):\n\n- Leader: Dunngeon\n- Tagline: Striking from the frozen depths\n- Playstyle: Focused and precise\n- Strength: Targeted operations, efficient execution\n- Alliance color: Ice Blue\n\nVisit the Alliances page for more details or use the Transfer page to apply.'
+  }
+
+  // Who is Spartan / specific person
+  if (msg.includes('who is spartan') || msg.includes('who is sparta') || msg.includes('tell me about spartan') || msg.includes('about spartan')) {
+    return 'Spartan is the Sovereign Admin of Kingdom 846.\n\n- Role: King/Admin of the kingdom\n- Responsibilities: Website design & development, data management, king status, news sync, guide sync, and overall kingdom leadership\n- Alliance: Admin (oversees all four alliances)\n- Avatar: Spartan warrior\n- Contact: Through Discord (https://discord.gg/rcxJCh97A)\n\nSpartan built this entire website from scratch and manages all kingdom operations.'
+  }
+
+  // Who is Shoni
+  if (msg.includes('who is shoni') || msg.includes('tell me about shoni') || msg.includes('about shoni')) {
+    return 'Shoni is the leader of RYO (Spiders) alliance in Kingdom 846.\n\n- Alliance: RYO (Spiders)\n- Role: Alliance Leader\n- Avatar: RYO Lord (spider queen themed)\n- Playstyle: Strategic and disciplined\n- Contact: Through Discord or in-game\n\nShoni manages RYO event schedules through the Leader Portal.'
+  }
+
+  // Who is Lovely Khaos
+  if (msg.includes('lovely') || msg.includes('khaos')) {
+    return 'Lovely Khaos is the leader of KzK (KamilKazeKarnival) alliance in Kingdom 846.\n\n- Alliance: KzK (KamilKazeKarnival)\n- Role: Alliance Leader\n- Avatar: KzK Lord (chaos queen themed)\n- Playstyle: Aggressive and fast-paced PvP\n- Contact: Through Discord or in-game\n\nLovely Khaos manages KzK event schedules through the Leader Portal.'
+  }
+
+  // Who is Lady Charlotte
+  if (msg.includes('charlotte') || msg.includes('lady')) {
+    return 'Lady Charlotte is the leader of SAS (SaintsAndSinners) alliance in Kingdom 846.\n\n- Alliance: SAS (SaintsAndSinners)\n- Role: Alliance Leader\n- Avatar: SAS Lord (saint-sinner themed)\n- Playstyle: Balanced and adaptable\n- Contact: Through Discord or in-game\n\nLady Charlotte manages SAS event schedules through the Leader Portal.'
+  }
+
+  // Who is Dunngeon
+  if (msg.includes('dunngeon') || msg.includes('dungeon')) {
+    return 'Dunngeon is the leader of ICE (IceHunters) alliance in Kingdom 846.\n\n- Alliance: ICE (IceHunters)\n- Role: Alliance Leader\n- Avatar: ICE Lord (frost huntress themed)\n- Playstyle: Focused and precise\n- Contact: Through Discord or in-game\n\nDunngeon manages ICE event schedules through the Leader Portal.'
+  }
+
+  // Past KvK history / war records
+  if (msg.includes('past kvk') || msg.includes('kvk history') || msg.includes('war history') || msg.includes('war record') || msg.includes('past war') || msg.includes('previous kvk') || msg.includes('battle history')) {
+    return 'Kingdom 846 War History:\n\n- Fought in 10 wars\n- Won 7 dominations\n- Never broken a treaty\n- Never lost a defensive war\n- Perfect diplomatic record\n\nVisit the Timeline page for detailed war records and kingdom milestones. The About page has the full kingdom history.'
+  }
+
+  // Event point system
+  if (msg.includes('point system') || msg.includes('how do points') || msg.includes('how are points') || msg.includes('earn points') || msg.includes('get points')) {
+    return 'Event Point System:\n\n- Points earned by completing event-specific objectives\n- KvK: Points from kills, holding structures, and territory\n- Bear Hunt: Points from damage dealt to bears\n- PvP events: Points from successful attacks\n- Gathering events: Points from resources gathered\n- Rankings determined by total points\n- Top performers get the best rewards\n\nAlways contribute — even small points add up. Every bit helps your alliance and kingdom.'
+  }
+
+  // Player profile
+  if (msg.includes('player profile') || msg.includes('my profile') || msg.includes('view profile') || msg.includes('see profile')) {
+    return 'Player Profiles:\n\n- View your profile in-game by tapping your avatar\n- Shows your power, kill count, hero roster, and troop stats\n- On this website, visit the Rankings page to see kingdom player profiles\n- Alliance leaders have avatars displayed in the sidebar after login\n\nNote: Power scores are not publicly displayed on this website to maintain strategic privacy.'
+  }
+
+  // How to get more alliance tokens
+  if (msg.includes('alliance token') || msg.includes('kingdom token') || msg.includes('get token') || msg.includes('earn token')) {
+    return 'Earning Alliance & Kingdom Tokens:\n\nAlliance Tokens:\n- Participate in alliance events\n- Help alliance members (Alliance Help)\n- Bear hunts and rallies\n- Daily alliance quests\n\nKingdom Tokens:\n- KvK participation and performance\n- Kingdom events\n- Season rankings\n\nSpend tokens in the Alliance Shop and Kingdom Shop for exclusive items.'
+  }
+
+  // Can I play with friends from another kingdom
+  if (msg.includes('friend from another') || msg.includes('friends in other kingdom') || msg.includes('other kingdom') || msg.includes('enemy kingdom')) {
+    return 'Friends in Other Kingdoms:\n\n- You cannot be in the same alliance as friends in other kingdoms\n- You CAN chat with them through Discord or external apps\n- During KvK, your kingdoms will be enemies — it\'s nothing personal\n- If they want to join Kingdom 846, have them use the Transfer page\n- NAPs allow peaceful coexistence but not same-alliance play\n\nDiplomacy is handled by the King/Queen and alliance leaders.'
+  }
+
+  // What is the best gathering hero
+  if (msg.includes('gathering hero') || msg.includes('best gatherer') || msg.includes('gather hero') || msg.includes('gather faster')) {
+    return 'Best Gathering Heroes:\n\n- Look for heroes with gathering speed skills\n- Heroes with load capacity bonuses gather more per trip\n- Assign cavalry-heavy troops to gathering heroes (fastest march speed)\n- Some heroes have resource-specific gathering bonuses\n\nTip: Use your least-combat-focused hero for gathering. Save your strongest heroes for battles and rallies.'
+  }
+
+  // What is the kingdom motto / tagline
+  if (msg.includes('motto') || msg.includes('tagline') || msg.includes('slogan') || msg.includes('catchphrase')) {
+    return 'Kingdom 846 Mottos:\n\n- "Where legends are forged in fire and crowned in gold"\n- "One Crown. Four Alliances. Endless Glory."\n- "We take what\'s ours"\n\nVisit the About page for the full kingdom doctrine and philosophy.'
+  }
+
+  // What is the kingdom doctrine / full doctrine
+  if (msg.includes('full doctrine') || msg.includes('kingdom doctrine') || msg.includes('entire doctrine')) {
+    return 'Kingdom 846 Full Doctrine:\n\nOne Crown. Four Alliances. Endless Glory.\n\nI. Unity — Four alliances stand as one kingdom under one crown\nII. Honor — We honor our treaties, our word, and our allies\nIII. Strength — We forge ourselves through fire and war\nIV. Brotherhood — No member is left behind\nV. Victory — We take what is ours\n\nForged in ten wars. Crowned in seven dominations. We have never broken a treaty. We have never lost a defensive war.\n\nWhere legends are forged in fire and crowned in gold.'
+  }
+
+  // Can I be king / how to become king (detailed)
+  if (msg.includes('can i be king') || msg.includes('can i become king') || msg.includes('can i be queen') || msg.includes('can i become queen') || msg.includes('can i rule')) {
+    return 'Becoming King/Queen of Kingdom 846:\n\n1. You must be an alliance leader (or supported by one)\n2. During the King Event, your alliance must capture and hold the throne\n3. The alliance holding the throne longest wins\n4. That alliance\'s leader becomes King/Queen\n5. The King gets kingdom-wide buff powers and the crown\n\nIt requires a massive troop investment, perfect coordination, and the support of all four alliances.\n\nCurrently, Spartan holds the crown as Sovereign Admin.'
+  }
+
+  // What is the leader portal
+  if (msg.includes('leader portal') || msg.includes('leader access') || msg.includes('leader login') || msg.includes('royal access')) {
+    return 'The Leader Portal:\n\n- Accessible through the Royal Access login on this website\n- Alliance leaders can update their alliance event schedules\n- Leaders: Shoni (RYO), Lovely Khaos (KzK), Lady Charlotte (SAS), Dunngeon (ICE)\n- Admin (Spartan) has full Master Console access\n- Leaders use the portal to set event times in UTC\n\nIf you are a leader and need login credentials, contact Spartan through Discord.'
+  }
+
+  // What is the master console / admin console
+  if (msg.includes('master console') || msg.includes('admin console') || msg.includes('admin panel') || msg.includes('admin access')) {
+    return 'The Master Console:\n\n- Admin-only area of the website\n- Accessible only to Spartan (Sovereign Admin)\n- Features: Edit players, rankings, avatars, king status, site content, news sync, guide sync, alliance management\n- Also includes leader credential management\n\nOnly the admin account (sparta) has access. Alliance leaders have their own Leader Portal for event schedules.'
+  }
+
+  // What is the knowledge base
+  if (msg.includes('knowledge base') || msg.includes('strategy guides') || msg.includes('how many guides')) {
+    return 'The Knowledge Base (Strategy & Guides):\n\n- Auto-syncs from the Kingshot Wiki\n- Currently 49+ guides available\n- Categories: Beginner, Combat, Heroes, Resources, Buildings, Events, Advanced Strategy\n- New guides added automatically when the wiki updates\n- Visit the Guides page to browse by category\n\nThe Guides page also has a royal library background for immersive reading.'
+  }
+
+  // How does the news sync work
+  if (msg.includes('news sync') || msg.includes('auto sync') || msg.includes('auto-sync') || msg.includes('how does news') || msg.includes('where does news')) {
+    return 'News Auto-Sync:\n\n- The News page automatically pulls articles from official Kingshot sources\n- Uses a sync key to authenticate with the content source\n- Updates periodically without manual intervention\n- Shows publish dates (not sync dates)\n- Visit the News page for the latest kingdom and game news\n\nThe sync runs on the website\'s server and requires no external AI services.'
+  }
+
+  // Can I suggest a feature
+  if (msg.includes('suggest') || msg.includes('feature request') || msg.includes('idea') || msg.includes('proposal') || msg.includes('can you add')) {
+    return 'Feature Requests:\n\nWe love hearing from our community! To suggest a website feature:\n\n1. Join Discord: https://discord.gg/rcxJCh97A\n2. Post your suggestion in the appropriate channel\n3. Spartan (admin) reviews all suggestions\n4. Popular ideas get prioritized\n\nYour ideas shape the future of Kingdom 846. Don\'t hesitate to share!'
+  }
+
+  // What is the splash screen / intro
+  if (msg.includes('splash') || msg.includes('intro') || msg.includes('opening') || msg.includes('welcome screen') || msg.includes('loading screen')) {
+    return 'The Kingdom 846 Splash Screen:\n\n- Features the royal crest with crown, 846, moon, and stars\n- Cinematic fade-in animation\n- Auto-plays royal ambient music\n- No sound toggle — music plays automatically (by design)\n- Leads into the main dashboard\n\nThe splash screen sets the royal, luxurious tone of the entire website experience.'
+  }
+
+  // What is the clock / header clock
+  if (msg.includes('header clock') || msg.includes('top clock') || msg.includes('kingdom time') || msg.includes('why utc') || msg.includes('why utc')) {
+    return 'The Header Clock:\n\n- Shows current time in UTC (Coordinated Universal Time)\n- All event schedules use UTC as the standard\n- Alliance leaders set event times in UTC through the Leader Portal\n- UTC was chosen as the neutral timezone for all members across the globe\n\nConvert UTC to your local time using Google or any timezone converter.'
+  }
+
+  // What is the sidebar / navigation
+  if (msg.includes('sidebar') || msg.includes('navigation') || msg.includes('menu') || msg.includes('how to navigate')) {
+    return 'Website Navigation:\n\nThe sidebar contains links to all pages:\n- Dashboard — Kingdom overview and stats\n- Rankings — Player leaderboard with avatars\n- Alliances — Four alliance cards with details\n- Events — Event schedules and calendar\n- Guides — Strategy library (49+ guides)\n- News — Auto-synced kingdom news\n- Timeline — Kingdom war history\n- About — Kingdom lore and doctrine\n\nAfter login, leaders see their avatar in the sidebar profile section.'
+  }
+
+  // What is the transfer page / how to apply
+  if (msg.includes('transfer page') || msg.includes('apply page') || msg.includes('how to apply') || msg.includes('application')) {
+    return 'The Transfer Page:\n\n- Where visitors apply to join Kingdom 846\n- Select your preferred alliance (RYO, KzK, SAS, or ICE)\n- Fill out the application form\n- Alliance leaders review applications\n- Once accepted, use the in-game transfer/migration to join kingdom 846\n\nAll four alliances welcome new members. Choose based on your playstyle!'
+  }
+
+  // Are there any cheats / hacks
+  if (msg.includes('cheat') || msg.includes('hack tool') || msg.includes('hack download') || msg.includes('mod apk') || msg.includes('modded') || msg.includes('free gems generator')) {
+    return 'There are NO working cheats or hacks for Kingshot.\n\n- All "gem generators" and "hack tools" are SCAMS\n- They steal your account credentials\n- Modded APKs contain malware\n- Using cheats results in permanent bans\n\nPlay fair. The only way to get gems is through events, daily rewards, and legitimate purchases. Anyone claiming otherwise is trying to scam you.'
+  }
+
+  // What is the fire tyrant / season details
+  if (msg.includes('fire tyrant') || msg.includes('tyrant') || msg.includes('current season') || msg.includes('this season')) {
+    return 'Season of the Fire Tyrant:\n\n- Current season of Kingdom 846\n- Features fire-themed events and challenges\n- Season-specific rewards available\n- Ends with KvK (Kingdom vs Kingdom)\n- Season rankings determine reward tiers\n\nCheck the Events page for season-specific schedules and the About page for season standings.'
+  }
+
+  // How to contact support / game support
+  if (msg.includes('game support') || msg.includes('kingshot support') || msg.includes('contact developer') || msg.includes('contact support') || msg.includes('customer service')) {
+    return 'Contacting Game Support:\n\n1. In-game: Settings > Help & Support\n2. Official website: kingshot.net\n3. Submit a ticket with your issue details\n\nFor Kingdom 846 specific issues (website, rankings, schedules), contact Spartan through Discord: https://discord.gg/rcxJCh97A\n\nFor game bugs, account issues, or payment problems, use the in-game support system.'
+  }
+
+  // Can I play offline
+  if (msg.includes('offline mode') || msg.includes('play offline') || msg.includes('without internet') || msg.includes('no wifi') || msg.includes('no internet')) {
+    return 'Kingshot requires an internet connection to play.\n\n- It is an online multiplayer strategy game\n- All events, battles, and alliance features need internet\n- You can view some cached data offline but cannot interact\n- Use WiFi or mobile data — the game uses minimal data for basic actions\n\nIf you\'re going offline, bubble up and set training queues first!'
+  }
+
+  // What is the best cavalry hero
+  if (msg.includes('cavalry hero') || msg.includes('best cavalry') || msg.includes('cav hero')) {
+    return 'Best Cavalry Heroes:\n\n- Look for heroes with cavalry-specific buff skills\n- Cavalry heroes boost march speed and cavalry damage\n- Best for: raiding gatherers, quick PvP, flanking\n- Pair with cavalry-heavy formations for maximum effect\n\nCheck the Kingshot Wiki for the current hero tier list. Meta heroes change with updates.'
+  }
+
+  // What is the best infantry hero
+  if (msg.includes('infantry hero') || msg.includes('best infantry') || msg.includes('inf hero')) {
+    return 'Best Infantry Heroes:\n\n- Look for heroes with infantry buff skills\n- Infantry heroes boost defense and survivability\n- Best for: front line, sieges, defending your city\n- Pair with infantry-heavy formations for tanky compositions\n\nCheck the Kingshot Wiki for the current hero tier list. Meta heroes change with updates.'
+  }
+
+  // What is the best archer hero
+  if (msg.includes('archer hero') || msg.includes('best archer') || msg.includes('arch hero') || msg.includes('ranged hero')) {
+    return 'Best Archer Heroes:\n\n- Look for heroes with archer/ranged buff skills\n- Archer heroes boost ranged damage\n- Best for: back line DPS, supporting cavalry charges\n- Vulnerable in melee — protect with infantry\n\nCheck the Kingshot Wiki for the current hero tier list. Meta heroes change with updates.'
+  }
+
+  // How to get free stuff / free rewards
+  if (msg.includes('free stuff') || msg.includes('free reward') || msg.includes('free items') || msg.includes('free gift') || msg.includes('what is free') || msg.includes('anything free')) {
+    return 'Free Rewards in Kingshot:\n\n1. Daily Login — free resources and items every day\n2. Daily Quests — complete for XP and gems\n3. Alliance Help — help allies for mutual rewards\n4. Events — all events have free reward tiers\n5. Free Shop Items — check the shop daily for free gifts\n6. Season Pass Free Tier — claim every season\n7. Achievements — one-time but significant rewards\n8. Mail — check for unclaimed reward mail\n\nA free-to-play player who claims everything can stay very competitive.'
+  }
+
+  // What is the kingdom shop
+  if (msg.includes('kingdom shop') || msg.includes('kingdom store')) {
+    return 'The Kingdom Shop:\n\n- Uses Kingdom Tokens (earned from KvK and kingdom events)\n- Offers exclusive items not available elsewhere\n- Includes high-tier gear materials and hero shards\n- Save tokens for high-value items\n\nParticipate in KvK to earn Kingdom Tokens — the shop has some of the best items in the game.'
+  }
+
+  // What is the honor shop
+  if (msg.includes('honor shop') || msg.includes('honor store')) {
+    return 'The Honor Shop:\n\n- Uses Honor Points (earned from PvP combat)\n- Offers PvP-focused items and gear\n- Resets inventory periodically\n- Earn honor by attacking and defending against other players\n\nIf you\'re an aggressive PvP player, the Honor Shop has great rewards for you.'
+  }
+
+  // What is the alliance help
+  if (msg.includes('alliance help') || msg.includes('help alliance') || msg.includes('help allies')) {
+    return 'Alliance Help:\n\n- Click the Help button on alliance members\' requests\n- Reduces their building/research time\n- You also receive help when you request it\n- Gives small speedup rewards to both players\n- Always help allies — it costs nothing and benefits everyone\n\nActive alliances with high help participation progress much faster.'
+  }
+
+  // What is the embassy reinforcement
+  if (msg.includes('embassy reinforcement') || msg.includes('how many reinforcement') || msg.includes('reinforcement capacity')) {
+    return 'Embassy & Reinforcements:\n\n- The Embassy determines how many allied troops can garrison your city\n- Higher Embassy level = more reinforcement capacity\n- Reinforcements help defend your city when attacked\n- Alliance members send troops through your Embassy\n- During KvK, max out your Embassy for maximum defense\n\nA high-level Embassy can be the difference between surviving and being zeroed.'
+  }
+
+  // What is the blacksmith / forge
+  if (msg.includes('blacksmith') || msg.includes('forge') || msg.includes('crafting') || msg.includes('craft gear')) {
+    return 'The Blacksmith / Forge:\n\n- Where you craft and upgrade hero gear\n- Requires materials from events, bear hunts, and mystic trials\n- Higher Blacksmith level = better gear crafting\n- Forge Hammers required for crafting\n- Mithril required for high-tier upgrades\n\nPrioritize crafting gear for your main 2-3 heroes. Don\'t spread materials thin.'
+  }
+
+  // What is the academy / tech
+  if (msg.includes('academy') || msg.includes('university') || msg.includes('tech building') || msg.includes('research building')) {
+    return 'The Academy / Tech Building:\n\n- Where you research technologies\n- Tech tree has military, economy, and alliance branches\n- Military tech: troop buffs, unlock higher tiers\n- Economy tech: resource production, gathering speed\n- Alliance tech: shared buffs for all alliance members\n\nPrioritize military tech for combat power. Economy tech helps long-term growth.'
+  }
+
+  // What is the stable / archery range / workshop
+  if (msg.includes('stable') || msg.includes('archery range') || msg.includes('workshop') || msg.includes('armory')) {
+    return 'Specialized Buildings:\n\n- Stable: Trains cavalry (requires Barracks upgrade)\n- Archery Range: Trains archers (requires Barracks upgrade)\n- Workshop: Produces siege equipment\n- Armory: Stores and upgrades troop equipment\n\nUpgrade these alongside your Barracks to unlock and train higher tier specialized troops.'
+  }
+
+  // How to get more builder queues
+  if (msg.includes('builder') || msg.includes('build queue') || msg.includes('construction queue') || msg.includes('second builder')) {
+    return 'Builder Queues:\n\n- You start with 1 builder queue\n- A second queue can be purchased with gems (highly recommended)\n- VIP levels may grant temporary extra queues\n- Two queues = twice the building speed\n\nThe second builder queue is the best gem investment in the game. Buy it as soon as possible.'
+  }
+
+  // What is the rally spot
+  if (msg.includes('rally spot') || msg.includes('rally point') || msg.includes('rally station')) {
+    return 'The Rally Spot:\n\n- Where alliance rallies are organized\n- One player initiates a rally\n- Alliance members join with their troops\n- Rally capacity depends on the initiator\'s War Room level\n- Essential for bear hunts and KvK\n\nAlways join rallies when called — you get rewards even with small troop contributions.'
+  }
+
+  // What is the alliance flag / territory
+  if (msg.includes('alliance flag') || msg.includes('alliance territory') || msg.includes('alliance zone') || msg.includes('alliance land')) {
+    return 'Alliance Flags & Territory:\n\n- Alliance flags mark your territory on the world map\n- Territory provides buffs to alliance members within it\n- Larger territory = more resource tiles and strategic positions\n- Expand territory by capturing passes and fortresses\n- During KvK, territory control earns points\n\nStay within your alliance territory for defense buffs and faster gathering.'
+  }
+
+  // What is a pass / fortress (more detailed)
+  if (msg.includes('capture pass') || msg.includes('hold pass') || msg.includes('capture fortress') || msg.includes('hold fortress') || msg.includes('strategic point')) {
+    return 'Strategic Structures:\n\nPasses:\n- Chokepoints on the world map\n- Control movement between regions\n- Must be captured and held\n\nFortresses:\n- Large defensive structures\n- Provide territory-wide buffs\n- High troop commitment to capture\n\nBoth earn KvK points while held. Coordinate with alliance leadership to decide which to target.'
+  }
+
+  // What is the throne event / king event
+  if (msg.includes('throne event') || msg.includes('king event') || msg.includes('king competition') || msg.includes('throne war')) {
+    return 'The Throne Event (King Competition):\n\n- Alliances fight for control of the central throne\n- The alliance holding the throne longest wins\n- The winning alliance\'s leader becomes King/Queen\n- The King gets kingdom-wide buff powers\n- Requires massive coordination and troop investment\n- Usually happens at the end of a season\n\nOnly the strongest alliances contest the throne. It\'s the ultimate PvP challenge.'
+  }
+
+  // What is the comeback / return reward
+  if (msg.includes('comeback event') || msg.includes('return reward') || msg.includes('welcome back') || msg.includes('comeback reward') || msg.includes('returning reward')) {
+    return 'Comeback / Return Rewards:\n\n- Kingshot offers comeback bonuses for inactive players who return\n- Check your in-game mail for welcome-back rewards\n- Some events have special returning-player bonuses\n- Your alliance may have resources waiting for you\n\nWelcome back! Contact your alliance leader on Discord (https://discord.gg/rcxJCh97A) to get caught up.'
+  }
+
+  // What is the best tier to stop at
+  if (msg.includes('what tier should') || msg.includes('stop at tier') || msg.includes('which tier to') || msg.includes('best tier level')) {
+    return 'Troop Tier Progression:\n\n- Don\'t stop — always upgrade when possible\n- Tier 3: Minimum for PvP participation\n- Tier 5: Recommended for KvK\n- Tier 7+: Competitive end-game\n- Higher tier troops are exponentially stronger\n- Don\'t waste resources on lower tiers once you unlock higher ones\n\nUpgrade Castle and Barracks to unlock higher tiers. It\'s always worth it.'
+  }
+
+  // What is the population / how many people
+  if (msg.includes('how many people') || msg.includes('total member') || msg.includes('member count') || msg.includes('roster size') || msg.includes('how big is the alliance')) {
+    return 'Kingdom 846 Membership:\n\n- Four alliances with active rosters\n- Members span multiple time zones for 24/7 coverage\n- Exact member counts are visible on the Alliances page\n- Each alliance has its own leader and event schedule\n\nJoin our Discord (https://discord.gg/rcxJCh97A) to get a feel for our active community.'
+  }
+
+  // Can I see the rankings without logging in
+  if (msg.includes('see rankings') || msg.includes('view rankings') || msg.includes('see leaderboard') || msg.includes('public ranking') || msg.includes('without login')) {
+    return 'The Rankings page is public — no login required.\n\n- Shows player names, alliance tags, and avatars\n- Top 3 players have special gold glow effects\n- Power scores are NOT displayed (strategic privacy)\n- Rankings are managed by the admin through the Master Console\n\nVisit the Rankings page to see who\'s at the top of Kingdom 846.'
+  }
+
+  // What is the timeline page
+  if (msg.includes('timeline') || msg.includes('kingdom history page') || msg.includes('war records page')) {
+    return 'The Timeline Page:\n\n- Shows Kingdom 846\'s war history and milestones\n- Includes: Wars fought, dominations won, treaties signed, KvK results\n- Historical events with dates\n- Kingdom achievements and records\n\nVisit the Timeline page to see the full history of Kingdom 846 — ten wars, seven dominations, zero broken treaties.'
+  }
+
+  // What is the about page
+  if (msg.includes('about page') || msg.includes('about us') || msg.includes('kingdom info') || msg.includes('about kingdom')) {
+    return 'The About Page:\n\n- Kingdom 846 lore and history\n- Full doctrine: One Crown. Four Alliances. Endless Glory.\n- War records: 10 wars, 7 dominations\n- Kingdom motto and philosophy\n- Hero images and royal crest\n- Council of Alliances information\n\nVisit the About page to learn everything about Kingdom 846\'s history and values.'
+  }
+
+  // What is the dashboard
+  if (msg.includes('dashboard') || msg.includes('home page') || msg.includes('main page') || msg.includes('landing page')) {
+    return 'The Dashboard:\n\n- The main landing page of Kingdom 846\n- Shows kingdom overview and statistics\n- Quick access to all sections\n- Kingdom events preview\n- Latest news preview\n- Royal themed with gold accents on dark background\n\nThe Dashboard is your starting point for everything Kingdom 846.'
+  }
+
+  // What is the events page
+  if (msg.includes('events page') || msg.includes('event schedule page') || msg.includes('calendar')) {
+    return 'The Events Page:\n\n- Shows all upcoming and current events\n- Event schedules set by alliance leaders in UTC\n- Includes: Bear hunts, rallies, KvK, PvP events, seasonal events\n- Times displayed in UTC (check header clock)\n- Alliance leaders update times through the Leader Portal\n\nVisit the Events page to see what\'s happening in Kingdom 846 right now.'
+  }
+
+  // What is the news page
+  if (msg.includes('news page') || msg.includes('kingdom news') || msg.includes('latest news page')) {
+    return 'The News Page:\n\n- Auto-syncs from official Kingshot sources\n- Shows publish dates (not sync dates)\n- Latest game updates, announcements, and events\n- No manual updates needed — runs automatically\n- Part of the website\'s server-side sync system\n\nVisit the News page to stay informed about Kingshot and Kingdom 846.'
+  }
+
+  // What is the guides page
+  if (msg.includes('guides page') || msg.includes('strategy page') || msg.includes('knowledge base page')) {
+    return 'The Guides Page:\n\n- Auto-syncs from Kingshot Wiki\n- 49+ strategy guides available\n- Category filter for easy browsing\n- Categories: Beginner, Combat, Heroes, Resources, Buildings, Events, Advanced\n- Royal library themed background\n\nVisit the Guides page to level up your Kingshot strategy knowledge.'
+  }
+
+  // What is the alliances page
+  if (msg.includes('alliances page') || msg.includes('alliance page') || msg.includes('council page')) {
+    return 'The Alliances Page:\n\n- Shows all four Kingdom 846 alliances\n- Each alliance has a card with leader, tagline, and details\n- Council chamber background image\n- Shimmer animation effects on cards\n- Links to apply through the Transfer page\n\nAlliances:\n- RYO (Spiders) — Led by Shoni\n- KzK (KamilKazeKarnival) — Led by Lovely Khaos\n- SAS (SaintsAndSinners) — Led by Lady Charlotte\n- ICE (IceHunters) — Led by Dunngeon'
+  }
+
+  // What is the rankings page
+  if (msg.includes('rankings page') || msg.includes('leaderboard page') || msg.includes('ranking page')) {
+    return 'The Rankings Page:\n\n- Public player leaderboard for Kingdom 846\n- Shows player names, alliance tags, and avatars\n- Top 3 players have special gold glow effects\n- Power scores are NOT displayed (strategic privacy)\n- Managed by admin through the Master Console\n- Avatars are editable in the admin console\n\nNo login required to view rankings.'
+  }
+
+  // Can I change my name
+  if (msg.includes('change name') || msg.includes('rename') || msg.includes('different name') || msg.includes('new name')) {
+    return 'Changing Your Name:\n\nIn-game: Kingshot may offer name change items through events or shop.\n\nOn this website: Your name on the Rankings page is managed by the admin. Contact Spartan through Discord (https://discord.gg/rcxJCh97A) to request a name change.\n\nChoose your name carefully — it represents you in the kingdom.'
+  }
+
+  // Can I change my avatar
+  if (msg.includes('change avatar') || msg.includes('different avatar') || msg.includes('new avatar') || msg.includes('switch avatar') || msg.includes('edit avatar')) {
+    return 'Avatars:\n\n- Players on the Rankings page have avatars assigned by the admin\n- Available avatars: King, Queen, Warrior, Knight, Mage, Shieldmaiden, Sorceress, Archer, Berserker, Spartan\n- Alliance leaders have custom themed avatars (RYO Lord, KzK Lord, SAS Lord, ICE Lord)\n- To request an avatar change, contact Spartan through Discord: https://discord.gg/rcxJCh97A\n\nAvatars are managed through the Master Console.'
+  }
+
+  // How does the website work / tech stack
+  if (msg.includes('website tech') || msg.includes('how does the website work') || msg.includes('what is the website built') || msg.includes('tech stack') || msg.includes('what framework')) {
+    return 'This website is built with:\n\n- Frontend: React + Vite + Tailwind CSS\n- Backend: Express.js + SQLite database\n- Design: Royal theme with gold accents, Cinzel fonts\n- Features: Auto-syncing news and guides, leader portal, admin console, AI chat advisor\n- Hosting: Render.com with custom domain (kingdom846.com)\n- Source code: GitHub\n\nThe entire website was designed and built by Spartan, the Sovereign Admin.'
+  }
+
+  // Is the website mobile friendly
+  if (msg.includes('mobile friendly') || msg.includes('responsive') || msg.includes('works on phone') || msg.includes('mobile site')) {
+    return 'Yes! The Kingdom 846 website is fully responsive and mobile-friendly.\n\n- Works on all screen sizes (phone, tablet, desktop)\n- Royal theme adapts to mobile layout\n- All pages accessible on mobile\n- Chat advisor works on mobile too\n\nAccess the website at kingdom846.com from any device.'
+  }
+
+  // What is the theme / design
+  if (msg.includes('website theme') || msg.includes('design style') || msg.includes('visual style') || msg.includes('website design') || msg.includes('look and feel')) {
+    return 'Kingdom 846 Website Design:\n\n- Theme: Royal, rich, luxurious, premium\n- Colors: Dark navy background (#0E1220), gold accents (#D4AF37), crimson red, ice blue\n- Fonts: Cinzel (display), Spectral (body), Montserrat (sans)\n- Effects: Shimmer text, embers, float animations, glow pulses, page transitions\n- Hero images on multiple pages\n- Custom royal crest\n- Cinematic splash screen with auto-playing music\n\nDesigned to feel like a premium royal experience.'
+  }
+
   // Default — suggest topics
-  return 'I am not sure about that, but I can help you with:\n\n- Alliances and their leaders\n- The current King or Queen\n- Event schedules\n- How to transfer or apply\n- Strategy guides and tips\n- Latest news and updates\n- Kingdom history and doctrine\n- Troops, heroes, and formations\n- KvK, bear hunts, and events\n- Defense and attack strategies\n- Castle, barracks, and buildings\n- Gathering, resources, and trading\n- Discord and community\n- Crest meaning and kingdom lore\n- Beginner guides and F2P tips\n- Troop tiers and counters\n- World map and structures\n\nTry asking about one of these topics.'
+  return 'I am not sure about that, but I can help you with:\n\n- Alliances and their leaders\n- The current King or Queen\n- Event schedules\n- How to transfer or apply\n- Strategy guides and tips\n- Latest news and updates\n- Kingdom history and doctrine\n- Troops, heroes, and formations\n- KvK, bear hunts, and events\n- Defense and attack strategies\n- Castle, barracks, and buildings\n- Gathering, resources, and trading\n- Discord and community\n- Crest meaning and kingdom lore\n- Beginner guides and F2P tips\n- Troop tiers and counters\n- World map and structures\n- Account binding and recovery\n- VIP, season pass, and shop\n- Scam prevention and account safety\n\nTry asking about one of these topics.'
 }
 
 // Chat endpoint — pure database-powered, never crashes

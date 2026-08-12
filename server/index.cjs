@@ -2404,8 +2404,205 @@ function getKingdomAnswer(message) {
     return 'Best Gathering Formation:\n\n- Use 100% Cavalry for maximum gathering speed\n- Cavalry marches fastest, reducing travel time\n- Use a gathering hero (if available)\n- Send just enough troops to fill the resource tile\n- Don\'t send all your troops — keep some for defense\n\nGather overnight for free resources while you sleep.'
   }
 
+  // === Bonus batch: even more visitor questions ===
+
+  // How to deal with being small / weak
+  if (msg.includes('too small') || msg.includes('too weak') || msg.includes('too low') || msg.includes('not strong enough') || msg.includes('i am weak') || msg.includes('i am small') || msg.includes('low level') || msg.includes('low power')) {
+    return 'Being Small is Not a Disadvantage!\n\n1. Join an alliance immediately — they protect you\n2. Bubble when offline — size doesn\'t matter if you can\'t be attacked\n3. Join rallies — even small troops earn rewards\n4. Focus on Castle upgrades — grow fast\n5. Gather resources — cavalry gather is safe and profitable\n6. Participate in events — rewards scale with effort, not size\n7. Ask alliance for reinforcements when threatened\n\nEvery big player started small. Grow steadily and you\'ll be strong before you know it.'
+  }
+
+  // How to deal with being zeroed multiple times
+  if (msg.includes('zeroed again') || msg.includes('keep getting zeroed') || msg.includes('attacked again and again') || msg.includes('repeatedly attacked') || msg.includes('keep getting attacked') || msg.includes('attacked every day')) {
+    return 'Stop Getting Repeatedly Attacked:\n\n1. ALWAYS bubble when offline — non-negotiable\n2. Move to your alliance hive (cluster) — safety in numbers\n3. Don\'t hoard resources — keep them in Warehouse\n4. Don\'t provoke stronger players\n5. Ask alliance for permanent reinforcements\n6. If targeted by a specific player, talk to your alliance leader\n7. Use a Random Teleport to move far away\n8. Lay low during KvK if you\'re outmatched\n\nA well-bubbled city in an alliance hive is almost never attacked. Bubble up!'
+  }
+
+  // What is the best time to play
+  if (msg.includes('best time to play') || msg.includes('when should i play') || msg.includes('what time') && msg.includes('play')) {
+    return 'Best Times to Play:\n\n- Event hours: Check the Events page for scheduled events\n- KvK: Coordinate with alliance on Discord\n- Bear hunts: Check alliance schedule\n- Evenings (your timezone): More alliance members online\n- Weekends: Most events and rallies\n\nJoin Discord (https://discord.gg/rcxJCh97A) for real-time event notifications. Even 30 minutes daily is enough if you\'re consistent.'
+  }
+
+  // How long does it take to get strong
+  if (msg.includes('how long') && (msg.includes('strong') || msg.includes('powerful') || msg.includes('good'))) {
+    return 'Time to Get Strong:\n\n- 1 week: Reach Castle 10, basic troops, join alliance\n- 1 month: Castle 15, Tier 5 troops, participate in events\n- 3 months: Castle 20, Tier 7 troops, competitive in KvK\n- 6 months: Castle 25, max troops, end-game ready\n\nConsistency matters more than hours played. 30 minutes daily beats 5 hours once a week. Speedups and events accelerate growth.'
+  }
+
+  // Is there a wiki for the game
+  if (msg.includes('game wiki') || msg.includes('kingshot wiki') || msg.includes('where is the wiki') || msg.includes('game guide wiki')) {
+    return 'Kingshot Wiki:\n\n- Official Kingshot Wiki: https://www.kingshot.wiki\n- Contains: Hero guides, troop info, building details, event mechanics\n- Our Guides page auto-syncs from this wiki\n- Currently 49+ guides available on our website\n\nThe wiki is the best resource for detailed game mechanics and strategies.'
+  }
+
+  // What is the official game website
+  if (msg.includes('official website') || msg.includes('kingshot website') || msg.includes('game website') || msg.includes('official site')) {
+    return 'Kingshot Official:\n\n- Website: https://kingshot.net\n- Download: Available on iOS App Store, Google Play, and PC\n- Support: In-game Settings > Help & Support\n- Wiki: https://www.kingshot.wiki\n\nKingdom 846 is a player community — not the official game site. This website (kingdom846.com) is our community portal.'
+  }
+
+  // Can I change kingdoms
+  if (msg.includes('change kingdom') || msg.includes('switch kingdom') || msg.includes('move to different kingdom') || msg.includes('leave this kingdom')) {
+    return 'Changing Kingdoms:\n\n1. Use a Migration item (from events, KvK rewards, or shop)\n2. Select a new kingdom on the world map\n3. Confirm migration\n4. Cannot migrate during KvK\n5. You keep all progress, troops, and resources\n\nWarning: If you leave Kingdom 846, you\'ll need another Migration to return. We\'d hate to see you go — talk to your leader first!'
+  }
+
+  // What is a kvk match
+  if (msg.includes('kvk match') || msg.includes('kvk matchmaking') || msg.includes('how are kvk opponents') || msg.includes('who do we fight')) {
+    return 'KvK Matchmaking:\n\n- Kingdoms are matched based on overall power and dominance\n- The system tries to create fair matchups\n- Sometimes you face stronger or weaker kingdoms\n- Your kingdom\'s dominance score affects matchmaking\n- More active kingdoms get better matches\n\nKingdom 846\'s strong performance means we usually face competitive opponents. Prepare well!'
+  }
+
+  // What is a seed in KvK
+  if (msg.includes('kvk seed') || msg.includes('seed') && msg.includes('kvk')) {
+    return 'KvK Seed:\n\n- The seed determines which kingdoms are placed in your KvK bracket\n- Seeds are assigned based on kingdom power and dominance\n- Your seed determines your opponents\n- Higher seeds = tougher opponents but better rewards\n\nKingdom 846 aims for high seeds through strong performance and dominance.'
+  }
+
+  // What is a temple
+  if (msg.includes('temple') || msg.includes('shrine') || msg.includes('sacred')) {
+    return 'Temples & Shrines:\n\n- Special structures on the world map\n- Provide buffs to the alliance that controls them\n- Must be captured and held\n- Strategic value during KvK\n- Different temples give different buffs\n\nCoordinate with your alliance to capture and defend temples during events.'
+  }
+
+  // What is a banner / flag
+  if (msg.includes('banner') && !msg.includes('alliance banner')) {
+    return 'Banners & Flags:\n\n- Alliance banners mark territory on the world map\n- Planted by alliance leaders\n- Expand alliance territory\n- Territory provides buffs to members within it\n- More territory = more resource tiles and strategic positions\n\nStay within your alliance\'s banner territory for defense buffs.'
+  }
+
+  // What is the shop refresh
+  if (msg.includes('shop refresh') || msg.includes('when does shop') || msg.includes('shop reset') || msg.includes('shop update')) {
+    return 'Shop Refresh:\n\n- Daily Shop: Refreshes every 24 hours\n- Always check the free daily items\n- Some items have purchase limits\n- Special event shops appear during events\n- Season shop available during each season\n\nCheck the shop daily — free items are always worth claiming.'
+  }
+
+  // What is the mail system
+  if (msg.includes('mail system') || msg.includes('in-game mail') || msg.includes('game mail') || msg.includes('battle report')) {
+    return 'The In-Game Mail System:\n\nTypes of Mail:\n- Battle Reports: Attack and defense results\n- System Messages: Events, rewards, announcements\n- Alliance Mail: Messages from leadership\n- Player Messages: Direct messages from other players\n\nCheck mail daily — unclaimed rewards expire. Battle reports show troop losses, kills, and resources gained/lost.'
+  }
+
+  // What is a battle report
+  if (msg.includes('battle report') || msg.includes('attack report') || msg.includes('combat report') || msg.includes('war report')) {
+    return 'Battle Reports:\n\n- Sent to your mail after every battle (attack or defense)\n- Shows: troops killed, troops lost, resources gained/lost\n- Includes: hero performance, troop type effectiveness\n- Use to analyze and improve your strategies\n- Check if you won or lost and why\n\nAlways read battle reports — they\'re your best learning tool. Adjust formations based on results.'
+  }
+
+  // How to read a battle report
+  if (msg.includes('read battle report') || msg.includes('understand battle') || msg.includes('how to read report')) {
+    return 'Reading Battle Reports:\n\n1. Check win/loss at the top\n2. Review troop kills vs losses — positive ratio = good\n3. See which troop type performed best/worst\n4. Check enemy formation — learn their strategy\n5. Note hero performance — which skills triggered\n6. Review resources gained or lost\n7. Adjust your formation based on results\n\nBattle reports are free intelligence. Learn from every battle.'
+  }
+
+  // What is the garrison
+  if (msg.includes('garrison') || msg.includes('stationed') || msg.includes('defending troops')) {
+    return 'Garrison Troops:\n\n- Troops stationed in your city for defense\n- Garrison troops defend when your city is attacked\n- Keep your strongest troops garrisoned when online\n- Reinforcements from allies also garrison your city\n- Higher level walls = stronger garrison defense\n\nNever send all your troops out — always keep a garrison for defense.'
+  }
+
+  // What is a siege
+  if (msg.includes('siege') || msg.includes('siege weapon') || msg.includes('siege engine') || msg.includes('battering ram')) {
+    return 'Siege Warfare:\n\n- Sieges are prolonged attacks on fortified cities\n- Siege weapons (catapults, rams) break through walls\n- Require large troop commitments\n- Best done with alliance rallies\n- Scout first to check garrison strength\n- Higher tier troops siege more effectively\n\nSieges are end-game content. Coordinate with your alliance for successful sieges.'
+  }
+
+  // What is a flank
+  if (msg.includes('flank') || msg.includes('flanking') || msg.includes('side attack')) {
+    return 'Flanking:\n\n- Attacking the enemy from the side\n- Cavalry is best for flanking (fast and mobile)\n- Flanking can break enemy formations\n- Heroes with flanking skills deal bonus damage\n- Works best when enemy is focused on your front line\n\nUse cavalry-heavy formations to exploit flanking opportunities during PvP.'
+  }
+
+  // What is a front line
+  if (msg.includes('front line') || msg.includes('frontline') || msg.includes('vanguard')) {
+    return 'Front Line / Vanguard:\n\n- The first row of troops in battle\n- Usually Infantry (tanks) — they absorb damage\n- Protect archers and ranged units behind them\n- Strong front line = longer battle survival\n- Heroes with defense skills belong on the front line\n\nA strong front line is the foundation of any winning formation. Never skimp on infantry.'
+  }
+
+  // What is the back line
+  if (msg.includes('back line') || msg.includes('backline') || msg.includes('rear guard')) {
+    return 'Back Line / Rear Guard:\n\n- The last row of troops in battle\n- Usually Archers (ranged DPS) — they deal damage from safety\n- Protected by the front line (infantry)\n- If the front line breaks, back line is vulnerable\n- Heroes with damage skills belong on the back line\n\nProtect your back line — if archers fall, your damage output crumbles.'
+  }
+
+  // What is a rally capacity
+  if (msg.includes('rally capacity') || msg.includes('rally size') || msg.includes('how many in rally') || msg.includes('rally limit')) {
+    return 'Rally Capacity:\n\n- Total troops a rally can hold\n- Determined by the rally initiator\'s War Room level\n- Higher War Room = larger rally capacity\n- All participants\' troops count toward the cap\n- Upgrade War Room to increase rally size\n\nLarge rallies are essential for high-level bears and KvK. Always have your War Room upgraded.'
+  }
+
+  // What is the alliance tech
+  if (msg.includes('alliance tech') || msg.includes('alliance research') || msg.includes('alliance technology')) {
+    return 'Alliance Tech:\n\n- Shared research that benefits all alliance members\n- Donated to by members using resources\n- Provides buffs: attack, defense, gathering, speed\n- Higher levels = stronger buffs\n- Everyone contributes and everyone benefits\n\nAlways donate to alliance tech — it\'s the best investment for the whole alliance. Every contribution helps.'
+  }
+
+  // What is the alliance warehouse
+  if (msg.includes('alliance warehouse') || msg.includes('alliance storage') || msg.includes('shared storage')) {
+    return 'Alliance Warehouse:\n\n- Shared storage for alliance resources\n- Members can deposit and withdraw resources\n- Used to help members who need resources\n- Managed by alliance leadership\n- Useful during KvK for resource distribution\n\nIf you need resources, ask your alliance leader about the alliance warehouse.'
+  }
+
+  // What is the alliance gift
+  if (msg.includes('alliance gift') || msg.includes('alliance present') || msg.includes('gift for alliance')) {
+    return 'Alliance Gifts:\n\n- When any alliance member purchases a pack, all members get a gift\n- Gifts include resources, speedups, and items\n- Higher level purchases = better gifts\n- No cost to receiving members\n- Check your mail for unclaimed alliance gifts\n\nEven F2P players benefit when whales in the alliance make purchases. Always claim your gifts!'
+  }
+
+  // What is the daily check-in
+  if (msg.includes('check in') || msg.includes('check-in') || msg.includes('daily check') || msg.includes('login bonus') || msg.includes('check-in reward')) {
+    return 'Daily Check-In:\n\n- Log in every day to claim free rewards\n- Rewards increase with consecutive login days\n- 7-day streak gives premium rewards\n- 30-day streak gives rare items\n- Missing a day resets the streak\n\nLog in daily even if you only have 2 minutes. The rewards are worth it.'
+  }
+
+  // What is the lucky draw / wheel
+  if (msg.includes('lucky draw') || msg.includes('lucky wheel') || msg.includes('spin the wheel') || msg.includes('roulette') || msg.includes('lottery')) {
+    return 'Lucky Draw / Wheel:\n\n- A gacha-style feature in the shop\n- Spin for random rewards (resources, speedups, gems, hero shards)\n- Free spins available daily\n- Premium spins cost gems\n- Rare rewards have low probability\n\nUse free spins daily. Save gems for guaranteed rewards rather than gambling on spins.'
+  }
+
+  // What is the exchange / trade
+  if (msg.includes('exchange') && !msg.includes('trade post')) {
+    return 'Resource Exchange:\n\n- Some versions of Kingshot have a resource exchange\n- Convert one resource type to another\n- Usually at a unfavorable rate\n- Useful when you have excess of one resource\n- Check in-game for availability\n\nOnly exchange when necessary — the conversion rate is always unfavorable.'
+  }
+
+  // What is the VIP shop
+  if (msg.includes('vip shop') || msg.includes('vip store') || msg.includes('vip item')) {
+    return 'VIP Shop:\n\n- Special shop available to VIP players\n- Offers exclusive items and discounts\n- Higher VIP levels = better items\n- Includes rare gear materials and hero shards\n- Some items are VIP-exclusive\n\nEarn VIP time through events or use VIP activation items during big events.'
+  }
+
+  // What is the event shop
+  if (msg.includes('event shop') || msg.includes('event store') || msg.includes('event exchange')) {
+    return 'Event Shops:\n\n- Temporary shops that appear during special events\n- Use event-specific currency (not gems)\n- Offer exclusive, time-limited items\n- Disappear when the event ends\n- Always spend all event currency before the shop closes\n\nDon\'t let event currency go to waste — check shops before events end!'
+  }
+
+  // What is the bulletin / announcement
+  if (msg.includes('bulletin') || msg.includes('announcement') || msg.includes('official notice') || msg.includes('game notice')) {
+    return 'Announcements & Bulletins:\n\n- In-game: Check mail for system announcements\n- Website: Visit the News page for auto-synced updates\n- Discord: https://discord.gg/rcxJCh97A for real-time announcements\n- Events page: For event schedules\n\nStay informed through Discord — it\'s the fastest channel for Kingdom 846 announcements.'
+  }
+
+  // What is the kingdom ranking
+  if (msg.includes('kingdom ranking') || msg.includes('kingdom rank') || msg.includes('how does our kingdom rank')) {
+    return 'Kingdom Rankings:\n\n- Kingdoms are ranked by overall power and dominance\n- Affected by KvK performance\n- Higher ranking = better KvK matchmaking\n- Kingdom 846 has a strong ranking with 7 dominations\n- Visit the About page for kingdom achievements\n\nOur strong war record keeps Kingdom 846 highly ranked.'
+  }
+
+  // What is the alliance ranking
+  if (msg.includes('alliance ranking') || msg.includes('alliance rank') || msg.includes('how does our alliance rank')) {
+    return 'Alliance Rankings:\n\n- Alliances are ranked by total power and contribution\n- Rankings visible on the Alliances page\n- Each alliance\'s strength is different (strategy, PvP, balance, precision)\n- In Kingdom 846, all four alliances are competitive\n- No official "best" — each excels differently\n\nVisit the Alliances page for details on each alliance.'
+  }
+
+  // What is the personal ranking
+  if (msg.includes('personal ranking') || msg.includes('individual ranking') || msg.includes('my ranking') || msg.includes('player rank')) {
+    return 'Personal Rankings:\n\n- Your individual ranking among Kingdom 846 players\n- Visible on the Rankings page\n- Based on various metrics (kills, power, contribution)\n- Note: Power scores are not publicly displayed\n- Avatars shown next to player names\n\nClimb the rankings by being active in events, PvP, and KvK!'
+  }
+
+  // What is the kill ranking
+  if (msg.includes('kill ranking') || msg.includes('kill leaderboard') || msg.includes('most kills') || msg.includes('top killer')) {
+    return 'Kill Rankings:\n\n- Tracks total enemy troops killed\n- Updated during KvK and PvP events\n- Top killers get special rewards\n- Climb by joining rallies, PvP combat, and defending\n- Visit the Rankings page to see top players\n\nEvery kill counts — join rallies and participate in KvK for maximum kills.'
+  }
+
+  // What is the power ranking
+  if (msg.includes('power ranking') || msg.includes('power leaderboard') || msg.includes('strongest player') || msg.includes('most powerful')) {
+    return 'Power Rankings:\n\n- Tracks total player power (buildings, troops, heroes, tech)\n- On this website, power scores are NOT displayed publicly\n- This is intentional — strategic privacy\n- Visit the Rankings page to see player names and alliance tags\n\nIn Kingdom 846, we don\'t show off power — we show off results.'
+  }
+
+  // What is a smurf account
+  if (msg.includes('smurf') || msg.includes('smurfing') || msg.includes('smurf account')) {
+    return 'A Smurf Account:\n\n- A secondary account kept at a low level intentionally\n- Used to attack weaker players without consequences\n- Considered unsportsmanlike\n- Against the spirit of fair play\n\nKingdom 846 does not encourage smurfing. Play with your main account and fight players at your level.'
+  }
+
+  // What is the purpose of infantry
+  if (msg.includes('purpose of infantry') || msg.includes('why infantry') || msg.includes('what do infantry do') || msg.includes('infantry role')) {
+    return 'Infantry Role:\n\n- Front line defenders and attackers\n- Highest defense and HP\n- Absorb damage for ranged units\n- Beat Cavalry (spears stop charges)\n- Weak against Archers (ranged kills them before they reach)\n- Best for: sieges, defense, front line\n\nAlways have a strong infantry front line. Without it, your formation crumbles.'
+  }
+
+  // What is the purpose of cavalry
+  if (msg.includes('purpose of cavalry') || msg.includes('why cavalry') || msg.includes('what do cavalry do') || msg.includes('cavalry role')) {
+    return 'Cavalry Role:\n\n- Fast, mobile, hard-hitting\n- Best for flanking and quick raids\n- Beat Archers (fast charge closes distance)\n- Weak against Infantry (spears stop charges)\n- Best for: raiding, flanking, gathering, chasing\n\nUse cavalry for quick PvP raids on gatherers and flanking during battles.'
+  }
+
+  // What is the purpose of archers
+  if (msg.includes('purpose of archer') || msg.includes('why archer') || msg.includes('what do archers do') || msg.includes('archer role')) {
+    return 'Archer Role:\n\n- Ranged damage dealers\n- Highest attack but lowest defense\n- Beat Infantry (ranged kills them before they reach)\n- Weak against Cavalry (fast charge closes distance)\n- Best for: back line DPS, supporting front line\n\nKeep archers protected behind infantry. If exposed, they die fast. But if protected, they deal massive damage.'
+  }
+
   // Default — suggest topics
-  return 'I am not sure about that, but I can help you with:\n\n- Alliances and their leaders\n- The current King or Queen\n- Event schedules\n- How to transfer or apply\n- Strategy guides and tips\n- Latest news and updates\n- Kingdom history and doctrine\n- Troops, heroes, and formations\n- KvK, bear hunts, and events\n- Defense and attack strategies\n- Castle, barracks, and buildings\n- Gathering, resources, and trading\n- Discord and community\n- Crest meaning and kingdom lore\n- Beginner guides and F2P tips\n- Troop tiers and counters\n- World map and structures\n- Account binding and recovery\n- VIP, season pass, and shop\n- Scam prevention and account safety\n- Hero types, skills, and rarity\n- Formations for attack, defense, gathering\n- KvK preparation and strategy\n- Website features and navigation\n\nTry asking about one of these topics.'
+  return 'I am not sure about that, but I can help you with:\n\n- Alliances and their leaders\n- The current King or Queen\n- Event schedules and types\n- How to transfer or apply\n- Strategy guides and tips\n- Latest news and updates\n- Kingdom history and doctrine\n- Troops, heroes, and formations\n- KvK, bear hunts, and events\n- Defense and attack strategies\n- Castle, barracks, and buildings\n- Gathering, resources, and trading\n- Discord and community\n- Crest meaning and kingdom lore\n- Beginner guides and F2P tips\n- Troop tiers, types, and counters\n- World map and structures\n- Account binding and recovery\n- VIP, season pass, and shop\n- Scam prevention and account safety\n- Hero types, skills, rarity, and gear\n- Formations for attack, defense, gathering\n- KvK preparation, strategy, and matchmaking\n- Website features, navigation, and tech\n- Event types: kill, gather, power, training, research, building\n- Battle reports, sieges, flanking, garrisons\n- Alliance tech, warehouse, gifts, and ranks\n\nTry asking about one of these topics.'
 }
 
 // Chat endpoint — pure database-powered, never crashes

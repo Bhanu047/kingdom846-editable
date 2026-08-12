@@ -878,6 +878,65 @@ function getKingdomAnswer(message) {
     return 'I am the Royal Advisor of Kingdom 846, the official community portal for the strategy game Kingshot.\n\nI can answer questions about:\n- The four alliances and their leaders\n- The current King or Queen\n- Event schedules and timings\n- How to transfer or apply to join\n- Strategy guides and playbooks\n- Kingdom history and doctrine\n\nWhat would you like to know?'
   }
 
+  // Alliance-specific event timing (bear, KvK, clash, etc.)
+  if (msg.includes('timing') || msg.includes('schedule') || msg.includes('when') || (msg.includes('bear') && (msg.includes('time') || msg.includes('when'))) || (msg.includes('event') && (msg.includes('time') || msg.includes('when')))) {
+    // Check if asking about a specific alliance's schedule
+    const allianceSlugs = { ryo: 'ryo', kzk: 'kzk', sas: 'sas', ice: 'ice', spider: 'ryo', spiders: 'ryo', kamil: 'kzk', kamikaze: 'kzk', karnival: 'kzk', saint: 'sas', sinner: 'sas', icchunter: 'ice', hunter: 'ice' }
+    let askedAlliance = null
+    for (const [key, slug] of Object.entries(allianceSlugs)) {
+      if (msg.includes(key)) { askedAlliance = slug; break }
+    }
+    if (askedAlliance) {
+      const allianceSchedules = db.prepare('SELECT event_name, event_time, updated_at FROM alliance_schedules WHERE alliance_slug = ?').all(askedAlliance)
+      const allianceInfo = alliances.find(a => a.slug === askedAlliance)
+      const aName = allianceInfo ? `${allianceInfo.name} [${askedAlliance.toUpperCase()}]` : `[${askedAlliance.toUpperCase()}]`
+      if (allianceSchedules.length > 0) {
+        // Check if asking about a specific event type
+        const askingBear = msg.includes('bear')
+        const askingKvk = msg.includes('kvk') || msg.includes('kingdom vs')
+        const askingClash = msg.includes('clash') || msg.includes('tri-alliance')
+        const askingViking = msg.includes('viking')
+        const askingSwordland = msg.includes('swordland') || msg.includes('showdown')
+        
+        if (askingBear) {
+          const bear = allianceSchedules.find(s => s.event_name.toLowerCase().includes('bear'))
+          if (bear) {
+            return `${aName} — Bear Hunt Timing:\n\n${bear.event_name}: ${bear.event_time} UTC\n\nLast updated: ${bear.updated_at}\n\nVisit the Events page for the full schedule.`
+          }
+          return `${aName} — No bear hunt timing has been set yet.\n\nThe alliance leader can update event times through the Leader Portal. Check the Events page or Discord (https://discord.gg/rcxJCh97A) for the latest schedule.`
+        }
+        if (askingKvk) {
+          const kvk = allianceSchedules.find(s => s.event_name.toLowerCase().includes('kvk') || s.event_name.toLowerCase().includes('kingdom'))
+          if (kvk) {
+            return `${aName} — KvK Timing:\n\n${kvk.event_name}: ${kvk.event_time} UTC\n\nLast updated: ${kvk.updated_at}`
+          }
+        }
+        if (askingClash) {
+          const clash = allianceSchedules.find(s => s.event_name.toLowerCase().includes('clash'))
+          if (clash) {
+            return `${aName} — Clash Timing:\n\n${clash.event_name}: ${clash.event_time} UTC\n\nLast updated: ${clash.updated_at}`
+          }
+        }
+        if (askingViking) {
+          const viking = allianceSchedules.find(s => s.event_name.toLowerCase().includes('viking'))
+          if (viking) {
+            return `${aName} — Viking Vengeance Timing:\n\n${viking.event_name}: ${viking.event_time} UTC\n\nLast updated: ${viking.updated_at}`
+          }
+        }
+        if (askingSwordland) {
+          const sword = allianceSchedules.find(s => s.event_name.toLowerCase().includes('sword') || s.event_name.toLowerCase().includes('showdown'))
+          if (sword) {
+            return `${aName} — Swordland Showdown Timing:\n\n${sword.event_name}: ${sword.event_time} UTC\n\nLast updated: ${sword.updated_at}`
+          }
+        }
+        // Return all schedules for this alliance
+        const list = allianceSchedules.map(s => `${s.event_name}: ${s.event_time} UTC`).join('\n')
+        return `${aName} — Event Schedule (UTC):\n\n${list}\n\nLast updated: ${allianceSchedules[0].updated_at}\n\nVisit the Events page for the full visual schedule.`
+      }
+      return `${aName} — No event timings have been set yet.\n\nThe alliance leader can update event times through the Leader Portal. Check the Events page or join Discord (https://discord.gg/rcxJCh97A) for the latest schedule.`
+    }
+  }
+
   // Alliances — detailed info
   if (msg.includes('alliance') || msg.includes('guild') || (msg.includes('spider') || msg.includes('kzk') || msg.includes('karnival') || msg.includes('saint') || msg.includes('sinner') || msg.includes('ice') || msg.includes('hunter'))) {
     // Check if asking about a specific alliance

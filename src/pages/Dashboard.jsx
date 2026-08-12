@@ -62,6 +62,9 @@ export default function Dashboard({ onNavigate }) {
   const NEXT_KING_CHANGE = '2026-08-15'
   const kc = countdownTo(NEXT_KING_CHANGE)
 
+  // Easter egg: click Kingdom Status panel 3x
+  const statusEgg = useEgg({ clicks: 3, message: 'The kingdom is strong, but the throne is always watchful. — Kingdom 846' })
+
   return (
     <div className="space-y-6">
       {/* AI insights banner (if available) */}
@@ -189,7 +192,7 @@ export default function Dashboard({ onNavigate }) {
             <div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/50 to-transparent" />
             <div className="absolute inset-0 ring-1 ring-inset ring-gold/15" />
           </div>
-          <div className="relative z-10 flex h-full min-h-[460px] flex-col p-5">
+          <div className="relative z-10 flex h-full min-h-[460px] flex-col p-5" onClick={statusEgg.onClick} style={{ cursor: 'pointer' }}>
             <SectionTitle eyebrow="Realm" title="Kingdom Status" action={isAdmin ? <button onClick={() => onNavigate('console')} className="text-xs text-gold hover:underline" data-testid="button-edit-king-status" style={{ textShadow: '0 1px 6px rgba(0,0,0,1)' }}>Edit →</button> : undefined} />
             <div className="flex flex-1 flex-col justify-center gap-!3 py-4">
               <div className="inline-flex items-center gap-2 rounded-full border border-gold/40 bg-ink/70 px-3 py-1 ">

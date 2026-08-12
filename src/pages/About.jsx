@@ -31,6 +31,11 @@ function fmtDate(iso) {
 
 export default function About() {
   const domPct = Math.round((kvkStats.dominations / kvkStats.total) * 100)
+
+  // Easter eggs
+  const titleEgg = useEgg({ clicks: 3, message: 'The crown remembers every battle. 8 fought, 8 won. The identity of 846 is eternal.' })
+  const crownEgg = useEgg({ clicks: 3, message: 'Heavy is the head that wears the crown. But the worthy bear it without flinching.' })
+
   return (
     <div className="space-y-6 overflow-x-hidden">
       {/* Hero */}
@@ -45,7 +50,7 @@ export default function About() {
               <Pill tone="blue">Global Rank #{kingdom.kvkCurrentRank}</Pill>
               <Pill tone="muted">{kingdom.atlasPercentile}</Pill>
             </div>
-            <h1 className="mt-3 font-display text-4xl font-bold gradient-gold glow-pulse">Kingdom 846</h1>
+            <h1 className="mt-3 font-display text-4xl font-bold gradient-gold glow-pulse" onClick={titleEgg.onClick} style={{ cursor: 'pointer' }}>Kingdom 846</h1>
             <p className="mt-1 text-sm text-gold-bright/80">"{kingdom.motto}"</p>
             <p className="mt-3 text-sm leading-relaxed text-parchment/70">
               Kingdom 846 is an <span className="text-gold-bright">S-Tier</span> realm — a battle-hardened
@@ -60,7 +65,7 @@ export default function About() {
               <a href={kingdom.kvkSource} target="_blank" rel="noreferrer" className="btn-secondary">
                 <Icon name="swords" size={14} /> KvK Rankings
               </a>
-              <span className="btn-ghost"><Icon name="crown" size={14} /> S-Tier Kingdom</span>
+              <span className="btn-ghost" onClick={crownEgg.onClick} style={{ cursor: 'pointer' }}><Icon name="crown" size={14} /> S-Tier Kingdom</span>
             </div>
           </div>
         </div>

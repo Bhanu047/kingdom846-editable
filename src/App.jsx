@@ -280,7 +280,7 @@ function Shell() {
       )}
 
       {loginOpen && Login && <Login onClose={() => setLoginOpen(false)} onSuccess={() => { if (loginMode === 'leader') navigate('leader-portal'); else navigate('console') }} mode={loginMode} />}
-      <EggToast message={clockEgg.eggMsg} />
+      <EggToast message={clockEgg.eggMsg || footerEgg.eggMsg} />
       </div>
     </>
   )

@@ -24,33 +24,6 @@ const SECRETS = [
     icon: '◆',
   },
   {
-    id: 'crown',
-    trigger: 'type',
-    word: 'crown',
-    title: 'Long Live the King',
-    message: 'The crown is heavy, but the worthy bear it. You seek what others fear.',
-    effect: 'glow-pulse',
-    icon: '♛',
-  },
-  {
-    id: 'glory',
-    trigger: 'type',
-    word: 'glory',
-    title: 'Glory is Taken',
-    message: 'We don\'t wait for glory. We take it. — Kingdom 846',
-    effect: 'firework',
-    icon: '✧',
-  },
-  {
-    id: 'sparta',
-    trigger: 'type',
-    word: 'sparta',
-    title: 'The Spartan Never Retreats',
-    message: 'Forged in discipline, crowned in victory. Sparta leads the realm.',
-    effect: 'gold-flash',
-    icon: '⚔',
-  },
-  {
     id: 'crest5',
     trigger: 'click',
     selector: 'header img[src*="crest"]',
@@ -137,30 +110,13 @@ export default function EasterEggs() {
       const tag = e.target.tagName
       if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return
 
-      // Konami code
+      // Konami code only
       konamiRef.current.push(e.key)
       if (konamiRef.current.length > konami.length) konamiRef.current.shift()
       if (konamiRef.current.join(',').toLowerCase() === konami.join(',').toLowerCase()) {
         const s = SECRETS.find(s => s.id === 'konami')
         if (s) trigger(s)
         konamiRef.current = []
-        typeBufferRef.current = ''
-        return
-      }
-
-      // Word typing
-      const key = e.key.toLowerCase()
-      if (key.length === 1) {
-        typeBufferRef.current += key
-        if (typeBufferRef.current.length > 8) typeBufferRef.current = typeBufferRef.current.slice(-8)
-        
-        for (const secret of SECRETS) {
-          if (secret.trigger === 'type' && typeBufferRef.current.endsWith(secret.word)) {
-            trigger(secret)
-            typeBufferRef.current = ''
-            break
-          }
-        }
       }
     }
 

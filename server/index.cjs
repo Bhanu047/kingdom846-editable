@@ -853,7 +853,10 @@ async function executeTool(toolName, args) {
 // ===== Kingdom Advisor — reliable database-powered chatbot =====
 // No external API calls, never crashes, always responds
 
-function getKingdomAnswer(message) {
+// Track which jokes have been told per IP (no repeats until all told)
+const jokeTracker = {}
+
+function getKingdomAnswer(message, reqIp) {
   const msg = message.toLowerCase().trim()
   const alliances = db.prepare('SELECT slug, name, leader, tagline FROM alliances').all()
   const king = db.prepare('SELECT * FROM king_status WHERE id = 1').get()
@@ -1238,8 +1241,50 @@ function getKingdomAnswer(message) {
   }
 
   // Funny / easter egg
-  if (msg.includes('joke') || msg.includes('funny') || msg.includes('make me laugh') || msg.includes('bored')) {
-    return 'Why did the infantry cross the battlefield?\n\nBecause the cavalry was too fast and the archers were afraid of getting hit.\n\nNow get back to your rallies — the bears are not going to hunt themselves.'
+  if (msg.includes('joke') || msg.includes('funny') || msg.includes('make me laugh') || msg.includes('bored') || msg.includes('make me smile') || msg.includes('cheer me up') || msg.includes('something funny')) {
+    // Joke rotation — tracks per-IP which jokes have been told, no repeats until all told
+    const jokes = [
+      'Why did the infantry cross the battlefield?\n\nBecause the cavalry was too fast and the archers were afraid of getting hit.\n\nNow get back to your rallies — the bears are not going to hunt themselves.',
+      'A cavalry commander, an infantry sergeant, and an archer walk into a tavern.\n\nThe infantry sergeant orders a drink. The cavalry commander orders two. The archer shoots the bartender and yells "NOBODY EXPECTS THE ARCHER!"',
+      'Why dont archers ever get invited to parties?\n\nBecause they always shoot their mouths off and nobody can reach them to argue.',
+      'How many infantry does it take to change a torch?\n\nNone. They just stand there and tank the darkness.',
+      'A king asks his advisor: "How many troops do we have?"\n\nThe advisor says: "50,000 my lord."\n\nThe king says: "And how many does the enemy have?"\n\nThe advisor says: "Enough to make that number irrelevant."',
+      'Why did the bear hunt fail?\n\nBecause someone sent cavalry to hunt a bear. The bear is still laughing. The cavalry is still running.',
+      'What is the difference between a spy and an alt account?\n\nOne is against the rules. The other is also against the rules, but you have not been caught yet.',
+      'Why did the Spartan cross the battlefield?\n\nHe did not. The battlefield crossed him.',
+      'A new player asks: "How do I become king?"\n\nThe advisor replies: "First, you need an army. Then you need a bigger army. Then you need a bigger army than that. Then you need friends with even bigger armies."',
+      'Why was the peace shield always calm?\n\nBecause nothing could get to it.',
+      'What do you call a cavalry unit that charges into infantry?\n\nFormer cavalry.',
+      'Why do alliances have NAPs?\n\nBecause without them, everyone would be in therapy.',
+      'A player gets zeroed and messages his leader: "I lost everything!"\n\nThe leader replies: "Did you bubble?"\n\nThe player says: "No."\n\nThe leader says: "Then you did not lose everything. You still have your lessons."',
+      'Why did the archer bring a ladder to the siege?\n\nBecause he heard he needed to "reach new heights" in PvP.',
+      'How many KvK commanders does it take to win a war?\n\nOne to plan, one to lead, one to rally, and forty to argue in Discord about whose fault it was when it goes wrong.',
+      'What did the infantry say to the cavalry?\n\n"Nice charge. Too bad you forgot about the spears."',
+      'Why did the dragon refuse to fight Kingdom 846?\n\nIt saw the crest, counted four alliances, and decided retirement was a better option.',
+      'A visitor asks the Royal Advisor: "Are you a real person?"\n\nThe Advisor replies: "I am as real as your peace shield at 3 AM. Technically there, but you should not rely on it."',
+      'Why did the builder quit?\n\nBecause every time he finished a wall, someone sent a rally at it. He said "I am not a Fortnite player, I do not build for fun."',
+      'What is the kingdom motto after a bad KvK?\n\n"One Crown. Four Alliances. Endless Excuses."',
+      'Why do bears hate Kingdom 846?\n\nBecause every time they spawn, 200 players show up with cavalry and bad intentions. It is not a hunt — it is a surprise party they did not ask for.',
+      'A player asks: "What is the best formation?"\n\nThe Advisor says: "The one where your troops are still alive at the end."',
+      'Why did the spy get caught?\n\nHe asked the Royal Advisor "How do I spy on this kingdom?" The Advisor told everyone.',
+      'What is the difference between a whale and a F2P player?\n\nThe whale paid to lose. The F2P player lost for free. Both are in the same hospital.',
+      'Why did the gathering hero get fired?\n\nBecause he was caught gathering during KvK. His defense? "I was contributing resources!" His leader\'s response? "You were contributing to the enemy\'s kill count."',
+      'A leader says: "Everyone bubble up tonight!"\n\nNext morning, three players are zeroed.\n\nThe leader asks: "Did you not bubble?"\n\nThey say: "We thought you were joking."\n\nThe leader: "I am the Royal Advisor. I tell the jokes around here."',
+      'Why did the catapult break up with the wall?\n\nIt said: "It is not you, it is me. I just need space." Then it destroyed the space.',
+      'What do you call a player who never bubbles, never gathers, and never joins rallies?\n\nAn NPC.',
+      'Why did the scout report say "Enemy has 0 troops"?\n\nBecause the scout was looking at his own city. He had been zeroed and did not notice.',
+      'How does the Royal Advisor stay so wise?\n\nBy answering 338 questions a day and pretending to know the answer to all of them.',
+    ]
+    // Track jokes per IP to avoid repeats
+    const ip = reqIp || 'unknown'
+    if (!jokeTracker[ip]) jokeTracker[ip] = { told: [], index: 0 }
+    const tracker = jokeTracker[ip]
+    // Pick a joke index not yet told (or reset if all told)
+    if (tracker.told.length >= jokes.length) tracker.told = []
+    let idx
+    do { idx = Math.floor(Math.random() * jokes.length) } while (tracker.told.includes(idx))
+    tracker.told.push(idx)
+    return jokes[idx] + '\n\n(Joke ' + tracker.told.length + ' of ' + jokes.length + ' — ask again for another!)'
   }
 
   // Secret / sparta easter egg
@@ -2701,7 +2746,7 @@ app.post('/api/ai/chat', (req, res) => {
   times.push(now)
   aiRateLimit.set(ip, times)
 
-  const reply = getKingdomAnswer(message)
+  const reply = getKingdomAnswer(message, req.ip)
   res.json({ reply })
 })
 
@@ -2711,7 +2756,7 @@ const aiRateLimit = new Map()
 app.post('/api/ai/admin', auth, adminOnly, (req, res) => {
   const { message } = req.body
   if (!message) return res.json({ reply: 'Please enter a message.' })
-  const reply = getKingdomAnswer(message)
+  const reply = getKingdomAnswer(message, req.ip)
   res.json({ reply })
 })
 

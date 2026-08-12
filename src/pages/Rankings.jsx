@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { Panel } from '../components/ui'
 import Icon from '../components/Icon'
 import { apiJson } from '../lib/api'
 import { useSiteData } from '../context/SiteDataContext'
 import { BANNERS } from '../data/kingdom'
+import { EggToast } from '../lib/useEgg'
 
 // Top-3 special styling (gold / silver / bronze)
 const PODIUM = {
@@ -35,6 +36,19 @@ export default function Rankings() {
   const alliances = data.alliances
   const [list, setList] = useState(data.players)
   const [source, setSource] = useState('curated')
+
+  // Easter egg: click #1 ranked player 3x
+  const [eggMsg, setEggMsg] = useState(null)
+  const rank1ClicksRef = useRef(0)
+  const onRank1Click = useCallback(() => {
+    rank1ClicksRef.current++
+    if (rank1ClicksRef.current >= 3) {
+      rank1ClicksRef.current = 0
+      setEggMsg('To be first is to be a target. Stay sharp, champion. The realm watches.')
+      setTimeout(() => setEggMsg(null), 6000)
+    }
+    setTimeout(() => { if (rank1ClicksRef.current > 0) rank1ClicksRef.current = 0 }, 3000)
+  }, [])
 
   // Keep in sync with admin edits (Website Editor → Players)
   useEffect(() => { setList(data.players) }, [data.players])
@@ -108,6 +122,8 @@ export default function Rankings() {
                 <div
                   key={`${p.slug}-${p.rank}`}
                   data-testid={`rank-row-${p.rank}`}
+                  onClick={p.rank === 1 ? onRank1Click : undefined}
+                  style={p.rank === 1 ? { cursor: 'pointer' } : undefined}
                   className={`lift relative overflow-hidden rounded-xl ring-1 ${isTop3 ? s.ring + ' ' + s.grad : 'ring-gold/15'} bg-gradient-to-r p-3 transition hover:ring-gold/40`}
                 >
                   {/* Alliance banner background */}
@@ -143,6 +159,7 @@ export default function Rankings() {
           </div>
         )}
       </Panel>
+      <EggToast message={eggMsg} />
     </div>
   )
 }

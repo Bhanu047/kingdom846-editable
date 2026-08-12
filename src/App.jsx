@@ -6,6 +6,7 @@ import { ToastProvider } from './components/Toast'
 import { PageSkeleton } from './components/Skeleton'
 import SplashScreen from './components/SplashScreen'
 import EasterEggs from './components/EasterEggs'
+import { useEgg, EggToast } from './lib/useEgg'
 import ParticleField from './components/ParticleField'
 import ScrollProgress from './components/ScrollProgress'
 import ChatAssistant from './components/ChatAssistant'
@@ -89,6 +90,11 @@ function Shell() {
   const [search, setSearch] = useState('')
   const [searchOpen, setSearchOpen] = useState(false)
 
+  // Easter egg: click UTC clock 3x
+  const clockEgg = useEgg({ clicks: 3, message: 'Time is the only thing kings can\'t conquer. But you can try. — Kingdom 846' })
+  // Easter egg: click Spartan name 3x
+  const footerEgg = useEgg({ clicks: 3, message: 'The Spartan never retreats, never surrenders. Forged in discipline, crowned in victory.' })
+
   // Sync state with hash changes (browser back/forward)
   useEffect(() => {
     const onHashChange = () => setPage(getPageFromHash())
@@ -114,6 +120,10 @@ function Shell() {
   const results = useMemo(() => {
     const q = search.trim().toLowerCase()
     if (!q) return index.slice(0, 6)
+    // Easter egg search queries
+    if (q === 'treasure' || q === 'gold') return [{ type: 'Secret', label: 'You seek treasure? The real treasure is the allies you made along the way.', page: 'dashboard', icon: 'crown' }]
+    if (q === 'secret' || q === 'hidden') return [{ type: 'Secret', label: 'A wise seeker. But some secrets are earned, not found.', page: 'dashboard', icon: 'sparkles' }]
+    if (q === 'sparta') return [{ type: 'Secret', label: 'The Spartan never retreats. Click the name in the footer to learn more.', page: 'dashboard', icon: 'shield' }]
     return index.filter((i) => i.label.toLowerCase().includes(q)).slice(0, 8)
   }, [search, index])
 
@@ -192,7 +202,7 @@ function Shell() {
             <div className="font-display text-base font-bold text-gold-bright">{titles[page] || 'Page'}</div>
           </div>
           {/* Live EST Clock */}
-          <div className="hidden sm:flex flex-col items-end mr-2">
+          <div className="hidden sm:flex flex-col items-end mr-2" onClick={clockEgg.onClick} style={{ cursor: 'pointer' }}>
             <span className="text-[9px] uppercase tracking-wider text-gold/50">Kingdom Time</span>
             <span className="font-mono text-xs font-semibold text-gold-bright tabular-nums">{estTime}</span>
           </div>
@@ -233,7 +243,7 @@ function Shell() {
               <p className="text-[12px] text-gold/50 italic font-serif">Where legends are forged in fire and crowned in gold</p>
               <div className="mt-2 flex items-center gap-2 text-[11px] text-parchment/50">
                 <span>Crafted by</span>
-                <span className="text-gold/70 font-semibold">Spartan</span>
+                <span className="text-gold/70 font-semibold" onClick={footerEgg.onClick} style={{ cursor: 'pointer' }}>Spartan</span>
                 <span className="text-gold/30">◆</span>
                 <span>Forged for the realm</span>
               </div>
@@ -270,6 +280,7 @@ function Shell() {
       )}
 
       {loginOpen && Login && <Login onClose={() => setLoginOpen(false)} onSuccess={() => { if (loginMode === 'leader') navigate('leader-portal'); else navigate('console') }} mode={loginMode} />}
+      <EggToast message={clockEgg.eggMsg} />
       </div>
     </>
   )

@@ -6,6 +6,7 @@ import { kingdom, countdownTo, BANNERS } from '../data/kingdom'
 import { apiJson } from '../lib/api'
 import { useAuth } from '../context/AuthContext'
 import { useSiteData } from '../context/SiteDataContext'
+import { useEgg, EggToast } from '../lib/useEgg'
 
 const colorMap = {
   gold: 'text-gold', silver: 'text-slate-200', crimson: 'text-rose-300',
@@ -283,6 +284,7 @@ export default function Dashboard({ onNavigate }) {
           </div>
         </Panel>
       </div>
+      <EggToast message={statusEgg.eggMsg} />
     </div>
   )
 }

@@ -1,10 +1,11 @@
-import { useState } from 'react'
+import { useState, useRef, useCallback } from 'react'
 import { Panel, ArtImage } from '../components/ui'
 import Icon from '../components/Icon'
 import { Embers } from '../components/Embers'
 import { Modal } from '../components/RosterPending'
 import { useSiteData } from '../context/SiteDataContext'
 import { buildSchedule } from '../data/kingdom'
+import { EggToast } from '../lib/useEgg'
 
 const colorMap = {
   gold: { ring: 'ring-gold/40', text: 'text-gold', bg: 'bg-gold/10', grad: 'from-gold/30 to-gold/5' },
@@ -34,6 +35,41 @@ export default function Alliances() {
   const alliances = data.alliances
   const [active, setActive] = useState(null)
   const activeColor = active ? (colorMap[active.color] || colorMap.blue) : colorMap.blue
+
+  // Easter egg: click all 4 alliance banners in order (RYO → KZK → SAS → ICE)
+  const [eggMsg, setEggMsg] = useState(null)
+  const clickOrderRef = useRef([])
+  const expectedOrder = ['ryo', 'kzk', 'sas', 'ice']
+  const allianceClickCountsRef = useRef({})
+
+  const onAllianceClick = useCallback((alliance) => {
+    // Track click order for banner sequence egg
+    clickOrderRef.current.push(alliance.slug)
+    if (clickOrderRef.current.length > 4) clickOrderRef.current.shift()
+    if (clickOrderRef.current.length === 4 && clickOrderRef.current.join(',') === expectedOrder.join(',')) {
+      setEggMsg('United we stand. The four pillars of 846 shall not fall.')
+      setTimeout(() => setEggMsg(null), 6000)
+      clickOrderRef.current = []
+    }
+    // Track per-alliance clicks for the 3x egg
+    const slug = alliance.slug
+    allianceClickCountsRef.current[slug] = (allianceClickCountsRef.current[slug] || 0) + 1
+    if (allianceClickCountsRef.current[slug] >= 3) {
+      const mottos = {
+        ryo: 'RYO: Weaving victory through shadows. The spiders strike unseen.',
+        kzk: 'KZK: Chaos is our strategy, chaos is our victory.',
+        sas: 'SAS: Saints by day, sinners by night. We are the balance.',
+        ice: 'ICE: Cold hearts, sharp blades. We hunt without mercy.',
+      }
+      setEggMsg(mottos[slug] || 'A worthy alliance.')
+      setTimeout(() => setEggMsg(null), 6000)
+      allianceClickCountsRef.current[slug] = 0
+    }
+    setTimeout(() => { allianceClickCountsRef.current[slug] = 0 }, 3000)
+    // Still open the modal
+    setActive(alliance)
+  }, [])
+
   return (
     <div className="space-y-6">
       <Panel glow className="aurora-border gold-corners">
@@ -47,7 +83,7 @@ export default function Alliances() {
         {alliances.map((a) => {
           const c = colorMap[a.color] || colorMap.blue
           return (
-            <button key={a.slug} onClick={() => setActive(a)} className="royal-grid-card group overflow-hidden text-left cursor-pointer">
+            <button key={a.slug} onClick={() => onAllianceClick(a)} className="royal-grid-card group overflow-hidden text-left cursor-pointer">
               <div className="relative h-28">
                 <ArtImage src={a.art} alt={a.name} className="h-full w-full" />
                 <div className={`absolute inset-0 bg-gradient-to-r ${c.grad}`} />
@@ -114,6 +150,7 @@ export default function Alliances() {
           </div>
         )}
       </Modal>
+      <EggToast message={eggMsg} />
     </div>
   )
 }

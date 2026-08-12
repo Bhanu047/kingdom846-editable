@@ -1,6 +1,8 @@
+import { useState } from 'react'
 import { Panel, SectionTitle, Pill, ArtImage } from '../components/ui'
 import Icon from '../components/Icon'
 import { kingdom, kvkHistory, kvkStats, transfers, reputation } from '../data/kingdom'
+import { useEgg, EggToast } from '../lib/useEgg'
 
 function MetricCard({ label, value, sub }) {
   return (
@@ -168,6 +170,7 @@ export default function About() {
       <p className="text-center text-[10px] text-parchment/30">
         Kingdom data from <a href={kingdom.source} target="_blank" rel="noreferrer" className="text-gold/70 hover:text-gold-bright underline">Kingshot Atlas</a> & <a href={kingdom.kvkSource} target="_blank" rel="noreferrer" className="text-gold/70 hover:text-gold-bright underline">Kingshot Optimizer</a>. Some alliance and commander details are illustrative pending live roster import.
       </p>
+      <EggToast message={titleEgg.eggMsg || crownEgg.eggMsg} />
     </div>
   )
 }

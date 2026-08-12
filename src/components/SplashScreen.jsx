@@ -175,10 +175,13 @@ export default function SplashScreen({ onEnter }) {
       }
     }
     document.addEventListener('keydown', onKey)
+    // Also listen on window for better key capture
+    window.addEventListener('keydown', onKey, true)
 
     return () => {
       document.body.style.overflow = ''
       document.removeEventListener('keydown', onKey)
+      window.removeEventListener('keydown', onKey, true)
     }
   }, [])
 
@@ -437,11 +440,12 @@ export default function SplashScreen({ onEnter }) {
         </div>
       </div>
 
-      {/* Easter egg message */}
+      {/* Easter egg message - pointer-events none so it never blocks the button */}
       {eggMessage && (
         <div style={{
           position: 'absolute', bottom: '15%', left: '50%', transform: 'translateX(-50%)',
           zIndex: 50, textAlign: 'center', padding: '0 2rem',
+          pointerEvents: 'none',
           animation: 'egg-appear 0.5s ease-out',
         }}>
           <p style={{

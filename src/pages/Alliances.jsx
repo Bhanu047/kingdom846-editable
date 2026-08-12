@@ -88,11 +88,16 @@ export default function Alliances() {
 
   return (
     <div className="space-y-6">
-      <Panel glow className="aurora-border gold-corners">
-        <Embers count={10} />
-        <div className="eyebrow text-glow">The Council</div>
-        <h1 className="mt-1 font-display text-3xl font-bold gradient-gold glow-pulse">Alliances of 846</h1>
-        <p className="mt-2 text-sm text-parchment/60">The four pillars of Kingdom 846 — the alliances and the council that hold the realm together.</p>
+      <Panel glow className="aurora-border gold-corners relative overflow-hidden">
+        <div className="absolute inset-0 z-0 opacity-30">
+          <img src="./assets/hero-council.webp" alt="" className="h-full w-full object-cover drift-slow" loading="lazy" />
+        </div>
+        <div className="relative z-10">
+          <Embers count={10} />
+          <div className="eyebrow text-glow">The Council</div>
+          <h1 className="mt-1 font-display text-3xl font-bold gradient-gold glow-pulse">Alliances of 846</h1>
+          <p className="mt-2 text-sm text-parchment/60">The four pillars of Kingdom 846 — the alliances and the council that hold the realm together.</p>
+        </div>
       </Panel>
 
       <div className="grid gap-4 lg:grid-cols-2">

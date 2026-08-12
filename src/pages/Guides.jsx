@@ -30,11 +30,16 @@ export default function Guides() {
 
   return (
     <div className="space-y-4">
-      <Panel glow className="gold-corners">
-        <RoyalSectionHeader icon="book" eyebrow="Knowledge Base" title="Strategy & Guides" />
-        <p className="text-sm text-parchment/50">
-          Auto-synced from Kingshot Wiki · {filteredGuides.length} guides available
-        </p>
+      <Panel glow className="gold-corners relative overflow-hidden">
+        <div className="absolute inset-0 z-0 opacity-25">
+          <img src="./assets/hero-guides.webp" alt="" className="h-full w-full object-cover drift-slow" loading="lazy" />
+        </div>
+        <div className="relative z-10">
+          <RoyalSectionHeader icon="book" eyebrow="Knowledge Base" title="Strategy & Guides" />
+          <p className="text-sm text-parchment/50">
+            Auto-synced from Kingshot Wiki · {filteredGuides.length} guides available
+          </p>
+        </div>
       </Panel>
 
       <div className="royal-divider"><span className="royal-divider-icon">◆</span></div>

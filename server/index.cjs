@@ -972,8 +972,210 @@ function getKingdomAnswer(message) {
     return 'I can help you with:\n\n- Alliances (names, leaders, info)\n- The current King or Queen\n- Event schedules and timings\n- How to transfer or join\n- Strategy guides and tips\n- Latest news and updates\n- Kingdom history and doctrine\n- Leader and admin access\n\nJust ask me a question about Kingdom 846.'
   }
 
+  // === Random visitor questions ===
+
+  // What game / Kingshot
+  if (msg.includes('what game') || msg.includes('kingshot') || msg.includes('what is this') || msg.includes('which game')) {
+    return 'Kingdom 846 is a community portal for the strategy game Kingshot, available on iOS, Android, and PC.\n\nKingshot is a medieval strategy game where you build your city, train troops, join alliances, and battle for control of the kingdom. Kingdom 846 is one of the kingdoms in the game.'
+  }
+
+  // Discord
+  if (msg.includes('discord') || msg.includes('community') || msg.includes('where to chat') || msg.includes('social')) {
+    return 'Join the Kingdom 846 Discord community here:\nhttps://discord.gg/rcxJCh97A\n\nThis is where alliance members coordinate events, rallies, and chat in real time.'
+  }
+
+  // KvK
+  if (msg.includes('kvk') || msg.includes('kingdom vs kingdom') || msg.includes('kingdom war')) {
+    return 'KvK (Kingdom vs Kingdom) is the ultimate event where entire kingdoms go to war against each other.\n\n- Lasts several days\n- All alliances fight together for their kingdom\n- Rewards include gems, speedups, and exclusive items\n- The kingdom with the most points wins\n\nCheck the Events page for the next KvK schedule and the Timeline page for KvK history.'
+  }
+
+  // NAP
+  if (msg.includes('nap') || msg.includes('non-aggression') || msg.includes('peace treaty')) {
+    return 'NAP stands for Non-Aggression Pact — an agreement between alliances or kingdoms not to attack each other.\n\nIn Kingdom 846, NAPs are managed by the council and alliance leaders. Breaking a NAP is considered dishonorable and may result in diplomatic consequences.'
+  }
+
+  // Bear hunt
+  if (msg.includes('bear') || msg.includes('bear hunt')) {
+    return 'Bear Hunt is a PvE event where alliance members rally together to defeat powerful bears.\n\n- Requires alliance coordination\n- Higher level bears give better rewards\n- Rewards include gems, resources, and speedups\n- Check the Events page for the next bear hunt schedule'
+  }
+
+  // Viking Vengeance
+  if (msg.includes('viking') || msg.includes('vengeance')) {
+    return 'Viking Vengeance is a special event where players fight Viking invaders.\n\n- PvE event with multiple difficulty levels\n- Solo and alliance versions available\n- Rewards include hero shards, gems, and resources\n- Check the Events page for the schedule'
+  }
+
+  // Tri-Alliance Clash
+  if (msg.includes('tri-alliance') || msg.includes('tri alliance') || msg.includes('triple clash')) {
+    return 'Tri-Alliance Clash is a competitive event where three alliances battle for control of a central temple.\n\n- 3 alliances compete simultaneously\n- The alliance holding the temple longest wins\n- Rewards include gems, hero gear, and alliance tokens\n- Requires strong coordination and troop management'
+  }
+
+  // Swordland Showdown
+  if (msg.includes('swordland') || msg.includes('sword land') || msg.includes('showdown')) {
+    return 'Swordland Showdown is the championship battle event.\n\n- The ultimate PvP competition\n- Alliances fight for the championship title\n- Top performers earn exclusive rewards\n- Check the Events page for the next showdown'
+  }
+
+  // Troops
+  if (msg.includes('troop') || msg.includes('army') || msg.includes('soldiers') || msg.includes('infantry') || msg.includes('cavalry') || msg.includes('archer')) {
+    return 'Troop Management:\n\n- Infantry: Strong defense, holds the front line\n- Cavalry: Fast and mobile, great for flanking\n- Archers: Ranged damage, vulnerable in melee\n- Train a balanced army for best results\n- Higher tier troops are significantly stronger\n\nVisit the Guides page for detailed formation strategies.'
+  }
+
+  // Heroes
+  if (msg.includes('hero') || msg.includes('commander') || msg.includes('champion')) {
+    return 'Heroes are powerful leaders that boost your troops and city.\n\n- Each hero has unique skills and buffs\n- Level up heroes through battles and XP items\n- Equip gear to increase hero power\n- Match hero skills to your troop composition\n\nVisit the Guides page for hero tier lists and optimization tips.'
+  }
+
+  // Resources
+  if (msg.includes('resource') || msg.includes('food') || msg.includes('wood') || msg.includes('stone') || msg.includes('gold') || msg.includes('iron')) {
+    return 'Resources in Kingshot:\n\n- Food: Feeds your troops\n- Wood: Construction and troops\n- Stone: Advanced buildings\n- Iron: High-tier troops and gear\n- Gold: Premium currency for speedups and shop items\n\nTips: Keep your resource production buildings upgraded. Use the Resource Guide on the Guides page for optimization strategies.'
+  }
+
+  // Gems / premium
+  if (msg.includes('gem') || msg.includes('diamond') || msg.includes('premium') || msg.includes('pay to win') || msg.includes('p2w') || msg.includes('free to play') || msg.includes('f2p')) {
+    return 'Gems are the premium currency in Kingshot.\n\nWays to earn gems:\n- Events and competitions\n- Daily quests and achievements\n- KvK rewards\n- Bear hunts and PvE events\n\nKingdom 846 welcomes both free-to-play and paying players. Strategy and coordination matter more than spending.'
+  }
+
+  // Power / strength
+  if (msg.includes('power') || msg.includes('strong') || msg.includes('strength') || msg.includes('combat power') || msg.includes('cp')) {
+    return 'Increasing your power:\n\n1. Upgrade buildings (especially Castle)\n2. Train higher tier troops\n3. Level up and gear your heroes\n4. Research technologies in the Tech tree\n5. Join alliance events for bonus rewards\n6. Participate in KvK and bear hunts\n\nVisit the Guides page for detailed power progression strategies.'
+  }
+
+  // Defense / attack
+  if (msg.includes('defend') || msg.includes('defense') || msg.includes('attacked') || msg.includes('raid') || msg.includes('zeroed') || msg.includes('bubble') || msg.includes('peace shield') || msg.includes('shield')) {
+    return 'Defense Strategies:\n\n- Use Peace Shield (bubble) when offline to prevent attacks\n- Keep troops garrisoned in your castle\n- Upgrade your walls and defenses\n- Join an alliance for mutual defense\n- If zeroed (city destroyed), use speedups to rebuild quickly\n- Ask your alliance for reinforcement troops\n\nNever hesitate to bubble up if you sense danger. Better safe than zeroed.'
+  }
+
+  // Rally
+  if (msg.includes('rally') || msg.includes('rallies')) {
+    return 'Rallies are coordinated group attacks where multiple players join forces to hit a single target.\n\n- One player initiates the rally\n- Alliance members join with their troops\n- More participants = stronger rally\n- Essential for bear hunts and KvK\n\nAlways join rallies when your alliance calls for them — coordination wins wars.'
+  }
+
+  // Teleport / relocate
+  if (msg.includes('teleport') || msg.includes('relocate') || msg.includes('move') || msg.includes('teleport') || msg.includes('migration')) {
+    return 'Teleporting and Relocation:\n\n- Use Teleports to move your city within the kingdom\n- Alliance Teleport moves you near your alliance leader\n- Advanced Teleport places you at exact coordinates\n- Migration allows moving to a different kingdom (limited uses)\n\nWhen joining Kingdom 846, use your alliance teleport to move close to your alliance members for better coordination.'
+  }
+
+  // VIP
+  if (msg.includes('vip') || msg.includes('subscription') || msg.includes('premium account')) {
+    return 'VIP in Kingshot:\n\n- VIP status gives daily bonuses and buffs\n- Higher VIP levels unlock more perks\n- VIP points can be earned through events or purchased\n- Free players can still earn VIP time through events\n\nVIP is helpful but not required for success.'
+  }
+
+  // Season
+  if (msg.includes('season') || msg.includes('fire tyrant') || msg.includes('current season')) {
+    return 'Kingdom 846 is currently in the Season of the Fire Tyrant. Check the Events page for season-specific event schedules and the Kingdom page for season standings.'
+  }
+
+  // Shop / store
+  if (msg.includes('shop') || msg.includes('store') || msg.includes('buy') || msg.includes('purchase') || msg.includes('pack')) {
+    return 'The in-game shop offers various packs and items.\n\n- Resource packs for quick building\n- Speedup items\n- Hero shards and gear\n- Gem purchases\n\nTip: Save your gems for events and KvK — the shop will always be there, but event rewards are time-limited.'
+  }
+
+  // Download / play
+  if (msg.includes('download') || msg.includes('where to play') || msg.includes('how to play') || msg.includes('install') || msg.includes('app store') || msg.includes('google play') || msg.includes('steam')) {
+    return 'Kingshot is available on:\n\n- iOS (App Store)\n- Android (Google Play)\n- PC (via official website)\n\nDownload the game, complete the tutorial, and once you reach the required level, use the Transfer page on this website to join Kingdom 846.'
+  }
+
+  // Server / kingdom number
+  if (msg.includes('server') || msg.includes('which kingdom') || msg.includes('kingdom number') || msg.includes('what kingdom')) {
+    return 'We are Kingdom 846 in the game Kingshot. When transferring or migrating, search for kingdom 846 to find us.\n\nAll four alliances welcome new members — use the Transfer page to apply.'
+  }
+
+  // Rules / doctrine
+  if (msg.includes('rule') || msg.includes('law') || msg.includes('code of conduct') || msg.includes('behavior')) {
+    return 'Kingdom 846 Rules:\n\n1. Respect all members — toxic behavior is not tolerated\n2. Honor NAPs and alliances\n3. Participate in alliance events and rallies\n4. No spying or sabotage against allied kingdoms\n5. Follow alliance leader instructions during KvK\n6. Use Discord for coordination\n\nViolations may result in being kicked from your alliance.'
+  }
+
+  // Contact / reach leaders
+  if (msg.includes('contact') || msg.includes('reach') || msg.includes('talk to') || msg.includes('message') || msg.includes('email')) {
+    return 'To contact Kingdom 846 leadership:\n\n1. Join our Discord: https://discord.gg/rcxJCh97A\n2. Message your alliance leader directly in-game\n3. Use the Transfer page to apply to an alliance\n4. For admin matters, the Spartan account manages the kingdom\n\nAlliance leaders check Discord regularly and will respond to your messages.'
+  }
+
+  // Best alliance / which to join
+  if (msg.includes('best alliance') || msg.includes('which alliance') || msg.includes('recommend') || msg.includes('should i join')) {
+    return `All four alliances in Kingdom 846 are strong and welcoming:\n\n- [RYO] Spiders — Led by Shoni. Strategic and disciplined.\n- [KzK] KamilKazeKarnival — Led by Lovely Khaos. Aggressive and fun.\n- [SAS] SaintsAndSinners — Led by Lady Charlotte. Balanced and tactical.\n- [ICE] IceHunters — Led by Dunngeon. Focused and coordinated.\n\nChoose based on your playstyle. Visit the Alliances page for details, or join the Discord and talk to the leaders directly.`
+  }
+
+  // Who made this website / who built
+  if (msg.includes('who made') || msg.includes('who built') || msg.includes('who created') || msg.includes('who designed') || msg.includes('webmaster') || msg.includes('developer')) {
+    return 'This website was designed and built by Spartan, the Sovereign Admin of Kingdom 846. It serves as the official community portal for all alliance members and visitors.\n\nFeatures include alliance management, event schedules, rankings, strategy guides, kingdom news, and more.'
+  }
+
+  // Time zone / clock
+  if (msg.includes('time zone') || msg.includes('timezone') || msg.includes('what time') || msg.includes('clock') || msg.includes('utc')) {
+    return 'All event times on Kingdom 846 are displayed in UTC (Coordinated Universal Time).\n\nThe clock in the top navigation shows the current Kingdom Time in UTC. Alliance leaders set their event times in UTC through the Leader Portal.\n\nConvert UTC to your local time using any timezone converter.'
+  }
+
+  // Mobile / app
+  if (msg.includes('mobile') || msg.includes('phone') || msg.includes('tablet') || msg.includes('android') || msg.includes('ios') || msg.includes('iphone')) {
+    return 'This website is fully responsive and works on mobile, tablet, and desktop.\n\nThe game Kingshot itself is also available on iOS, Android, and PC. You can play on any device and access this community portal from your mobile browser.'
+  }
+
+  // Rankings / top players
+  if (msg.includes('rank') || msg.includes('top player') || msg.includes('leaderboard') || msg.includes('best player') || msg.includes('strongest')) {
+    return 'Visit the Rankings page to see the top players in Kingdom 846.\n\nThe leaderboard shows player rankings with their alliance tags and avatars. Rankings are managed by the admin through the website editor.\n\nNote: Power scores are not displayed publicly to maintain strategic privacy.'
+  }
+
+  // Tech / research
+  if (msg.includes('tech') || msg.includes('research') || msg.includes('technology')) {
+    return 'Tech Research in Kingshot:\n\n- Research technologies in the Tech tree to unlock new troops, buildings, and buffs\n- Prioritize military tech for combat power\n- Economic tech boosts resource production\n- Alliance tech provides shared buffs for all members\n\nVisit the Guides page for recommended tech research orders.'
+  }
+
+  // Gear / equipment
+  if (msg.includes('gear') || msg.includes('equipment') || msg.includes('item') || msg.includes('forge') || msg.includes('craft')) {
+    return 'Hero Gear in Kingshot:\n\n- Equip heroes with gear to boost stats\n- Forge gear using materials from events\n- Higher rarity gear gives stronger bonuses\n- Match gear to your hero role (tank, DPS, support)\n\nThe Hero Gear Optimizer tool (available in game) helps you decide which gear to upgrade first. Visit the Guides page for more tips.'
+  }
+
+  // Formation / strategy
+  if (msg.includes('formation') || msg.includes('lineup') || msg.includes('composition') || msg.includes('best setup')) {
+    return 'Troop Formations:\n\n- Front line: Infantry (tanks, absorb damage)\n- Middle: Cavalry (flanking, mobile)\n- Back line: Archers (ranged DPS)\n- Use heroes that buff your troop types\n- Adjust formation based on opponent\n\nA common effective ratio is 40% infantry, 30% cavalry, 30% archers. Visit the Guides page for detailed formation guides.'
+  }
+
+  // Active / how active
+  if (msg.includes('active') || msg.includes('how active') || msg.includes('dead') || msg.includes('alive')) {
+    return 'Kingdom 846 is very active! All four alliances participate in daily events, bear hunts, rallies, and KvK.\n\nJoin our Discord (https://discord.gg/rcxJCh97A) to see real-time activity and coordinate with alliance members. New members are always welcome.'
+  }
+
+  // Wiki / where to find info
+  if (msg.includes('wiki') || msg.includes('where to find') || msg.includes('information') || msg.includes('learn more')) {
+    return 'For more information:\n\n1. This website — Check Alliances, Events, Guides, and News pages\n2. Kingshot Wiki — https://www.kingshot.wiki (strategy guides and game mechanics)\n3. Kingshot Official — https://kingshot.net (announcements and updates)\n4. Kingdom 846 Discord — https://discord.gg/rcxJCh97A (community chat)\n\nThe Guides page on this site auto-syncs with the Kingshot Wiki for the latest strategies.'
+  }
+
+  // Wiki / where to find info
+  if (msg.includes('wiki') || msg.includes('where to find') || msg.includes('information') || msg.includes('learn more')) {
+    return 'For more information:\n\n1. This website — Check Alliances, Events, Guides, and News pages\n2. Kingshot Wiki — https://www.kingshot.wiki (strategy guides and game mechanics)\n3. Kingshot Official — https://kingshot.net (announcements and updates)\n4. Kingdom 846 Discord — https://discord.gg/rcxJCh97A (community chat)\n\nThe Guides page on this site auto-syncs with the Kingshot Wiki for the latest strategies.'
+  }
+
+  // Rewards
+  if (msg.includes('reward') || msg.includes('prize') || msg.includes('loot') || msg.includes('what do i get')) {
+    return 'Event Rewards in Kingshot:\n\n- Gems (premium currency)\n- Speedups (building, training, research)\n- Resource packs\n- Hero shards and gear\n- Exclusive seasonal items\n\nKvK and championship events give the best rewards. Always participate in alliance events — even small contributions count.'
+  }
+
+  // Speedups / how to grow fast
+  if (msg.includes('speedup') || msg.includes('fast') || msg.includes('quick') || msg.includes('level up fast') || msg.includes('grow fast')) {
+    return 'Growing Fast in Kingshot:\n\n1. Complete daily quests for XP and resources\n2. Join all alliance events (bear hunts, rallies, KvK)\n3. Use speedups during events for bonus rewards\n4. Upgrade your Castle first — it unlocks everything\n5. Train troops constantly — never let barracks sit idle\n6. Research tech in parallel with building\n7. Claim free daily gifts from the shop\n\nPatience pays off. Consistent daily play beats sporadic bursts.'
+  }
+
+  // Report / complaint
+  if (msg.includes('report') || msg.includes('complaint') || msg.includes('cheater') || msg.includes('hacker') || msg.includes('scam')) {
+    return 'To report a player or issue:\n\n1. Use the in-game report function on the player profile\n2. Contact your alliance leader with evidence (screenshots)\n3. Post in the Kingdom 846 Discord with details\n4. For serious issues, contact the Spartan admin\n\nDo not take matters into your own hands. Let leadership handle disputes diplomatically.'
+  }
+
+  // Funny / easter egg
+  if (msg.includes('joke') || msg.includes('funny') || msg.includes('make me laugh') || msg.includes('bored')) {
+    return 'Why did the infantry cross the battlefield?\n\nBecause the cavalry was too fast and the archers were afraid of getting hit.\n\nNow get back to your rallies — the bears are not going to hunt themselves.'
+  }
+
+  // Secret / sparta easter egg
+  if (msg.includes('sparta') || msg.includes('this is sparta') || msg.includes('300')) {
+    return 'THIS. IS. 846!\n\nThe Spartan never retreats, never surrenders. Forged in discipline, crowned in victory.\n\nClick the Spartan name in the footer 3 times to learn more...'
+  }
+
+  // Treasure / secret
+  if (msg.includes('treasure') || msg.includes('secret') || msg.includes('hidden') || msg.includes('easter egg')) {
+    return 'There are hidden secrets scattered across this realm...\n\nTry searching for "treasure" or "secret" in the search bar. Or click the crown in the title, the crest in the splash screen, or the clock in the header. The realm holds many surprises for those who seek them.'
+  }
+
   // Default — suggest topics
-  return 'I am not sure about that, but I can help you with:\n\n- Alliances and their leaders\n- The current King or Queen\n- Event schedules\n- How to transfer or apply\n- Strategy guides\n- Latest news\n- Kingdom history\n\nTry asking about one of these topics.'
+  return 'I am not sure about that, but I can help you with:\n\n- Alliances and their leaders\n- The current King or Queen\n- Event schedules\n- How to transfer or apply\n- Strategy guides and tips\n- Latest news and updates\n- Kingdom history and doctrine\n- Troops, heroes, and formations\n- KvK, bear hunts, and events\n- Defense and attack strategies\n- Discord and community\n\nTry asking about one of these topics.'
 }
 
 // Chat endpoint — pure database-powered, never crashes

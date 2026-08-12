@@ -72,6 +72,12 @@ export default function ChatAssistant() {
     { icon: '👑', text: 'Who is the current King?' },
     { icon: '📅', text: 'What are the event schedules?' },
     { icon: '🔄', text: 'How do I transfer to 846?' },
+    { icon: '🛡️', text: 'How to defend my city?' },
+    { icon: '💬', text: 'What is the Discord link?' },
+    { icon: '⚔️', text: 'What is KvK?' },
+    { icon: '🐻', text: 'What is a bear hunt?' },
+    { icon: '💎', text: 'How to get gems?' },
+    { icon: '🚀', text: 'How to grow fast?' },
   ]
 
   return (

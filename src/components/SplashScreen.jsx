@@ -3,42 +3,10 @@ import { useState, useEffect, useRef } from 'react'
 export default function SplashScreen({ onEnter }) {
   const [fading, setFading] = useState(false)
   const [entered, setEntered] = useState(false)
-  const audioRef = useRef(null)
   const enterAudioRef = useRef(null)
 
   useEffect(() => {
     document.body.style.overflow = 'hidden'
-    
-    // Autoplay fanfare immediately on page load
-    // Trick: start muted (browsers allow muted autoplay), then unmute
-    if (audioRef.current) {
-      const audio = audioRef.current
-      audio.muted = true
-      audio.volume = 0.7
-      
-      // Start playing muted (this is allowed by all browsers)
-      audio.play().then(() => {
-        // Immediately unmute once playing starts
-        audio.muted = false
-      }).catch(() => {
-        // If still blocked, try unmuting after a tiny delay
-        setTimeout(() => {
-          audio.muted = false
-          audio.play().catch(() => {
-            // Last resort: unmute and play on the very first interaction
-            const unmuteAndPlay = () => {
-              audio.muted = false
-              audio.currentTime = 0
-              audio.play().catch(() => {})
-            }
-            document.addEventListener('click', unmuteAndPlay, { once: true })
-            document.addEventListener('touchstart', unmuteAndPlay, { once: true, passive: true })
-            document.addEventListener('keydown', unmuteAndPlay, { once: true })
-          })
-        }, 100)
-      })
-    }
-    
     return () => { document.body.style.overflow = '' }
   }, [])
 
@@ -63,10 +31,7 @@ export default function SplashScreen({ onEnter }) {
       className={`fixed inset-0 z-[100] flex items-center justify-center overflow-hidden ${fading ? 'splash-fade-out' : ''}`}
       style={{ background: '#060810' }}
     >
-      {/* Autoplay royal fanfare - plays when website opens */}
-      <audio ref={audioRef} autoPlay muted>
-        <source src="./assets/fanfare.wav" type="audio/wav" />
-      </audio>
+      {/* Fanfare audio is in index.html for earliest autoplay */}
       {/* Enter sound - plays when user taps Enter the Realm */}
       <audio ref={enterAudioRef} preload="auto">
         <source src="./assets/enter-sound.wav" type="audio/wav" />

@@ -4,6 +4,7 @@ export default function SplashScreen({ onEnter }) {
   const [fading, setFading] = useState(false)
   const [entered, setEntered] = useState(false)
   const audioRef = useRef(null)
+  const enterAudioRef = useRef(null)
 
   useEffect(() => {
     document.body.style.overflow = 'hidden'
@@ -39,11 +40,17 @@ export default function SplashScreen({ onEnter }) {
   const enter = () => {
     if (fading) return
     setEntered(true)
+    // Play enter sound
+    if (enterAudioRef.current) {
+      enterAudioRef.current.volume = 0.8
+      enterAudioRef.current.currentTime = 0
+      enterAudioRef.current.play().catch(() => {})
+    }
     setFading(true)
     setTimeout(() => {
       document.body.style.overflow = ''
       onEnter?.()
-    }, 1200)
+    }, 1500)
   }
 
   return (
@@ -51,9 +58,13 @@ export default function SplashScreen({ onEnter }) {
       className={`fixed inset-0 z-[100] flex items-center justify-center overflow-hidden ${fading ? 'splash-fade-out' : ''}`}
       style={{ background: '#060810' }}
     >
-      {/* Autoplay royal fanfare */}
+      {/* Autoplay royal fanfare - plays when website opens */}
       <audio ref={audioRef} autoPlay>
         <source src="./assets/fanfare.wav" type="audio/wav" />
+      </audio>
+      {/* Enter sound - plays when user taps Enter the Realm */}
+      <audio ref={enterAudioRef} preload="auto">
+        <source src="./assets/enter-sound.wav" type="audio/wav" />
       </audio>
 
       {/* Cinematic throne room background */}

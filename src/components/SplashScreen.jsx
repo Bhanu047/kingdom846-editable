@@ -3,68 +3,42 @@ import { useState, useEffect, useRef } from 'react'
 export default function SplashScreen({ onEnter }) {
   const [fading, setFading] = useState(false)
   const [entered, setEntered] = useState(false)
-  const audioCtxRef = useRef(null)
+  const audioRef = useRef(null)
 
   useEffect(() => {
     document.body.style.overflow = 'hidden'
+    
+    // Autoplay fanfare - try immediately, fallback on any interaction
+    if (audioRef.current) {
+      audioRef.current.volume = 0.7
+      audioRef.current.play().catch(() => {
+        // Browser blocked autoplay - play on ANY first interaction
+        const playOnInteract = () => {
+          audioRef.current?.play().catch(() => {})
+          document.removeEventListener('mousemove', playOnInteract)
+          document.removeEventListener('touchstart', playOnInteract)
+          document.removeEventListener('touchmove', playOnInteract)
+          document.removeEventListener('keydown', playOnInteract)
+          document.removeEventListener('click', playOnInteract)
+          document.removeEventListener('scroll', playOnInteract)
+          document.removeEventListener('pointermove', playOnInteract)
+        }
+        document.addEventListener('mousemove', playOnInteract)
+        document.addEventListener('touchstart', playOnInteract, { passive: true })
+        document.addEventListener('touchmove', playOnInteract, { passive: true })
+        document.addEventListener('keydown', playOnInteract)
+        document.addEventListener('click', playOnInteract)
+        document.addEventListener('scroll', playOnInteract, { passive: true })
+        document.addEventListener('pointermove', playOnInteract)
+      })
+    }
+    
     return () => { document.body.style.overflow = '' }
   }, [])
-
-  // Dramatic ambient sound using Web Audio API (no external file needed)
-  const playSound = () => {
-    if (entered) return
-    try {
-      if (!audioCtxRef.current) {
-        audioCtxRef.current = new (window.AudioContext || window.webkitAudioContext)()
-      }
-      const ctx = audioCtxRef.current
-      if (ctx.state === 'suspended') ctx.resume()
-      const now = ctx.currentTime
-
-      // Deep boom (bass drum)
-      const boom = ctx.createOscillator()
-      const boomGain = ctx.createGain()
-      boom.frequency.setValueAtTime(55, now)
-      boom.frequency.exponentialRampToValueAtTime(28, now + 1.2)
-      boomGain.gain.setValueAtTime(0.0001, now)
-      boomGain.gain.exponentialRampToValueAtTime(0.5, now + 0.05)
-      boomGain.gain.exponentialRampToValueAtTime(0.001, now + 1.5)
-      boom.connect(boomGain).connect(ctx.destination)
-      boom.start(now); boom.stop(now + 1.5)
-
-      // Rising shimmer (gold sparkle)
-      const shimmer = ctx.createOscillator()
-      const shimmerGain = ctx.createGain()
-      shimmer.type = 'triangle'
-      shimmer.frequency.setValueAtTime(400, now)
-      shimmer.frequency.exponentialRampToValueAtTime(1200, now + 0.8)
-      shimmerGain.gain.setValueAtTime(0.0001, now)
-      shimmerGain.gain.exponentialRampToValueAtTime(0.08, now + 0.3)
-      shimmerGain.gain.exponentialRampToValueAtTime(0.001, now + 1.2)
-      shimmer.connect(shimmerGain).connect(ctx.destination)
-      shimmer.start(now); shimmer.stop(now + 1.2)
-
-      // Epic horn note
-      const horn = ctx.createOscillator()
-      const hornGain = ctx.createGain()
-      horn.type = 'sawtooth'
-      horn.frequency.setValueAtTime(110, now + 0.1)
-      horn.frequency.linearRampToValueAtTime(165, now + 0.4)
-      hornGain.gain.setValueAtTime(0.0001, now + 0.1)
-      hornGain.gain.exponentialRampToValueAtTime(0.06, now + 0.3)
-      hornGain.gain.exponentialRampToValueAtTime(0.001, now + 1.8)
-      const hornFilter = ctx.createBiquadFilter()
-      hornFilter.type = 'lowpass'
-      hornFilter.frequency.setValueAtTime(800, now + 0.1)
-      horn.connect(hornFilter).connect(hornGain).connect(ctx.destination)
-      horn.start(now + 0.1); horn.stop(now + 1.8)
-    } catch (e) { /* audio not available */ }
-  }
 
   const enter = () => {
     if (fading) return
     setEntered(true)
-    playSound()
     setFading(true)
     setTimeout(() => {
       document.body.style.overflow = ''
@@ -77,9 +51,14 @@ export default function SplashScreen({ onEnter }) {
       className={`fixed inset-0 z-[100] flex items-center justify-center overflow-hidden ${fading ? 'splash-fade-out' : ''}`}
       style={{ background: '#060810' }}
     >
-      {/* ===== AI-GENERATED CASTLE BACKGROUND ===== */}
+      {/* Autoplay royal fanfare */}
+      <audio ref={audioRef} autoPlay>
+        <source src="./assets/fanfare.wav" type="audio/wav" />
+      </audio>
+
+      {/* Cinematic throne room background */}
       <img
-        src="./assets/splash-castle-bg.png"
+        src="./assets/royal-bg.jpg"
         alt=""
         style={{
           position: 'absolute',
@@ -88,25 +67,25 @@ export default function SplashScreen({ onEnter }) {
           height: '100%',
           objectFit: 'cover',
           zIndex: 1,
-          opacity: 0.7,
-          animation: 'bg-zoom 20s ease-out forwards',
+          animation: 'bg-zoom 20s ease-in-out infinite alternate',
         }}
       />
+
       {/* Dark gradient overlay for text readability */}
       <div style={{
         position: 'absolute', inset: 0, zIndex: 2,
-        background: 'linear-gradient(180deg, rgba(6,8,16,0.6) 0%, rgba(6,8,16,0.3) 40%, rgba(6,8,16,0.7) 80%, rgba(6,8,16,0.95) 100%)',
+        background: 'radial-gradient(ellipse at 50% 50%, rgba(6,8,16,0.3) 0%, rgba(6,8,16,0.75) 70%, rgba(6,8,16,0.92) 100%)',
       }} />
 
-      {/* ===== GOD RAYS (CSS animated) ===== */}
+      {/* God rays */}
       <div style={{ position: 'absolute', inset: 0, zIndex: 3, pointerEvents: 'none' }}>
         {Array.from({ length: 8 }).map((_, i) => {
           const angle = (i * 45) - 90
           return (
             <div key={i} style={{
-              position: 'absolute', top: '30%', left: '50%',
+              position: 'absolute', top: '25%', left: '50%',
               width: '1px', height: '100vh',
-              background: 'linear-gradient(to bottom, rgba(232,199,102,0.12), transparent 60%)',
+              background: 'linear-gradient(to bottom, rgba(232,199,102,0.1), transparent 60%)',
               transformOrigin: 'top center',
               transform: `translateX(-50%) rotate(${angle}deg)`,
               animation: `ray-flicker 5s ease-in-out ${i * 0.4}s infinite`,
@@ -115,163 +94,173 @@ export default function SplashScreen({ onEnter }) {
         })}
       </div>
 
-      {/* ===== FLOATING GOLD PARTICLES ===== */}
+      {/* Gold border frame */}
+      <div style={{
+        position: 'absolute', inset: '16px', zIndex: 15, pointerEvents: 'none',
+        border: '1px solid rgba(212,175,55,0.2)', borderRadius: '6px',
+        animation: 'frame-glow 5s ease-in-out infinite',
+      }}>
+        <div style={{ position: 'absolute', inset: '5px', border: '1px solid rgba(212,175,55,0.08)', borderRadius: '3px' }} />
+      </div>
+
+      {/* Floating gold particles */}
       <div style={{ position: 'absolute', inset: 0, zIndex: 4, pointerEvents: 'none', overflow: 'hidden' }}>
-        {Array.from({ length: 50 }).map((_, i) => {
-          const left = (i * 2 + 2) % 100
+        {Array.from({ length: 40 }).map((_, i) => {
+          const left = (i * 2.5 + 2) % 100
           const delay = (i * 0.25) % 10
-          const dur = 7 + (i % 8)
-          const size = 1 + (i % 4)
+          const dur = 8 + (i % 8)
+          const size = 2 + (i % 3)
           return (
             <span key={i} style={{
               position: 'absolute', bottom: '-10px', left: `${left}%`,
               width: `${size}px`, height: `${size}px`, borderRadius: '50%',
-              background: 'radial-gradient(circle, rgba(232,199,102,0.9), rgba(212,175,55,0))',
+              background: i % 3 === 0 ? '#D4AF37' : '#E8C766',
+              boxShadow: `0 0 ${4 + size}px rgba(212,175,55,0.5)`,
               opacity: 0,
-              animation: `float-up ${dur}s linear ${delay}s infinite`,
+              animation: `ember-rise ${dur}s linear ${delay}s infinite`,
             }} />
           )
         })}
       </div>
 
-      {/* ===== SHOCKWAVE RINGS ===== */}
-      <div style={{ position: 'absolute', zIndex: 5, pointerEvents: 'none', top: '50%', left: '50%' }}>
-        {[0, 1, 2].map((i) => (
-          <div key={i} style={{
-            position: 'absolute',
-            width: '120px', height: '120px',
-            borderRadius: '50%',
-            border: '1px solid rgba(232,199,102,0.25)',
-            transform: 'translate(-50%, -50%)',
-            animation: `ring-expand 4s ease-out ${i * 1.3}s infinite`,
-          }} />
-        ))}
+      {/* Rotating ring behind crest */}
+      <div style={{
+        position: 'absolute', zIndex: 5, pointerEvents: 'none',
+        top: '38%', left: '50%', transform: 'translate(-50%, -50%)',
+        width: 'min(28vh, 280px)', height: 'min(28vh, 280px)',
+        borderRadius: '50%', border: '1px solid rgba(212,175,55,0.12)',
+        animation: 'spin-cw 25s linear infinite',
+      }}>
+        <div style={{
+          position: 'absolute', inset: '15px', borderRadius: '50%',
+          border: '1px solid rgba(212,175,55,0.06)',
+        }} />
       </div>
 
-      {/* ===== MAIN CONTENT ===== */}
-      <div style={{ position: 'relative', zIndex: 10, display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '0 1.5rem', textAlign: 'center' }}>
+      {/* Glow halo behind crest */}
+      <div style={{
+        position: 'absolute', zIndex: 5, pointerEvents: 'none',
+        top: '38%', left: '50%', transform: 'translate(-50%, -50%)',
+        width: 'min(25vh, 250px)', height: 'min(25vh, 250px)', borderRadius: '50%',
+        background: 'radial-gradient(circle, rgba(212,175,55,0.2) 0%, rgba(140,43,58,0.05) 40%, transparent 65%)',
+        animation: 'halo-pulse 5s ease-in-out infinite',
+      }} />
 
-        {/* Shield Crest */}
-        <div style={{ width: '120px', height: '120px', marginBottom: '1.25rem', position: 'relative' }}>
-          <svg viewBox="0 0 140 140" width="120" height="120">
-            {/* Rotating dashed rings */}
-            <g style={{ animation: 'spin-cw 25s linear infinite', transformOrigin: '70px 70px' }}>
-              <circle cx="70" cy="70" r="67" fill="none" stroke="rgba(212,175,55,0.1)" strokeWidth="0.5" strokeDasharray="2 8" />
-            </g>
-            <g style={{ animation: 'spin-ccw 18s linear infinite', transformOrigin: '70px 70px' }}>
-              <circle cx="70" cy="70" r="61" fill="none" stroke="rgba(212,175,55,0.18)" strokeWidth="0.3" strokeDasharray="1 5" />
-            </g>
-            {/* Shield */}
-            <path
-              d="M70,16 L114,29 L114,66 Q114,100 70,122 Q26,100 26,66 L26,29 Z"
-              fill="url(#splash-shield-grad)"
-              stroke="#D4AF37"
-              strokeWidth="2.5"
-              style={{ filter: 'drop-shadow(0 0 10px rgba(212,175,55,0.5))', animation: 'shield-pulse 3s ease-in-out infinite' }}
-            />
-            <path d="M70,20 L110,32 L110,66 Q110,96 70,116 Q30,96 30,66 L30,32 Z" fill="none" stroke="rgba(232,199,102,0.25)" strokeWidth="0.5" />
-            {/* Castle towers */}
-            <g transform="translate(70,58)">
-              <rect x="-24" y="-6" width="9" height="24" fill="#D4AF37" rx="1" />
-              <rect x="-25" y="-10" width="3" height="5" fill="#D4AF37" /><rect x="-20" y="-10" width="3" height="5" fill="#D4AF37" /><rect x="-15" y="-10" width="3" height="5" fill="#D4AF37" />
-              <rect x="-5" y="-16" width="10" height="34" fill="#E8C766" rx="1" />
-              <rect x="-6" y="-20" width="3" height="5" fill="#E8C766" /><rect x="-1" y="-20" width="3" height="5" fill="#E8C766" /><rect x="4" y="-20" width="3" height="5" fill="#E8C766" />
-              <rect x="15" y="-6" width="9" height="24" fill="#D4AF37" rx="1" />
-              <rect x="14" y="-10" width="3" height="5" fill="#D4AF37" /><rect x="19" y="-10" width="3" height="5" fill="#D4AF37" /><rect x="24" y="-10" width="3" height="5" fill="#D4AF37" />
-              <path d="M-3,18 L-3,10 Q-3,5 0,5 Q3,5 3,10 L3,18 Z" fill="#060810" stroke="#D4AF37" strokeWidth="0.5" />
-              <rect x="-21" y="2" width="2" height="4" fill="#060810" opacity="0.7" />
-              <rect x="-2" y="-4" width="2" height="4" fill="#060810" opacity="0.7" />
-              <rect x="18" y="2" width="2" height="4" fill="#060810" opacity="0.7" />
-            </g>
-            <text x="70" y="108" textAnchor="middle" fill="#E8C766" fontFamily="Cinzel, serif" fontSize="17" fontWeight="bold" letterSpacing="2">846</text>
-            <defs>
-              <linearGradient id="splash-shield-grad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#1A1F38" />
-                <stop offset="100%" stopColor="#0E1220" />
-              </linearGradient>
-            </defs>
-          </svg>
+      {/* Main content */}
+      <div style={{ position: 'relative', zIndex: 10, display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '2rem 1.5rem', textAlign: 'center', gap: '0.6rem' }}>
+
+        {/* Royal Crest Image */}
+        <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <img
+            src="./assets/crest-846.png"
+            alt="Kingdom 846 Royal Crest"
+            style={{
+              maxHeight: '35vh',
+              maxWidth: '70vw',
+              width: 'auto', height: 'auto',
+              objectFit: 'contain',
+              filter: 'drop-shadow(0 10px 35px rgba(0,0,0,0.9)) drop-shadow(0 0 25px rgba(212,175,55,0.2))',
+              animation: 'crest-float 7s ease-in-out infinite',
+              position: 'relative', zIndex: 2,
+            }}
+          />
         </div>
 
         {/* Eyebrow */}
         <p style={{
           fontSize: 'clamp(10px, 1.5vw, 13px)', fontWeight: 600, textTransform: 'uppercase',
-          letterSpacing: '0.5em', color: '#D4AF37', marginBottom: '0.5rem',
-          textShadow: '0 0 12px rgba(212,175,55,0.4)', paddingLeft: '0.5em',
-        }}>One Crown. Four Alliances.</p>
+          letterSpacing: '0.45em', color: '#D4AF37', opacity: 0.7, marginBottom: '0.25rem',
+          textShadow: '0 0 12px rgba(212,175,55,0.4)', paddingLeft: '0.45em',
+        }}>One Crown · Four Alliances</p>
 
         {/* Title */}
         <h1 style={{
           fontFamily: "'Cinzel Decorative', 'Cinzel', serif",
-          fontSize: 'clamp(1.7rem, 5.5vw, 3.5rem)', fontWeight: 'bold',
-          color: '#E8C766', margin: 0, letterSpacing: '0.02em',
-          textShadow: '0 0 30px rgba(212,175,55,0.5), 0 0 60px rgba(212,175,55,0.25), 0 2px 10px rgba(0,0,0,0.9)',
-        }}>Welcome to<br /><span style={{ fontSize: '1.2em' }}>Kingdom 846</span></h1>
-
-        {/* Subtitle */}
-        <p style={{
-          marginTop: '0.5rem', fontSize: 'clamp(0.85rem, 2vw, 1.05rem)',
-          color: 'rgba(243,232,204,0.6)', fontStyle: 'italic',
-        }}>A realm forged in fire, crowned in gold</p>
+          fontSize: 'clamp(2rem, 6vw, 4rem)', fontWeight: 900, margin: 0, letterSpacing: '0.06em',
+          background: 'linear-gradient(135deg, #6B5414 0%, #9C7A24 12%, #D4AF37 28%, #E8C766 42%, #F3E8CC 50%, #E8C766 58%, #D4AF37 72%, #9C7A24 88%, #6B5414 100%)',
+          backgroundSize: '200% auto',
+          WebkitBackgroundClip: 'text', backgroundClip: 'text', WebkitTextFillColor: 'transparent',
+          animation: 'gold-flow 5s linear infinite',
+          filter: 'drop-shadow(0 4px 14px rgba(0,0,0,0.7))',
+        }}>KINGDOM 846</h1>
 
         {/* Divider */}
-        <div style={{
-          marginTop: '1.25rem', width: '180px', height: '1px',
-          background: 'linear-gradient(90deg, transparent, rgba(212,175,55,0.5), transparent)',
-        }} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', margin: '0.4rem 0' }}>
+          <div style={{ width: '70px', height: '1px', background: 'linear-gradient(90deg, transparent, #D4AF37 50%, transparent)' }} />
+          <span style={{ color: '#D4AF37', opacity: 0.5, fontSize: '11px', textShadow: '0 0 8px rgba(212,175,55,0.4)' }}>✦ ◆ ✦</span>
+          <div style={{ width: '70px', height: '1px', background: 'linear-gradient(90deg, transparent, #D4AF37 50%, transparent)' }} />
+        </div>
+
+        {/* Tagline */}
+        <p style={{
+          fontSize: 'clamp(0.85rem, 2vw, 1.1rem)',
+          color: '#D4AF37', opacity: 0.65, fontStyle: 'italic', letterSpacing: '0.04em',
+          textShadow: '0 2px 8px rgba(0,0,0,0.8)',
+        }}>Where legends are forged in fire and crowned in gold</p>
 
         {/* Enter button */}
         <button
           onClick={enter}
           style={{
-            marginTop: '1.25rem', padding: '0.8rem 2.5rem',
-            fontSize: '0.85rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.15em',
-            color: '#0E1220',
-            background: 'linear-gradient(180deg, #E8C766, #D4AF37)',
-            border: '1px solid #9C7A24', borderRadius: '0.5rem', cursor: 'pointer',
-            boxShadow: '0 6px 24px -6px rgba(212,175,55,0.7), inset 0 1px 0 rgba(255,255,255,0.25)',
-            transition: 'all 0.2s ease', display: 'flex', alignItems: 'center', gap: '0.5rem',
+            marginTop: '0.75rem', padding: '15px 44px',
+            fontSize: '13px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.2em',
+            color: '#0a0e1a',
+            background: 'linear-gradient(135deg, #6B5414 0%, #9C7A24 15%, #D4AF37 30%, #E8C766 45%, #F3E8CC 50%, #E8C766 55%, #D4AF37 70%, #9C7A24 85%, #6B5414 100%)',
+            backgroundSize: '200% auto',
+            border: 'none', borderRadius: '6px', cursor: 'pointer', position: 'relative', overflow: 'hidden',
+            boxShadow: '0 5px 22px rgba(212,175,55,0.35), 0 2px 8px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.4), inset 0 -2px 4px rgba(0,0,0,0.15)',
+            animation: 'btn-shimmer 4s linear infinite',
+            transition: 'transform 0.3s ease, box-shadow 0.3s ease',
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.transform = 'translateY(-2px) scale(1.04)'
-            e.currentTarget.style.boxShadow = '0 12px 36px -6px rgba(212,175,55,0.9), inset 0 1px 0 rgba(255,255,255,0.35)'
-            e.currentTarget.style.filter = 'brightness(1.1)'
+            e.currentTarget.style.transform = 'translateY(-3px) scale(1.04)'
+            e.currentTarget.style.boxShadow = '0 10px 32px rgba(212,175,55,0.45), 0 4px 12px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.5), inset 0 -2px 4px rgba(0,0,0,0.15)'
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.transform = 'translateY(0) scale(1)'
-            e.currentTarget.style.boxShadow = '0 6px 24px -6px rgba(212,175,55,0.7), inset 0 1px 0 rgba(255,255,255,0.25)'
-            e.currentTarget.style.filter = 'brightness(1)'
+            e.currentTarget.style.boxShadow = '0 5px 22px rgba(212,175,55,0.35), 0 2px 8px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.4), inset 0 -2px 4px rgba(0,0,0,0.15)'
           }}
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-            <path d="M12 2L4 7v6c0 5.5 3.8 10.7 8 12 4.2-1.3 8-6.5 8-12V7l-8-5z" />
-          </svg>
           Enter the Realm
         </button>
+
+        {/* Loading dots */}
+        <div style={{ display: 'flex', gap: '8px', marginTop: '0.5rem' }}>
+          {[0,1,2].map(i => (
+            <span key={i} style={{
+              width: '6px', height: '6px', borderRadius: '50%', background: '#D4AF37',
+              boxShadow: '0 0 8px rgba(212,175,55,0.4)',
+              animation: `dot-pulse 1.5s ease-in-out ${i * 0.2}s infinite`,
+            }} />
+          ))}
+        </div>
       </div>
 
       <style>{`
         @keyframes splash-fade { to { opacity: 0; visibility: hidden; } }
         .splash-fade-out { animation: splash-fade 1.2s ease-in forwards; }
-        @keyframes bg-zoom { from { transform: scale(1.15); } to { transform: scale(1); } }
+        @keyframes bg-zoom { 0% { transform: scale(1); } 100% { transform: scale(1.08); } }
         @keyframes ray-flicker { 0%,100% { opacity: 0.3; } 50% { opacity: 0.7; } }
-        @keyframes float-up {
-          0% { transform: translateY(0) scale(0.5); opacity: 0; }
+        @keyframes ember-rise {
+          0% { opacity: 0; transform: translateY(0) translateX(0) scale(1); }
           10% { opacity: 0.8; }
-          90% { opacity: 0.5; }
-          100% { transform: translateY(-100vh) scale(1.2); opacity: 0; }
+          80% { opacity: 0.4; }
+          100% { opacity: 0; transform: translateY(-100vh) translateX(20px) scale(0.2); }
         }
-        @keyframes ring-expand {
-          0% { transform: translate(-50%,-50%) scale(1); opacity: 0.5; }
-          100% { transform: translate(-50%,-50%) scale(4); opacity: 0; }
-        }
-        @keyframes spin-cw { to { transform: rotate(360deg); } }
-        @keyframes spin-ccw { to { transform: rotate(-360deg); } }
-        @keyframes shield-pulse {
-          0%,100% { filter: drop-shadow(0 0 8px rgba(212,175,55,0.4)); }
-          50% { filter: drop-shadow(0 0 22px rgba(212,175,55,0.8)); }
-        }
+        @keyframes spin-cw { to { transform: translate(-50%, -50%) rotate(360deg); } }
+        @keyframes halo-pulse { 0%,100% { opacity: 0.4; transform: translate(-50%, -50%) scale(1); } 50% { opacity: 0.9; transform: translate(-50%, -50%) scale(1.15); } }
+        @keyframes gold-flow { to { background-position: 200% center; } }
+        @keyframes btn-shimmer { to { background-position: 200% center; } }
+        @keyframes crest-float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+        @keyframes frame-glow { 0%,100% { border-color: rgba(212,175,55,0.15); } 50% { border-color: rgba(212,175,55,0.3); } }
+        @keyframes dot-pulse { 0%,80%,100% { opacity: 0.2; transform: scale(1); } 40% { opacity: 1; transform: scale(1.5); } }
         @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+        @media (max-width: 768px) {
+          .splash-fade-out img[alt="Kingdom 846 Royal Crest"] { max-height: 28vh !important; }
+        }
+        @media (max-width: 480px) {
+          .splash-fade-out img[alt="Kingdom 846 Royal Crest"] { max-height: 22vh !important; }
+        }
       `}</style>
     </div>
   )

@@ -35,9 +35,16 @@ export default function Settings() {
         {user ? (
           <div className="mt-3 space-y-3">
             <div className="flex items-center gap-3 rounded-lg border border-gold/15 bg-white/5 p-3">
-              <div className="grid h-12 w-12 place-items-center rounded-full bg-gradient-to-b from-gold-bright to-gold text-sm font-bold text-ink">
-                {String(user.display_name || user.username).slice(0, 2).toUpperCase()}
-              </div>
+              <img
+                src={user.role === 'admin' ? './assets/avatars/spartan.webp' : ({
+                  'ryo': './assets/avatars/ryo-lord.webp',
+                  'kzk': './assets/avatars/kzk-lord.webp',
+                  'sas': './assets/avatars/sas-lord.webp',
+                  'ice': './assets/avatars/ice-lord.webp',
+                }[user.alliance_slug] || './assets/avatars/queen.webp')}
+                alt={user.display_name || user.username}
+                className="grid h-12 w-12 place-items-center rounded-full object-cover ring-2 ring-gold/50"
+              />
               <div className="flex-1">
                 <div className="font-display text-lg font-bold text-parchment">{user.display_name || user.username}</div>
                 <div className="text-xs text-parchment/50">

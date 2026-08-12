@@ -152,7 +152,16 @@ export default function MasterConsole() {
         <div className="space-y-2">
           {leaders.map((l) => (
             <div key={l.id} className="lift flex items-center gap-3 rounded-lg border border-gold/15 bg-white/5 px-3 py-2.5">
-              <div className="grid h-9 w-9 flex-shrink-0 place-items-center rounded-md bg-gold/10 font-display text-xs font-bold text-gold">{l.alliance_tag?.replace(/[\[\]]/g, '')}</div>
+              <img
+                src={l.role === 'admin' ? './assets/avatars/spartan.webp' : ({
+                  'ryo': './assets/avatars/ryo-lord.webp',
+                  'kzk': './assets/avatars/kzk-lord.webp',
+                  'sas': './assets/avatars/sas-lord.webp',
+                  'ice': './assets/avatars/ice-lord.webp',
+                }[l.alliance_slug] || './assets/avatars/queen.webp')}
+                alt={l.display_name}
+                className="grid h-9 w-9 flex-shrink-0 place-items-center rounded-md object-cover ring-1 ring-gold/30"
+              />
               <div className="min-w-0 flex-1">
                 <div className="truncate font-semibold text-parchment">{l.display_name} <span className="text-parchment/40">· {l.username}</span></div>
                 <div className="text-[11px] text-parchment/40">{l.alliance_tag} {l.alliance_slug?.toUpperCase()}</div>

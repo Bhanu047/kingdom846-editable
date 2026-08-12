@@ -158,7 +158,7 @@ function Shell() {
     )
   }
 
-  const sidebarUser = user ? { name: user.display_name || user.username, role: user.role } : null
+  const sidebarUser = user ? { name: user.display_name || user.username, role: user.role, alliance_slug: user.alliance_slug } : null
   const handleSignOut = () => { signOut(); navigate('dashboard') }
 
   // Lazy-load Login modal only when needed

@@ -13,6 +13,8 @@ import ChatAssistant from './components/ChatAssistant'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { SiteDataProvider } from './context/SiteDataContext'
 import { nav, timeline, guides, news } from './data/kingdom'
+import RoyalAtmosphere from './components/RoyalAtmosphere'
+import useScrollReveal from './hooks/useScrollReveal'
 
 function useESTClock() {
   const [time, setTime] = useState('')
@@ -158,6 +160,7 @@ function Shell() {
     )
   }
 
+  useScrollReveal()
   const sidebarUser = user ? { name: user.display_name || user.username, role: user.role, alliance_slug: user.alliance_slug } : null
   const handleSignOut = () => { signOut(); navigate('dashboard') }
 
@@ -192,6 +195,7 @@ function Shell() {
       )}
 
       <main className="flex flex-1 flex-col overflow-hidden">
+        <RoyalAtmosphere />
         <header className="royal-header flex items-center gap-3 px-4 py-3 md:px-6">
           <button onClick={() => setMobileNav(true)} className="text-parchment/70 hover:text-parchment md:hidden">
             <Icon name="home" size={20} />
@@ -199,7 +203,7 @@ function Shell() {
           <img src="./assets/crest-846.png" alt="" className="crest-pulse h-8 w-8 hidden sm:block" />
           <div className="flex-1">
             <div className="eyebrow">Kingdom 846 · {titles[page] || 'Page'}</div>
-            <div className="font-display text-base font-bold text-gold-bright">{titles[page] || 'Page'}</div>
+            <div className="font-display text-base font-bold text-gold-bright cinematic-glow">{titles[page] || 'Page'}</div>
           </div>
           {/* Live EST Clock */}
           <div className="flex flex-col items-end mr-2" onClick={clockEgg.onClick} style={{ cursor: 'pointer' }}>
@@ -231,7 +235,7 @@ function Shell() {
         </header>
 
         <div className="flex-1 overflow-y-auto overflow-x-hidden overscroll-contain p-4 md:p-6" style={{ WebkitOverflowScrolling: 'touch' }}>
-          <div key={page} className="page-enter mx-auto max-w-6xl">{render()}</div>
+          <div key={page} className="page-curtain-enter mx-auto max-w-6xl">{render()}</div>
           {/* Footer */}
           <footer className="mt-12 pt-6 pb-4 relative">
             <div className="flex flex-col items-center gap-2 text-center">

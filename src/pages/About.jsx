@@ -39,7 +39,7 @@ export default function About() {
   return (
     <div className="space-y-6 overflow-x-hidden">
       {/* Hero */}
-      <Panel glow className="relative overflow-hidden p-0 gold-corners">
+      <Panel className="reveal" glow className="relative overflow-hidden p-0 gold-corners">
         <div className="grid gap-0 md:grid-cols-2">
           <div className="relative h-64 md:h-full">
             <ArtImage src="./assets/art-kingdom-status.png" alt="Kingdom 846 castle at sunset" className="h-full w-full drift-slow" />

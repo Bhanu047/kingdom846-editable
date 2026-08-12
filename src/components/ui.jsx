@@ -1,7 +1,7 @@
 import Icon from './Icon'
 
 export function Panel({ children, className = '', glow }) {
-  return <div className={`panel p-5 ${glow ? 'panel-glow gold-corners' : ''} ${className}`}>{children}</div>
+  return <div className={`panel p-5 royal-card-hover ${glow ? 'panel-glow gold-corners' : ''} ${className}`}>{children}</div>
 }
 
 export function SectionTitle({ eyebrow, title, action }) {

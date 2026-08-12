@@ -30,7 +30,7 @@ export default function Guides() {
 
   return (
     <div className="space-y-4">
-      <Panel glow className="gold-corners">
+      <Panel className="reveal" glow className="gold-corners">
         <RoyalSectionHeader icon="book" eyebrow="Knowledge Base" title="Strategy & Guides" />
         <p className="text-sm text-parchment/50">
           Auto-synced from Kingshot Wiki · {filteredGuides.length} guides available

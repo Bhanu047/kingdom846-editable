@@ -9,28 +9,33 @@ export default function SplashScreen({ onEnter }) {
   useEffect(() => {
     document.body.style.overflow = 'hidden'
     
-    // Autoplay fanfare - try immediately, fallback on any interaction
+    // Autoplay fanfare immediately on page load
+    // Trick: start muted (browsers allow muted autoplay), then unmute
     if (audioRef.current) {
-      audioRef.current.volume = 0.7
-      audioRef.current.play().catch(() => {
-        // Browser blocked autoplay - play on ANY first interaction
-        const playOnInteract = () => {
-          audioRef.current?.play().catch(() => {})
-          document.removeEventListener('mousemove', playOnInteract)
-          document.removeEventListener('touchstart', playOnInteract)
-          document.removeEventListener('touchmove', playOnInteract)
-          document.removeEventListener('keydown', playOnInteract)
-          document.removeEventListener('click', playOnInteract)
-          document.removeEventListener('scroll', playOnInteract)
-          document.removeEventListener('pointermove', playOnInteract)
-        }
-        document.addEventListener('mousemove', playOnInteract)
-        document.addEventListener('touchstart', playOnInteract, { passive: true })
-        document.addEventListener('touchmove', playOnInteract, { passive: true })
-        document.addEventListener('keydown', playOnInteract)
-        document.addEventListener('click', playOnInteract)
-        document.addEventListener('scroll', playOnInteract, { passive: true })
-        document.addEventListener('pointermove', playOnInteract)
+      const audio = audioRef.current
+      audio.muted = true
+      audio.volume = 0.7
+      
+      // Start playing muted (this is allowed by all browsers)
+      audio.play().then(() => {
+        // Immediately unmute once playing starts
+        audio.muted = false
+      }).catch(() => {
+        // If still blocked, try unmuting after a tiny delay
+        setTimeout(() => {
+          audio.muted = false
+          audio.play().catch(() => {
+            // Last resort: unmute and play on the very first interaction
+            const unmuteAndPlay = () => {
+              audio.muted = false
+              audio.currentTime = 0
+              audio.play().catch(() => {})
+            }
+            document.addEventListener('click', unmuteAndPlay, { once: true })
+            document.addEventListener('touchstart', unmuteAndPlay, { once: true, passive: true })
+            document.addEventListener('keydown', unmuteAndPlay, { once: true })
+          })
+        }, 100)
       })
     }
     
@@ -59,7 +64,7 @@ export default function SplashScreen({ onEnter }) {
       style={{ background: '#060810' }}
     >
       {/* Autoplay royal fanfare - plays when website opens */}
-      <audio ref={audioRef} autoPlay>
+      <audio ref={audioRef} autoPlay muted>
         <source src="./assets/fanfare.wav" type="audio/wav" />
       </audio>
       {/* Enter sound - plays when user taps Enter the Realm */}

@@ -1,8 +1,9 @@
 import { Panel, SectionTitle, Pill, ArtImage } from '../components/ui'
 import Icon from '../components/Icon'
-import { kingdom, kvkHistory, kvkStats, transfers } from '../data/kingdom'
+import { kingdom } from '../data/kingdom'
+import { tracker846 } from '../data/tracker846'
 
-const latestKvk = { kvk: 17, date: null, opponent: 'K795', opponentRank: null, quality: null, prep: null, battle: null, current: true }
+const latestKvk = { ...tracker846.kvk.latest, current: true }
 
 function MetricCard({ label, value, sub }) {
   return (
@@ -26,7 +27,7 @@ function fmtDate(iso) {
 }
 
 export default function About() {
-  const history = [latestKvk, ...kvkHistory.filter((k) => k.kvk !== latestKvk.kvk)]
+  const history = tracker846.kvk.history.map((k) => ({ ...k, current: k.kvk === latestKvk.kvk }))
   return (
     <div className="space-y-6 overflow-x-hidden">
       <Panel glow className="relative overflow-hidden p-0 gold-corners">
@@ -37,7 +38,7 @@ export default function About() {
           </div>
           <div className="p-7 md:p-9">
             <div className="flex flex-wrap items-center gap-2">
-              <Pill tone="gold">{kingdom.tier}</Pill>
+              <Pill tone="gold">{tracker846.tier}</Pill>
               <Pill tone="blue">KvK #{latestKvk.kvk}</Pill>
               <Pill tone="red">vs {latestKvk.opponent}</Pill>
             </div>
@@ -56,19 +57,20 @@ export default function About() {
       </Panel>
 
       <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
-        <MetricCard label="KvK Rating" value={kingdom.kvkRating} sub={`Global Rank #${kingdom.kvkCurrentRank}`} />
-        <MetricCard label="Atlas Score" value={kingdom.atlasScore} sub={`Rank #${kingdom.atlasRank} · ${kingdom.atlasPercentile}`} />
+        <MetricCard label="KvK Rating" value={tracker846.kvk.rating.toFixed(3)} sub={`Global Rank #${tracker846.kvk.rank}`} />
+        <MetricCard label="Atlas Score" value={tracker846.atlas.score.toFixed(2)} sub={`Rank #${tracker846.atlas.rank}`} />
         <MetricCard label="Latest KvK" value={`#${latestKvk.kvk}`} sub={`K846 vs ${latestKvk.opponent}`} />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
         <Panel className="lg:col-span-2">
           <SectionTitle eyebrow="War Record" title="Kingdom vs Kingdom History" action={<Pill tone="gold">Latest · {latestKvk.opponent}</Pill>} />
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
             <Stat label="Latest Opponent" value={latestKvk.opponent} tone="gold" />
-            <Stat label="Dominations" value={kvkStats.dominations} />
-            <Stat label="Comebacks" value={kvkStats.comebacks} />
-            <Stat label="Reversals" value={kvkStats.reversals} />
+            <Stat label="Dominations" value={tracker846.kvk.dominations} />
+            <Stat label="Comebacks" value={tracker846.kvk.comebacks} />
+            <Stat label="Reversals" value={tracker846.kvk.reversals} />
+            <Stat label="Invasions" value={tracker846.kvk.invasions} />
           </div>
           <div className="mt-4 gold-divider" />
           <div className="mt-4 overflow-x-auto rounded-lg border border-gold/15">
@@ -88,8 +90,8 @@ export default function About() {
                   <tr key={k.kvk} className={`border-t border-white/5 hover:bg-white/5 ${k.current ? 'bg-gold/[.055]' : ''}`}>
                     <td className="px-3 py-2 text-parchment/60"><span className={k.current ? 'font-bold text-gold-bright' : ''}>#{k.kvk}</span>{k.current && <span className="ml-2 rounded border border-gold/25 bg-gold/10 px-1.5 py-0.5 text-[8px] uppercase tracking-wider text-gold">Latest</span>}</td>
                     <td className="px-3 py-2 whitespace-nowrap text-parchment/50">{fmtDate(k.date)}</td>
-                    <td className="px-3 py-2 font-medium text-parchment">{k.opponent}{k.opponentRank ? <span className="ml-1 text-[10px] text-parchment/40">#{k.opponentRank}</span> : null}</td>
-                    <td className="px-3 py-2 text-gold-bright">{typeof k.quality === 'number' ? k.quality.toFixed(2) : '—'}</td>
+                    <td className="px-3 py-2 font-medium text-parchment">{k.opponent}<span className="ml-1 text-[10px] text-parchment/40">#{k.opponentRank}</span></td>
+                    <td className="px-3 py-2 text-gold-bright">{k.quality.toFixed(2)}</td>
                     <td className="px-3 py-2"><ResultBadge r={k.prep} /></td>
                     <td className="px-3 py-2"><ResultBadge r={k.battle} /></td>
                   </tr>
@@ -98,16 +100,16 @@ export default function About() {
             </table>
           </div>
           <div className="mt-4 grid grid-cols-2 gap-3">
-            <MiniStat label="Prep Record" record={kvkStats.prepRecord} rate={kvkStats.prepWinRate} streak={kvkStats.prepStreak} />
-            <MiniStat label="Battle Record" record={kvkStats.battleRecord} rate={kvkStats.battleWinRate} streak={kvkStats.battleBestStreak} />
+            <MiniStat label="Prep Record" record={tracker846.kvk.prep.record} rate={tracker846.kvk.prep.winRate} streak={tracker846.kvk.prep.best} />
+            <MiniStat label="Battle Record" record={tracker846.kvk.battle.record} rate={tracker846.kvk.battle.winRate} streak={tracker846.kvk.battle.best} />
           </div>
         </Panel>
 
         <div className="space-y-6 overflow-x-hidden">
           <Panel>
-            <SectionTitle eyebrow="Mobility" title="Transfer Status" action={<Pill tone="gold">{kingdom.transferStatus}</Pill>} />
+            <SectionTitle eyebrow="Mobility" title="Transfer Status" action={<Pill tone="gold">{tracker846.transfers[0].status}</Pill>} />
             <div className="mt-3 space-y-2">
-              {transfers.map((t) => (
+              {tracker846.transfers.map((t) => (
                 <div key={t.transfer} className="flex items-center justify-between rounded-lg bg-white/5 px-3 py-2">
                   <div>
                     <div className="text-sm font-semibold text-parchment">Transfer #{t.transfer}</div>
@@ -128,7 +130,7 @@ export default function About() {
             { title: 'One Crown', body: 'Four alliances, one kingdom. Every decision serves the realm first. Rallies are shared, intelligence is pooled, and the kingdom moves as one body in war.' },
             { title: 'Discipline Wins Wars', body: 'Shield coverage, march discipline, reinforcement timing, and prep-phase coordination turn strength into results.' },
             { title: 'Honor in Diplomacy', body: 'Clear communication and reliable coordination keep the realm stable between wars and focused when KvK begins.' },
-            { title: 'Forged in Fire', body: `The recorded war history now leads into KvK ${latestKvk.kvk} against ${latestKvk.opponent}. Every opponent adds another chapter to Kingdom 846.` },
+            { title: 'Forged in Fire', body: `The recorded war history now leads through KvK ${latestKvk.kvk} against ${latestKvk.opponent}: preparation won and battle won.` },
           ].map((d) => (
             <div key={d.title} className="rounded-lg border border-gold/15 bg-white/5 p-5">
               <div className="font-display text-lg font-bold text-gold-bright">{d.title}</div>

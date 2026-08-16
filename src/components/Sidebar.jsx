@@ -22,7 +22,10 @@ export default function Sidebar({ active, onNavigate, onLogin, onSignOut, user, 
       <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-gold/5 to-transparent pointer-events-none" />
       <div className="absolute top-0 right-0 bottom-0 w-px bg-gradient-to-b from-transparent via-gold/15 to-transparent pointer-events-none" />
       <div className="flex items-center gap-3 px-4 py-5 relative z-10">
-        <img src="./assets/crest-846.png?v=20260816-verified" alt="Kingdom 846 crest" className="sidebar-crest h-12 w-12 rounded-lg float-anim" />
+        <div className="relative grid h-14 w-14 shrink-0 place-items-center">
+          <div className="absolute inset-1 rounded-full bg-gold/5 blur-md" />
+          <img src="./assets/crest-846.png?v=20260816-transparent" alt="Kingdom 846 crest" className="sidebar-crest relative h-14 w-14 object-contain float-anim" style={{ background: 'transparent', border: 0, boxShadow: 'none', borderRadius: 0 }} />
+        </div>
         <div className="leading-tight">
           <div className="gradient-gold font-display text-sm font-bold tracking-wide">KINGDOM 846</div>
           <div className="text-[10px] uppercase tracking-[0.25em] text-gold/40">Royal Portal</div>

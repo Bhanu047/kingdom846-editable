@@ -231,48 +231,45 @@ export const guides = [
     excerpt: 'Optimal trap formations and reward-maximizing math for the bear hunt.',
     body: [
       'The Bear Hunt is a PvE event where alliances rally to defeat a bear boss. Higher damage means better rewards for all participants.',
-      'Formation: Use your strongest infantry and cavalry heroes in the rally. The bear has high defense, so bring heroes with armor-piercing or percentage-based damage skills.',
-      'Trap Placement: Place traps at the rally point before the bear spawns. Each trap adds bonus damage to the rally. More traps = more damage = better rewards.',
-      'Timing: Join the rally within the first 10 seconds for maximum damage bonus. Late joiners contribute less damage and get fewer rewards.',
-      'Reward Tiers: Damage thresholds determine reward tiers. Coordinate with your alliance to ensure everyone hits the minimum damage threshold for top-tier rewards.',
-      'Pro Tip: Use speedups to train extra troops before Bear Hunt days. More troops in the rally means more damage.',
+      'Formation: Use your strongest infantry and cavalry heroes in the rally. The bear has high defense, so bring heroes with armor-piercing or damage-amplification skills.',
+      'Rally Timing: Join rallies as soon as they appear. Full rallies do significantly more damage than partial ones. Coordinate with your alliance to stagger rally starts so everyone can participate.',
+      'Stamina: Save stamina potions for Bear Hunt days. Each rally costs stamina, and running out early means missing reward tiers.',
+      'Rewards: Damage milestones award progressively better gear materials, speedups, and resources. Alliance total damage also unlocks shared chests.',
+      'Pro tip: Don\'t launch solo attacks during the event — rally damage is always more efficient per stamina spent.',
     ].join('\n\n')
   },
   {
-    id: 'castle-rotation', title: 'Castle Rotation Strategy', category: 'Strategy', art: './assets/art-castle-rotation.png', read: '10 min',
-    excerpt: 'Optimizing march rotation through the castle gateway during KvK.',
+    id: 'castle-battle', title: 'Castle Battle Tactics', category: 'PvP', art: './assets/art-castle-battle.png', read: '8 min',
+    excerpt: 'Rally timing, garrison swaps, and reinforcement discipline for castle fights.',
     body: [
-      'Castle rotation is the strategy of cycling marches through the castle gateway during KvK to maintain constant pressure and maximize points.',
-      'Wave 1: Send your top 2 marches immediately when the castle opens. These should be your strongest compositions with your best heroes.',
-      'Wave 2: As Wave 1 marches return (heavily damaged), send your next 2 marches. This ensures the castle is never left undefended.',
-      'Rotation Timing: A full rotation cycle takes about 3-4 minutes depending on march speed and hospital healing time. Coordinate with alliance members to stagger your waves.',
-      'Gateway Control: The alliance that controls the gateway can block enemy marches. Station a strong garrison at the gateway to slow enemy rotations.',
-      'Hospital Management: Keep hospitals clear between waves. Use healing speedups strategically — don\'t waste them on low-tier troops. Prioritize healing your strongest marches first.',
-      'Communication: Use Discord voice chat during castle battles. Call out enemy movements, coordinate wave timing, and alert the team when your marches are returning.',
+      'Castle Battles are won by coordination, not individual power. The strongest kingdom can lose if rallies are mistimed or reinforcements are slow.',
+      'Rally Leaders: Designate 2-3 primary rally leaders before the battle. Everyone else should join their rallies rather than launching competing ones.',
+      'Garrison Management: Keep your strongest defender in the castle at all times. Rotate garrison leaders when their troops drop below 60% to avoid a sudden collapse.',
+      'Reinforcement Discipline: Send your best troops to the castle, not your entire march. Keep enough troops home to join offensive rallies.',
+      'Timing: Coordinate rally launches so multiple attacks land within a 5-second window. This prevents the enemy from healing between hits.',
+      'Communication: Use voice chat during castle battles. Text chat is too slow for real-time rally coordination.',
     ].join('\n\n')
   },
   {
-    id: 'fire-tyrant', title: 'Fire Tyrant — World Boss Guide', category: 'Boss', art: './assets/art-fire-tyrant.png', read: '7 min',
-    excerpt: 'Anti-burn gear, rally timing, and damage-race strategy for the dragon world boss.',
+    id: 'transfer-guide', title: 'Transfer Season Guide', category: 'Kingdom', art: './assets/art-transfer.png', read: '5 min',
+    excerpt: 'How transfer groups, invitations, and kingdom capacity work.',
     body: [
-      'The Fire Tyrant is a world boss that deals heavy burn damage. Preparation is critical — unprepared marches will be wiped instantly.',
-      'Anti-Burn Gear: Equip heroes with burn-resistant gear. Fire resistance charms and anti-burn accessories are essential. Check your gear before the event starts.',
-      'Rally Composition: Use heroes with high HP and defense stats. Infantry-heavy compositions tend to survive longer against the Fire Tyrant\'s AoE burn attacks.',
-      'Timing: The Fire Tyrant spawns at a set time. Have your rally ready 5 minutes before spawn. The first rally to hit gets a damage bonus.',
-      'Damage Race: This is a damage race, not a survival fight. Maximize DPS even if your marches die — every point of damage counts toward your reward tier.',
-      'Healing: Bring extra healing items. After each rally, heal immediately and rejoin. The faster you cycle marches, the more damage you contribute.',
-      'Rewards: Reward tiers are based on total damage dealt. Coordinate with your alliance to ensure everyone participates — alliance-wide rewards scale with total participation.',
+      'Transfer events allow players to move between kingdoms during designated windows. Each kingdom is assigned to a Transfer Group based on age and power.',
+      'Eligibility: Your account must meet the power requirements for the destination kingdom. High-power players may require a Special Invitation from the King.',
+      'Invitations: Kingdom leadership receives a limited number of Special Invitations each transfer season. These are reserved for players who will strengthen the kingdom roster.',
+      'Before Transferring: Contact Kingdom 846 leadership on Discord. Do not transfer without approval — alliance spots and event schedules need to be coordinated.',
+      'After Arrival: Join your assigned alliance immediately, update your in-game name/tag if required, and introduce yourself in the kingdom Discord.',
     ].join('\n\n')
   },
   {
-    id: 'heroes', title: 'Commander & Hero Pairings', category: 'Combat', art: './assets/art-heroes.png', read: '12 min',
-    excerpt: 'Best hero synergies for rallies and field fights across generations.',
+    id: 'hero-meta', title: 'Hero & Formation Meta', category: 'Combat', art: './assets/art-hero-meta.png', read: '7 min',
+    excerpt: 'Building balanced marches and adapting to current hero generations.',
     body: [
-      'Hero pairings are critical for maximizing march effectiveness. Different hero combinations excel in different situations.',
-      'Rally Pairings: For castle rallies, pair a high-damage hero with a support hero that buffs attack or reduces enemy defense. Example: a Gen-5 DPS hero paired with a Gen-3 support hero that provides an attack buff.',
-      'Field Fight Pairings: For open-field combat, prioritize heroes with crowd control and mobility skills. A hero that can freeze or slow enemies paired with a high-burst damage hero is devastating in skirmishes.',
-      'Generation Synergy: Heroes from the same generation often have synergy bonuses. Check your hero roster for generation bonuses and build around them.',
-      'Gear Matters: A well-geared older hero can outperform a poorly-geared newer hero. Always gear up your top 3-5 heroes before investing in new ones.',
+      'A balanced march uses heroes whose skills complement each other. Don\'t just pick your three highest-power heroes — synergy matters more.',
+      'Infantry Heroes: Best for absorbing damage and holding positions. Prioritize defense, health, and damage-reduction skills.',
+      'Cavalry Heroes: Excel at burst damage and mobility. Pair with heroes that boost attack speed or critical hit chance.',
+      'Archer/Ranged Heroes: Provide sustained damage from the back line. Protect them with strong infantry in the front.',
+      'Hero Generations: New generations are generally stronger, but a fully-upgraded older hero can outperform a low-star new one. Finish your current heroes before investing in new ones.',
       'Pet Pairings: Don\'t forget pets. Some pets provide passive buffs that complement specific hero skills. Match your pet to your hero composition for maximum effect.',
       'Counter-Picking: In KvK, pay attention to what the enemy is fielding. If they are running infantry-heavy marches, counter with cavalry. Adaptability wins battles.',
     ].join('\n\n')
@@ -379,6 +376,20 @@ export const reputation = {
     { rating: 5.0, time: '4 months ago', text: 'Fun KvK match. Very organized castle battle and easy to get along with.' },
     { rating: 5.0, time: '3 months ago', text: 'The people were nice. It was a fun kvk' }
   ]
+}
+
+// Helper: given an original rotation date and a cycle length (in days),
+// roll forward in whole cycles until we land on the next upcoming date.
+// This keeps a recurring countdown (e.g. "crown rotates every 14 days")
+// correct forever, instead of freezing once the original date passes.
+export function nextRecurringDate(anchorIso, cycleDays) {
+  const cycleMs = cycleDays * 86400000
+  const anchor = new Date(anchorIso + 'T00:00:00').getTime()
+  const now = Date.now()
+  if (anchor >= now) return anchorIso
+  const cyclesElapsed = Math.ceil((now - anchor) / cycleMs)
+  const next = new Date(anchor + cyclesElapsed * cycleMs)
+  return next.toISOString().slice(0, 10)
 }
 
 // Helper: live countdown to a future ISO date from "now"

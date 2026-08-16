@@ -1,5 +1,7 @@
 let audioCtx = null
 let lastCue = ''
+let pendingGoTimer = null
+let pendingGoName = ''
 
 function ensureAudio() {
   try {
@@ -34,27 +36,40 @@ function tone(freq, duration, volume = 0.18, type = 'square', delay = 0) {
 
 function countdownBeep(number) {
   const freq = number === '3' ? 520 : number === '2' ? 620 : 740
-  tone(freq, 0.14, 0.18, 'square')
+  tone(freq, 0.16, 0.2, 'square')
 }
 
 function goBuzzer() {
-  // Strong double buzzer so every GO is unmistakable.
-  tone(980, 0.28, 0.28, 'sawtooth')
-  tone(760, 0.34, 0.24, 'square', 0.12)
+  // Loud, unmistakable triple-layer GO alarm.
+  tone(1050, 0.48, 0.42, 'sawtooth')
+  tone(780, 0.52, 0.36, 'square', 0.05)
+  tone(1180, 0.34, 0.30, 'sawtooth', 0.30)
+}
+
+function scheduleGuaranteedGo(name) {
+  if (pendingGoTimer) clearTimeout(pendingGoTimer)
+  pendingGoName = name
+  // The UI changes from 1 to GO about one second later. Scheduling from
+  // the audible "1" guarantees the GO alarm even if the DOM transition
+  // is too brief for MutationObserver on a device/browser.
+  pendingGoTimer = setTimeout(() => {
+    goBuzzer()
+    lastCue = `${pendingGoName}:GO`
+    pendingGoTimer = null
+  }, 950)
 }
 
 function inspectWarRoom() {
   if (window.location.hash !== '#/war-room') {
     lastCue = ''
+    if (pendingGoTimer) clearTimeout(pendingGoTimer)
+    pendingGoTimer = null
     return
   }
 
   const nowCalling = [...document.querySelectorAll('div')]
     .find((el) => el.textContent?.trim() === 'Now Calling')
-  if (!nowCalling) {
-    lastCue = ''
-    return
-  }
+  if (!nowCalling) return
 
   const panel = nowCalling.closest('.panel') || nowCalling.parentElement?.parentElement
   if (!panel) return
@@ -78,18 +93,23 @@ function inspectWarRoom() {
     }
   }
 
-  if (!cue) {
-    lastCue = ''
-    return
-  }
-  if (cue === lastCue) return
+  if (!cue || cue === lastCue) return
   lastCue = cue
 
-  if (cueType === 'go') goBuzzer()
-  else countdownBeep(cueType)
+  if (cueType === 'go') {
+    // If the scheduled alarm already fired for this player, do not double-play.
+    if (pendingGoTimer) {
+      clearTimeout(pendingGoTimer)
+      pendingGoTimer = null
+      goBuzzer()
+    }
+  } else {
+    countdownBeep(cueType)
+    if (cueType === '1') scheduleGuaranteedGo(name)
+  }
 }
 
-// A user gesture unlocks browser audio before the countdown begins.
+// User interaction unlocks Web Audio on browsers with autoplay restrictions.
 for (const eventName of ['pointerdown', 'keydown', 'touchstart']) {
   window.addEventListener(eventName, ensureAudio, { passive: true })
 }
@@ -98,5 +118,7 @@ const observer = new MutationObserver(inspectWarRoom)
 observer.observe(document.documentElement, { childList: true, subtree: true, characterData: true })
 window.addEventListener('hashchange', () => {
   lastCue = ''
+  if (pendingGoTimer) clearTimeout(pendingGoTimer)
+  pendingGoTimer = null
   setTimeout(inspectWarRoom, 0)
 })

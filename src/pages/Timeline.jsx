@@ -58,7 +58,6 @@ export default function Timeline() {
             <h2 className="mt-1 font-display text-2xl font-bold text-parchment">Kingdom 846 Timeline</h2>
             <p className="mt-1 text-sm text-parchment/60">Founded {new Date(kingdom.created + 'T00:00:00').toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })} · Day {kingdom.currentDay}. Every hero generation, truegold tier, feature unlock, and KvK first in the kingdom's history.</p>
           </div>
-          <a href={kingdom.timelineSource} target="_blank" rel="noreferrer" className="btn-secondary"><Icon name="arrow" size={14} /> Live Timeline</a>
         </div>
       </Panel>
 
@@ -108,9 +107,7 @@ export default function Timeline() {
         </div>
       </Panel>
 
-      <p className="text-center text-[10px] text-parchment/30">
-        Timeline data from <a href={kingdom.timelineSource} target="_blank" rel="noreferrer" className="text-gold/70 hover:text-gold-bright underline">Kingshot Optimizer</a>. Items marked "Predicted" are algorithmic estimates.
-      </p>
+      <p className="text-center text-[10px] text-parchment/30">Kingdom 846 milestone schedule</p>
     </div>
   )
 }

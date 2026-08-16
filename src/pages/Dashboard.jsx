@@ -3,6 +3,7 @@ import { Panel, SectionTitle, Pill, ArtImage } from '../components/ui'
 import Icon from '../components/Icon'
 import { RoyalSectionHeader, GraphicTile } from '../components/VisualElements'
 import { kingdom, countdownTo, nextRecurringDate, BANNERS } from '../data/kingdom'
+import { tracker846 } from '../data/tracker846'
 import { apiJson } from '../lib/api'
 import { useAuth } from '../context/AuthContext'
 import { useSiteData } from '../context/SiteDataContext'
@@ -134,14 +135,14 @@ export default function Dashboard({ onNavigate }) {
         </button>
       </div>
 
-      {/* Kingdom Performance — summary stats; full detail in About Kingdom */}
+      {/* Kingdom Performance — verified Atlas + Optimizer summary; full detail in About Kingdom */}
       <Panel glow className="glass-panel">
         <RoyalSectionHeader icon="trophy" eyebrow="Records" title="Kingdom Performance" action={<button onClick={() => onNavigate('about')} className="text-xs text-gold hover:underline">View About →</button>} />
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <KvKStat onClick={about} label="S-Tier Atlas" value={kingdom.atlasScore} sub={`Rank #${kingdom.atlasRank} · ${kingdom.atlasPercentile}`} icon="landmark" />
-          <KvKStat onClick={about} label="Mystic Trials" value={kingdom.mysticScore.toLocaleString()} sub={`Rank #${kingdom.mysticRank} · ${kingdom.mysticPercentile}`} icon="trophy" />
-          <KvKStat onClick={about} label="Total KvKs" value={kingdom.kvkOverview.totalKvks} sub="All-time" icon="crown" />
-          <KvKStat onClick={about} label="Transfer Status" value={kingdom.transferStatus} sub="Last KvK" icon="shield" />
+          <KvKStat onClick={about} label="S-Tier Atlas" value={tracker846.atlas.score.toFixed(2)} sub={`Rank #${tracker846.atlas.rank}`} icon="landmark" />
+          <KvKStat onClick={about} label="KvK Rating" value={tracker846.kvk.rating.toFixed(3)} sub={`Global Rank #${tracker846.kvk.rank}`} icon="trophy" />
+          <KvKStat onClick={about} label="Total KvKs" value={tracker846.kvk.total} sub={`Prep ${tracker846.kvk.prep.record} · Battle ${tracker846.kvk.battle.record}`} icon="crown" />
+          <KvKStat onClick={about} label="Dominations" value={tracker846.kvk.dominations} sub={`${tracker846.kvk.dominationRate}% · Latest vs ${tracker846.kvk.latest.opponent}`} icon="shield" />
         </div>
       </Panel>
 

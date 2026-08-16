@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Panel, SectionTitle, Pill, ArtImage } from '../components/ui'
+import { Panel, Pill, ArtImage } from '../components/ui'
 import Icon from '../components/Icon'
 import { timeline, countdownTo, kingdom } from '../data/kingdom'
 
@@ -8,6 +8,15 @@ const catTone = {
 }
 
 const filters = ['All', 'Upcoming', 'Heroes', 'Pets', 'PvP', 'Truegold']
+
+function timelineArt(item) {
+  if (!item) return './assets/hero-timeline-new.webp'
+  if (item.name === 'First Anniversary') return './assets/news-throne-room.png'
+  if (item.name === 'Generation 6 Heroes (Triton, Sophia, Yang)') return './assets/art-heroes.png'
+  if (item.name === 'Generation 6 Pets (Regal White Lion, Ironclad War Elephant)') return './assets/hero-timeline-new.webp'
+  if (item.name === 'First Flamedragon Tyrant Competition') return './assets/art-castle-battle.png'
+  return item.art || './assets/hero-timeline-new.webp'
+}
 
 export default function Timeline() {
   const [filter, setFilter] = useState('Upcoming')
@@ -22,17 +31,17 @@ export default function Timeline() {
 
   return (
     <div className="space-y-6">
-      {/* Hero with next milestone countdown */}
       {next && (
-        <Panel glow className="relative overflow-hidden p-0">
-          <div className="relative h-52 md:h-64">
-            <ArtImage src={next.art || './assets/art-castle-rotation.png'} alt={next.name} className="h-full w-full" />
-            <div className="absolute inset-0 bg-gradient-to-r from-ink via-ink/70 to-transparent" />
-            <div className="absolute inset-y-0 left-0 flex flex-col justify-center p-6 md:p-10">
-              <div className="eyebrow">Next Milestone</div>
+        <Panel glow className="relative overflow-hidden p-0 gold-corners">
+          <div className="relative h-56 overflow-hidden md:h-72">
+            <ArtImage src={timelineArt(next)} alt={next.name} className="h-full w-full drift-slow" />
+            <div className="absolute inset-0 bg-gradient-to-r from-ink via-ink/75 to-ink/10" />
+            <div className="absolute inset-0" style={{ background: 'radial-gradient(circle at 70% 45%, rgba(212,175,55,.12), transparent 40%)' }} />
+            <div className="absolute inset-y-0 left-0 flex max-w-2xl flex-col justify-center p-6 md:p-10">
+              <div className="eyebrow text-gold-bright">Next Milestone</div>
               <h1 className="mt-1 font-display text-3xl font-bold text-parchment drop-shadow-lg md:text-4xl">{next.name}</h1>
               <div className="mt-1 text-sm text-gold-bright/90">{new Date(next.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</div>
-              <div className="mt-3 flex gap-2">
+              <div className="mt-4 flex gap-2">
                 <Count label="Days" value={countdownTo(next.date).days} />
                 <Count label="Hours" value={countdownTo(next.date).hours} />
                 <Count label="Mins" value={countdownTo(next.date).mins} />
@@ -42,7 +51,6 @@ export default function Timeline() {
         </Panel>
       )}
 
-      {/* Intro + source */}
       <Panel>
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
@@ -54,7 +62,6 @@ export default function Timeline() {
         </div>
       </Panel>
 
-      {/* Filters */}
       <div className="flex flex-wrap gap-2">
         {filters.map((f) => (
           <button
@@ -67,7 +74,6 @@ export default function Timeline() {
         ))}
       </div>
 
-      {/* Timeline list */}
       <Panel className="p-0">
         <div className="relative px-4 py-5 sm:px-6">
           <div className="absolute left-[26px] top-4 bottom-4 w-px bg-gradient-to-b from-gold/40 via-gold/20 to-transparent sm:left-[30px]" />
@@ -111,7 +117,7 @@ export default function Timeline() {
 
 function Count({ label, value }) {
   return (
-    <div className="rounded-lg border border-gold/25 bg-ink-3/70 px-3 py-1.5 text-center">
+    <div className="rounded-lg border border-gold/25 bg-ink-3/70 px-3 py-1.5 text-center shadow-lg backdrop-blur-sm">
       <div className="font-display text-xl font-bold text-gold-bright">{value}</div>
       <div className="text-[9px] uppercase tracking-wider text-parchment/50">{label}</div>
     </div>

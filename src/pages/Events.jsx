@@ -23,6 +23,7 @@ function milestoneDesc(t) {
 function resolveEventArt(item) {
   const title = item?.title || item?.name || ''
   if (title === 'First Anniversary') return './assets/news-throne-room.png'
+  if (title === 'Generation 6 Heroes (Triton, Sophia, Yang)') return './assets/art-heroes.png'
   if (title === 'First Flamedragon Tyrant Competition') return './assets/art-castle-battle.png'
   return item?.art || './assets/art-kvk-prep.png'
 }
@@ -105,13 +106,10 @@ export default function Events() {
 
       <Panel>
         <RoyalSectionHeader icon="calendar" eyebrow="On the Horizon" title="All Upcoming Milestones" action={<Pill tone="muted">{upcoming.length} events</Pill>} />
-        {/* Vertical glowing timeline */}
         <div className="relative space-y-3 pl-6">
-          {/* Gold line */}
           <div className="absolute left-2 top-0 bottom-0 w-[2px] bg-gradient-to-b from-gold/40 via-gold/20 to-transparent" />
           {rest.map((e, i) => (
             <div key={e.id} className="relative stagger-in" style={{ animationDelay: `${Math.min(i * 0.05, 0.4)}s` }}>
-              {/* Glowing dot */}
               <div className="absolute -left-[18px] top-3 h-2.5 w-2.5 rounded-full bg-gold border border-gold-bright" style={{ boxShadow: '0 0 8px rgba(212,175,55,.5)' }} />
               <ArtCard
                 src={e.art}

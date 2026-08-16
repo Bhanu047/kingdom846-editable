@@ -11,10 +11,10 @@ const filters = ['All', 'Upcoming', 'Heroes', 'Pets', 'PvP', 'Truegold']
 
 function timelineArt(item) {
   if (!item) return './assets/hero-timeline-new.webp'
-  if (item.name === 'First Anniversary') return './assets/news-throne-room.png'
+  if (item.name === 'First Anniversary') return './assets/art-season-opening.png'
   if (item.name === 'Generation 6 Heroes (Triton, Sophia, Yang)') return './assets/art-heroes.png'
   if (item.name === 'Generation 6 Pets (Regal White Lion, Ironclad War Elephant)') return './assets/hero-timeline-new.webp'
-  if (item.name === 'First Flamedragon Tyrant Competition') return './assets/art-castle-battle.png'
+  if (item.name === 'First Flamedragon Tyrant Competition') return './assets/art-fire-tyrant.png'
   return item.art || './assets/hero-timeline-new.webp'
 }
 

@@ -1,0 +1,47 @@
+name: K846 Source Check
+
+on:
+  push:
+    branches:
+      - source-check/k846-only
+
+jobs:
+  extract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install browser
+        run: |
+          npm install --no-save playwright@1.54.2
+          npx playwright install --with-deps chromium
+      - name: Extract only approved Kingdom 846 sources
+        run: |
+          cat > /tmp/extract-k846.cjs <<'NODE'
+          const { chromium } = require('playwright');
+          (async () => {
+            const browser = await chromium.launch({ headless: true });
+            const page = await browser.newPage({ viewport: { width: 1440, height: 1200 } });
+            const urls = [
+              'https://ks-atlas.com/kingdom/846',
+              'https://kingshotoptimizer.com/kvk-rankings/kingdom/846'
+            ];
+            for (const url of urls) {
+              console.log('\n===== SOURCE START: ' + url + ' =====');
+              try {
+                await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 120000 });
+                await page.waitForTimeout(10000);
+                const text = await page.locator('body').innerText();
+                console.log(text);
+              } catch (err) {
+                console.log('ERROR: ' + err.message);
+              }
+              console.log('===== SOURCE END =====\n');
+            }
+            await browser.close();
+          })();
+          NODE
+          node /tmp/extract-k846.cjs

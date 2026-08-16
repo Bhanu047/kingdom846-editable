@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Panel, SectionTitle, Pill, ArtImage } from '../components/ui'
 import Icon from '../components/Icon'
 import { RoyalSectionHeader, GraphicTile } from '../components/VisualElements'
-import { kingdom, countdownTo, BANNERS } from '../data/kingdom'
+import { kingdom, countdownTo, nextRecurringDate, BANNERS } from '../data/kingdom'
 import { apiJson } from '../lib/api'
 import { useAuth } from '../context/AuthContext'
 import { useSiteData } from '../context/SiteDataContext'
@@ -58,9 +58,11 @@ export default function Dashboard({ onNavigate }) {
   const kingTitle = liveKing?.king_type || 'High King'
   const leadingAlliance = liveKing ? `${liveKing.alliance_tag} ${liveKing.alliance_name}` : kingdom.leadingAlliance
   const isLeadingAlliance = kingSlug === 'ryo'
-  // Crown rotation: the king changes every 14 days after Castle Battle — next on Aug 15
-  const NEXT_KING_CHANGE = '2026-08-15'
+  // Crown rotation: the king changes every 14 days after Castle Battle.
+  const KING_CHANGE_ANCHOR = '2026-08-15'
+  const NEXT_KING_CHANGE = nextRecurringDate(KING_CHANGE_ANCHOR, 14)
   const kc = countdownTo(NEXT_KING_CHANGE)
+  const nextKingChangeLabel = new Date(NEXT_KING_CHANGE + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 
   // Easter egg: click Kingdom Status panel 3x
   const statusEgg = useEgg({ clicks: 3, message: 'The kingdom is strong, but the throne is always watchful. — Kingdom 846' })
@@ -206,7 +208,7 @@ export default function Dashboard({ onNavigate }) {
               <div className="max-w-xs text-[11px] leading-relaxed text-parchment/70">The realm's {isLeadingAlliance ? 'leading ' : ''}alliance — {kingAlliance.tagline}</div>
               <div className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-gold/30 bg-ink/60 px-2.5 py-0.5 text-[10px] text-gold/80">
                 <Icon name="clock" size={11} />
-                Crown rotates every 14 days · next change Aug 15 · {kc.days}d {kc.hours}h {kc.mins}m {kc.secs}s
+                Crown rotates every 14 days · next change {nextKingChangeLabel} · {kc.days}d {kc.hours}h {kc.mins}m {kc.secs}s
               </div>
             </div>
           </div>

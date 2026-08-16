@@ -17,7 +17,7 @@ function ensureAudio() {
   }
 }
 
-function tone(freq, duration, volume = 0.18, type = 'square', delay = 0) {
+function tone(freq, duration, volume = 0.18, type = 'square', delay = 0, endFreq = null) {
   const ctx = ensureAudio()
   if (!ctx) return
   const start = ctx.currentTime + delay
@@ -25,13 +25,15 @@ function tone(freq, duration, volume = 0.18, type = 'square', delay = 0) {
   const gain = ctx.createGain()
   osc.type = type
   osc.frequency.setValueAtTime(freq, start)
+  if (endFreq) osc.frequency.exponentialRampToValueAtTime(endFreq, start + duration)
   gain.gain.setValueAtTime(0.0001, start)
-  gain.gain.exponentialRampToValueAtTime(volume, start + 0.01)
+  gain.gain.exponentialRampToValueAtTime(volume, start + 0.015)
+  gain.gain.setValueAtTime(volume, start + Math.max(0.02, duration * 0.45))
   gain.gain.exponentialRampToValueAtTime(0.0001, start + duration)
   osc.connect(gain)
   gain.connect(ctx.destination)
   osc.start(start)
-  osc.stop(start + duration + 0.03)
+  osc.stop(start + duration + 0.04)
 }
 
 function countdownBeep(number) {
@@ -40,18 +42,16 @@ function countdownBeep(number) {
 }
 
 function goBuzzer() {
-  // Loud, unmistakable triple-layer GO alarm.
-  tone(1050, 0.48, 0.42, 'sawtooth')
-  tone(780, 0.52, 0.36, 'square', 0.05)
-  tone(1180, 0.34, 0.30, 'sawtooth', 0.30)
+  // Distinct battlefield command horn: low impact + rising brass + sharp attack.
+  tone(135, 0.34, 0.42, 'sine', 0, 82)
+  tone(310, 0.78, 0.38, 'sawtooth', 0.02, 470)
+  tone(620, 0.46, 0.25, 'square', 0.03, 760)
+  tone(390, 0.46, 0.30, 'sawtooth', 0.42, 560)
 }
 
 function scheduleGuaranteedGo(name) {
   if (pendingGoTimer) clearTimeout(pendingGoTimer)
   pendingGoName = name
-  // The UI changes from 1 to GO about one second later. Scheduling from
-  // the audible "1" guarantees the GO alarm even if the DOM transition
-  // is too brief for MutationObserver on a device/browser.
   pendingGoTimer = setTimeout(() => {
     goBuzzer()
     lastCue = `${pendingGoName}:GO`
@@ -97,7 +97,6 @@ function inspectWarRoom() {
   lastCue = cue
 
   if (cueType === 'go') {
-    // If the scheduled alarm already fired for this player, do not double-play.
     if (pendingGoTimer) {
       clearTimeout(pendingGoTimer)
       pendingGoTimer = null
@@ -109,7 +108,6 @@ function inspectWarRoom() {
   }
 }
 
-// User interaction unlocks Web Audio on browsers with autoplay restrictions.
 for (const eventName of ['pointerdown', 'keydown', 'touchstart']) {
   window.addEventListener(eventName, ensureAudio, { passive: true })
 }

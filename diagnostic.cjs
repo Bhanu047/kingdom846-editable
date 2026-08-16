@@ -1,34 +1,70 @@
 const http = require('http')
 
-async function get(url) {
-  const r = await fetch(url, { headers: { 'user-agent':'Mozilla/5.0', accept:'application/javascript,text/plain,*/*' } })
-  return { status:r.status, text:await r.text() }
+async function post(url, body) {
+  const r = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'user-agent': 'Mozilla/5.0 (compatible; Kingdom846SourceCheck/3.0)',
+      accept: 'application/json,text/plain,*/*',
+      'content-type': 'application/json',
+    },
+    body: JSON.stringify(body),
+  })
+  const text = await r.text()
+  let json = null
+  try { json = JSON.parse(text) } catch {}
+  return { status: r.status, text, json }
 }
 
-function snippets(label, text, needles) {
-  for (const needle of needles) {
-    let from = 0, n = 0
-    while (n < 10) {
-      const i = text.indexOf(needle, from)
-      if (i < 0) break
-      console.log(`${label}_${needle.replace(/[^a-z0-9]/gi,'_')}_${n}=` + text.slice(Math.max(0,i-3000), i+5000))
-      from = i + needle.length
-      n++
+function compact(label, value, max = 60000) {
+  const s = JSON.stringify(value)
+  console.log(label + '=' + (s.length > max ? s.slice(0, max) + '…TRUNCATED' : s))
+}
+
+function collectRelevant(value, path = '$', out = [], seen = new Set()) {
+  if (!value || typeof value !== 'object' || seen.has(value)) return out
+  seen.add(value)
+  if (Array.isArray(value)) {
+    value.forEach((v, i) => collectRelevant(v, `${path}[${i}]`, out, seen))
+    return out
+  }
+  const text = JSON.stringify(value)
+  if (/846|795|rating|rank|quality|prep|battle|kvk|date|opponent/i.test(text)) {
+    const keys = Object.keys(value)
+    if (keys.some(k => /kingdom|opponent|rating|rank|quality|prep|battle|kvk|date|history|record|score|result/i.test(k))) {
+      out.push({ path, value })
     }
+  }
+  for (const [k, v] of Object.entries(value)) collectRelevant(v, `${path}.${k}`, out, seen)
+  return out
+}
+
+async function runOne(label) {
+  const res = await post('https://kingshotoptimizer.com/api/kvk-rankings', {
+    type: 'kingdom',
+    kingdomId: 846,
+  })
+  console.log(`${label}_STATUS=${res.status}`)
+  if (res.json) {
+    compact(`${label}_RAW`, res.json)
+    compact(`${label}_RELEVANT`, collectRelevant(res.json).slice(0, 120))
+  } else {
+    compact(`${label}_TEXT`, res.text.slice(0, 10000))
   }
 }
 
 async function run() {
-  const urls = [
-    'https://kingshotoptimizer.com/assets/useKvKRankings-Dih_Iel8.js',
-    'https://kingshotoptimizer.com/assets/app-DSqfwT3Y.js'
-  ]
-  for (const url of urls) {
-    const x = await get(url)
-    console.log('FETCH=' + url + ' STATUS=' + x.status + ' LEN=' + x.text.length)
-    snippets(url.includes('useKvK') ? 'HOOK' : 'APP', x.text, ['kvk-kingdom','fetch(','JSON.stringify','/api','kingdomId','kingdom:','type:'])
-  }
+  await runOne('OPT_CHECK_1')
+  await new Promise(r => setTimeout(r, 1200))
+  await runOne('OPT_CHECK_2')
 }
 
-const server = http.createServer((req,res)=>{res.setHeader('content-type','application/json');res.end('{"ok":true}')})
-server.listen(process.env.PORT||10000,()=>{console.log('diagnostic listening');run().catch(e=>console.error('ERR='+e.stack))})
+const server = http.createServer((req, res) => {
+  res.setHeader('content-type', 'application/json')
+  res.end('{"ok":true,"purpose":"K846 Optimizer verification"}')
+})
+
+server.listen(process.env.PORT || 10000, () => {
+  console.log('diagnostic listening')
+  run().catch(err => console.error('SOURCE_ERROR=' + (err?.stack || err)))
+})

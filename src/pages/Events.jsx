@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Panel, Pill, ArtImage, ArtCard } from '../components/ui'
 import { RoyalSectionHeader } from '../components/VisualElements'
-import { timeline, countdownTo, kingdom } from '../data/kingdom'
+import { timeline, countdownTo } from '../data/kingdom'
 import { useSiteData } from '../context/SiteDataContext'
 
 // Re-render every second so all countdowns tick live (no manual refresh needed)
@@ -22,13 +22,12 @@ function milestoneDesc(t) {
 
 function resolveEventArt(item) {
   const title = item?.title || item?.name || ''
-  if (title === 'First Anniversary') return './assets/news-throne-room.png'
+  if (title === 'First Anniversary') return './assets/art-season-opening.png'
   if (title === 'Generation 6 Heroes (Triton, Sophia, Yang)') return './assets/art-heroes.png'
-  if (title === 'First Flamedragon Tyrant Competition') return './assets/art-castle-battle.png'
+  if (title === 'First Flamedragon Tyrant Competition') return './assets/art-fire-tyrant.png'
   return item?.art || './assets/art-kvk-prep.png'
 }
 
-// Merge curated events with real upcoming timeline milestones into one upcoming list
 function buildUpcoming(events) {
   return [
     ...timeline.filter((t) => t.status === 'upcoming' || t.status === 'future').map((t) => ({
@@ -72,7 +71,7 @@ export default function Events() {
           <div className="absolute inset-0 flex flex-col justify-center p-6 md:p-10">
             <div className="eyebrow text-glow">War Calendar</div>
             <h1 className="mt-1 font-display text-3xl font-bold gradient-gold glow-pulse drop-shadow-lg">Upcoming Events</h1>
-            <p className="mt-2 max-w-lg text-sm text-parchment/70">Live milestone schedule synced from the official Kingdom 846 timeline. Countdowns update in real time.</p>
+            <p className="mt-2 max-w-lg text-sm text-parchment/70">Kingdom milestone schedule with live countdowns for upcoming events.</p>
           </div>
         </div>
       </Panel>
@@ -134,9 +133,7 @@ export default function Events() {
         </div>
       </Panel>
 
-      <p className="text-center text-[10px] text-parchment/30">
-        Schedule synced from the <a href={kingdom.timelineSource} target="_blank" rel="noreferrer" className="text-gold/70 hover:text-gold-bright underline">official Kingdom 846 timeline</a>. Countdowns are live estimates.
-      </p>
+      <p className="text-center text-[10px] text-parchment/30">Kingdom 846 milestone schedule · live countdowns</p>
     </div>
   )
 }

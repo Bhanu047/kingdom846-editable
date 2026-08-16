@@ -5,8 +5,16 @@ import Icon from '../components/Icon'
 import { useAuth } from '../context/AuthContext'
 
 const STORAGE_KEY = 'k846-shoni-war-room-v1'
-const STATUS_OPTIONS = ['RYO', 'HUN', 'In Garrison', 'Undeployed']
-const STATUS_TONE = { RYO: 'red', HUN: 'blue', 'In Garrison': 'gold', Undeployed: 'muted' }
+const STATUS_OPTIONS = ['RYO', 'KzK', 'SAS', 'ICE', 'HUN', 'In Garrison', 'Undeployed']
+const STATUS_TONE = {
+  RYO: 'gold',
+  KzK: 'red',
+  SAS: 'red',
+  ICE: 'blue',
+  HUN: 'green',
+  'In Garrison': 'gold',
+  Undeployed: 'muted'
+}
 
 function parseTime(value) {
   const s = String(value || '').trim()

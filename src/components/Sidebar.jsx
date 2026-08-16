@@ -74,6 +74,9 @@ export default function Sidebar({ active, onNavigate, onLogin, onSignOut, user, 
             <button onClick={() => onNavigate('admin')} className={`nav-item w-full text-left ${active === 'admin' ? 'active' : ''}`}>
               <Icon name="sparkles" size={17} /><span>Edit Website</span>
             </button>
+            <button onClick={() => onNavigate('war-room')} className={`nav-item w-full text-left ${active === 'war-room' ? 'active nav-glow' : ''}`}>
+              <Icon name="swords" size={17} /><span>War Room</span>
+            </button>
           </>
         )}
 

@@ -4,77 +4,52 @@ async function request(url, opts = {}) {
   const r = await fetch(url, {
     ...opts,
     headers: {
-      'user-agent': 'Mozilla/5.0 (compatible; Kingdom846SourceCheck/2.0)',
-      accept: 'application/json,text/plain,*/*',
+      'user-agent': 'Mozilla/5.0 (compatible; Kingdom846SourceCheck/3.0)',
+      accept: 'text/html,application/javascript,application/json,text/plain,*/*',
       ...(opts.headers || {}),
     },
   })
   const text = await r.text()
-  let json = null
-  try { json = JSON.parse(text) } catch {}
-  return { status: r.status, text, json }
+  return { status: r.status, text }
 }
 
-function compact(label, value, max = 30000) {
-  const s = JSON.stringify(value)
+function log(label, value, max = 18000) {
+  const s = typeof value === 'string' ? value : JSON.stringify(value)
   console.log(label + '=' + (s.length > max ? s.slice(0, max) + '…TRUNCATED' : s))
 }
 
-function find846(value, seen = new Set(), out = []) {
-  if (!value || typeof value !== 'object' || seen.has(value)) return out
-  seen.add(value)
-  if (Array.isArray(value)) {
-    for (const item of value) find846(item, seen, out)
-    return out
-  }
-  const vals = [value.kingdom, value.kingdom_number, value.kingdomNumber, value.id]
-  if (vals.some(v => Number(v) === 846)) out.push(value)
-  for (const v of Object.values(value)) find846(v, seen, out)
-  return out
-}
-
 async function run() {
-  // Exact approved Optimizer Kingdom 846 page backend.
-  const opt = await request('https://kingshotoptimizer.com/api/kvk-kingdom', {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ kingdom: 846 }),
-  })
-  console.log('OPT_STATUS=' + opt.status)
-  if (opt.json) {
-    compact('OPT_ROOT_KEYS', Object.keys(opt.json))
-    compact('OPT_846_OBJECTS', find846(opt.json).slice(0, 25))
-    compact('OPT_RAW', opt.json, 50000)
-  } else {
-    compact('OPT_TEXT', opt.text.slice(0, 5000))
-  }
+  const pageUrl = 'https://kingshotoptimizer.com/kvk-rankings/kingdom/846'
+  const page = await request(pageUrl)
+  console.log('PAGE_STATUS=' + page.status)
+  const assets = [...page.text.matchAll(/(?:src|href)=["']([^"']+\.js(?:\?[^"']*)?)["']/g)].map(m => m[1])
+  log('JS_ASSETS', assets)
 
-  // Exact approved Atlas Kingdom 846 page data dependencies.
-  const atlasTargets = [
-    ['ATLAS_COMPARE', 'https://kingshot-atlas.onrender.com/api/v1/compare?kingdoms=846'],
-    ['ATLAS_SEARCH', 'https://kingshot-atlas.onrender.com/api/v1/kingdoms?search=846'],
-    ['ATLAS_DIRECTORY', 'https://kingshot-atlas.onrender.com/api/v1/kingdoms/directory'],
-    ['ATLAS_SNAPSHOT', 'https://ks-atlas.com/snapshots/public-read-rankings.json?v=20260720-mystic-july20'],
-  ]
-
-  for (const [label, url] of atlasTargets) {
-    const res = await request(url)
-    console.log(label + '_STATUS=' + res.status)
-    if (res.json) {
-      const matches = find846(res.json).slice(0, 25)
-      compact(label + '_846', matches, 40000)
-      if (!matches.length) compact(label + '_ROOT_KEYS', Array.isArray(res.json) ? ['array', res.json.length] : Object.keys(res.json))
-    } else {
-      compact(label + '_TEXT', res.text.slice(0, 5000))
+  for (const raw of assets) {
+    const url = new URL(raw, pageUrl).href
+    const asset = await request(url)
+    const text = asset.text
+    const needles = ['kvk-kingdom', '/api/kvk', 'kvk-rankings', 'Validation error']
+    if (needles.some(n => text.includes(n))) {
+      console.log('MATCH_ASSET=' + url)
+      for (const n of needles) {
+        let from = 0, count = 0
+        while (count < 6) {
+          const i = text.indexOf(n, from)
+          if (i < 0) break
+          log('SNIP_' + n.replace(/[^a-z0-9]/gi,'_') + '_' + count, text.slice(Math.max(0, i - 2200), i + 3200), 6000)
+          from = i + n.length
+          count++
+        }
+      }
     }
   }
 }
 
 const server = http.createServer((req, res) => {
   res.setHeader('content-type', 'application/json')
-  res.end('{"ok":true,"purpose":"K846 source verification"}')
+  res.end('{"ok":true,"purpose":"Optimizer contract inspection"}')
 })
-
 server.listen(process.env.PORT || 10000, () => {
   console.log('diagnostic listening')
   run().catch(err => console.error('SOURCE_ERROR=' + (err?.stack || err)))

@@ -15,7 +15,8 @@ function snippets(text, needle, radius=220, max=30){
 }
 async function fetchText(url){ const r=await fetch(url,{headers:{'user-agent':'Mozilla/5.0 (compatible; Kingdom846SourceCheck/1.0)','accept':'*/*'}}); return {status:r.status,text:await r.text()} }
 function assetRefs(text, base){
-  return uniq([...text.matchAll(/assets\/[A-Za-z0-9_.-]+\.js/g)].map(m=>abs(base,m[0])).filter(Boolean))
+  const origin = new URL(base).origin
+  return uniq([...text.matchAll(/assets\/[A-Za-z0-9_.-]+\.js/g)].map(m => new URL('/' + m[0], origin).href))
 }
 function apiRefs(text, base){
   const refs=[]
@@ -30,9 +31,9 @@ async function inspect(which){
   const scriptSrcs=uniq([...page.text.matchAll(/<script[^>]+src=["']([^"']+)["']/gi)].map(m=>abs(pageUrl,m[1])).filter(Boolean))
   const output={pageUrl,status:page.status,rootScripts:scriptSrcs,modules:[]}
   let queue=[...scriptSrcs], seen=new Set(), depth=0
-  while(queue.length && depth<3){
+  while(queue.length && depth<4){
     const next=[]
-    for(const src of queue.slice(0,80)){
+    for(const src of queue.slice(0,120)){
       if(seen.has(src)) continue; seen.add(src)
       try{
         const r=await fetchText(src)
@@ -41,14 +42,14 @@ async function inspect(which){
         if(interesting){
           output.modules.push({
             src,status:r.status,length:r.text.length,
-            apiRefs:apiRefs(r.text,src).filter(u=>/api|supabase|rank|kvk|kingdom|atlas|data/i.test(u)).slice(0,80),
-            assetRefs:refs.filter(u=>/kingdom|rank|kvk|query|supabase|data/i.test(u)).slice(0,80),
-            hits846:snippets(r.text,'846',260,12),
-            hits795:snippets(r.text,'795',260,12),
-            hitsRank:snippets(r.text,'rank',220,15),
-            hitsScore:snippets(r.text,'score',220,15),
-            hitsFetch:snippets(r.text,'fetch(',260,20),
-            hitsFrom:snippets(r.text,'.from(',260,20),
+            apiRefs:apiRefs(r.text,src).filter(u=>/api|supabase|rank|kvk|kingdom|atlas|data/i.test(u)).slice(0,120),
+            assetRefs:refs.filter(u=>/kingdom|rank|kvk|query|supabase|data|score|outcome/i.test(u)).slice(0,120),
+            hits846:snippets(r.text,'846',300,20),
+            hits795:snippets(r.text,'795',300,20),
+            hitsRank:snippets(r.text,'rank',240,20),
+            hitsScore:snippets(r.text,'score',240,20),
+            hitsFetch:snippets(r.text,'fetch(',300,30),
+            hitsFrom:snippets(r.text,'.from(',300,30),
           })
         }
         next.push(...refs)

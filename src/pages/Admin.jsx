@@ -191,11 +191,43 @@ export default function Admin() {
 
             {section === 'Events' && (
               <div className="space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <div className="text-xs font-semibold text-parchment">Manage Events</div>
+                    <div className="text-[11px] text-parchment/45">Add upcoming events or remove completed events, then click Save Changes.</div>
+                  </div>
+                  <button onClick={() => setDraft((prev) => {
+                    const next = structuredClone(prev)
+                    next.events.push({
+                      id: `event-${Date.now()}`,
+                      title: 'New Event',
+                      category: 'Event',
+                      date: new Date().toISOString().slice(0, 10),
+                      time: '',
+                      featured: false,
+                      art: './assets/hero-events.webp',
+                      desc: ''
+                    })
+                    return next
+                  })} className="btn-secondary">+ Add Event</button>
+                </div>
+
+                {draft.events.length === 0 && (
+                  <div className="rounded-lg border border-dashed border-gold/20 bg-white/[0.02] p-6 text-center text-sm text-parchment/45">
+                    No events listed. Use <span className="text-gold">+ Add Event</span> to create one.
+                  </div>
+                )}
+
                 {draft.events.map((ev, i) => (
-                  <Row key={i}>
+                  <Row key={ev.id || i} onDelete={() => setDraft((prev) => {
+                    const next = structuredClone(prev)
+                    next.events.splice(i, 1)
+                    return next
+                  })}>
                     <Field label="Title" value={ev.title} onChange={(v) => update(['events', i, 'title'], v)} />
                     <Field label="Category" value={ev.category} onChange={(v) => update(['events', i, 'category'], v)} />
                     <Field label="Date" value={ev.date} onChange={(v) => update(['events', i, 'date'], v)} />
+                    <Field label="Time" value={ev.time} onChange={(v) => update(['events', i, 'time'], v)} />
                     <div className="sm:col-span-2"><Field label="Description" textarea value={ev.desc} onChange={(v) => update(['events', i, 'desc'], v)} /></div>
                   </Row>
                 ))}
@@ -301,8 +333,7 @@ function AdminAI() {
         </span>
         {agentStatus?.next_run && (
           <span className="text-[10px] text-parchment/30 ml-auto">
-            Next auto-run: {new Date(agentStatus.next_run).toLocaleTimeString()}
-          </span>
+            Next auto-run: {new Date(agentStatus.next_run).toLocaleTimeString()}</span>
         )}
       </div>
 
@@ -316,7 +347,7 @@ function AdminAI() {
             {agentStatus.activity_log.map((log, i) => (
               <div key={i} className="flex items-start gap-2 text-[10px] text-parchment/50">
                 <span className="text-gold/40 shrink-0">{new Date(log.time).toLocaleTimeString()}</span>
-                <span className="shrink-0 text-gold/60 font-medium">{log.action}</span>
+                <span className="shrink-0 text-gold/60">{log.action}</span>
                 <span className="truncate">{log.detail}</span>
               </div>
             ))}
@@ -324,81 +355,37 @@ function AdminAI() {
         </div>
       )}
 
-      {/* Design Intelligence Briefing */}
-      {agentStatus?.design_briefing?.top_picks?.length > 0 && (
-        <div className="mb-3 rounded-lg border border-gold/15 bg-ink-2/50 p-3">
-          <div className="mb-2 flex items-center justify-between">
-            <div className="flex items-center gap-1 text-[9px] uppercase tracking-wider text-gold/50">
-              <span>🎨</span> Design Intelligence Briefing
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-[9px] text-parchment/30">
-                {new Date(agentStatus.design_briefing.date).toLocaleDateString()}
-              </span>
-              <button onClick={async () => {
-                setSyncing(true)
-                try { await apiJson('/api/ai/run-design-scan', { method: 'POST' }); apiJson('/api/ai/status').then(setAgentStatus) }
-                catch {} finally { setSyncing(false) }
-              }} disabled={syncing} className="text-[9px] text-gold/60 hover:text-gold transition">
-                {syncing ? 'Scanning…' : 'Rescan'}
-              </button>
-            </div>
-          </div>
-          <div className="space-y-2">
-            {agentStatus.design_briefing.top_picks.map((pick, i) => (
-              <div key={i} className="rounded-md border border-gold/10 bg-ink/40 p-2">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold text-gold">{i+1}.</span>
-                  <a href={pick.url} target="_blank" rel="noreferrer" className="text-xs font-medium text-parchment/80 hover:text-gold transition">
-                    {pick.name}
-                  </a>
-                  <span className="text-[9px] text-parchment/30">{pick.stars || ''} stars</span>
-                  <span className={`ml-auto rounded-full px-1.5 py-0.5 text-[8px] font-bold uppercase ${
-                    pick.priority === 'high' ? 'bg-rose-500/20 text-rose-300' : pick.priority === 'medium' ? 'bg-amber-500/20 text-amber-300' : 'bg-sky-500/20 text-sky-300'
-                  }`}>{pick.priority || 'low'}</span>
-                </div>
-                <p className="mt-1 text-[10px] text-parchment/50">{pick.why}</p>
-                <p className="mt-0.5 text-[10px] text-gold/40">→ {pick.integration}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
+      {/* Chat messages */}
       {messages.length > 0 && (
         <div className="mb-3 max-h-48 overflow-y-auto space-y-2">
           {messages.map((m, i) => (
-            <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-              <div className={`max-w-[85%] rounded-lg px-3 py-1.5 text-sm ${m.role === 'user' ? 'bg-gold/15 text-parchment' : 'bg-ink/60 border border-gold/10 text-parchment/90'}`}>
-                {m.content}
-              </div>
+            <div key={i} className={`rounded-lg px-3 py-2 text-xs ${m.role === 'user' ? 'ml-8 bg-gold/10 text-gold' : 'mr-8 bg-white/5 text-parchment/70'}`}>
+              {m.content}
             </div>
           ))}
-          {loading && (
-            <div className="text-sm text-parchment/40">Advisor is thinking…</div>
-          )}
         </div>
       )}
 
-      {messages.length === 0 && (
-        <div className="mb-3 flex flex-wrap gap-1.5">
-          {prompts.map(p => (
-            <button key={p} onClick={() => setInput(p)} className="rounded-full border border-gold/20 bg-gold/5 px-2.5 py-1 text-[10px] text-gold/80 hover:bg-gold/10 transition">{p}</button>
-          ))}
-        </div>
-      )}
+      {/* Quick prompts */}
+      <div className="mb-2 flex flex-wrap gap-1.5">
+        {prompts.map((p) => (
+          <button key={p} onClick={() => setInput(p)} className="rounded-full border border-gold/15 bg-white/5 px-2.5 py-1 text-[10px] text-parchment/60 hover:border-gold/40 hover:text-gold">
+            {p}
+          </button>
+        ))}
+      </div>
 
-      <div className="flex items-center gap-2">
+      {/* Input */}
+      <div className="flex gap-2">
         <input
           value={input}
-          onChange={e => setInput(e.target.value)}
-          onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); send() } }}
-          placeholder="Ask the AI assistant…"
-          className="flex-1 rounded-md border border-gold/20 bg-ink/60 px-3 py-1.5 text-sm text-parchment placeholder-parchment/30 outline-none focus:border-gold/60"
-          disabled={loading}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter') send() }}
+          placeholder="Ask the Royal Advisor…"
+          className="min-w-0 flex-1 rounded-lg border border-gold/20 bg-ink/60 px-3 py-2 text-sm text-parchment outline-none placeholder:text-parchment/30 focus:border-gold/50"
         />
-        <button onClick={send} disabled={loading || !input.trim()} className="btn-primary !py-1.5 !text-xs">
-          <Icon name="arrow" size={12} />
+        <button onClick={send} disabled={loading || !input.trim()} className="btn-primary !px-3">
+          {loading ? '…' : 'Ask'}
         </button>
       </div>
     </div>

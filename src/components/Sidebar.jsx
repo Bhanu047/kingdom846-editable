@@ -16,6 +16,8 @@ function getLeaderAvatar(user) {
 }
 
 export default function Sidebar({ active, onNavigate, onLogin, onSignOut, user, isAdmin }) {
+  const isShoni = user?.role === 'leader' && user?.username === 'shoni'
+
   return (
     <aside className="flex h-full w-64 flex-col border-r border-gold/15 bg-ink-2/90 relative overflow-hidden">
       <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-gold/8 to-transparent pointer-events-none" />
@@ -62,6 +64,11 @@ export default function Sidebar({ active, onNavigate, onLogin, onSignOut, user, 
             <button onClick={() => onNavigate('leader-portal')} className={`nav-item w-full text-left ${active === 'leader-portal' ? 'active nav-glow' : ''}`}>
               <Icon name="clock" size={17} /><span>Event Schedule</span>
             </button>
+            {isShoni && (
+              <button onClick={() => onNavigate('war-room')} className={`nav-item w-full text-left ${active === 'war-room' ? 'active nav-glow' : ''}`}>
+                <Icon name="swords" size={17} /><span>War Room</span>
+              </button>
+            )}
           </>
         )}
       </nav>

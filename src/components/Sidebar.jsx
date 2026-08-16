@@ -23,11 +23,31 @@ export default function Sidebar({ active, onNavigate, onLogin, onSignOut, user, 
       <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-gold/8 to-transparent pointer-events-none" />
       <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-gold/5 to-transparent pointer-events-none" />
       <div className="absolute top-0 right-0 bottom-0 w-px bg-gradient-to-b from-transparent via-gold/15 to-transparent pointer-events-none" />
-      <div className="flex items-center gap-3 px-4 py-5 relative z-10">
-        <img src="./assets/crest-846.png" alt="Kingdom 846 crest" className="sidebar-crest h-12 w-12 rounded-lg float-anim" />
-        <div className="leading-tight">
-          <div className="gradient-gold font-display text-sm font-bold tracking-wide">KINGDOM 846</div>
-          <div className="text-[10px] uppercase tracking-[0.25em] text-gold/40">Royal Portal</div>
+
+      <div className="relative z-10 flex items-center gap-3 px-3.5 py-4">
+        <div className="relative grid h-[70px] w-[70px] shrink-0 place-items-center">
+          <div
+            className="pointer-events-none absolute inset-1 rounded-full"
+            style={{
+              background: 'radial-gradient(circle, rgba(232,199,102,.18) 0%, rgba(212,175,55,.08) 42%, transparent 72%)',
+              filter: 'blur(6px)',
+            }}
+          />
+          <img
+            src="./assets/crest-846.png"
+            alt="Kingdom 846 crest"
+            className="sidebar-crest relative h-[66px] w-[66px] object-contain float-anim"
+            style={{
+              background: 'transparent',
+              border: 0,
+              borderRadius: 0,
+              filter: 'brightness(1.10) saturate(1.10) drop-shadow(0 0 7px rgba(232,199,102,.36)) drop-shadow(0 7px 10px rgba(0,0,0,.55))',
+            }}
+          />
+        </div>
+        <div className="min-w-0 leading-tight">
+          <div className="gradient-gold whitespace-nowrap font-display text-[15px] font-bold tracking-[0.035em]">KINGDOM 846</div>
+          <div className="mt-1 whitespace-nowrap text-[9px] uppercase tracking-[0.22em] text-gold/55">Royal Portal</div>
         </div>
       </div>
 

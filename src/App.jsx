@@ -46,6 +46,7 @@ const Apply = lazy(() => import('./pages/Apply'))
 const Admin = lazy(() => import('./pages/Admin'))
 const MasterConsole = lazy(() => import('./pages/MasterConsole'))
 const LeaderPortal = lazy(() => import('./pages/LeaderPortal'))
+const WarRoom = lazy(() => import('./pages/WarRoom'))
 const Settings = lazy(() => import('./pages/Settings'))
 
 const titles = {
@@ -53,7 +54,7 @@ const titles = {
   alliances: 'Alliances', events: 'Events', timeline: 'Timeline', news: 'News',
   guides: 'Guides', rankings: 'Rankings',
   transfer: 'Transfer', 'apply-chief': 'Apply · Chief Minister', 'apply-noble': 'Apply · Noble Advisor', apply: 'Apply', admin: 'Admin Editor', console: 'Master Console', settings: 'Settings',
-  'leader-portal': 'Event Schedule'
+  'leader-portal': 'Event Schedule', 'war-room': 'War Room'
 }
 
 // Hash-based routing: #/dashboard, #/rankings, etc.
@@ -145,6 +146,7 @@ function Shell() {
         case 'admin': return isAdmin ? <Admin /> : <Placeholder title="Admin Access" icon="shieldCheck" note="Only the Sparta account can access the website editor." />
         case 'console': return isAdmin ? <MasterConsole /> : <Placeholder title="Master Console" icon="crown" note="Only the Sparta master account can access the console." />
         case 'leader-portal': return user?.role === 'leader' ? <LeaderPortal /> : <Placeholder title="Leader Access" icon="clock" note="Only alliance leaders can manage event schedules. Log in with your leader account." />
+        case 'war-room': return user?.username === 'shoni' ? <WarRoom /> : <Placeholder title="Private War Room" icon="shieldCheck" note="This command room is reserved for Shoni." />
         case 'settings': return <Settings />
         default: return <Dashboard onNavigate={navigate} />
       }
@@ -158,7 +160,7 @@ function Shell() {
     )
   }
 
-  const sidebarUser = user ? { name: user.display_name || user.username, role: user.role, alliance_slug: user.alliance_slug } : null
+  const sidebarUser = user ? { name: user.display_name || user.username, username: user.username, role: user.role, alliance_slug: user.alliance_slug } : null
   const handleSignOut = () => { signOut(); navigate('dashboard') }
 
   // Lazy-load Login modal only when needed

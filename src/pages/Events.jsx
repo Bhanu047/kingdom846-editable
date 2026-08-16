@@ -20,6 +20,13 @@ function milestoneDesc(t) {
   return 'A new kingdom milestone unlocks across the realm.'
 }
 
+function resolveEventArt(item) {
+  const title = item?.title || item?.name || ''
+  if (title === 'First Anniversary') return './assets/news-throne-room.png'
+  if (title === 'First Flamedragon Tyrant Competition') return './assets/art-castle-battle.png'
+  return item?.art || './assets/art-kvk-prep.png'
+}
+
 // Merge curated events with real upcoming timeline milestones into one upcoming list
 function buildUpcoming(events) {
   return [
@@ -27,7 +34,7 @@ function buildUpcoming(events) {
       id: 'tl-' + t.date,
       title: t.name,
       type: t.category.toUpperCase(),
-      art: t.art || './assets/art-kvk-prep.png',
+      art: resolveEventArt(t),
       startsIn: countdownTo(t.date),
       date: t.date,
       description: milestoneDesc(t),
@@ -38,7 +45,7 @@ function buildUpcoming(events) {
       id: e.id,
       title: e.title,
       type: e.category.toUpperCase(),
-      art: e.art || './assets/art-kvk-prep.png',
+      art: resolveEventArt(e),
       startsIn: countdownTo(e.date),
       date: e.date,
       description: e.desc,
@@ -109,21 +116,21 @@ export default function Events() {
               <ArtCard
                 src={e.art}
                 alt={e.title}
-              title={e.title}
-              action={
-                <div className="flex items-center justify-between">
-                  <div className="flex gap-1.5">
-                    <Count label="D" value={e.startsIn.days} small />
-                    <Count label="H" value={e.startsIn.hours} small />
-                    <Count label="M" value={e.startsIn.mins} small />
-                    <Count label="S" value={e.startsIn.secs} small />
+                title={e.title}
+                action={
+                  <div className="flex items-center justify-between">
+                    <div className="flex gap-1.5">
+                      <Count label="D" value={e.startsIn.days} small />
+                      <Count label="H" value={e.startsIn.hours} small />
+                      <Count label="M" value={e.startsIn.mins} small />
+                      <Count label="S" value={e.startsIn.secs} small />
+                    </div>
+                    <Pill tone={toneFor(e.type)}>{e.type}</Pill>
                   </div>
-                  <Pill tone={toneFor(e.type)}>{e.type}</Pill>
-                </div>
-              }
-            >
-              <p className="text-xs text-parchment/60">{e.description}</p>
-            </ArtCard>
+                }
+              >
+                <p className="text-xs text-parchment/60">{e.description}</p>
+              </ArtCard>
             </div>
           ))}
         </div>

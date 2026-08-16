@@ -6,44 +6,63 @@ const SOURCES = {
   optimizer: 'https://kingshotoptimizer.com/kvk-rankings/kingdom/846',
 }
 
-function uniq(xs){ return [...new Set(xs)].slice(0,300) }
+function uniq(xs){ return [...new Set(xs)] }
 function abs(base, src){ try { return new URL(src, base).href } catch { return null } }
-function snippets(text, needle, radius=180){
+function snippets(text, needle, radius=220, max=30){
   const out=[]; let p=0; const low=text.toLowerCase(), n=needle.toLowerCase()
-  while((p=low.indexOf(n,p))>=0 && out.length<40){ out.push(text.slice(Math.max(0,p-radius), Math.min(text.length,p+n.length+radius)).replace(/\s+/g,' ')); p+=n.length }
+  while((p=low.indexOf(n,p))>=0 && out.length<max){ out.push(text.slice(Math.max(0,p-radius), Math.min(text.length,p+n.length+radius)).replace(/\s+/g,' ')); p+=n.length }
   return out
 }
+async function fetchText(url){ const r=await fetch(url,{headers:{'user-agent':'Mozilla/5.0 (compatible; Kingdom846SourceCheck/1.0)','accept':'*/*'}}); return {status:r.status,text:await r.text()} }
+function assetRefs(text, base){
+  return uniq([...text.matchAll(/assets\/[A-Za-z0-9_.-]+\.js/g)].map(m=>abs(base,m[0])).filter(Boolean))
+}
+function apiRefs(text, base){
+  const refs=[]
+  for(const m of text.matchAll(/https?:\\?\/\\?\/[A-Za-z0-9._~:/?#\[\]@!$&'()*+,;=%-]+/g)) refs.push(m[0].replaceAll('\\/','/'))
+  for(const m of text.matchAll(/["'`]((?:\/api\/|\/data\/)[^"'`]{1,180})["'`]/g)) refs.push(abs(base,m[1]))
+  return uniq(refs.filter(Boolean))
+}
+
 async function inspect(which){
   const pageUrl=SOURCES[which]
-  if(!pageUrl) throw new Error('invalid source')
-  const r=await fetch(pageUrl,{headers:{'user-agent':'Mozilla/5.0 (compatible; Kingdom846SourceCheck/1.0)','accept':'text/html,application/xhtml+xml'}})
-  const html=await r.text()
-  const scriptSrcs=uniq([...html.matchAll(/<script[^>]+src=["']([^"']+)["']/gi)].map(m=>abs(pageUrl,m[1])).filter(Boolean))
-  const inline=[...html.matchAll(/<script(?![^>]+src=)[^>]*>([\s\S]*?)<\/script>/gi)].map(m=>m[1]).filter(Boolean)
-  const result={pageUrl,status:r.status,htmlLength:html.length,scriptSrcs,inlineCount:inline.length,html846:snippets(html,'846'),html795:snippets(html,'795'),htmlRank:snippets(html,'rank'),htmlScore:snippets(html,'score'),inline846:inline.flatMap(s=>snippets(s,'846')).slice(0,40),scriptFindings:[]}
-  for(const src of scriptSrcs.slice(0,25)){
-    try{
-      const sr=await fetch(src,{headers:{'user-agent':'Mozilla/5.0 (compatible; Kingdom846SourceCheck/1.0)'}})
-      const txt=await sr.text()
-      const urls=uniq([
-        ...[...txt.matchAll(/https?:\\?\/\\?\/[A-Za-z0-9._~:/?#\[\]@!$&'()*+,;=%-]+/g)].map(m=>m[0].replaceAll('\\/','/')),
-        ...[...txt.matchAll(/["'`]((?:\/api\/|\/data\/|\/assets\/)[^"'`]{1,180})["'`]/g)].map(m=>m[1])
-      ])
-      const hits846=snippets(txt,'846',220)
-      const hits795=snippets(txt,'795',220)
-      const hitsApi=[...snippets(txt,'/api/',220),...snippets(txt,'fetch(',220),...snippets(txt,'supabase',220),...snippets(txt,'graphql',220),...snippets(txt,'kingdom',140)].slice(0,50)
-      if(hits846.length||hits795.length||hitsApi.length||urls.length) result.scriptFindings.push({src,status:sr.status,length:txt.length,urls:urls.slice(0,60),hits846:hits846.slice(0,15),hits795:hits795.slice(0,15),hitsApi:hitsApi.slice(0,30)})
-    }catch(e){ result.scriptFindings.push({src,error:String(e)}) }
+  const page=await fetchText(pageUrl)
+  const scriptSrcs=uniq([...page.text.matchAll(/<script[^>]+src=["']([^"']+)["']/gi)].map(m=>abs(pageUrl,m[1])).filter(Boolean))
+  const output={pageUrl,status:page.status,rootScripts:scriptSrcs,modules:[]}
+  let queue=[...scriptSrcs], seen=new Set(), depth=0
+  while(queue.length && depth<3){
+    const next=[]
+    for(const src of queue.slice(0,80)){
+      if(seen.has(src)) continue; seen.add(src)
+      try{
+        const r=await fetchText(src)
+        const refs=assetRefs(r.text,src)
+        const interesting=/kingdom|rank|kvk|supabase|atlas|score|history|matchup/i.test(src) || /kingdom|rank|kvk|supabase|atlas score|matchup|history/i.test(r.text)
+        if(interesting){
+          output.modules.push({
+            src,status:r.status,length:r.text.length,
+            apiRefs:apiRefs(r.text,src).filter(u=>/api|supabase|rank|kvk|kingdom|atlas|data/i.test(u)).slice(0,80),
+            assetRefs:refs.filter(u=>/kingdom|rank|kvk|query|supabase|data/i.test(u)).slice(0,80),
+            hits846:snippets(r.text,'846',260,12),
+            hits795:snippets(r.text,'795',260,12),
+            hitsRank:snippets(r.text,'rank',220,15),
+            hitsScore:snippets(r.text,'score',220,15),
+            hitsFetch:snippets(r.text,'fetch(',260,20),
+            hitsFrom:snippets(r.text,'.from(',260,20),
+          })
+        }
+        next.push(...refs)
+      }catch(e){ output.modules.push({src,error:String(e)}) }
+    }
+    queue=uniq(next); depth++
   }
-  return result
+  return output
 }
 
 async function logDiagnostics(){
   for(const which of ['atlas','optimizer']){
-    try{
-      const data=await inspect(which)
-      console.log(`SOURCE_DIAGNOSTIC_${which.toUpperCase()}=${JSON.stringify(data)}`)
-    }catch(e){ console.log(`SOURCE_DIAGNOSTIC_${which.toUpperCase()}_ERROR=${String(e)}`) }
+    try{ console.log(`SOURCE_MODULES_${which.toUpperCase()}=${JSON.stringify(await inspect(which))}`) }
+    catch(e){ console.log(`SOURCE_MODULES_${which.toUpperCase()}_ERROR=${String(e)}`) }
   }
 }
 

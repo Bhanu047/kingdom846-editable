@@ -22,5 +22,48 @@
 <body>
   <div id="root"></div>
   <script type="module" src="/src/main.jsx"></script>
+  <script>
+    (() => {
+      const entranceImpact = new Audio('./assets/enter-sound.wav')
+      const royalFanfare = new Audio('./assets/fanfare.wav')
+      entranceImpact.preload = 'auto'
+      royalFanfare.preload = 'auto'
+      entranceImpact.volume = 0.52
+      royalFanfare.volume = 0.28
+      entranceImpact.playsInline = true
+      royalFanfare.playsInline = true
+
+      const audioState = { entranceImpact, royalFanfare, playing: false, fadeTimer: null }
+      window.__k846WelcomeAudio = audioState
+
+      // iOS and modern browsers require a direct user gesture for audible playback.
+      // Start the royal sequence on pointer-down so it reacts instantly to ENTER THE REALM.
+      document.addEventListener('pointerdown', (event) => {
+        const button = event.target?.closest?.('button')
+        if (!button || !/enter\s+the\s+realm/i.test(button.textContent || '') || audioState.playing) return
+
+        audioState.playing = true
+        royalFanfare.volume = 0.28
+        entranceImpact.currentTime = 0
+        royalFanfare.currentTime = 0
+
+        entranceImpact.play().catch(() => {})
+        setTimeout(() => royalFanfare.play().catch(() => {}), 70)
+
+        // Let the fanfare bloom through the portal transition, then fade it naturally.
+        setTimeout(() => {
+          clearInterval(audioState.fadeTimer)
+          audioState.fadeTimer = setInterval(() => {
+            royalFanfare.volume = Math.max(0, royalFanfare.volume - 0.025)
+            if (royalFanfare.volume <= 0.01 || royalFanfare.ended) {
+              clearInterval(audioState.fadeTimer)
+              royalFanfare.pause()
+              royalFanfare.volume = 0.28
+            }
+          }, 120)
+        }, 1500)
+      }, true)
+    })()
+  </script>
 </body>
 </html>

@@ -1,180 +1,52 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
-function playLivingRoyalSound(ctx) {
+function royalSound(ctx) {
   const now = ctx.currentTime
-  const master = ctx.createGain()
-  master.gain.setValueAtTime(0.0001, now)
-  master.gain.exponentialRampToValueAtTime(0.2, now + 0.05)
-  master.gain.exponentialRampToValueAtTime(0.001, now + 2.35)
-  master.connect(ctx.destination)
-
-  const tone = (freq, start, end, gain, type = 'sine') => {
-    const osc = ctx.createOscillator()
-    const amp = ctx.createGain()
-    osc.type = type
-    osc.frequency.setValueAtTime(freq, now + start)
-    amp.gain.setValueAtTime(0.0001, now + start)
-    amp.gain.exponentialRampToValueAtTime(gain, now + start + 0.04)
-    amp.gain.exponentialRampToValueAtTime(0.001, now + end)
-    osc.connect(amp)
-    amp.connect(master)
-    osc.start(now + start)
-    osc.stop(now + end + 0.05)
-  }
-
-  tone(49, 0, 1.85, 0.3)
-  tone(98, 0.06, 1.45, 0.08, 'triangle')
-  tone(196, 0.2, 0.9, 0.045, 'triangle')
-  tone(293.66, 0.38, 1.1, 0.04, 'triangle')
-  tone(392, 0.62, 1.36, 0.035, 'sine')
-  tone(523.25, 0.86, 1.65, 0.03, 'sine')
-
-  try {
-    const length = Math.floor(ctx.sampleRate * 0.36)
-    const buffer = ctx.createBuffer(1, length, ctx.sampleRate)
-    const data = buffer.getChannelData(0)
-    for (let i = 0; i < length; i++) data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (ctx.sampleRate * 0.08))
-    const source = ctx.createBufferSource()
-    const filter = ctx.createBiquadFilter()
-    const gain = ctx.createGain()
-    filter.type = 'bandpass'
-    filter.frequency.value = 640
-    filter.Q.value = 1.3
-    gain.gain.value = 0.055
-    source.buffer = buffer
-    source.connect(filter)
-    filter.connect(gain)
-    gain.connect(master)
-    source.start(now + 0.18)
-  } catch {}
+  const master = ctx.createGain(); master.gain.setValueAtTime(.0001,now); master.gain.exponentialRampToValueAtTime(.18,now+.05); master.gain.exponentialRampToValueAtTime(.001,now+2.6); master.connect(ctx.destination)
+  ;[[46,.28,'sine'],[92,.10,'triangle'],[184,.055,'triangle'],[276,.04,'sine'],[368,.03,'sine']].forEach(([f,g,type],i)=>{const o=ctx.createOscillator(),a=ctx.createGain();o.type=type;o.frequency.value=f;a.gain.setValueAtTime(.0001,now+i*.11);a.gain.exponentialRampToValueAtTime(g,now+i*.11+.05);a.gain.exponentialRampToValueAtTime(.001,now+1.7+i*.15);o.connect(a);a.connect(master);o.start(now+i*.11);o.stop(now+2.4)})
 }
 
 export default function SplashScreen({ onEnter }) {
-  const [opening, setOpening] = useState(false)
-  const audioRef = useRef(null)
-  const isMobile = useMemo(() => typeof window !== 'undefined' && window.innerWidth < 768, [])
-  const particles = isMobile ? 16 : 30
-
-  useEffect(() => {
-    document.body.style.overflow = 'hidden'
-    const AudioCtx = window.AudioContext || window.webkitAudioContext
-    if (AudioCtx) audioRef.current = new AudioCtx()
-    return () => {
-      document.body.style.overflow = ''
-      try { audioRef.current?.close() } catch {}
-    }
-  }, [])
-
-  function enter() {
-    if (opening) return
-    const ctx = audioRef.current
-    if (ctx) {
-      if (ctx.state === 'suspended') ctx.resume().then(() => playLivingRoyalSound(ctx)).catch(() => {})
-      else playLivingRoyalSound(ctx)
-    }
-    setOpening(true)
-    setTimeout(() => {
-      document.body.style.overflow = ''
-      onEnter?.()
-    }, 1500)
-  }
-
-  return (
-    <section className={`living-royal ${opening ? 'is-opening' : ''}`}>
-      <img src="/assets/splash-castle-bg.png" alt="" className="castle-layer" loading="eager" />
-      <div className="world-shade" />
-      <div className="blue-depth" />
-      <div className="gold-ray ray-a" />
-      <div className="gold-ray ray-b" />
-
-      <div className="banner banner-left" aria-hidden="true"><span>846</span></div>
-      <div className="banner banner-right" aria-hidden="true"><span>846</span></div>
-      <div className="brazier brazier-left" aria-hidden="true"><i/><b/></div>
-      <div className="brazier brazier-right" aria-hidden="true"><i/><b/></div>
-
-      <div className="particle-field" aria-hidden="true">
-        {Array.from({ length: particles }).map((_, i) => (
-          <span key={i} className="particle" style={{ left: `${(i * 41 + 7) % 100}%`, animationDelay: `${(i * 0.31) % 7}s`, animationDuration: `${8 + (i % 6)}s`, width: `${1 + (i % 3)}px`, height: `${1 + (i % 3)}px` }} />
-        ))}
+  const [opening,setOpening]=useState(false)
+  const audio=useRef(null)
+  useEffect(()=>{document.body.style.overflow='hidden';const C=window.AudioContext||window.webkitAudioContext;if(C)audio.current=new C();return()=>{document.body.style.overflow='';try{audio.current?.close()}catch{}}},[])
+  const enter=()=>{if(opening)return;const c=audio.current;if(c){if(c.state==='suspended')c.resume().then(()=>royalSound(c)).catch(()=>{});else royalSound(c)}setOpening(true);setTimeout(()=>{document.body.style.overflow='';onEnter?.()},1650)}
+  return <section className={`royal6 ${opening?'opening':''}`}>
+    <div className="castle"/><div className="night"/><div className="ray r1"/><div className="ray r2"/>
+    <div className="frame"><i/><i/><i/><i/></div>
+    <div className="banner left">♛<b>846</b></div><div className="banner right">♛<b>846</b></div>
+    <div className="embers">{Array.from({length:34},(_,i)=><span key={i} style={{left:`${(i*37+11)%100}%`,animationDelay:`-${(i*.41)%9}s`,animationDuration:`${7+i%7}s`}}/>)}</div>
+    <main>
+      <div className="heraldry">
+        <div className="ring a"/><div className="ring b"/><div className="ring c"/><div className="aura"/><div className="glint"/>
+        <img src="/assets/crest-846.png" className="crest" alt="Kingdom 846 crest"/>
       </div>
-
-      <div className="lux-frame" aria-hidden="true">
-        <i className="jewel tl"/><i className="jewel tr"/><i className="jewel bl"/><i className="jewel br"/>
-      </div>
-
-      <main className="royal-content">
-        <div className="crest-stage">
-          <div className="halo halo-a"/><div className="halo halo-b"/><div className="halo halo-c"/>
-          <div className="crest-aura"/>
-          <div className="travel-glint"/>
-          <img src="/assets/crest-846.png?v=living-royal-final" alt="Kingdom 846 Royal Crest" className="crest" loading="eager" />
-        </div>
-
-        <div className="kicker reveal r1">ONE CROWN · FOUR ALLIANCES</div>
-        <h1 className="reveal r2">KINGDOM 846</h1>
-        <div className="ornament reveal r3"><span/>✦ ◆ ✦<span/></div>
-        <p className="tagline reveal r4">Where legends are forged in fire and crowned in gold</p>
-        <button className="enter-button reveal r5" onClick={enter} disabled={opening}>
-          <b>ENTER THE REALM</b>
-        </button>
-        <div className="portal-mark reveal r6">OFFICIAL ROYAL PORTAL · KINGDOM 846</div>
-      </main>
-
-      <div className="portal-flash" aria-hidden="true" />
-
-      <style>{`
-        .living-royal{position:fixed;inset:0;z-index:100;overflow:hidden;background:#01040b;color:#efd783;display:grid;place-items:center;isolation:isolate;font-family:Georgia,'Times New Roman',serif}
-        .castle-layer{position:absolute;inset:-2%;width:104%;height:104%;object-fit:cover;object-position:center 45%;z-index:-12;filter:brightness(.47) saturate(.9) contrast(1.08);transform:scale(1.045);animation:castleDrift 22s ease-in-out infinite alternate}
-        .world-shade{position:absolute;inset:0;z-index:-11;background:linear-gradient(180deg,rgba(1,5,14,.18),rgba(2,7,20,.28) 44%,rgba(1,3,9,.9)),radial-gradient(ellipse at center,transparent 32%,rgba(0,0,0,.6) 92%)}
-        .blue-depth{position:absolute;inset:0;z-index:-10;background:radial-gradient(ellipse at 50% 40%,rgba(18,70,155,.18),transparent 54%),linear-gradient(90deg,rgba(0,15,42,.33),transparent 30%,transparent 70%,rgba(0,15,42,.33));mix-blend-mode:screen}
-        .gold-ray{position:absolute;top:-18%;width:18vw;height:78%;z-index:-7;background:linear-gradient(180deg,rgba(255,238,181,.22),rgba(219,169,53,.03) 68%,transparent);filter:blur(11px);opacity:.34;animation:rayMove 8s ease-in-out infinite alternate}.ray-a{left:30%;transform:rotate(8deg)}.ray-b{right:29%;transform:rotate(-8deg);animation-delay:-3s}
-
-        .banner{position:absolute;top:13%;width:8vw;min-width:72px;max-width:112px;height:47%;z-index:1;clip-path:polygon(0 0,100% 0,100% 88%,50% 100%,0 88%);background:linear-gradient(90deg,#031028,#0a2c62 48%,#041638);border:1px solid rgba(218,171,62,.42);box-shadow:0 14px 28px rgba(0,0,0,.6);transform-origin:top center;animation:bannerSway 7s ease-in-out infinite alternate}.banner-left{left:4.6%}.banner-right{right:4.6%;animation-delay:-2.5s}.banner:before{content:'♛';position:absolute;top:24%;left:50%;transform:translateX(-50%);font-size:24px;color:#d8ad4c;text-shadow:0 0 12px rgba(216,170,69,.2)}.banner span{position:absolute;top:44%;left:50%;transform:translateX(-50%);font-size:clamp(14px,1.35vw,22px);letter-spacing:.1em;color:#e1bd61}
-        .brazier{position:absolute;bottom:15%;width:58px;height:96px;z-index:4}.brazier-left{left:8%}.brazier-right{right:8%}.brazier b{position:absolute;bottom:0;left:6px;width:48px;height:32px;background:linear-gradient(90deg,#241506,#c1841c,#392207);border:1px solid #d3a33a;clip-path:polygon(10% 0,90% 0,75% 100%,25% 100%)}.brazier i{position:absolute;left:17px;bottom:25px;width:30px;height:62px;border-radius:55% 55% 45% 45%;background:radial-gradient(ellipse at 50% 70%,#fff5c0 0 9%,#ffd24d 10% 29%,#f37817 35% 58%,rgba(240,83,10,0) 68%);filter:drop-shadow(0 0 18px #ff9820);animation:fire 1.5s ease-in-out infinite alternate;transform-origin:bottom}
-
-        .particle-field{position:absolute;inset:0;z-index:3;pointer-events:none}.particle{position:absolute;bottom:-8px;border-radius:50%;background:#f3cd68;box-shadow:0 0 8px #e8ae33;opacity:0;animation:particleRise linear infinite}
-        .lux-frame{position:absolute;inset:14px;z-index:7;border:1px solid rgba(222,177,67,.38);box-shadow:inset 0 0 0 5px rgba(222,177,67,.035),inset 0 0 65px rgba(0,0,0,.34);pointer-events:none}.lux-frame:after{content:'';position:absolute;inset:7px;border:1px solid rgba(222,177,67,.13)}
-        .jewel{position:absolute;width:17px;height:17px;background:#0c4b9e;border:2px solid #f0cf75;transform:rotate(45deg);box-shadow:0 0 0 5px rgba(216,170,69,.06),0 0 14px rgba(31,94,188,.5)}.jewel.tl{top:-7px;left:-7px}.jewel.tr{top:-7px;right:-7px}.jewel.bl{bottom:-7px;left:-7px}.jewel.br{bottom:-7px;right:-7px}
-
-        .royal-content{position:relative;z-index:6;width:min(92vw,930px);display:flex;flex-direction:column;align-items:center;text-align:center;padding:3.4svh 22px 4svh}
-        .crest-stage{position:relative;width:min(55vw,500px);height:min(48svh,440px);display:grid;place-items:center;perspective:900px}
-        .halo{position:absolute;border-radius:50%;border:1px solid rgba(235,196,92,.24);box-shadow:0 0 38px rgba(216,170,69,.07),inset 0 0 32px rgba(216,170,69,.035)}.halo-a{width:90%;aspect-ratio:1;animation:spin 46s linear infinite}.halo-b{width:74%;aspect-ratio:1;border-style:dashed;animation:spinR 33s linear infinite}.halo-c{width:58%;aspect-ratio:1;animation:haloPulse 4.8s ease-in-out infinite}
-        .crest-aura{position:absolute;width:90%;aspect-ratio:1;border-radius:50%;background:radial-gradient(circle,rgba(245,210,110,.18),rgba(212,175,55,.045) 43%,transparent 70%);filter:blur(15px);animation:haloPulse 5.1s ease-in-out infinite}
-        .travel-glint{position:absolute;z-index:4;top:8%;bottom:8%;left:-22%;width:16%;background:linear-gradient(100deg,transparent,rgba(255,243,195,.25),transparent);transform:rotate(9deg);filter:blur(1px);animation:crestGlint 6.8s ease-in-out 1.4s infinite;pointer-events:none}
-        .crest{position:relative;z-index:3;max-width:91%;max-height:95%;object-fit:contain;filter:drop-shadow(0 18px 28px rgba(0,0,0,.84)) drop-shadow(0 0 18px rgba(212,175,55,.2));animation:crestIn 1.15s cubic-bezier(.16,1,.3,1) both,crestFloat 6.2s ease-in-out 1.2s infinite;transform-style:preserve-3d}
-
-        .kicker{font-size:clamp(10px,1.1vw,13px);font-weight:600;letter-spacing:.34em;color:#e8c866;text-transform:uppercase;text-shadow:0 2px 10px #000}.royal-content h1{margin:8px 0 0;font-size:clamp(50px,7vw,92px);line-height:.94;letter-spacing:.03em;font-weight:700;background:linear-gradient(180deg,#fff1b5 0%,#e9c86c 27%,#b77818 55%,#f1d57b 78%,#80500b 100%);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 5px 15px rgba(0,0,0,.72))}.ornament{display:flex;align-items:center;gap:12px;width:min(74%,540px);margin:13px 0 6px;font-size:13px;letter-spacing:.32em;color:#d4a338}.ornament span{height:1px;flex:1;background:linear-gradient(90deg,transparent,#d4a338,transparent)}.tagline{margin:0;max-width:620px;font-size:clamp(13px,1.3vw,17px);font-style:italic;line-height:1.55;color:rgba(244,230,194,.84);text-shadow:0 2px 10px #000}
-        .enter-button{position:relative;margin-top:24px;min-width:min(340px,72vw);padding:15px 38px;border:1px solid #e2b950;border-radius:8px;background:linear-gradient(180deg,#0d3479,#071d4e 52%,#051334);color:#f4d77c;font:700 clamp(12px,1.35vw,15px) Georgia;letter-spacing:.18em;text-transform:uppercase;box-shadow:0 0 0 4px rgba(4,13,35,.8),0 0 0 5px rgba(216,170,69,.28),0 14px 34px rgba(0,0,0,.62),0 0 26px rgba(216,170,69,.18);cursor:pointer;overflow:hidden;transition:transform .22s ease,filter .22s ease,box-shadow .22s ease}.enter-button:before{content:'';position:absolute;top:-70%;left:-45%;width:34%;height:240%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.45),transparent);transform:rotate(14deg);animation:buttonShine 4.5s ease-in-out 1.9s infinite}.enter-button b{position:relative;z-index:2}.enter-button:hover{transform:translateY(-2px) scale(1.018);filter:brightness(1.08);box-shadow:0 0 0 4px rgba(4,13,35,.8),0 0 0 5px rgba(239,196,86,.46),0 16px 38px rgba(0,0,0,.66),0 0 34px rgba(239,196,86,.3)}
-        .portal-mark{margin-top:14px;font-size:9px;letter-spacing:.28em;color:rgba(244,224,173,.4)}
-        .reveal{opacity:0;transform:translateY(12px);animation:reveal .8s cubic-bezier(.16,1,.3,1) forwards}.r1{animation-delay:.55s}.r2{animation-delay:.72s}.r3{animation-delay:.88s}.r4{animation-delay:1.02s}.r5{animation-delay:1.18s}.r6{animation-delay:1.34s}
-        .portal-flash{position:absolute;inset:0;z-index:20;pointer-events:none;opacity:0;background:radial-gradient(circle at 50% 40%,rgba(255,239,183,.7),rgba(70,129,225,.22) 34%,transparent 68%)}
-        .is-opening .royal-content{animation:royalPush 1.5s cubic-bezier(.16,1,.3,1) forwards}.is-opening .portal-flash{animation:flash 1.15s ease-out forwards}.is-opening .banner{animation:bannerExit 1.5s ease-in forwards}
-
-        @keyframes castleDrift{to{transform:scale(1.08) translateY(-.6%)}}
-        @keyframes rayMove{to{opacity:.56;transform:translateY(1.2%) rotate(6deg)}}
-        @keyframes bannerSway{to{transform:rotate(1.4deg)}}
-        @keyframes fire{to{transform:scaleY(1.12) rotate(-2deg)}}
-        @keyframes particleRise{0%{transform:translateY(0);opacity:0}14%{opacity:.82}100%{transform:translateY(-108svh);opacity:0}}
-        @keyframes spin{to{transform:rotate(360deg)}}@keyframes spinR{to{transform:rotate(-360deg)}}
-        @keyframes haloPulse{50%{transform:scale(1.045);opacity:.76}}
-        @keyframes crestIn{from{opacity:0;transform:translateY(24px) scale(.82)}to{opacity:1;transform:none}}
-        @keyframes crestFloat{0%,100%{transform:translateY(0) rotateX(0deg)}50%{transform:translateY(-6px) rotateX(1.2deg)}}
-        @keyframes crestGlint{0%,58%{left:-22%;opacity:0}70%{opacity:1}100%{left:112%;opacity:0}}
-        @keyframes buttonShine{0%,60%{left:-45%}84%,100%{left:125%}}
-        @keyframes reveal{to{opacity:1;transform:none}}
-        @keyframes royalPush{0%{transform:scale(1);opacity:1}45%{transform:scale(1.035);opacity:1;filter:brightness(1.12)}100%{transform:scale(1.16);opacity:0;filter:brightness(1.5)}}
-        @keyframes bannerExit{to{opacity:0;transform:translateY(-12px) scale(.98)}}
-        @keyframes flash{0%{opacity:0}22%{opacity:.62}100%{opacity:0}}
-
-        @media(max-width:767px){
-          .castle-layer{object-position:center 47%;animation:none;transform:scale(1.03)}
-          .gold-ray{width:28vw}.banner{width:18vw;min-width:58px;opacity:.72}.banner-left{left:2.5%}.banner-right{right:2.5%}.brazier-left{left:3%}.brazier-right{right:3%}
-          .lux-frame{inset:9px}.jewel{width:13px;height:13px}
-          .royal-content{width:100%;padding:2.6svh 14px 3svh}.crest-stage{width:min(90vw,390px);height:min(42svh,370px)}
-          .kicker{font-size:8.5px;letter-spacing:.14em;white-space:nowrap}.royal-content h1{font-size:clamp(48px,14.5vw,70px);margin-top:7px}.ornament{width:82%;margin:10px 0 6px;font-size:11px}.tagline{font-size:12.5px;max-width:330px}.enter-button{min-width:80vw;max-width:360px;margin-top:19px;padding:14px 20px;font-size:12px}.portal-mark{font-size:7px;letter-spacing:.18em;margin-top:12px;white-space:nowrap}
-        }
-        @media(prefers-reduced-motion:reduce){.castle-layer,.gold-ray,.banner,.brazier i,.particle,.halo,.crest-aura,.crest,.travel-glint,.enter-button:before,.reveal{animation:none!important}.reveal{opacity:1;transform:none}}
-      `}</style>
-    </section>
-  )
+      <div className="kicker">ONE CROWN · FOUR ALLIANCES</div>
+      <h1><span>KINGDOM</span><strong>846</strong></h1>
+      <div className="divider"><b/>◆<b/></div>
+      <p>Where legends are forged in fire and crowned in gold</p>
+      <button onClick={enter} disabled={opening}><span>ENTER THE REALM</span></button>
+      <small>OFFICIAL ROYAL PORTAL · KINGDOM 846</small>
+    </main>
+    <div className="fire f1"/><div className="fire f2"/><div className="portal"/>
+    <style>{`
+      .royal6{position:fixed;inset:0;z-index:9999;overflow:hidden;background:#01040c;color:#efd47c;font-family:Georgia,'Times New Roman',serif;isolation:isolate}
+      .castle{position:absolute;inset:-5%;z-index:-9;background:url('/assets/splash-castle-bg.png') center 43%/cover no-repeat;filter:brightness(.38) saturate(.95) contrast(1.12);animation:drift 18s ease-in-out infinite alternate}
+      .night{position:absolute;inset:0;z-index:-8;background:radial-gradient(circle at 50% 31%,rgba(22,74,151,.10),transparent 33%),linear-gradient(180deg,rgba(1,4,12,.12),rgba(1,5,16,.18) 48%,rgba(0,2,8,.88) 100%),radial-gradient(ellipse at center,transparent 34%,rgba(0,0,0,.72) 100%)}
+      .ray{position:absolute;top:-20%;width:14%;height:78%;z-index:-5;background:linear-gradient(180deg,rgba(255,234,166,.26),rgba(225,177,59,.02) 75%,transparent);filter:blur(13px);opacity:.34;animation:rays 7s ease-in-out infinite alternate}.r1{left:31%;transform:rotate(8deg)}.r2{right:31%;transform:rotate(-8deg);animation-delay:-3s}
+      .frame{position:absolute;inset:12px;border:1px solid rgba(222,177,67,.5);box-shadow:inset 0 0 0 6px rgba(222,177,67,.035),inset 0 0 80px #000;pointer-events:none;z-index:8}.frame:after{content:'';position:absolute;inset:7px;border:1px solid rgba(222,177,67,.15)}.frame i{position:absolute;width:18px;height:18px;background:#0a3f8c;border:2px solid #e6bd55;transform:rotate(45deg);box-shadow:0 0 18px rgba(40,105,210,.7)}.frame i:nth-child(1){left:-8px;top:-8px}.frame i:nth-child(2){right:-8px;top:-8px}.frame i:nth-child(3){left:-8px;bottom:-8px}.frame i:nth-child(4){right:-8px;bottom:-8px}
+      .banner{position:absolute;top:9%;width:clamp(74px,8vw,116px);height:48%;z-index:1;background:linear-gradient(90deg,#020b1d,#0a2c68 48%,#03112d);border:1px solid rgba(222,177,67,.48);clip-path:polygon(0 0,100% 0,100% 87%,50% 100%,0 87%);display:flex;flex-direction:column;align-items:center;padding-top:12vh;gap:7vh;font-size:24px;color:#d9ad4a;text-shadow:0 0 16px rgba(222,177,67,.25);box-shadow:0 20px 40px #000;transform-origin:top;animation:sway 7s ease-in-out infinite alternate}.banner b{font-size:18px;letter-spacing:.16em;font-weight:400}.left{left:5%}.right{right:5%;animation-delay:-2.8s}
+      .embers{position:absolute;inset:0;z-index:4;pointer-events:none}.embers span{position:absolute;bottom:-10px;width:2px;height:2px;border-radius:50%;background:#ffd66d;box-shadow:0 0 9px #f2a72d;opacity:0;animation:rise linear infinite}
+      main{position:absolute;inset:0;z-index:5;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:2.5vh 15vw 3vh}
+      .heraldry{position:relative;width:min(44vw,500px);height:min(43vh,440px);display:grid;place-items:center;margin-top:-3vh}.ring{position:absolute;border-radius:50%;border:1px solid rgba(229,187,77,.27);box-shadow:0 0 38px rgba(214,169,54,.06),inset 0 0 28px rgba(214,169,54,.04)}.ring.a{width:94%;aspect-ratio:1;animation:spin 42s linear infinite}.ring.b{width:78%;aspect-ratio:1;border-style:dashed;animation:spinR 31s linear infinite}.ring.c{width:62%;aspect-ratio:1;animation:pulse 4.5s ease-in-out infinite}.aura{position:absolute;width:86%;aspect-ratio:1;border-radius:50%;background:radial-gradient(circle,rgba(247,209,100,.18),rgba(16,65,143,.08) 40%,transparent 70%);filter:blur(15px);animation:pulse 5s ease-in-out infinite}.crest{position:relative;z-index:2;max-width:92%;max-height:94%;object-fit:contain;filter:drop-shadow(0 24px 34px rgba(0,0,0,.9)) drop-shadow(0 0 20px rgba(221,175,57,.22));animation:float 6s ease-in-out infinite}.glint{position:absolute;z-index:3;top:6%;bottom:6%;left:-24%;width:14%;background:linear-gradient(100deg,transparent,rgba(255,245,200,.34),transparent);transform:rotate(8deg);animation:glint 6.5s ease-in-out infinite;pointer-events:none}
+      .kicker{font-size:clamp(10px,1vw,13px);letter-spacing:.32em;font-weight:600;text-shadow:0 2px 10px #000;margin-top:-1vh}h1{margin:8px 0 0;line-height:.82;font-weight:400;background:linear-gradient(#fff1b4 0%,#e9c66c 30%,#9a5d0c 58%,#f0d67c 82%,#6c3c05 100%);-webkit-background-clip:text;color:transparent;filter:drop-shadow(0 6px 14px #000)}h1 span{display:block;font-size:clamp(48px,7vw,98px);letter-spacing:.025em}h1 strong{display:block;font-size:clamp(54px,7.6vw,108px);font-weight:400;margin-top:12px}.divider{display:flex;align-items:center;gap:12px;width:min(520px,65vw);margin:15px 0 8px;font-size:12px}.divider b{height:1px;flex:1;background:linear-gradient(90deg,transparent,#d7a83e,transparent)}p{margin:0;color:rgba(247,232,194,.88);font-size:clamp(13px,1.25vw,17px);font-style:italic;text-shadow:0 2px 10px #000}
+      button{position:relative;margin-top:24px;min-width:min(420px,68vw);padding:16px 40px;border:1px solid #e1b84e;border-radius:7px;background:linear-gradient(180deg,#0d397f,#071f55 52%,#04122f);color:#f4d77b;font:700 clamp(12px,1.25vw,15px) Georgia;letter-spacing:.18em;box-shadow:0 0 0 4px rgba(2,8,24,.88),0 0 0 5px rgba(222,177,67,.32),0 18px 38px #000,0 0 32px rgba(222,177,67,.14);cursor:pointer;overflow:hidden;transition:.25s}button:before{content:'';position:absolute;top:-90%;left:-45%;width:28%;height:280%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.5),transparent);transform:rotate(13deg);animation:shine 4.2s ease-in-out infinite}button:hover{transform:translateY(-2px) scale(1.015);box-shadow:0 0 0 4px #020818,0 0 0 5px rgba(236,196,84,.5),0 20px 44px #000,0 0 38px rgba(224,177,60,.3)}button span{position:relative;z-index:1}small{margin-top:22px;font-size:9px;letter-spacing:.32em;color:rgba(229,205,139,.55)}
+      .fire{position:absolute;bottom:13%;width:52px;height:85px;z-index:4;background:radial-gradient(ellipse at 50% 72%,#fff6c6 0 9%,#ffd550 10% 28%,#f47a16 35% 55%,rgba(244,91,10,0) 68%);filter:drop-shadow(0 0 20px #f58a1b);transform-origin:bottom;animation:fire 1.2s ease-in-out infinite alternate}.f1{left:9%}.f2{right:9%;animation-delay:-.55s}.portal{position:absolute;inset:0;z-index:20;background:radial-gradient(circle,#fff8da 0,#f4d274 15%,#315fae 42%,#06112d 70%,#000 100%);opacity:0;pointer-events:none}
+      .opening main{animation:enterZoom 1.65s cubic-bezier(.16,.84,.2,1) forwards}.opening .banner.left{animation:leaveL 1.4s ease-in forwards}.opening .banner.right{animation:leaveR 1.4s ease-in forwards}.opening .portal{animation:portal 1.65s ease-in forwards}.opening .frame{animation:frameOut 1.3s ease forwards}
+      @keyframes drift{to{transform:scale(1.055) translate3d(0,-1%,0)}}@keyframes rays{to{opacity:.55;transform:translateX(4vw) rotate(6deg)}}@keyframes sway{to{transform:perspective(600px) rotateY(2deg) rotateZ(.35deg)}}@keyframes rise{0%{transform:translateY(0) scale(.6);opacity:0}12%{opacity:.8}100%{transform:translateY(-105vh) translateX(30px) scale(1.3);opacity:0}}@keyframes spin{to{transform:rotate(360deg)}}@keyframes spinR{to{transform:rotate(-360deg)}}@keyframes pulse{50%{transform:scale(1.045);opacity:.7}}@keyframes float{50%{transform:translateY(-7px) scale(1.012)}}@keyframes glint{0%,28%{left:-24%;opacity:0}40%{opacity:1}58%{left:112%;opacity:0}100%{left:112%;opacity:0}}@keyframes shine{0%,55%{left:-45%;opacity:0}65%{opacity:.8}82%{left:125%;opacity:0}100%{left:125%;opacity:0}}@keyframes fire{to{transform:scaleX(.84) scaleY(1.12) rotate(2deg);filter:drop-shadow(0 0 28px #ff9d22)}}@keyframes enterZoom{to{transform:scale(1.24);filter:blur(2px);opacity:.1}}@keyframes leaveL{to{transform:translateX(-130%);opacity:0}}@keyframes leaveR{to{transform:translateX(130%);opacity:0}}@keyframes portal{0%,28%{opacity:0}72%{opacity:.45}100%{opacity:1}}@keyframes frameOut{to{opacity:0;transform:scale(1.06)}}
+      @media(max-width:767px){main{padding:2svh 7vw 3svh;justify-content:flex-start}.castle{background-position:center 40%;filter:brightness(.34) saturate(.95) contrast(1.1)}.banner{top:12%;height:41%;width:64px;min-width:64px;padding-top:11vh;gap:6vh;opacity:.76}.left{left:2.5%}.right{right:2.5%}.heraldry{width:74vw;height:39svh;margin-top:5svh}.kicker{margin-top:-1.5svh;font-size:9px;letter-spacing:.22em}h1{margin-top:7px}h1 span{font-size:clamp(45px,14vw,64px)}h1 strong{font-size:clamp(54px,17vw,76px);margin-top:10px}.divider{margin:11px 0 6px;width:78vw}p{font-size:13px;max-width:82vw;line-height:1.4}button{margin-top:19px;min-width:78vw;padding:16px 18px;font-size:13px}small{margin-top:18px;font-size:7px;letter-spacing:.24em}.fire{bottom:13%;width:40px;height:68px}.f1{left:4%}.f2{right:4%}.frame{inset:10px}}
+      @media(max-height:720px){.heraldry{height:35vh}.royal6 main{transform:scale(.9)}}
+      @media(prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;animation-iteration-count:1!important}}
+    `}</style>
+  </section>
 }

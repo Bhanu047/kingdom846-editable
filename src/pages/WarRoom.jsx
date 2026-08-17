@@ -22,7 +22,7 @@ function formatClock(seconds) { const n = Math.max(0, Math.ceil(seconds)); retur
 function newId() { return `${Date.now()}-${Math.random().toString(36).slice(2, 7)}` }
 
 export default function WarRoom() {
-  const { user } = useAuth()
+  const { user, isAdmin } = useAuth()
   const [whales, setWhales] = useState([]), [selected, setSelected] = useState({}), [running, setRunning] = useState(false), [, setTick] = useState(0), [saved, setSaved] = useState(false)
   const startRef = useRef(0), timerRef = useRef(null)
   useEffect(() => { try { const raw = localStorage.getItem(STORAGE_KEY); if (raw) setWhales(JSON.parse(raw)) } catch {} }, [])
@@ -32,7 +32,7 @@ export default function WarRoom() {
   const active = running ? sequence.find(w=>elapsed>=w.offset-3&&elapsed<w.offset+1):null
   const complete = running&&sequence.length>0&&elapsed>sequence[sequence.length-1].offset+1
   useEffect(()=>{if(complete){clearInterval(timerRef.current);setRunning(false)}},[complete])
-  if(user?.username!=='shoni') return <div className="grid place-items-center py-20"><Panel glow className="max-w-lg text-center"><Icon name="shieldCheck" size={34} className="mx-auto text-gold mb-3"/><h1 className="font-display text-2xl font-bold text-parchment">Private War Room</h1><p className="mt-2 text-sm text-parchment/50">This command room is reserved for Shoni.</p></Panel></div>
+  if(!isAdmin && user?.username?.toLowerCase()!=='shoni') return <div className="grid place-items-center py-20"><Panel glow className="max-w-lg text-center"><Icon name="shieldCheck" size={34} className="mx-auto text-gold mb-3"/><h1 className="font-display text-2xl font-bold text-parchment">Private War Room</h1><p className="mt-2 text-sm text-parchment/50">This command room is reserved for Sparta admin and Shoni.</p></Panel></div>
   function addWhale(){setWhales(p=>[...p,{id:newId(),name:'New Whale',march:'0:30',status:'Undeployed'}]);setSaved(false)}
   function updateWhale(id,field,value){setWhales(p=>p.map(w=>w.id===id?{...w,[field]:value}:w));setSaved(false)}
   function removeWhale(id){setWhales(p=>p.filter(w=>w.id!==id));setSelected(p=>{const n={...p};delete n[id];return n});setSaved(false)}

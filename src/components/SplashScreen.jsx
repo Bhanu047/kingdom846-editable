@@ -1,68 +1,92 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 
 export default function SplashScreen({ onEnter }) {
   const [fading, setFading] = useState(false)
-  const audioRef = useRef(null)
 
   useEffect(() => {
     document.body.style.overflow = 'hidden'
     return () => { document.body.style.overflow = '' }
   }, [])
 
-  function playRoyalCue() {
-    try {
-      const AudioCtx = window.AudioContext || window.webkitAudioContext
-      if (!AudioCtx) return
-      const ctx = audioRef.current || new AudioCtx()
-      audioRef.current = ctx
-      if (ctx.state === 'suspended') ctx.resume()
-      const now = ctx.currentTime
-      const master = ctx.createGain()
-      master.gain.value = .18
-      master.connect(ctx.destination)
-      ;[[55,0,1.15,'sine'],[392,.08,.5,'triangle'],[523.25,.18,.58,'triangle'],[659.25,.3,.7,'triangle']].forEach(([freq,start,dur,type]) => {
-        const osc = ctx.createOscillator(), gain = ctx.createGain()
-        osc.type = type; osc.frequency.value = freq
-        gain.gain.setValueAtTime(.0001, now + start)
-        gain.gain.exponentialRampToValueAtTime(freq === 55 ? .3 : .05, now + start + .04)
-        gain.gain.exponentialRampToValueAtTime(.001, now + start + dur)
-        osc.connect(gain); gain.connect(master); osc.start(now + start); osc.stop(now + start + dur)
-      })
-    } catch {}
-  }
-
   function enter() {
     if (fading) return
-    playRoyalCue()
     setFading(true)
     setTimeout(() => {
       document.body.style.overflow = ''
       onEnter?.()
-    }, 1100)
+    }, 1650)
+  }
+
+  function fallbackArtwork(e) {
+    if (e.currentTarget.dataset.fallbackApplied) return
+    e.currentTarget.dataset.fallbackApplied = 'true'
+    e.currentTarget.src = '/assets/splash-castle-bg.png'
   }
 
   return (
-    <div className={`royal-welcome fixed inset-0 z-[100] flex items-center justify-center overflow-hidden ${fading ? 'portal-opening' : ''}`}>
-      <img src="/assets/splash-castle-bg.png" alt="" loading="eager" className="welcome-bg absolute inset-0 h-full w-full object-cover" />
-      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(3,5,12,.58),rgba(3,5,12,.25)_38%,rgba(3,5,12,.78)_100%)]" />
-      <div className="welcome-glow absolute inset-0" />
-      <div className="welcome-frame absolute inset-3 rounded-2xl border border-gold/20 sm:inset-5" />
+    <div className={`premium-welcome fixed inset-0 z-[100] flex items-center justify-center overflow-hidden ${fading ? 'portal-opening' : ''}`}>
+      <div className="welcome-backdrop" aria-hidden="true" />
+      <div className="welcome-vignette" aria-hidden="true" />
 
-      <main className="relative z-10 flex w-full max-w-3xl flex-col items-center px-6 text-center">
-        <div className="crest-wrap relative flex items-center justify-center">
-          <div className="crest-halo absolute rounded-full" />
-          <img src="/assets/crest-846.png?v=welcome-hotfix" alt="Kingdom 846 Royal Crest" loading="eager" className="welcome-crest relative object-contain" />
-        </div>
-        <div className="mt-3 text-[10px] font-semibold uppercase tracking-[.32em] text-gold-bright sm:text-xs">One Crown · Four Alliances</div>
-        <h1 className="mt-2 font-decorative text-[clamp(2rem,10vw,4.5rem)] font-black leading-none gradient-gold">KINGDOM 846</h1>
-        <div className="mt-3 text-xs tracking-[.5em] text-gold/75">✦ ◆ ✦</div>
-        <p className="mt-3 max-w-lg font-serif text-sm italic text-parchment/80 sm:text-base">Where legends are forged in fire and crowned in gold</p>
-        <button type="button" onClick={enter} disabled={fading} className="welcome-enter mt-6 min-w-[220px] rounded-lg border border-[#9c7a24] px-8 py-3 text-xs font-bold uppercase tracking-[.17em] text-ink sm:text-sm">Enter the Realm</button>
-        <div className="mt-4 text-[8px] uppercase tracking-[.24em] text-parchment/35 sm:text-[9px]">Official Royal Portal · Kingdom 846</div>
-      </main>
+      <div className="welcome-art-frame">
+        <img
+          src="/assets/kingdom846-welcome-premium.webp?v=20260816-premium"
+          alt="Kingdom 846 Royal Portal"
+          loading="eager"
+          fetchPriority="high"
+          draggable="false"
+          onError={fallbackArtwork}
+          className="welcome-art"
+        />
+
+        <div className="welcome-gold-bloom" aria-hidden="true" />
+        <div className="welcome-sheen" aria-hidden="true" />
+
+        <button
+          type="button"
+          onClick={enter}
+          disabled={fading}
+          className="welcome-enter-hit"
+          aria-label="Enter the Realm"
+        >
+          <span className="sr-only">Enter the Realm</span>
+        </button>
+      </div>
+
+      <div className="welcome-flash" aria-hidden="true" />
 
       <style>{`
-        .royal-welcome{background:#03050b;isolation:isolate}.welcome-bg{z-index:-3;transform:scale(1.04);animation:bgmove 16s ease-in-out infinite alternate}.welcome-glow{z-index:-1;background:radial-gradient(circle at 50% 34%,rgba(232,199,102,.18),transparent 38%);pointer-events:none}.welcome-frame{pointer-events:none;box-shadow:inset 0 0 50px rgba(212,175,55,.035)}.crest-wrap{width:min(58vw,280px);height:min(37vh,360px)}.welcome-crest{max-width:100%;max-height:100%;filter:brightness(1.08) saturate(1.08) drop-shadow(0 12px 20px rgba(0,0,0,.7)) drop-shadow(0 0 15px rgba(212,175,55,.28));animation:crestfloat 5s ease-in-out infinite}.crest-halo{width:90%;aspect-ratio:1;background:radial-gradient(circle,rgba(232,199,102,.18),transparent 68%);filter:blur(14px);animation:halo 4s ease-in-out infinite}.welcome-enter{background:linear-gradient(180deg,#f1d77d,#e8c766 35%,#d4af37);box-shadow:0 10px 28px -8px rgba(212,175,55,.72),inset 0 1px rgba(255,255,255,.4);transition:.2s ease}.welcome-enter:hover{transform:translateY(-2px);filter:brightness(1.08)}.portal-opening{animation:fadeout 1.1s ease forwards}@keyframes bgmove{to{transform:scale(1.09)}}@keyframes crestfloat{50%{transform:translateY(-6px)}}@keyframes halo{50%{opacity:.65;transform:scale(1.08)}}@keyframes fadeout{to{opacity:0;visibility:hidden}}@media(max-width:767px){.welcome-bg{animation:none;object-position:center}.crest-wrap{width:min(68vw,230px);height:min(34svh,300px)}.welcome-frame{inset:10px}.welcome-enter{margin-top:1.25rem}}@media(max-height:700px){.crest-wrap{height:27svh}.welcome-enter{margin-top:.8rem;padding-top:.65rem;padding-bottom:.65rem}}@media(prefers-reduced-motion:reduce){.welcome-bg,.welcome-crest,.crest-halo{animation:none!important}}
+        .premium-welcome { background: #03050b; isolation: isolate; }
+        .welcome-backdrop { position:absolute; inset:-6%; z-index:-3; background-image:url('/assets/kingdom846-welcome-premium.webp?v=20260816-premium'); background-position:center; background-size:cover; filter:blur(30px) brightness(.32) saturate(1.16); transform:scale(1.08); }
+        .welcome-vignette { position:absolute; inset:0; z-index:-1; background:radial-gradient(ellipse at 50% 45%,rgba(234,190,72,.08),transparent 46%),linear-gradient(90deg,rgba(2,3,7,.88),transparent 18%,transparent 82%,rgba(2,3,7,.88)); pointer-events:none; }
+        .welcome-art-frame { position:relative; width:min(100vw,calc(100svh * 1.5006)); aspect-ratio:1280/853; flex:none; overflow:hidden; box-shadow:0 0 80px rgba(0,0,0,.72),0 0 55px rgba(212,175,55,.07); animation:royal-breathe 11s ease-in-out infinite alternate; transform-origin:center; }
+        .welcome-art { display:block; width:100%; height:100%; object-fit:cover; user-select:none; -webkit-user-drag:none; }
+        .welcome-gold-bloom { position:absolute; inset:0; pointer-events:none; background:radial-gradient(circle at 50% 12%,rgba(255,221,128,.12),transparent 29%); mix-blend-mode:screen; animation:crown-bloom 4.8s ease-in-out infinite; }
+        .welcome-sheen { position:absolute; top:-40%; bottom:-40%; left:-32%; width:19%; pointer-events:none; background:linear-gradient(102deg,transparent,rgba(255,232,164,.11),transparent); transform:rotate(9deg); animation:royal-sheen 7.5s ease-in-out 1.5s infinite; }
+        .welcome-enter-hit { position:absolute; z-index:5; left:31.1%; top:80.5%; width:38%; height:11.2%; border:0; border-radius:18px; background:transparent; cursor:pointer; outline:none; transition:transform .22s ease,filter .22s ease,box-shadow .22s ease; -webkit-tap-highlight-color:transparent; }
+        .welcome-enter-hit::after { content:''; position:absolute; inset:11% 5%; border-radius:16px; opacity:0; box-shadow:0 0 30px rgba(232,199,102,.5),0 0 62px rgba(212,175,55,.23); transition:opacity .22s ease; }
+        .welcome-enter-hit:hover,.welcome-enter-hit:focus-visible { transform:scale(1.018); }
+        .welcome-enter-hit:hover::after,.welcome-enter-hit:focus-visible::after { opacity:1; }
+        .welcome-enter-hit:focus-visible { outline:2px solid rgba(255,222,132,.9); outline-offset:-8px; }
+        .welcome-flash { position:absolute; inset:0; z-index:20; pointer-events:none; opacity:0; background:radial-gradient(circle at 50% 42%,rgba(255,240,190,.78),rgba(225,176,58,.22) 28%,transparent 66%); }
+        .portal-opening .welcome-enter-hit { pointer-events:none; }
+        .portal-opening .welcome-art-frame { animation:portal-open 1.65s cubic-bezier(.16,1,.3,1) forwards; }
+        .portal-opening .welcome-flash { animation:portal-flash 1.2s ease-out forwards; }
+        @keyframes royal-breathe { from { transform:scale(1); filter:brightness(1); } to { transform:scale(1.008); filter:brightness(1.035); } }
+        @keyframes crown-bloom { 0%,100% { opacity:.52; } 50% { opacity:1; } }
+        @keyframes royal-sheen { 0%,58% { left:-32%; opacity:0; } 67% { opacity:1; } 88%,100% { left:118%; opacity:0; } }
+        @keyframes portal-open { 0% { transform:scale(1); filter:brightness(1) saturate(1); opacity:1; } 35% { transform:scale(1.018); filter:brightness(1.15) saturate(1.08); opacity:1; } 100% { transform:scale(1.075); filter:brightness(1.28) saturate(1.03); opacity:0; } }
+        @keyframes portal-flash { 0% { opacity:0; transform:scale(.7); } 18% { opacity:.58; } 48% { opacity:.18; transform:scale(1.08); } 100% { opacity:0; transform:scale(1.24); } }
+        @media (max-width:767px) {
+          .welcome-backdrop { background-image:url('/assets/kingdom846-welcome-premium.webp?v=20260816-premium'); filter:blur(24px) brightness(.34) saturate(1.12); }
+          .welcome-vignette { background:linear-gradient(180deg,rgba(2,3,7,.5),transparent 11%,transparent 89%,rgba(2,3,7,.58)); }
+          .welcome-art-frame { width:100vw; height:100svh; aspect-ratio:auto; box-shadow:0 0 55px rgba(0,0,0,.65); }
+          .welcome-art { object-fit:cover; object-position:center; }
+          .welcome-enter-hit { left:24%; top:78%; width:52%; height:10%; border-radius:12px; }
+          .welcome-sheen { display:none; }
+        }
+        @media (max-height:650px) and (max-width:767px) { .welcome-enter-hit { top:76%; } }
+        @media (prefers-reduced-motion:reduce) { .welcome-art-frame,.welcome-gold-bloom,.welcome-sheen { animation:none!important; } .portal-opening .welcome-art-frame { animation:portal-open .8s ease-out forwards!important; } .portal-opening .welcome-flash { animation-duration:.65s!important; } }
       `}</style>
     </div>
   )

@@ -52,4 +52,4 @@ The UI separates **Verified/source rules**, **Community model**, and **Experimen
 
 ## Validation status
 
-The branch is isolated to Battle Lab/navigation files, but a full `npm run build` has not been executed in this connector-only environment. Draft PR #17 should remain unmerged until a normal build or deployment preview confirms the branch.
+The branch is isolated to Battle Lab/navigation files. A separate Render preview service built the branch using `npm ci --include=dev && npm run build`; Vite completed successfully and emitted the Battle Lab production bundle. Render then started `node server/index.cjs`, the server bound on port 10000, and the preview deploy reached `live` status. Production remains on the `main` branch. Draft PR #17 remains unmerged for visual and battle-report validation.

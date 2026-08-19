@@ -14,7 +14,7 @@ Battle Lab does not require a player username/password. Users can use the tools 
 
 A profile stores player name, kingdom, march capacity, Infantry/Cavalry/Archer Attack/Lethality/Defense/Health, and user-entered progression-source values used by Mystic Trials.
 
-Profiles can be exported/imported as JSON for manual cross-device transfer. No Battle Lab password or cloud credential is collected in this version; saved profiles remain in the user's browser unless the user explicitly exports a backup.
+Profiles can be exported/imported as JSON for manual cross-device transfer. No Battle Lab password or cloud credential is collected; saved profiles remain in the user's browser unless the user explicitly exports a backup.
 
 ## Bear Optimizer
 
@@ -23,17 +23,13 @@ The Bear module uses publicly described Kingshot community mechanics:
 - Offensive factor: `(1 + Attack / 100) × (1 + Lethality / 100)`
 - Bear modeled as an Infantry-type target
 - Community Bear offensive weights: Infantry `1/3`, Cavalry `1`, Archers `4/3`
-- Diminishing-return contribution proportional to `sqrt(troop_count)`
+- Contribution proportional to `sqrt(troop_count)`
 
 For troop type `i`:
 
 `c_i = troop_weight_i × (1 + attack_i / 100) × (1 + lethality_i / 100)`
 
-Battle Lab optimizes:
-
-`score = Σ c_i × sqrt(n_i)`
-
-subject to `Σ n_i = march_capacity` and optional minimum troop constraints. Without binding minimums, `n_i ∝ c_i²`. Battle Lab implements its own active-set allocation and exact-capacity integer rounding.
+Battle Lab optimizes `score = Σ c_i × sqrt(n_i)` subject to march capacity and optional minimum troop constraints. Without binding minimums, `n_i ∝ c_i²`. The active-set allocation and exact-capacity integer rounding are Battle Lab's own implementation.
 
 ## Mystic Trials
 
@@ -45,13 +41,9 @@ Current source groups: Heroes, Hero Gear, Widgets, Pets, Pet Skills, Governor Ch
 
 Hero Synergy models the community-observed stacking pattern where effects in the same internal family add first and different families multiply.
 
-For each family `g`:
+For each family `g`: `family_multiplier_g = 1 + Σ bonuses_in_g / 100`.
 
-`family_multiplier_g = 1 + Σ bonuses_in_g / 100`
-
-Total grouped multiplier:
-
-`multiplier = Π family_multiplier_g`
+Total grouped multiplier: `multiplier = Π family_multiplier_g`.
 
 The UI uses user-defined A/B/C family labels instead of claiming a complete hidden Kingshot opcode database.
 
@@ -63,7 +55,7 @@ This module is labeled **Experimental** because real PvP includes targeting, Def
 
 ## Battle Simulator
 
-The first simulator is explicitly labeled **Experimental T10 Expedition**. It models Infantry/Cavalry/Archer lines, isolated T10 base Attack/HP data, base Lethality/Defense used by the public Expedition-style model, user combat percentages, square-root army factor, 10% counters, front-line targeting, simultaneous casualty application, and the small documented round-fatigue term.
+The first simulator is explicitly labeled **Experimental T10 Expedition**. It models Infantry/Cavalry/Archer lines, isolated T10 base Attack/HP data, base Lethality/Defense used by the public Expedition-style model, user combat percentages, square-root army factor, 10% counters, front-line targeting, simultaneous casualty application, and a small round-fatigue term.
 
 It intentionally excludes Cavalry bypass, Archer volley, complete hero proc timing, widgets, special hero edge cases, and other hidden/uncertain mechanics until validated.
 
@@ -82,6 +74,6 @@ These references are used for game-mechanics research. Their source code, creati
 
 Battle Lab separates **Verified/source rules**, **Community model**, and **Experimental** mechanics in the interface. Experimental outputs should be compared against actual Kingshot battle reports before being presented as predictive, and the model should be updated when game patches or stronger evidence change a mechanic.
 
-## Current validation status
+## Validation status
 
-The feature branch has been reviewed at the repository-diff level to keep Battle Lab changes isolated from unrelated site functionality. A full `npm run build` has not yet been executed in this connector-only environment, and the repository does not currently provide an automatic PR build result. Draft PR #17 must remain unmerged until a build/preview check is available or the branch is tested in the normal deployment environment.
+The branch is isolated to Battle Lab/navigation files, but a full `npm run build` has not been executed in this connector-only environment. Draft PR #17 should stay unmerged until a normal build or deployment preview confirms the branch.

@@ -19,7 +19,7 @@ A profile stores:
 - Infantry / Cavalry / Archer Attack, Lethality, Defense, and Health
 - user-entered progression-source values used by the Mystic Trials filter
 
-Profiles can be exported/imported as JSON for manual cross-device transfer. No Battle Lab profile password or cloud credential is collected in this version.
+Profiles can be exported/imported as JSON for manual cross-device transfer. No Battle Lab profile password or cloud credential is collected in this version. Saved profiles remain in the user's browser unless the user explicitly exports a backup file.
 
 ## Bear Optimizer
 
@@ -91,7 +91,7 @@ The general Formation Optimizer extends the square-root allocation method using 
 
 - Infantry counters Cavalry
 - Cavalry counters Archers
-- Archers counter Infantry
+- Archers counters Infantry
 
 A counter receives a `1.1` coefficient multiplier in this theorycrafting model.
 

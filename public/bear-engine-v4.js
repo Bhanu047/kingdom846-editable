@@ -47,10 +47,8 @@
     ],
   }
 
-  // TG5-TG7 is calibrated against the supplied Frakinator reference screenshot:
-  // INF 790.50/1126.50, CAV 728.00/1028.00, ARC 903.40/1178.10,
-  // Other / Other / Rosa => 1 / 11 / 88.
-  // Other tier groups stay neutral until we have an equivalent controlled reference.
+  // TG5-TG7 is calibrated against the supplied reference case.
+  // Other tier groups stay neutral until we have equivalent controlled reference results.
   const TIER_FACTORS = {
     't1-6':   { infantry: 1, cavalry: 1, archers: 1, calibrated: false },
     't7-tg2': { infantry: 1, cavalry: 1, archers: 1, calibrated: false },
@@ -60,7 +58,7 @@
     't11':    { infantry: 1, cavalry: 1, archers: 1, calibrated: false },
   }
 
-  const DEFAULT = { tier: 'tg5-7', heroes: { infantry: 'Other', cavalry: 'Other', archers: 'Rosa' } }
+  const DEFAULT = { tier: 'tg5-7', heroes: { infantry: 'Other', cavalry: 'Other', archers: 'Other' } }
 
   function isBattleLab() { return /battle-lab/i.test(location.hash || '') }
   function sectionByText(text) { return [...document.querySelectorAll('section')].find((s) => (s.textContent || '').includes(text)) || null }
@@ -98,8 +96,6 @@
       const lethality = statValue(troop.label, 1)
       const selectedHero = hero(troop.key, config.heroes[troop.key])
 
-      // Rally-leader attack factor from the visible Bear theory:
-      // linear in Attack and Lethality. The +1 converts displayed bonus % into total factor.
       const attackFactor = (1 + attack / 100) * (1 + lethality / 100)
       const tierFactor = tier[troop.key] || 1
       const skillFactor = selectedHero.ratioMultiplier || 1
@@ -108,8 +104,6 @@
       return { ...troop, attack, lethality, selectedHero, attackFactor, tierFactor, skillFactor, coefficient }
     })
 
-    // If D_i = K * C_i * sqrt(N_i), maximizing sum(D_i) for fixed total troops gives
-    // N_i proportional to C_i^2. K and total march size cancel from the ratio.
     const denom = rows.reduce((sum, row) => sum + row.coefficient ** 2, 0) || 1
     rows.forEach((row) => { row.percent = row.coefficient ** 2 / denom * 100 })
     return { config, tier, rows }
@@ -131,7 +125,7 @@
       <div style="border:1px solid rgba(212,175,55,.18);border-radius:14px;background:rgba(212,175,55,.035);padding:14px">
         <div style="font:800 9px Montserrat,sans-serif;letter-spacing:.14em;color:rgba(241,231,206,.46)">TROOP TIER / TRUEGOLD STAGE</div>
         <select data-v4-tier style="margin-top:7px;width:100%;box-sizing:border-box;border:1px solid rgba(212,175,55,.2);border-radius:11px;background:#06152b;padding:11px;color:#f1e7ce;font:700 12px Montserrat,sans-serif">${tierOptions(state.config.tier)}</select>
-        <div style="margin-top:7px;font:600 9px/1.45 Montserrat,sans-serif;color:${state.tier.calibrated?'rgba(167,243,208,.62)':'rgba(251,191,36,.62)'}">${state.tier.calibrated ? 'Calibrated against the supplied TG5–TG7 reference output.' : 'This tier group still needs a controlled reference result before its troop-skill factors are considered validated.'}</div>
+        <div style="margin-top:7px;font:600 9px/1.45 Montserrat,sans-serif;color:${state.tier.calibrated?'rgba(167,243,208,.62)':'rgba(251,191,36,.62)'}">${state.tier.calibrated ? 'TG5–TG7 reference factors are enabled.' : 'This tier group still needs a controlled reference result before its troop-skill factors are considered validated.'}</div>
       </div>
       <div data-bear-troop-grid style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:11px">
         ${state.rows.map((row) => `

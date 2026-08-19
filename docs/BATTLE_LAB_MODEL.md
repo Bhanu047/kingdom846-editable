@@ -138,4 +138,4 @@ Experimental outputs should be checked against actual Kingshot reports before be
 
 ## Current validation status
 
-The feature branch has been reviewed at the repository-diff level to ensure Battle Lab changes stay isolated from unrelated site functionality. A full `npm run build` has not yet been executed in this connector-only environment, and the repository does not currently provide an automatic PR build result. The draft PR should remain unmerged until a build/preview check is available or the branch is tested in the normal deployment environment.
+The feature branch has been reviewed at the repository-diff level to ensure Battle Lab changes stay isolated from unrelated site functionality. A full `npm run build` has not yet been executed in this connector-only environment, and the repository does not currently provide an automatic PR build result. Draft PR #17 must remain unmerged until a build/preview check is available or the branch is tested in the normal deployment environment.

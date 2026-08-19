@@ -1,3 +1,4 @@
+import { Fragment } from 'react'
 import Icon from './Icon'
 import { nav } from '../data/kingdom'
 
@@ -15,8 +16,17 @@ function getLeaderAvatar(user) {
   return map[slug] || './assets/avatars/queen.webp'
 }
 
+function BetaBadge() {
+  return <span className="ml-auto rounded-full border border-amber-300/25 bg-amber-300/[0.06] px-2 py-0.5 text-[8px] font-bold uppercase tracking-[0.12em] text-amber-100/75">Beta</span>
+}
+
 export default function Sidebar({ active, onNavigate, onLogin, onSignOut, user, isAdmin }) {
   const isShoni = user?.role === 'leader' && user?.username === 'shoni'
+
+  function openBattleLab(module = 'bear') {
+    try { sessionStorage.setItem('kingdom846.battleLab.requestedModule', module) } catch {}
+    onNavigate('battle-lab')
+  }
 
   return (
     <aside className="flex h-full w-64 flex-col border-r border-gold/15 bg-ink-2/90 relative overflow-hidden">
@@ -57,21 +67,27 @@ export default function Sidebar({ active, onNavigate, onLogin, onSignOut, user, 
       <nav className="flex-1 overflow-y-auto px-2 py-3 relative z-10">
         <div className="eyebrow px-3 pb-2">Command</div>
         {nav.map((n) => (
-          <button
-            key={n.id}
-            onClick={() => onNavigate(n.id)}
-            className={`nav-item w-full text-left ${active === n.id ? 'active nav-glow' : ''}`}
-          >
-            <Icon name={n.icon} size={17} />
-            <span>{n.label}</span>
-          </button>
-        ))}
+          <Fragment key={n.id}>
+            <button
+              onClick={() => onNavigate(n.id)}
+              className={`nav-item w-full text-left ${active === n.id ? 'active nav-glow' : ''}`}
+            >
+              <Icon name={n.icon} size={17} />
+              <span>{n.label}</span>
+            </button>
 
-        <div className="gold-divider my-3" />
-        <div className="eyebrow px-3 pb-2">Tactical Tools</div>
-        <button onClick={() => onNavigate('battle-lab')} className={`nav-item w-full text-left ${active === 'battle-lab' ? 'active nav-glow' : ''}`}>
-          <Icon name="crosshair" size={17} /><span>Battle Lab</span>
-        </button>
+            {n.id === 'guides' && (
+              <>
+                <button onClick={() => openBattleLab('bear')} className={`nav-item w-full text-left ${active === 'battle-lab' ? 'active nav-glow' : ''}`}>
+                  <Icon name="crosshair" size={17} /><span>Battle Lab</span><BetaBadge />
+                </button>
+                <button onClick={() => openBattleLab('mystic')} className="nav-item w-full text-left">
+                  <Icon name="sparkles" size={17} /><span>Mystic Trials</span><BetaBadge />
+                </button>
+              </>
+            )}
+          </Fragment>
+        ))}
 
         {isAdmin && (
           <>

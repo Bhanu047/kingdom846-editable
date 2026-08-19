@@ -6,8 +6,9 @@
     'kingdom846.battleLab.bearConfig.v3',
     'kingdom846.battleLab.bearConfig.v4',
     'kingdom846.battleLab.bearConfig.v5',
+    'kingdom846.battleLab.bearConfig.v6',
   ]
-  const BEAR_V5_KEY = 'kingdom846.battleLab.bearConfig.v5'
+  const BEAR_V6_KEY = 'kingdom846.battleLab.bearConfig.v6'
 
   let resetDone = false
 
@@ -15,20 +16,22 @@
     if (resetDone || !/battle-lab/i.test(location.hash || '')) return
     resetDone = true
 
-    // Battle Lab starts each full page visit as a clean tactical session.
-    // Previous report values and Bear selections must never silently become
-    // inputs for a new calculation.
     try {
       localStorage.removeItem(PROFILE_KEY)
       localStorage.removeItem(ACTIVE_KEY)
       BEAR_KEYS.forEach((key) => sessionStorage.removeItem(key))
 
-      sessionStorage.setItem(BEAR_V5_KEY, JSON.stringify({
+      sessionStorage.setItem(BEAR_V6_KEY, JSON.stringify({
         tier: 'tg5-7',
         heroes: {
           infantry: 'Other',
           cavalry: 'Other',
           archers: 'Other',
+        },
+        widgets: {
+          infantry: 0,
+          cavalry: 0,
+          archers: 0,
         },
       }))
     } catch {}

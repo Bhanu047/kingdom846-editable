@@ -1,46 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
 import Icon from '../components/Icon'
-import LegacyBattleLab from './BattleLab'
+import LegacyBattleLab from './BattleLab.jsx'
 
 const REQUEST_KEY = 'kingdom846.battleLab.requestedModule'
 
 const TOOLS = [
-  {
-    id: 'bear',
-    title: 'Bear',
-    sourceLabel: 'Bear Optimizer',
-    icon: 'target',
-    image: './assets/battle-lab-bear.svg',
-    description: 'Optimize Bear Hunt troop ratios, lead heroes, widgets and rally setup.',
-    accent: 'from-amber-950/85 via-ink/45 to-transparent',
-  },
-  {
-    id: 'mystic',
-    title: 'Mystic',
-    sourceLabel: 'Mystic Trials',
-    icon: 'sparkles',
-    image: './assets/battle-lab-mystic.svg',
-    description: 'Analyze Mystic Trials progression, source rules and tactical planning.',
-    accent: 'from-violet-950/85 via-ink/45 to-transparent',
-  },
-  {
-    id: 'battle',
-    title: 'Battle',
-    sourceLabel: 'Battle Simulator',
-    icon: 'swords',
-    image: './assets/battle-lab-battle.svg',
-    description: 'Compare combat stats, armies and modeled battle outcomes.',
-    accent: 'from-red-950/85 via-ink/45 to-transparent',
-  },
-  {
-    id: 'formation',
-    title: 'Formation',
-    sourceLabel: 'Formation Optimizer',
-    icon: 'layers',
-    image: './assets/battle-lab-formation.svg',
-    description: 'Build and compare tactical troop formations for different targets.',
-    accent: 'from-emerald-950/85 via-ink/45 to-transparent',
-  },
+  { id: 'bear', title: 'Bear', sourceLabel: 'Bear Optimizer', icon: 'target', image: './assets/battle-lab-bear.svg', description: 'Optimize Bear Hunt troop ratios, lead heroes, widgets and rally setup.', accent: 'from-amber-950/85 via-ink/45 to-transparent' },
+  { id: 'mystic', title: 'Mystic', sourceLabel: 'Mystic Trials', icon: 'sparkles', image: './assets/battle-lab-mystic.svg', description: 'Analyze Mystic Trials progression, source rules and tactical planning.', accent: 'from-violet-950/85 via-ink/45 to-transparent' },
+  { id: 'battle', title: 'Battle', sourceLabel: 'Battle Simulator', icon: 'swords', image: './assets/battle-lab-battle.svg', description: 'Compare combat stats, armies and modeled battle outcomes.', accent: 'from-red-950/85 via-ink/45 to-transparent' },
+  { id: 'formation', title: 'Formation', sourceLabel: 'Formation Optimizer', icon: 'layers', image: './assets/battle-lab-formation.svg', description: 'Build and compare tactical troop formations for different targets.', accent: 'from-emerald-950/85 via-ink/45 to-transparent' },
 ]
 
 function readRequestedTool() {
@@ -60,11 +28,7 @@ function BetaBadge() {
 
 function ToolCard({ tool, onOpen }) {
   return (
-    <button
-      type="button"
-      onClick={() => onOpen(tool.id)}
-      className="group relative isolate min-h-[290px] overflow-hidden rounded-[24px] border border-gold/25 bg-ink text-left shadow-[0_18px_60px_rgba(0,0,0,.34)] transition duration-300 hover:-translate-y-1 hover:border-gold/60 hover:shadow-[0_22px_70px_rgba(212,175,55,.13)] md:min-h-[350px]"
-    >
+    <button type="button" onClick={() => onOpen(tool.id)} className="group relative isolate min-h-[290px] overflow-hidden rounded-[24px] border border-gold/25 bg-ink text-left shadow-[0_18px_60px_rgba(0,0,0,.34)] transition duration-300 hover:-translate-y-1 hover:border-gold/60 hover:shadow-[0_22px_70px_rgba(212,175,55,.13)] md:min-h-[350px]">
       <img src={tool.image} alt="" className="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-[1.035]" />
       <div className={`absolute inset-0 bg-gradient-to-t ${tool.accent}`} />
       <div className="absolute inset-0 bg-gradient-to-r from-black/35 via-transparent to-black/10" />
@@ -90,7 +54,6 @@ export default function BattleLabHub() {
     if (!activeTool) return
     const sourceLabel = TOOLS.find((item) => item.id === activeTool)?.sourceLabel
     if (!sourceLabel) return
-
     let attempts = 0
     const timer = window.setInterval(() => {
       attempts += 1
@@ -99,11 +62,8 @@ export default function BattleLabHub() {
       if (button) {
         button.click()
         window.clearInterval(timer)
-      } else if (attempts > 30) {
-        window.clearInterval(timer)
-      }
+      } else if (attempts > 30) window.clearInterval(timer)
     }, 60)
-
     return () => window.clearInterval(timer)
   }, [activeTool])
 
@@ -119,42 +79,24 @@ export default function BattleLabHub() {
             <div className="mt-4"><BetaBadge /></div>
           </div>
         </section>
-
-        <section className="grid gap-4 md:grid-cols-2 md:gap-5">
-          {TOOLS.map((item) => <ToolCard key={item.id} tool={item} onOpen={setActiveTool} />)}
-        </section>
+        <section className="grid gap-4 md:grid-cols-2 md:gap-5">{TOOLS.map((item) => <ToolCard key={item.id} tool={item} onOpen={setActiveTool} />)}</section>
       </div>
     )
   }
 
   return (
     <div className="space-y-6">
-      <style>{`
-        .bl-final-tool > div > section { display:none !important; }
-        .bl-final-tool > div > div.grid { grid-template-columns: minmax(0, .72fr) minmax(0, 1.28fr); }
-        @media (max-width: 1279px) { .bl-final-tool > div > div.grid { grid-template-columns: minmax(0, 1fr); } }
-      `}</style>
-
+      <style>{`.bl-final-tool > div > section { display:none !important; }.bl-final-tool > div > div.grid { grid-template-columns:minmax(0,.72fr) minmax(0,1.28fr); }@media(max-width:1279px){.bl-final-tool > div > div.grid{grid-template-columns:minmax(0,1fr);}}`}</style>
       <section className="relative min-h-[250px] overflow-hidden rounded-[26px] border border-gold/25 bg-ink shadow-[0_20px_70px_rgba(0,0,0,.34)] md:min-h-[310px]">
         <img src={tool.image} alt="" className="absolute inset-0 h-full w-full object-cover" />
         <div className={`absolute inset-0 bg-gradient-to-r ${tool.accent}`} />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-black/20" />
         <div className="relative flex min-h-[250px] flex-col justify-between p-5 md:min-h-[310px] md:p-8">
-          <div className="flex items-center justify-between gap-3">
-            <button type="button" onClick={() => setActiveTool(null)} className="inline-flex items-center gap-2 rounded-xl border border-gold/25 bg-black/35 px-3 py-2 text-xs font-bold uppercase tracking-[0.12em] text-parchment/80 backdrop-blur hover:border-gold/45 hover:text-parchment">← Battle Lab</button>
-            <BetaBadge />
-          </div>
-          <div>
-            <div className="mb-3 grid h-12 w-12 place-items-center rounded-2xl border border-gold/35 bg-black/35 text-gold-bright backdrop-blur"><Icon name={tool.icon} size={23} /></div>
-            <h1 className="font-display text-4xl font-bold uppercase tracking-[0.04em] text-parchment drop-shadow md:text-5xl">{tool.title}</h1>
-            <p className="mt-2 max-w-2xl text-sm leading-relaxed text-parchment/75 md:text-base">{tool.description}</p>
-          </div>
+          <div className="flex items-center justify-between gap-3"><button type="button" onClick={() => setActiveTool(null)} className="inline-flex items-center gap-2 rounded-xl border border-gold/25 bg-black/35 px-3 py-2 text-xs font-bold uppercase tracking-[0.12em] text-parchment/80 backdrop-blur hover:border-gold/45 hover:text-parchment">← Battle Lab</button><BetaBadge /></div>
+          <div><div className="mb-3 grid h-12 w-12 place-items-center rounded-2xl border border-gold/35 bg-black/35 text-gold-bright backdrop-blur"><Icon name={tool.icon} size={23} /></div><h1 className="font-display text-4xl font-bold uppercase tracking-[0.04em] text-parchment drop-shadow md:text-5xl">{tool.title}</h1><p className="mt-2 max-w-2xl text-sm leading-relaxed text-parchment/75 md:text-base">{tool.description}</p></div>
         </div>
       </section>
-
-      <div ref={legacyRef} className="bl-final-tool">
-        <LegacyBattleLab />
-      </div>
+      <div ref={legacyRef} className="bl-final-tool"><LegacyBattleLab /></div>
     </div>
   )
 }

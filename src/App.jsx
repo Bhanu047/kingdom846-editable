@@ -41,10 +41,11 @@ const Admin = lazy(() => import('./pages/Admin'))
 const MasterConsole = lazy(() => import('./pages/MasterConsole'))
 const LeaderPortal = lazy(() => import('./pages/LeaderPortal'))
 const WarRoom = lazy(() => import('./pages/WarRoom'))
+const BattleLab = lazy(() => import('./pages/BattleLab'))
 const Settings = lazy(() => import('./pages/Settings'))
 
 const titles = {
-  dashboard: 'Home', about: 'About Kingdom', kingdom: 'Kingdom', alliances: 'Alliances', events: 'Events', timeline: 'Timeline', news: 'News', guides: 'Guides', rankings: 'Rankings', transfer: 'Transfer',
+  dashboard: 'Home', about: 'About Kingdom', kingdom: 'Kingdom', alliances: 'Alliances', events: 'Events', timeline: 'Timeline', news: 'News', guides: 'Guides', rankings: 'Rankings', transfer: 'Transfer', 'battle-lab': 'Battle Lab',
   'apply-chief': 'Apply · Chief Minister', 'apply-noble': 'Apply · Noble Advisor', apply: 'Apply', admin: 'Admin Editor', console: 'Master Console', settings: 'Settings', 'leader-portal': 'Event Schedule', 'war-room': 'War Room'
 }
 
@@ -98,6 +99,7 @@ function Shell() {
   const index = useMemo(() => {
     const items = []
     nav.forEach((n) => items.push({ type: 'Page', label: n.label, page: n.id, icon: n.icon }))
+    items.push({ type: 'Tool', label: 'Battle Lab', page: 'battle-lab', icon: 'crosshair' })
     timeline.forEach((t) => items.push({ type: 'Timeline', label: t.name, page: 'timeline', icon: 'clock' }))
     guides.forEach((g) => items.push({ type: 'Guide', label: g.title, page: 'guides', icon: 'book' }))
     news.forEach((n) => items.push({ type: 'News', label: n.title, page: 'news', icon: 'newspaper' }))
@@ -124,6 +126,7 @@ function Shell() {
         case 'guides': return <Guides />
         case 'rankings': return <Rankings />
         case 'transfer': return <Transfer />
+        case 'battle-lab': return <BattleLab />
         case 'apply': return <Apply onNavigate={navigate} />
         case 'apply-chief': return <Apply type="chief_minister" onNavigate={navigate} />
         case 'apply-noble': return <Apply type="noble_advisor" onNavigate={navigate} />

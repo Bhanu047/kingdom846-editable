@@ -6,6 +6,7 @@
     'kingdom846.battleLab.bearConfig.v3',
     'kingdom846.battleLab.bearConfig.v4',
   ]
+  const BEAR_V4_KEY = 'kingdom846.battleLab.bearConfig.v4'
 
   let resetDone = false
 
@@ -20,6 +21,17 @@
       localStorage.removeItem(PROFILE_KEY)
       localStorage.removeItem(ACTIVE_KEY)
       BEAR_KEYS.forEach((key) => sessionStorage.removeItem(key))
+
+      // Do not assume any lead hero. The player must explicitly choose a hero
+      // before a hero-specific Bear modifier is allowed into the calculation.
+      sessionStorage.setItem(BEAR_V4_KEY, JSON.stringify({
+        tier: 'tg5-7',
+        heroes: {
+          infantry: 'Other',
+          cavalry: 'Other',
+          archers: 'Other',
+        },
+      }))
     } catch {}
   }
 

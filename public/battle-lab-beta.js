@@ -1,5 +1,4 @@
 (() => {
-  const REQUEST_KEY = 'kingdom846.battleLab.requestedModule'
   const TOOL_LABELS = ['Bear Optimizer', 'Mystic Trials', 'Battle Simulator', 'Hero Synergy', 'Formation Optimizer']
 
   function isBattleLab() {
@@ -18,31 +17,9 @@
     })
   }
 
-  function openRequestedModule() {
-    if (!isBattleLab()) return
-    let requested = ''
-    try { requested = sessionStorage.getItem(REQUEST_KEY) || '' } catch {}
-    if (!requested) return
-
-    const labels = {
-      bear: 'Bear Optimizer',
-      mystic: 'Mystic Trials',
-      battle: 'Battle Simulator',
-      formation: 'Formation Optimizer',
-    }
-    const label = labels[requested]
-    if (!label) return
-    const button = [...document.querySelectorAll('button')].find((node) => (node.textContent || '').includes(label))
-    if (!button) return
-
-    try { sessionStorage.removeItem(REQUEST_KEY) } catch {}
-    if (!(button.className || '').includes('border-gold/45')) button.click()
-  }
-
   function render() {
     if (!isBattleLab()) return
     markAllBeta()
-    openRequestedModule()
   }
 
   const observer = new MutationObserver(() => requestAnimationFrame(render))

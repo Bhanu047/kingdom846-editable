@@ -1,5 +1,6 @@
 (() => {
   const STYLE_ID = 'k846-battle-lab-layout-v3-style'
+  const IMPORT_ID = 'k846-combat-import-button'
 
   function isBattleLab() {
     return /battle-lab/i.test(location.hash || '')
@@ -30,6 +31,20 @@
     if (profile) profile.style.display = 'none'
   }
 
+  function addImportButton() {
+    const stats = sectionByText('Combat Report Stats')
+    if (!stats || document.getElementById(IMPORT_ID)) return
+    const title = [...stats.querySelectorAll('h2')].find((node) => /Combat Report Stats/i.test(node.textContent || ''))
+    if (!title) return
+    const button = document.createElement('button')
+    button.id = IMPORT_ID
+    button.type = 'button'
+    button.textContent = 'Import'
+    button.className = 'btn-primary btn-royal mt-3 w-full justify-center'
+    button.style.marginTop = '12px'
+    title.insertAdjacentElement('afterend', button)
+  }
+
   function configureTabs() {
     const labels = ['Bear Optimizer', 'Mystic Trials', 'Battle Simulator', 'Hero Synergy', 'Formation Optimizer']
     const buttons = labels.map((label) => [...document.querySelectorAll('button')].find((button) => (button.textContent || '').includes(label))).filter(Boolean)
@@ -55,15 +70,24 @@
     }
   }
 
+  function cleanupBearWhenInactive() {
+    const bear = [...document.querySelectorAll('button')].find((button) => (button.textContent || '').includes('Bear Optimizer'))
+    const active = !!bear && (bear.className || '').includes('border-gold/45')
+    if (!active) document.getElementById('k846-bear-result-v3')?.remove()
+  }
+
   function render() {
     if (!isBattleLab()) return
     installStyles()
     hidePlayerProfile()
+    addImportButton()
     configureTabs()
+    cleanupBearWhenInactive()
   }
 
   const observer = new MutationObserver(() => requestAnimationFrame(render))
   observer.observe(document.documentElement, { subtree: true, childList: true })
+  document.addEventListener('click', () => setTimeout(render, 60), true)
   window.addEventListener('hashchange', () => setTimeout(render, 150))
   setTimeout(render, 450)
 })()

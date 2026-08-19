@@ -23,6 +23,7 @@
   <div id="root"></div>
   <script type="module" src="/src/main.jsx"></script>
   <script src="/battle-lab-import.js" defer></script>
+  <script src="/mystic-trial-upload.js" defer></script>
   <script>
     (() => {
       const entranceImpact = new Audio('./assets/enter-sound.wav')
@@ -37,8 +38,6 @@
       const audioState = { entranceImpact, royalFanfare, playing: false, fadeTimer: null }
       window.__k846WelcomeAudio = audioState
 
-      // iOS and modern browsers require a direct user gesture for audible playback.
-      // Start the royal sequence on pointer-down so it reacts instantly to ENTER THE REALM.
       document.addEventListener('pointerdown', (event) => {
         const button = event.target?.closest?.('button')
         if (!button || !/enter\s+the\s+realm/i.test(button.textContent || '') || audioState.playing) return
@@ -51,7 +50,6 @@
         entranceImpact.play().catch(() => {})
         setTimeout(() => royalFanfare.play().catch(() => {}), 70)
 
-        // Let the fanfare bloom through the portal transition, then fade it naturally.
         setTimeout(() => {
           clearInterval(audioState.fadeTimer)
           audioState.fadeTimer = setInterval(() => {

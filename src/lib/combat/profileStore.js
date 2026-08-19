@@ -7,9 +7,9 @@ export const EMPTY_PROFILE = {
   kingdom: '846',
   capacity: 750000,
   stats: {
-    infantry: { attack: 300, lethality: 250, defense: 300, health: 250 },
-    cavalry: { attack: 300, lethality: 250, defense: 300, health: 250 },
-    archers: { attack: 300, lethality: 250, defense: 300, health: 250 },
+    infantry: { attack: 0, lethality: 0, defense: 0, health: 0 },
+    cavalry: { attack: 0, lethality: 0, defense: 0, health: 0 },
+    archers: { attack: 0, lethality: 0, defense: 0, health: 0 },
   },
   sources: {
     heroes: 0,

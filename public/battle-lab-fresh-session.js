@@ -5,8 +5,9 @@
     'kingdom846.battleLab.bearConfig.v2',
     'kingdom846.battleLab.bearConfig.v3',
     'kingdom846.battleLab.bearConfig.v4',
+    'kingdom846.battleLab.bearConfig.v5',
   ]
-  const BEAR_V4_KEY = 'kingdom846.battleLab.bearConfig.v4'
+  const BEAR_V5_KEY = 'kingdom846.battleLab.bearConfig.v5'
 
   let resetDone = false
 
@@ -14,17 +15,15 @@
     if (resetDone || !/battle-lab/i.test(location.hash || '')) return
     resetDone = true
 
-    // Battle Lab no longer exposes persistent player profiles. Start each full
-    // page visit with a clean tactical session so old report values cannot
-    // silently appear before the player imports or enters current stats.
+    // Battle Lab starts each full page visit as a clean tactical session.
+    // Previous report values and Bear selections must never silently become
+    // inputs for a new calculation.
     try {
       localStorage.removeItem(PROFILE_KEY)
       localStorage.removeItem(ACTIVE_KEY)
       BEAR_KEYS.forEach((key) => sessionStorage.removeItem(key))
 
-      // Do not assume any lead hero. The player must explicitly choose a hero
-      // before a hero-specific Bear modifier is allowed into the calculation.
-      sessionStorage.setItem(BEAR_V4_KEY, JSON.stringify({
+      sessionStorage.setItem(BEAR_V5_KEY, JSON.stringify({
         tier: 'tg5-7',
         heroes: {
           infantry: 'Other',

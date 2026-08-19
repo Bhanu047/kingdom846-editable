@@ -67,6 +67,12 @@ export default function Sidebar({ active, onNavigate, onLogin, onSignOut, user, 
           </button>
         ))}
 
+        <div className="gold-divider my-3" />
+        <div className="eyebrow px-3 pb-2">Tactical Tools</div>
+        <button onClick={() => onNavigate('battle-lab')} className={`nav-item w-full text-left ${active === 'battle-lab' ? 'active nav-glow' : ''}`}>
+          <Icon name="crosshair" size={17} /><span>Battle Lab</span>
+        </button>
+
         {isAdmin && (
           <>
             <div className="gold-divider my-3" />

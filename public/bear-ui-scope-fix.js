@@ -5,7 +5,7 @@
     return (node?.textContent || '').replace(/\s+/g, ' ').trim()
   }
 
-  function hideImportCapacity() {
+  function simplifyImportModal() {
     const modal = document.getElementById(MODAL_ID)
     if (!modal) return
 
@@ -18,8 +18,8 @@
       if (title) {
         const span = title.querySelector('span')
         const em = title.querySelector('em')
-        if (span) span.textContent = 'Detected Combat Values'
-        if (em) em.textContent = 'AUTO-DETECTED FROM REPORT'
+        if (span) span.textContent = 'Report Values'
+        if (em) em.textContent = 'REVIEW BEFORE APPLYING'
       }
     }
   }
@@ -46,43 +46,45 @@
   function scopeBearControls() {
     const section = findCombatStatsSection()
     if (!section) return
-    const tab = activeBearTab()
-    const isFormation = tab === 'formation'
+    const isFormation = activeBearTab() === 'formation'
 
-    const extraLabels = [/^March capacity$/i, /^Participants$/i, /^Troop tier$/i, /^True Gold$/i]
+    // Hunt Formation stays intentionally simple: Attack, Lethality and Troop Tier only.
+    // Rally Capacity, Participants and True Gold belong to Hunt Impact.
+    const impactOnlyLabels = [/^(March|Rally) capacity$/i, /^Participants$/i, /^True Gold$/i]
     const labels = [...section.querySelectorAll('label')]
 
     labels.forEach((label) => {
-      const labelText = text(label.querySelector('span') || label).replace(/%$/, '').trim()
-      const isImpactOnly = extraLabels.some((pattern) => pattern.test(labelText))
-      if (!isImpactOnly) return
+      const span = label.querySelector('span')
+      const labelText = text(span || label).replace(/%$/, '').trim()
+      if (/^March capacity$/i.test(labelText) && span) span.textContent = 'Rally Capacity'
+      const currentText = text(span || label).replace(/%$/, '').trim()
+      const isImpactOnly = impactOnlyLabels.some((pattern) => pattern.test(currentText))
+      if (!isImpactOnly) {
+        label.style.removeProperty('display')
+        return
+      }
       if (isFormation) label.style.setProperty('display', 'none', 'important')
       else label.style.removeProperty('display')
     })
 
-    // Remove the empty rows left behind after hiding Hunt Impact-only fields.
     [...section.querySelectorAll('div')].forEach((grid) => {
       const directLabels = [...grid.children].filter((child) => child.tagName === 'LABEL')
       if (!directLabels.length) return
-      const impactOnly = directLabels.every((label) => {
-        const labelText = text(label.querySelector('span') || label).replace(/%$/, '').trim()
-        return extraLabels.some((pattern) => pattern.test(labelText))
-      })
-      if (!impactOnly) return
-      if (isFormation) grid.style.setProperty('display', 'none', 'important')
+      const visible = directLabels.some((label) => label.style.display !== 'none')
+      if (!visible && isFormation) grid.style.setProperty('display', 'none', 'important')
       else grid.style.removeProperty('display')
     })
 
     const note = [...section.querySelectorAll('div')].find((node) => /Defense, Health and Squad stats are not inputs|Hunt Formation uses only|Hunt Impact uses your rally/i.test(text(node)))
     if (note) {
       note.textContent = isFormation
-        ? 'Hunt Formation uses only Infantry, Cavalry and Archer Attack + Lethality detected from the uploaded report.'
-        : 'Hunt Impact uses the uploaded combat stats plus march size, participants, troop tier and True Gold settings.'
+        ? 'Enter Infantry, Cavalry and Archer Attack + Lethality, choose your Troop Tier, then calculate the formation.'
+        : 'Hunt Impact uses the uploaded combat stats plus troop counts, heroes, widgets and troop tier.'
     }
   }
 
   function run() {
-    hideImportCapacity()
+    simplifyImportModal()
     scopeBearControls()
   }
 

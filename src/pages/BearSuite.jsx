@@ -40,6 +40,116 @@ function RatioCard({ troop }) {
   )
 }
 
+function heatColor(fraction) {
+  const f = Math.max(0, Math.min(1, fraction))
+  if (f >= 0.97) return '#f6df45'
+  if (f >= 0.90) return '#eeb737'
+  if (f >= 0.80) return '#dc7f3f'
+  if (f >= 0.65) return '#ad4a63'
+  if (f >= 0.45) return '#71386f'
+  return '#382760'
+}
+
+function ternaryPoint(infantry, cavalry, archers) {
+  const top = { x: 300, y: 42 }
+  const left = { x: 58, y: 462 }
+  const right = { x: 542, y: 462 }
+  return {
+    x: top.x * infantry + left.x * cavalry + right.x * archers,
+    y: top.y * infantry + left.y * cavalry + right.y * archers,
+  }
+}
+
+function HuntFormationMap({ stats, tier, tg, result }) {
+  const samples = useMemo(() => {
+    const steps = 28
+    const points = []
+    for (let i = 0; i <= steps; i += 1) {
+      for (let c = 0; c <= steps - i; c += 1) {
+        const a = steps - i - c
+        const ratio = { infantry: i / steps, cavalry: c / steps, archers: a / steps }
+        const score = computeBearDamageScore({ stats, tier, tg, ratio })
+        const p = ternaryPoint(ratio.infantry, ratio.cavalry, ratio.archers)
+        points.push({ ...p, score, ratio })
+      }
+    }
+    return points
+  }, [stats, tier, tg])
+
+  const best = ternaryPoint(result.ratio.infantry, result.ratio.cavalry, result.ratio.archers)
+  const typical = ternaryPoint(0.10, 0.10, 0.80)
+  const maxScore = result.optimizedScore || 1
+  const whole = {
+    infantry: Math.max(0, Math.round(result.ratio.infantry * 100)),
+    cavalry: Math.max(0, Math.round(result.ratio.cavalry * 100)),
+    archers: 0,
+  }
+  whole.archers = Math.max(0, 100 - whole.infantry - whole.cavalry)
+
+  const gridLines = []
+  for (let n = 1; n < 5; n += 1) {
+    const t = n / 5
+    const a1 = ternaryPoint(t, 0, 1 - t)
+    const a2 = ternaryPoint(t, 1 - t, 0)
+    const c1 = ternaryPoint(0, t, 1 - t)
+    const c2 = ternaryPoint(1 - t, t, 0)
+    const r1 = ternaryPoint(0, 1 - t, t)
+    const r2 = ternaryPoint(1 - t, 0, t)
+    gridLines.push(<line key={`i${n}`} x1={a1.x} y1={a1.y} x2={a2.x} y2={a2.y} />)
+    gridLines.push(<line key={`c${n}`} x1={c1.x} y1={c1.y} x2={c2.x} y2={c2.y} />)
+    gridLines.push(<line key={`a${n}`} x1={r1.x} y1={r1.y} x2={r2.x} y2={r2.y} />)
+  }
+
+  return (
+    <div className="mt-5 overflow-hidden rounded-2xl border border-gold/20 bg-[#07101e] p-3 md:p-4">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <div><div className="text-[9px] font-bold uppercase tracking-[0.16em] text-gold/55">Formation Terrain</div><div className="font-display text-lg font-bold text-parchment">Damage Efficiency Map</div></div>
+        <div className="rounded-full border border-gold/20 bg-gold/[0.06] px-3 py-1 font-mono text-xs font-bold text-gold-bright">Best {whole.infantry}/{whole.cavalry}/{whole.archers}</div>
+      </div>
+      <div className="rounded-xl border border-white/10 bg-[#f6f1e7] p-2">
+        <svg viewBox="0 0 600 525" className="h-auto w-full" role="img" aria-label="Ternary Hunt Formation efficiency map">
+          <defs>
+            <clipPath id="huntTriangle"><polygon points="300,42 58,462 542,462" /></clipPath>
+          </defs>
+          <rect width="600" height="525" fill="#f6f1e7" />
+          <g clipPath="url(#huntTriangle)">
+            {samples.map((point, index) => <circle key={index} cx={point.x} cy={point.y} r="18" fill={heatColor(point.score / maxScore)} opacity="0.94" />)}
+          </g>
+          <g stroke="#9aa1a8" strokeWidth="1" opacity="0.75">{gridLines}</g>
+          <polygon points="300,42 58,462 542,462" fill="none" stroke="#121820" strokeWidth="3" />
+
+          <circle cx={best.x} cy={best.y} r="8" fill="#19a34a" stroke="#ffffff" strokeWidth="2" />
+          <g stroke="#d92727" strokeWidth="3">
+            <line x1={typical.x - 7} y1={typical.y - 7} x2={typical.x + 7} y2={typical.y + 7} />
+            <line x1={typical.x + 7} y1={typical.y - 7} x2={typical.x - 7} y2={typical.y + 7} />
+          </g>
+
+          <g fontFamily="system-ui, sans-serif" fill="#151b23" fontWeight="700">
+            <text x="300" y="22" textAnchor="middle" fontSize="16">Full Infantry</text>
+            <text x="22" y="492" fontSize="16" transform="rotate(-58 22 492)">Full Cavalry</text>
+            <text x="578" y="492" textAnchor="end" fontSize="16" transform="rotate(58 578 492)">Full Archery</text>
+          </g>
+
+          <g fontFamily="system-ui, sans-serif" fontSize="13" fontWeight="700">
+            <text x="92" y="485" fill="#b56a20">Cavalry fraction →</text>
+            <text x="300" y="505" textAnchor="middle" fill="#208e45">Archery fraction →</text>
+            <text x="508" y="485" textAnchor="end" fill="#2677b8">← Infantry fraction</text>
+          </g>
+
+          <g fontFamily="system-ui, sans-serif" fontSize="13">
+            <rect x="82" y="66" width="150" height="56" rx="8" fill="#ffffff" stroke="#c7ccd1" />
+            <g stroke="#d92727" strokeWidth="2"><line x1="98" y1="82" x2="108" y2="92" /><line x1="108" y1="82" x2="98" y2="92" /></g>
+            <text x="118" y="91" fill="#222">Typical 10/10/80</text>
+            <circle cx="103" cy="107" r="5" fill="#19a34a" />
+            <text x="118" y="112" fill="#222">Best {whole.infantry}/{whole.cavalry}/{whole.archers}</text>
+          </g>
+        </svg>
+      </div>
+      <div className="mt-3 rounded-xl border border-gold/12 bg-black/20 px-4 py-3 text-sm leading-relaxed text-parchment/70">With the stats entered above, the strongest modeled formation is <span className="font-mono font-bold text-gold-bright">{whole.infantry}/{whole.cavalry}/{whole.archers}</span>. The green marker is your optimum; the red cross marks the common 10/10/80 reference.</div>
+    </div>
+  )
+}
+
 export default function BearSuite() {
   const [tab, setTab] = useState('ratio')
   const [capacity, setCapacity] = useState(750000)
@@ -112,6 +222,7 @@ export default function BearSuite() {
           <section className="panel panel-glow p-5 md:p-6">
             <div className="flex items-center justify-between gap-3"><div><div className="eyebrow">Hunt Formation</div><h3 className="mt-1 font-display text-2xl font-bold text-parchment">Optimal Troop Split</h3></div><div className="font-mono text-sm font-bold text-gold-bright">{Number(capacity).toLocaleString()}</div></div>
             <div className="mt-4 space-y-3">{result.troops.map((troop) => <RatioCard key={troop.type} troop={{ ...troop, icon: TROOPS.find((item) => item.key === troop.type)?.icon }} />)}</div>
+            <HuntFormationMap stats={stats} tier={tier} tg={tg} result={result} />
             <div className="mt-4 grid grid-cols-2 gap-3"><div className="rounded-xl border border-gold/10 bg-white/[0.025] p-3"><div className="text-[9px] uppercase tracking-wider text-parchment/35">Impact gain</div><div className="mt-1 font-mono text-xl font-bold text-gold-bright">+{result.gainVsBalanced.toFixed(2)}%</div><div className="text-[10px] text-parchment/35">vs 33/33/33</div></div><div className="rounded-xl border border-gold/10 bg-white/[0.025] p-3"><div className="text-[9px] uppercase tracking-wider text-parchment/35">Archer modifier</div><div className="mt-1 font-mono text-xl font-bold text-gold-bright">×{result.arcMult.toFixed(2)}</div><div className="text-[10px] text-parchment/35">tier/TG rule</div></div></div>
             <button type="button" onClick={copyFormation} className="btn-primary btn-royal mt-4 w-full justify-center"><Icon name={copied ? 'shieldCheck' : 'scroll'} size={14} /> {copied ? 'Copied' : 'Copy Hunt Formation'}</button>
             <div className="mt-3 rounded-xl border border-gold/10 bg-ink/50 p-3 font-mono text-[11px] leading-relaxed text-parchment/55">{buildBearChatMessage(result)}</div>

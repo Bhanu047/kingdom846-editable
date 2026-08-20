@@ -35,18 +35,6 @@
     return values.find(v => v.toLowerCase() !== label.toLowerCase()) || ''
   }
 
-  function formationText() {
-    const panel = getPanelByHeading('Optimal Troop Split')
-    if (!panel) return ''
-    const values = [...panel.querySelectorAll('.font-mono')].map(el => clean(el.textContent)).filter(v => /%$/.test(v))
-    if (values.length >= 3) {
-      const nums = values.slice(0, 3).map(v => Math.round(parseFloat(v) || 0))
-      return `Kingdom846 Hunt Formation\nINF ${nums[0]}% · CAV ${nums[1]}% · ARC ${nums[2]}%\n${location.origin}/#/battle-lab`
-    }
-    const donut = [...panel.querySelectorAll('*')].map(el => clean(el.textContent)).find(v => /^\d+\/\d+\/\d+$/.test(v))
-    return donut ? `Kingdom846 Hunt Formation\nINF/CAV/ARC ${donut}\n${location.origin}/#/battle-lab` : ''
-  }
-
   function dashboardText() {
     const panel = getPanelByHeading('Damage Analytics Dashboard')
     if (!panel) return ''
@@ -56,7 +44,7 @@
     const gain = findKpi(panel, 'Potential Gain')
     const formation = findKpi(panel, 'Current Formation')
     if (!current && !optimal) return ''
-    const lines = [
+    return [
       'Kingdom846 Hunt Impact — Damage Analytics',
       current && `Projected Impact: ${current}`,
       optimal && `Optimal Impact: ${optimal}`,
@@ -64,71 +52,52 @@
       gain && `Potential Gain: ${gain}`,
       formation && `Current Formation (INF/CAV/ARC): ${formation}`,
       `${location.origin}/#/battle-lab`,
-    ].filter(Boolean)
-    return lines.join('\n')
+    ].filter(Boolean).join('\n')
   }
 
-  async function shareText(title, text, button) {
-    if (!text) return
-    const original = button.textContent
-    try {
-      if (navigator.share) {
-        await navigator.share({ title, text, url: `${location.origin}/#/battle-lab` })
-        button.textContent = 'Shared'
-      } else {
-        await navigator.clipboard.writeText(text)
-        button.textContent = 'Copied'
-      }
-    } catch (err) {
-      if (err?.name === 'AbortError') return
-      try {
-        await navigator.clipboard.writeText(text)
-        button.textContent = 'Copied'
-      } catch {}
-    }
-    setTimeout(() => { button.textContent = original }, 1400)
-  }
-
-  function addFormationShare() {
+  function addFormationDownload() {
     const panel = getPanelByHeading('Optimal Troop Split')
     if (!panel || panel.querySelector('[data-k846-share="formation"]')) return
     const existingCopy = [...panel.querySelectorAll('button')].find(b => /copy hunt formation/i.test(clean(b.textContent)))
     if (!existingCopy) return
-    const share = document.createElement('button')
-    share.type = 'button'
-    share.className = `${BTN_CLASS} secondary`
-    share.dataset.k846Share = 'formation'
-    share.textContent = 'Share Hunt Formation'
-    share.addEventListener('click', () => shareText('Kingdom846 Hunt Formation', formationText(), share))
-    existingCopy.insertAdjacentElement('afterend', share)
+    const download = document.createElement('button')
+    download.type = 'button'
+    download.className = `${BTN_CLASS} secondary`
+    download.dataset.k846Share = 'formation'
+    download.textContent = 'Download Formation Report'
+    existingCopy.insertAdjacentElement('afterend', download)
   }
 
-  function addDashboardShare() {
+  function addDashboardControls() {
     const panel = getPanelByHeading('Damage Analytics Dashboard')
     if (!panel || panel.querySelector('[data-k846-share="dashboard"]')) return
     const projected = findKpi(panel, 'Projected Impact')
     if (!projected) return
+
     const row = document.createElement('div')
     row.className = 'k846-share-row'
     row.dataset.k846Share = 'dashboard'
 
-    const share = document.createElement('button')
-    share.type = 'button'
-    share.className = BTN_CLASS
-    share.textContent = 'Share Dashboard'
-    share.addEventListener('click', () => shareText('Kingdom846 Hunt Impact', dashboardText(), share))
+    const download = document.createElement('button')
+    download.type = 'button'
+    download.className = BTN_CLASS
+    download.textContent = 'Download Dashboard'
 
     const copy = document.createElement('button')
     copy.type = 'button'
     copy.className = `${BTN_CLASS} secondary`
     copy.textContent = 'Copy Dashboard Summary'
-    copy.addEventListener('click', async () => {
+    copy.addEventListener('click', async (event) => {
+      event.stopPropagation()
       const original = copy.textContent
-      try { await navigator.clipboard.writeText(dashboardText()); copy.textContent = 'Copied' } catch {}
+      try {
+        await navigator.clipboard.writeText(dashboardText())
+        copy.textContent = 'Copied'
+      } catch {}
       setTimeout(() => { copy.textContent = original }, 1400)
     })
 
-    row.append(share, copy)
+    row.append(download, copy)
     const title = [...panel.querySelectorAll('h3')].find(h => /damage analytics dashboard/i.test(clean(h.textContent)))
     const anchor = title?.parentElement || panel
     anchor.insertAdjacentElement('beforeend', row)
@@ -136,8 +105,8 @@
 
   function sync() {
     ensureStyles()
-    addFormationShare()
-    addDashboardShare()
+    addFormationDownload()
+    addDashboardControls()
   }
 
   let timer

@@ -6,7 +6,7 @@ import BearSuite from './BearSuite.jsx'
 const REQUEST_KEY = 'kingdom846.battleLab.requestedModule'
 
 const TOOLS = [
-  { id: 'bear', title: 'Bear', sourceLabel: 'Bear Optimizer', icon: 'target', image: './assets/art-bear-trap.png', description: 'Calculate Bear Ratio and compare Bear Damage for your exact rally stats.', accent: 'from-amber-950/85 via-ink/45 to-transparent' },
+  { id: 'bear', title: 'Bear', sourceLabel: 'Bear Optimizer', icon: 'target', image: './assets/art-bear-trap.png', description: 'Build your Hunt Formation and measure Hunt Impact for your exact rally stats.', accent: 'from-amber-950/85 via-ink/45 to-transparent' },
   { id: 'mystic', title: 'Mystic', sourceLabel: 'Mystic Trials', icon: 'sparkles', image: './assets/art-hero-meta.png', description: 'Analyze Mystic Trials progression, source rules and tactical planning.', accent: 'from-violet-950/85 via-ink/45 to-transparent' },
   { id: 'battle', title: 'Battle', sourceLabel: 'Battle Simulator', icon: 'swords', image: './assets/art-castle-battle.png', description: 'Compare combat stats, armies and modeled battle outcomes.', accent: 'from-red-950/85 via-ink/45 to-transparent' },
   { id: 'formation', title: 'Formation', sourceLabel: 'Formation Optimizer', icon: 'layers', image: './assets/strategy-war-academy.png', description: 'Build and compare tactical troop formations for different targets.', accent: 'from-emerald-950/85 via-ink/45 to-transparent' },

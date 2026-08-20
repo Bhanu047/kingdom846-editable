@@ -23,10 +23,9 @@ function BetaBadge() {
 export default function Sidebar({ active, onNavigate, onLogin, onSignOut, user, isAdmin }) {
   const isShoni = user?.role === 'leader' && user?.username === 'shoni'
 
-  function openBattleLab(module = 'hub') {
+  function openBattleLab() {
     try {
-      if (module === 'hub') sessionStorage.removeItem('kingdom846.battleLab.requestedModule')
-      else sessionStorage.setItem('kingdom846.battleLab.requestedModule', module)
+      sessionStorage.removeItem('kingdom846.battleLab.requestedModule')
     } catch {}
     onNavigate('battle-lab')
   }
@@ -80,14 +79,9 @@ export default function Sidebar({ active, onNavigate, onLogin, onSignOut, user, 
             </button>
 
             {n.id === 'guides' && (
-              <>
-                <button onClick={() => openBattleLab('hub')} className={`nav-item w-full text-left ${active === 'battle-lab' ? 'active nav-glow' : ''}`}>
-                  <Icon name="crosshair" size={17} /><span>Battle Lab</span><BetaBadge />
-                </button>
-                <button onClick={() => openBattleLab('mystic')} className="nav-item w-full text-left">
-                  <Icon name="sparkles" size={17} /><span>Mystic Trials</span><BetaBadge />
-                </button>
-              </>
+              <button onClick={openBattleLab} className={`nav-item w-full text-left ${active === 'battle-lab' ? 'active nav-glow' : ''}`}>
+                <Icon name="crosshair" size={17} /><span>Battle Lab</span><BetaBadge />
+              </button>
             )}
           </Fragment>
         ))}

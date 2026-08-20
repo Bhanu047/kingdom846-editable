@@ -55,7 +55,10 @@
         <header class="hf-head"><div><div class="hf-eye">HUNT FORMATION · RALLY BONUS</div><h2>Upload Rally Bonus</h2><p>Only Attack and Lethality are used for formation.</p></div><button data-action="close">×</button></header>
         <div class="hf-body">
           <input id="hf-file" type="file" accept="image/png,image/jpeg,image/webp" hidden>
-          <div class="hf-drop" data-action="choose" role="button" tabindex="0"><strong>Choose Rally Bonus screenshot</strong><span>PNG, JPG or WEBP</span></div>
+          <div class="hf-drop" data-action="choose" role="button" tabindex="0">
+            <strong>Drag & Drop Rally Bonus screenshot here</strong>
+            <span>or tap to choose · PNG, JPG or WEBP</span>
+          </div>
           <div class="hf-preview" hidden><img alt="Rally Bonus preview"><div><strong class="hf-name"></strong><span class="hf-meta"></span><button type="button" class="hf-replace" data-action="choose">Choose another screenshot</button></div></div>
           <button class="hf-read" data-action="read" disabled>Read Screenshot</button>
           <div class="hf-status"></div>
@@ -79,7 +82,8 @@
       #${MODAL_ID} .hf-eye{font-size:9px;letter-spacing:.16em;color:#d4af37;font-weight:800} #${MODAL_ID} h2{margin:4px 0;font-family:Cinzel,serif;color:#f6e5ad} #${MODAL_ID} p{margin:0;font-size:11px;color:rgba(241,231,206,.5)}
       #${MODAL_ID} .hf-head button{border:0;background:transparent;color:#f1e7ce;font-size:28px}
       #${MODAL_ID} .hf-body{padding:18px;max-height:66vh;overflow:auto}
-      #${MODAL_ID} .hf-drop{display:grid;place-items:center;gap:6px;min-height:150px;border:1.5px dashed rgba(212,175,55,.4);border-radius:16px;background:rgba(212,175,55,.04);cursor:pointer;text-align:center} #${MODAL_ID} .hf-drop span{font-size:10px;color:rgba(241,231,206,.4)}
+      #${MODAL_ID} .hf-drop{display:grid;place-items:center;align-content:center;gap:8px;min-height:160px;border:1.5px dashed rgba(212,175,55,.46);border-radius:16px;background:rgba(212,175,55,.04);cursor:pointer;text-align:center;transition:.18s ease} #${MODAL_ID} .hf-drop span{font-size:10px;color:rgba(241,231,206,.4)}
+      #${MODAL_ID} .hf-drop.hf-drag{border-color:#f0d17a;background:rgba(212,175,55,.12);box-shadow:inset 0 0 28px rgba(212,175,55,.08)}
       #${MODAL_ID} .hf-preview{display:flex;gap:12px;align-items:center;border:1px solid rgba(212,175,55,.14);border-radius:14px;padding:10px} #${MODAL_ID} .hf-preview img{width:86px;height:64px;object-fit:cover;border-radius:9px} #${MODAL_ID} .hf-preview div{display:flex;flex-direction:column;gap:4px;min-width:0} #${MODAL_ID} .hf-preview span{font-size:10px;color:rgba(241,231,206,.4)} #${MODAL_ID} .hf-replace{border:0;background:transparent;color:#d4af37;text-align:left;padding:0;font-size:10px;font-weight:700}
       #${MODAL_ID} .hf-read{width:100%;margin-top:10px;border:1px solid rgba(232,199,102,.4);border-radius:11px;padding:11px;background:linear-gradient(#d4af37,#ad8620);font-weight:900;color:#071224} #${MODAL_ID} .hf-read:disabled,#${MODAL_ID} .hf-apply:disabled{opacity:.4}
       #${MODAL_ID} .hf-status{margin-top:9px;font-size:10px;color:rgba(241,231,206,.5)} #${MODAL_ID} .hf-title{margin:16px 0 8px;font-family:Cinzel,serif;color:#ead393;font-weight:800}
@@ -111,14 +115,33 @@
       apply.disabled = true
       status.textContent = 'Screenshot selected. Tap Read Screenshot.'
     }
+
     file.addEventListener('change', () => choose(file.files?.[0]))
     drop.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); file.click() } })
+    ;['dragenter','dragover'].forEach(type => drop.addEventListener(type, (e) => {
+      e.preventDefault()
+      e.stopPropagation()
+      if (e.dataTransfer) e.dataTransfer.dropEffect = 'copy'
+      drop.classList.add('hf-drag')
+    }))
+    ;['dragleave','dragend'].forEach(type => drop.addEventListener(type, (e) => {
+      e.preventDefault()
+      e.stopPropagation()
+      drop.classList.remove('hf-drag')
+    }))
+    drop.addEventListener('drop', (e) => {
+      e.preventDefault()
+      e.stopPropagation()
+      drop.classList.remove('hf-drag')
+      choose(e.dataTransfer?.files?.[0])
+    })
+
     root.addEventListener('click', async (e) => {
       const action = e.target.closest('[data-action]')?.dataset.action; if (!action) return
       if (action === 'close') return close()
       if (action === 'choose') { e.preventDefault(); file.click(); return }
       if (action === 'read') {
-        if (!selected) { status.textContent = 'Choose a Rally Bonus screenshot first.'; return }
+        if (!selected) { status.textContent = 'Choose or drop a Rally Bonus screenshot first.'; return }
         read.disabled = true; status.textContent = 'Reading Rally Bonus…'
         try {
           const Tesseract = await loadTesseract(); const out = await Tesseract.recognize(selected, 'eng'); const stats = parseRallyBonus(out?.data?.text || '')

@@ -22,13 +22,12 @@
 
   async function readNumber(T,canvas){
     const r=await T.recognize(canvas,'eng',{tessedit_char_whitelist:'0123456789,',tessedit_pageseg_mode:'7'})
-    const hits=(String(r?.data?.text||'').match(/\d{1,3}(?:,?\d{3})+/g)||[]).map(clean).filter(valid)
+    const raw=String(r?.data?.text||'')
+    const hits=(raw.match(/\d{1,3}(?:,?\d{3})+/g)||[]).map(clean).filter(valid)
     return hits[0]||0
   }
 
   async function readFixedTroopRow(T,img){
-    // Kingshot mail battle report reference layout. The first three orange cards are INF/CAV/ARC.
-    // Read each count in its own cell so Tesseract cannot glue neighboring numbers together.
     const layouts=[
       {y0:.382,y1:.406,x:[[.045,.173],[.181,.309],[.318,.446]]},
       {y0:.374,y1:.414,x:[[.035,.180],[.175,.320],[.310,.455]]},
@@ -50,15 +49,35 @@
     return nums.length>=3?nums.slice(0,3):null
   }
 
-  function fill(vals){
+  function setField(root,p,v){
+    const el=root?.querySelector(`[data-f="${p}"]`)
+    if(!el)return false
+    const value=String(v)
+    const setter=Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype,'value')?.set
+    if(setter) setter.call(el,value); else el.value=value
+    el.dispatchEvent(new Event('input',{bubbles:true}))
+    el.dispatchEvent(new Event('change',{bubbles:true}))
+    return true
+  }
+
+  function fill(vals,reason='AUTO'){
     const root=document.getElementById('k846-hunt-impact-import')
     if(!root||!vals||!vals.every(valid))return false
-    const [inf,cav,arc]=vals,cap=inf+cav+arc
-    const set=(p,v)=>{const el=root.querySelector(`[data-f="${p}"]`);if(el){el.value=String(v);el.dispatchEvent(new Event('input',{bubbles:true}));el.dispatchEvent(new Event('change',{bubbles:true}))}}
-    set('troopCounts.infantry',inf);set('troopCounts.cavalry',cav);set('troopCounts.archers',arc);set('capacity',cap)
-    const status=root.querySelector('.status');if(status)status.textContent=`AUTO: INF ${inf.toLocaleString()} · CAV ${cav.toLocaleString()} · ARC ${arc.toLocaleString()} · Rally ${cap.toLocaleString()}.`
+    const [inf,cav,arc]=vals.map(Number),cap=inf+cav+arc
+    setField(root,'troopCounts.infantry',inf)
+    setField(root,'troopCounts.cavalry',cav)
+    setField(root,'troopCounts.archers',arc)
+    setField(root,'capacity',cap)
+    const status=root.querySelector('.status')
+    if(status)status.textContent=`${reason}: INF ${inf.toLocaleString()} · CAV ${cav.toLocaleString()} · ARC ${arc.toLocaleString()} · Rally ${cap.toLocaleString()}. Select Participants, Troop Tier and True Gold.`
     root.querySelector('[data-f="participants"]')?.dispatchEvent(new Event('change',{bubbles:true}))
     return true
+  }
+
+  function keepApplied(vals){
+    // The main importer performs a slower full-image OCR pass. Older code can finish later
+    // and write blank troop values. Re-apply the verified report troop counts after those passes.
+    [0,700,1800,3500,6500,10000].forEach((ms,i)=>setTimeout(()=>fill(vals,i?'AUTO VERIFIED':'AUTO'),ms))
   }
 
   async function scan(file){
@@ -66,7 +85,7 @@
       const T=await loadT(),img=await imageFromFile(file)
       let vals=await readFixedTroopRow(T,img)
       if(!vals){const r=await T.recognize(file,'eng');vals=extractCounts(r?.data?.text)}
-      if(vals)fill(vals)
+      if(vals){window.__k846LastTroopAutofill=vals.slice();keepApplied(vals)}
     }catch(e){console.warn('Hunt Impact troop autofill failed',e)}
   }
 

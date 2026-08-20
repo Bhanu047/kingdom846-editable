@@ -8,6 +8,12 @@ const TROOPS = [
   { key: 'archers', label: 'Archers', short: 'ARC', icon: 'crosshair' },
 ]
 
+const HEROES = {
+  infantry: ['None', 'Alcar', 'Amadeus', 'Charles', 'Eric', 'Forrest', 'Helga', 'Howard', 'Long Fei', 'Seth', 'Triton', 'Zoe'],
+  cavalry: ['None', 'Ava', 'Chenko', 'Edwin', 'Fahd', 'Gordon', 'Hilde', 'Jabel', 'Margot', 'Petra', 'Sophia', 'Thrud'],
+  archers: ['None', 'Amane', 'Diana', 'Jaeger', 'Marlin', 'Olive', 'Quinn', 'Rosa', 'Saul', 'Vivian', 'Wee & Woo', 'Yang', 'Yeonwoo'],
+}
+
 const DEFAULT_STATS = {
   infantry: { attack: '', lethality: '' },
   cavalry: { attack: '', lethality: '' },
@@ -109,6 +115,7 @@ export default function BearSuite() {
   const [tier, setTier] = useState('T10')
   const [tg, setTg] = useState(0)
   const [stats, setStats] = useState(DEFAULT_STATS)
+  const [leadHeroes, setLeadHeroes] = useState({ infantry: 'None', cavalry: 'None', archers: 'None' })
   const [customRatio, setCustomRatio] = useState({ infantry: 33.33, cavalry: 33.33, archers: 33.34 })
   const [copied, setCopied] = useState(false)
 
@@ -161,6 +168,14 @@ export default function BearSuite() {
               <div key={troop.key} className="rounded-2xl border border-gold/10 bg-white/[0.025] p-4">
                 <div className="mb-3 flex items-center gap-2 text-sm font-bold text-parchment"><Icon name={troop.icon} size={15} className="text-gold/70" /> {troop.label}</div>
                 <div className="grid grid-cols-2 gap-2"><Field label="Attack" suffix="%" value={stats[troop.key].attack} onChange={(v) => updateStat(troop.key, 'attack', v)} /><Field label="Lethality" suffix="%" value={stats[troop.key].lethality} onChange={(v) => updateStat(troop.key, 'lethality', v)} /></div>
+                {tab === 'ratio' && (
+                  <label className="mt-3 block">
+                    <span className="mb-1 block text-[10px] font-bold uppercase tracking-[0.12em] text-parchment/45">Lead {troop.label === 'Archers' ? 'Archer' : troop.label} Hero</span>
+                    <select value={leadHeroes[troop.key]} onChange={(e) => setLeadHeroes((current) => ({ ...current, [troop.key]: e.target.value }))} className="w-full rounded-xl border border-gold/15 bg-ink px-3 py-2.5 text-sm font-semibold text-parchment outline-none">
+                      {HEROES[troop.key].map((hero) => <option key={hero} value={hero}>{hero}</option>)}
+                    </select>
+                  </label>
+                )}
               </div>
             ))}
           </div>

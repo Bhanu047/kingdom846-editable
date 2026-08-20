@@ -1,21 +1,27 @@
 (() => {
-  function formationActive() {
+  function activeTab() {
     const buttons = [...document.querySelectorAll('button')]
     const formation = buttons.find((b) => /hunt formation/i.test((b.textContent || '').trim()))
     const impact = buttons.find((b) => /hunt impact/i.test((b.textContent || '').trim()))
-    if (!formation) return false
-    const formationActiveClass = /text-gold-bright|bg-gold/.test(formation.className || '')
-    const impactActiveClass = impact && /text-gold-bright|bg-gold/.test(impact.className || '')
-    return formationActiveClass && !impactActiveClass
+    const active = (b) => b && /text-gold-bright|bg-gold/.test(b.className || '')
+    if (active(formation) && !active(impact)) return 'formation'
+    if (active(impact) && !active(formation)) return 'impact'
+    return null
   }
 
   function patch() {
     const legacy = window.__k846BattleLabImport
     const formation = window.__k846HuntFormationImport
-    if (!legacy?.open || !formation?.open || legacy.__formationRouted) return false
+    const impact = window.__k846HuntImpactImport
+    if (!legacy?.open || !formation?.open || !impact?.open || legacy.__huntRouted) return false
     const originalOpen = legacy.open.bind(legacy)
-    legacy.open = (...args) => formationActive() ? formation.open() : originalOpen(...args)
-    legacy.__formationRouted = true
+    legacy.open = (...args) => {
+      const tab = activeTab()
+      if (tab === 'formation') return formation.open()
+      if (tab === 'impact') return impact.open()
+      return originalOpen(...args)
+    }
+    legacy.__huntRouted = true
     return true
   }
 

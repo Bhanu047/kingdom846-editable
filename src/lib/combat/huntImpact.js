@@ -2,15 +2,17 @@ import { computeBearDamageScore, optimizeBearFormation } from './bearOptimizer'
 
 const TYPES = ['infantry', 'cavalry', 'archers']
 
-export const HUNT_JOINER_HEROES = ['None', 'Amane', 'Chenko', 'Yeonwoo', 'Amadeus', 'Other']
+// Only heroes whose FIRST Expedition skill contributes offensive rally value.
+// These are the joiner choices used by the Bear calculator; lead-hero lists are separate.
+export const HUNT_JOINER_HEROES = ['None', 'Chenko', 'Amane', 'Hilde', 'Yeonwoo', 'Margot']
 
 const JOINER_EFFECTS = {
   None: { type: 'none', values: [0, 0, 0, 0, 0], skill: '—' },
-  Other: { type: 'none', values: [0, 0, 0, 0, 0], skill: 'Unmodeled' },
-  Amane: { type: 'attack', values: [5, 10, 15, 20, 25], skill: 'Tri Phalanx' },
   Chenko: { type: 'lethality', values: [5, 10, 15, 20, 25], skill: 'Stand of Arms' },
+  Amane: { type: 'attack', values: [5, 10, 15, 20, 25], skill: 'Tri Phalanx' },
+  Hilde: { type: 'attack', values: [3, 6, 9, 12, 15], skill: 'Noble Path' },
   Yeonwoo: { type: 'lethality', values: [5, 10, 15, 20, 25], skill: 'On Guard' },
-  Amadeus: { type: 'lethality', values: [5, 10, 15, 20, 25], skill: 'Way of the Blade' },
+  Margot: { type: 'attack', values: [5, 10, 15, 20, 25], skill: 'Warbringer' },
 }
 
 function number(value, fallback = 0) {
@@ -18,12 +20,20 @@ function number(value, fallback = 0) {
   return Number.isFinite(parsed) ? parsed : fallback
 }
 
+export function normalizeJoiners(joiners = []) {
+  return Array.from({ length: 4 }, (_, i) => {
+    const slot = joiners[i]
+    if (typeof slot === 'string') return { hero: HUNT_JOINER_HEROES.includes(slot) ? slot : 'None', skillLevel: 5 }
+    const hero = HUNT_JOINER_HEROES.includes(slot?.hero) ? slot.hero : 'None'
+    const skillLevel = Math.max(1, Math.min(5, Math.floor(number(slot?.skillLevel, 5))))
+    return { hero, skillLevel }
+  })
+}
+
 export function getJoinerBonuses(joiners = []) {
-  return joiners.reduce((acc, slot) => {
-    const hero = slot?.hero || 'None'
-    const level = Math.max(1, Math.min(5, Math.floor(number(slot?.skillLevel, 5))))
-    const effect = JOINER_EFFECTS[hero] || JOINER_EFFECTS.Other
-    const bonus = effect.values[level - 1] || 0
+  return normalizeJoiners(joiners).reduce((acc, slot) => {
+    const effect = JOINER_EFFECTS[slot.hero] || JOINER_EFFECTS.None
+    const bonus = effect.values[slot.skillLevel - 1] || 0
     if (effect.type === 'attack') acc.attack += bonus
     if (effect.type === 'lethality') acc.lethality += bonus
     return acc
@@ -39,12 +49,14 @@ export function applyJoinerBonuses(stats = {}, joiners = []) {
 }
 
 export function computeHuntImpact({ stats, tier, tg = 0, ratio, leadHeroes = {}, troopCounts = {}, capacity = 0, participants = 0, joiners = [] } = {}) {
-  const adjustedStats = applyJoinerBonuses(stats, joiners)
+  const normalizedJoiners = normalizeJoiners(joiners)
+  const adjustedStats = applyJoinerBonuses(stats, normalizedJoiners)
   const totalTroops = TYPES.reduce((sum, type) => sum + Math.max(0, number(troopCounts?.[type])), 0)
   const actualScore = computeBearDamageScore({ stats: adjustedStats, tier, tg, ratio, leadHeroes })
   const optimal = optimizeBearFormation({ stats: adjustedStats, tier, tg, leadHeroes, capacity: Math.max(1, totalTroops) })
   const efficiency = optimal.optimizedScore > 0 ? actualScore / optimal.optimizedScore * 100 : 0
   const impactIndex = totalTroops > 0 ? actualScore * Math.sqrt(totalTroops) : 0
+  const optimalImpactIndex = totalTroops > 0 ? optimal.optimizedScore * Math.sqrt(totalTroops) : 0
   const rallyCapacity = Math.max(0, number(capacity))
   const participantCount = Math.max(0, Math.floor(number(participants)))
   const fillRate = rallyCapacity > 0 ? totalTroops / rallyCapacity * 100 : 0
@@ -52,16 +64,18 @@ export function computeHuntImpact({ stats, tier, tg = 0, ratio, leadHeroes = {},
 
   return {
     adjustedStats,
-    joinerBonuses: getJoinerBonuses(joiners),
+    normalizedJoiners,
+    joinerBonuses: getJoinerBonuses(normalizedJoiners),
     actualScore,
     optimalScore: optimal.optimizedScore,
     optimalRatio: optimal.continuousRatio,
     efficiency,
     impactIndex,
+    optimalImpactIndex,
     totalTroops,
     fillRate,
     perParticipant,
-    model: 'hunt-impact-v1-relative-damage',
+    model: 'hunt-impact-v2-joiner-aware-relative-index',
   }
 }
 

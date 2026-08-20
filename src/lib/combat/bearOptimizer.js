@@ -14,18 +14,61 @@ const FORMATION_WEIGHTS = {
   archers: 4 / 3,
 }
 
-// Lead-hero effects that change the relative value of one troop type vs the others.
-// All-squad-only buffs are intentionally omitted here because multiplying every
-// coefficient by the same amount does not change the optimal formation ratio.
-// Proc effects are represented by their long-run expected value for Bear hunts.
-const LEAD_HERO_RELATIVE_MULTIPLIERS = {
-  Alcar: { infantry: 2.0, cavalry: 1.10, archers: 1.10 },
-  Margot: { cavalry: 1.50 },
-  Rosa: { archers: 1.30 },
-  Thrud: { infantry: 1.15, cavalry: 1.20, archers: 1.15 },
-  Vivian: { archers: 1.15 },
-  Yang: { archers: 1.40 },
+const NEUTRAL_MULTIPLIERS = Object.freeze({ infantry: 1, cavalry: 1, archers: 1 })
+const neutral = (reason) => ({ multipliers: NEUTRAL_MULTIPLIERS, ratioNeutral: true, reason })
+const relative = (multipliers, reason) => ({ multipliers, ratioNeutral: false, reason })
+
+// Every hero exposed by the Lead Hero selectors has an explicit Bear entry.
+// Values are max-skill / long-run Bear approximations. Effects that apply equally
+// to all troop types are ratio-neutral because they change total damage but not
+// the optimal INF/CAV/ARC split.
+const LEAD_HERO_BEAR_EFFECTS = {
+  None: neutral('No lead-hero modifier.'),
+
+  // Infantry heroes
+  Alcar: relative({ infantry: 2.00, cavalry: 1.10, archers: 1.10 }, 'Praetorian Will: Infantry +100% damage; Cavalry/Archers +10%.'),
+  Amadeus: neutral('Attack, Lethality and damage effects apply to all squads equally.'),
+  Charles: neutral('Bear-relevant expedition effects are defensive/all-squad and do not change troop weighting.'),
+  Eric: neutral('Bear-relevant expedition effects are defensive/all-squad and do not change troop weighting.'),
+  Forrest: neutral('Expedition skills are economy/gathering focused.'),
+  Helga: neutral('Attack/Lethality effects apply to all squads equally.'),
+  Howard: neutral('Expedition effects reduce incoming/enemy damage rather than changing relative Bear damage.'),
+  'Long Fei': neutral('Damage proc applies to all squads equally; other expedition effects are defensive.'),
+  Seth: neutral('Expedition skills are economy/gathering focused.'),
+  Triton: neutral('Skill-damage/defensive effects do not create a troop-specific Bear ratio advantage.'),
+  Zoe: neutral('Attack and damage-taken effects apply to all squads equally.'),
+
+  // Cavalry heroes
+  Ava: neutral('Lethality/enemy-defense effects apply to the whole squad equally.'),
+  Chenko: neutral('Lethality/defensive effects apply to the whole squad equally.'),
+  Edwin: neutral('Expedition skills are economy/gathering focused.'),
+  Fahd: neutral('Bear-relevant expedition effects are all-squad/utility.'),
+  Gordon: neutral('Attack/health effects apply to all squads equally.'),
+  Hilde: neutral('Attack and damage proc effects apply to all squads equally.'),
+  Jabel: neutral('Damage/Lethality effects apply to all squads equally.'),
+  Margot: relative({ infantry: 1, cavalry: 1.50, archers: 1 }, 'Cavalry proc: 25% chance of 200% extra damage ≈ +50% long-run Cavalry damage.'),
+  Petra: neutral('Damage and enemy-damage-taken procs apply to all squads equally.'),
+  Sophia: relative({ infantry: 1, cavalry: 2.00, archers: 1 }, 'Terror cycle approximation: following-turn +200% Cavalry damage averages to about ×2.00 over repeated Bear turns.'),
+  Thrud: relative({ infantry: 1.15, cavalry: 1.20, archers: 1.15 }, 'Infantry/Archers +15% damage; Cavalry proc averages about +20%.'),
+
+  // Archer heroes
+  Amane: neutral('Total Attack applies to all squads equally; other expedition effects are utility.'),
+  Diana: neutral('Expedition skills are stamina/march-speed focused.'),
+  Jaeger: neutral('Damage proc applies to all squads equally.'),
+  Marlin: neutral('Damage proc/enemy debuff applies to all squads equally.'),
+  Olive: neutral('Expedition skills are economy/gathering focused.'),
+  Quinn: neutral('Damage proc applies to all squads equally.'),
+  Rosa: relative({ infantry: 1, cavalry: 1, archers: 1.30 }, 'Golden Rhythm: Archers total Attack +30%.'),
+  Saul: neutral('Lethality/defensive effects apply to all squads or do not alter lead-Bear troop weighting.'),
+  Vivian: relative({ infantry: 1, cavalry: 1, archers: 1.15 }, 'Archers +60% on every fourth attack ≈ +15% long-run Archer damage.'),
+  'Wee & Woo': neutral('Against the Infantry Bear target, damage bonuses apply to all squad troop types equally.'),
+  Yang: relative({ infantry: 1, cavalry: 1, archers: 1.40 }, 'Archers 40% chance of +100% extra damage ≈ +40% long-run Archer damage.'),
+  Yeonwoo: neutral('Lethality applies to all squads equally; other expedition effects are utility.'),
 }
+
+const LEAD_HERO_RELATIVE_MULTIPLIERS = Object.fromEntries(
+  Object.entries(LEAD_HERO_BEAR_EFFECTS).map(([hero, effect]) => [hero, effect.multipliers]),
+)
 
 const MIN_FORMATION_PERCENT = 0
 
@@ -55,17 +98,23 @@ export function archerBearMultiplier(tier = 'T10', tg = 0) {
   return base * (advanced ? 1.1 : 1)
 }
 
+function selectedHeroEffects(leadHeroes = {}) {
+  return Object.fromEntries(TYPES.map((slotType) => {
+    const hero = leadHeroes?.[slotType] || 'None'
+    return [slotType, { hero, ...(LEAD_HERO_BEAR_EFFECTS[hero] || LEAD_HERO_BEAR_EFFECTS.None) }]
+  }))
+}
+
 function leadHeroMultipliers(leadHeroes = {}) {
   const combined = { infantry: 1, cavalry: 1, archers: 1 }
+  const effects = selectedHeroEffects(leadHeroes)
   TYPES.forEach((slotType) => {
-    const hero = leadHeroes?.[slotType]
-    const effect = LEAD_HERO_RELATIVE_MULTIPLIERS[hero]
-    if (!effect) return
+    const effect = effects[slotType]
     TYPES.forEach((type) => {
-      combined[type] *= Math.max(0.01, number(effect[type], 1))
+      combined[type] *= Math.max(0.01, number(effect.multipliers?.[type], 1))
     })
   })
-  return combined
+  return { combined, effects }
 }
 
 function coefficientsFor(stats = {}, tier = 'T10', tg = 0, leadHeroes = {}) {
@@ -75,11 +124,12 @@ function coefficientsFor(stats = {}, tier = 'T10', tg = 0, leadHeroes = {}) {
     archers: attackFactor(stats.archers),
   }
   const arcMult = archerBearMultiplier(tier, tg)
-  const heroMult = leadHeroMultipliers(leadHeroes)
+  const { combined: heroMult, effects: heroEffects } = leadHeroMultipliers(leadHeroes)
   return {
     factors,
     arcMult,
     heroMult,
+    heroEffects,
     coefficients: {
       infantry: (factors.infantry / 3) * heroMult.infantry,
       cavalry: factors.cavalry * heroMult.cavalry,
@@ -127,7 +177,7 @@ export function optimizeBearFormation(input = {}) {
   const tier = input.tier || 'T10'
   const tg = Math.max(0, Math.min(8, Math.floor(number(input.tg))))
   const leadHeroes = input.leadHeroes || {}
-  const { factors, coefficients, arcMult, heroMult } = coefficientsFor(input.stats, tier, tg, leadHeroes)
+  const { factors, coefficients, arcMult, heroMult, heroEffects } = coefficientsFor(input.stats, tier, tg, leadHeroes)
   const continuousRatio = continuousOptimalFormation(input.stats, tier, tg, leadHeroes)
   const whole = wholePercentApportionment(continuousRatio)
   const ratio = {
@@ -167,6 +217,7 @@ export function optimizeBearFormation(input = {}) {
     tg,
     leadHeroes,
     heroMult,
+    heroEffects,
     arcMult,
     ratio,
     continuousRatio,
@@ -176,7 +227,7 @@ export function optimizeBearFormation(input = {}) {
     optimizedScore,
     balancedScore,
     gainVsBalanced,
-    model: 'hunt-formation-lagrange-v3-heroes',
+    model: 'hunt-formation-lagrange-v4-all-heroes',
   }
 }
 
@@ -186,4 +237,4 @@ export function buildBearChatMessage(result) {
   return `Bear Formation — INF ${byType.infantry.percent.toFixed(0)}% · CAV ${byType.cavalry.percent.toFixed(0)}% · ARC ${byType.archers.percent.toFixed(0)}%`
 }
 
-export { TROOP_META, FORMATION_WEIGHTS, MIN_FORMATION_PERCENT, LEAD_HERO_RELATIVE_MULTIPLIERS }
+export { TROOP_META, FORMATION_WEIGHTS, MIN_FORMATION_PERCENT, LEAD_HERO_BEAR_EFFECTS, LEAD_HERO_RELATIVE_MULTIPLIERS }

@@ -4,23 +4,28 @@
   const valid=n=>n>=10000&&n<=5000000
   const loadT=()=>window.Tesseract?Promise.resolve(window.Tesseract):(window.__k846TesseractPromise||(window.__k846TesseractPromise=new Promise((res,rej)=>{const s=document.createElement('script');s.src=SRC;s.onload=()=>window.Tesseract?res(window.Tesseract):rej(new Error('Reader failed to load'));s.onerror=()=>rej(new Error('Reader failed to load'));document.head.appendChild(s)})))
 
+  function extractCounts(text){
+    const raw=String(text||'')
+    // Tesseract often glues adjacent report numbers together, e.g.
+    // "566,244531,248281,118". Match comma-formatted values independently first.
+    const commaVals=(raw.match(/\d{1,3},\d{3}/g)||[]).map(clean).filter(valid)
+    if(commaVals.length>=3)return commaVals
+    return (raw.match(/[0-9][0-9,]{4,}/g)||[]).map(clean).filter(valid)
+  }
+
   function pickTroopTrio(text){
     const lines=String(text||'').split(/\r?\n/).map(s=>s.trim()).filter(Boolean)
-    const rows=[]
     for(const line of lines){
-      const vals=(line.match(/[0-9][0-9,]{4,}/g)||[]).map(clean).filter(valid)
-      if(vals.length>=3) rows.push(vals)
+      const vals=extractCounts(line)
+      if(vals.length>=3){
+        const trio=vals.slice(0,3)
+        if(trio.every(valid)&&new Set(trio).size>=2)return trio
+      }
     }
-    // In Kingshot Troop Power Comparison the first three large values on the troop row
-    // are Infantry, Cavalry and Archer. Gear values come after them.
-    for(const vals of rows){
-      const trio=vals.slice(0,3)
-      if(trio.every(valid)&&new Set(trio).size>=2)return trio
-    }
-    const all=(String(text||'').match(/[0-9][0-9,]{4,}/g)||[]).map(clean).filter(valid)
+    const all=extractCounts(text)
     if(all.length>=3){
       const trio=all.slice(0,3)
-      if(new Set(trio).size>=2)return trio
+      if(trio.every(valid)&&new Set(trio).size>=2)return trio
     }
     return null
   }
@@ -69,8 +74,6 @@
   async function scan(file){
     try{
       const T=await loadT(),img=await imageFromFile(file)
-      // Kingshot mail report: Troop Power Comparison and the three troop counts are in the upper-middle band.
-      // Try several nearby crops because screenshots from different phones include different top/bottom margins.
       const bands=[[.18,.28],[.22,.30],[.26,.28],[.12,.38]]
       for(const [top,height] of bands){
         const canvas=cropBand(img,top,height)
@@ -82,7 +85,6 @@
         const vals=pickTroopTrio(r?.data?.text)
         if(vals&&fill(vals))return
       }
-      // Last fallback: full image OCR, still take the first plausible trio.
       const r=await T.recognize(file,'eng')
       const vals=pickTroopTrio(r?.data?.text)
       if(vals)fill(vals)

@@ -46,12 +46,15 @@
   }
 
   function readModalValues(modal) {
-    const values = { infantry: {}, cavalry: {}, archers: {} }
+    const values = { capacity: null, infantry: {}, cavalry: {}, archers: {} }
 
     modal.querySelectorAll('[data-field]').forEach((input) => {
-      if (input.dataset.field === 'capacity') return
       const value = clean(input.value)
       if (value == null) return
+      if (input.dataset.field === 'capacity') {
+        values.capacity = value
+        return
+      }
       const [troop, stat] = input.dataset.field.split('.')
       if (values[troop]) values[troop][stat] = value
     })
@@ -89,7 +92,7 @@
     const candidates = [...section.querySelectorAll('div')].filter((node) => {
       const text = node.textContent || ''
       const inputCount = node.querySelectorAll('input[type="number"]').length
-      return text.includes(troop.label) && /Attack/i.test(text) && /Lethality/i.test(text) && inputCount >= 4
+      return text.includes(troop.label) && /Attack/i.test(text) && /Lethality/i.test(text) && inputCount >= 2
     })
     candidates.sort((a, b) => {
       const countDiff = a.querySelectorAll('input[type="number"]').length - b.querySelectorAll('input[type="number"]').length
@@ -100,25 +103,24 @@
   }
 
   function applyToReact(values) {
-    const statsSection = findSection('Combat Report Stats')
-    if (!statsSection) throw new Error('Combat Report Stats is not visible.')
+    const statsSection = findSection('Combat Stats')
+    if (!statsSection) throw new Error('Hunt Formation combat stats are not visible.')
 
     for (const troop of TYPES) {
       const card = troopCard(statsSection, troop)
-      const inputs = card ? [...card.querySelectorAll('input[type="number"]')].slice(0, 4) : []
-      STATS.forEach((stat, index) => {
-        const value = clean(values[troop.key]?.[stat.key])
-        if (value != null) nativeSet(inputs[index], value)
-      })
+      const inputs = card ? [...card.querySelectorAll('input[type="number"]')].slice(0, 2) : []
+      nativeSet(inputs[0], clean(values[troop.key]?.attack))
+      nativeSet(inputs[1], clean(values[troop.key]?.lethality))
+    }
+
+    if (values.capacity != null) {
+      const capacityLabel = [...statsSection.querySelectorAll('label')].find((label) => /march capacity/i.test(label.textContent || ''))
+      nativeSet(capacityLabel?.querySelector('input[type="number"]'), values.capacity)
     }
   }
 
   function pageIdentity() {
-    const profileSection = findSection('Player Profile')
-    const labels = [...(profileSection?.querySelectorAll('label') || [])]
-    const player = labels.find((label) => /player name/i.test(label.textContent || ''))?.querySelector('input')?.value || 'My Player'
-    const kingdom = labels.find((label) => /^\s*kingdom/i.test(label.textContent || ''))?.querySelector('input')?.value || '846'
-    return { player, kingdom }
+    return { player: 'My Player', kingdom: '846' }
   }
 
   function saveToLocalProfile(values) {
@@ -143,7 +145,7 @@
       id: existing?.id || globalThis.crypto?.randomUUID?.() || `profile-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
       name: existing?.name || identity.player,
       kingdom: existing?.kingdom || identity.kingdom,
-      capacity: 750000,
+      capacity: values.capacity || existing?.capacity || 750000,
       stats: {
         infantry: { ...baseStats.infantry, ...(existing?.stats?.infantry || {}) },
         cavalry: { ...baseStats.cavalry, ...(existing?.stats?.cavalry || {}) },
@@ -209,8 +211,8 @@
         document.body.style.overflow = ''
       }
 
-      toast(`Applied ${count} combat stats — no refresh needed.`)
-      setTimeout(() => findSection('Combat Report Stats')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 120)
+      toast(`Applied ${count} report values to Hunt Formation.`)
+      setTimeout(() => findSection('Combat Stats')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 120)
     } catch (error) {
       toast(error.message || 'Unable to apply imported stats.', 'error')
     }

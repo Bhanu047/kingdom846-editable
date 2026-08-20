@@ -6,6 +6,18 @@ const TROOP_META = {
 
 const TYPES = Object.keys(TROOP_META)
 
+// Black-box calibrated formation weights derived from the verified Frakinator
+// Bear Ratio examples supplied by the site owner. The optimizer intentionally
+// searches whole-percent compositions because Frakinator reports results such
+// as 3/23/74 rather than exposing a continuous decimal optimum.
+const FORMATION_WEIGHTS = {
+  infantry: 0.275,
+  cavalry: 1,
+  archers: (4.4 / 3) * 1.1,
+}
+
+const MIN_FORMATION_PERCENT = 1
+
 function number(value, fallback = 0) {
   const parsed = Number(value)
   return Number.isFinite(parsed) ? parsed : fallback
@@ -17,25 +29,27 @@ function attackFactor(stat = {}) {
   return (1 + attack / 100) * (1 + lethality / 100)
 }
 
-export function archerBearMultiplier(tier = 'T10', tg = 0) {
-  const highTier = tier === 'T7-T9' || tier === 'T10' || tier === 'T11'
-  return highTier && number(tg) >= 3 ? 1.21 : 1.1
+// Kept as a public helper for the existing UI. The current Hunt Formation
+// calibration uses the observed Bear-ratio behaviour and therefore keeps the
+// formation-side archer multiplier fixed at 1.10.
+export function archerBearMultiplier() {
+  return 1.1
 }
 
-function coefficientsFor(stats = {}, tier = 'T10', tg = 0) {
+function coefficientsFor(stats = {}) {
   const factors = {
     infantry: attackFactor(stats.infantry),
     cavalry: attackFactor(stats.cavalry),
     archers: attackFactor(stats.archers),
   }
-  const arcMult = archerBearMultiplier(tier, tg)
+  const arcMult = 1.1
   return {
     factors,
     arcMult,
     coefficients: {
-      infantry: factors.infantry / 3,
-      cavalry: factors.cavalry,
-      archers: (4.4 / 3) * factors.archers * arcMult,
+      infantry: factors.infantry * FORMATION_WEIGHTS.infantry,
+      cavalry: factors.cavalry * FORMATION_WEIGHTS.cavalry,
+      archers: factors.archers * FORMATION_WEIGHTS.archers,
     },
   }
 }
@@ -51,21 +65,43 @@ function normalizeRatio(ratio = {}) {
   return Object.fromEntries(TYPES.map((type) => [type, values[type] / sum]))
 }
 
-export function computeBearDamageScore({ stats, ratio, tier = 'T10', tg = 0 } = {}) {
+export function computeBearDamageScore({ stats, ratio } = {}) {
   const normalized = normalizeRatio(ratio)
-  const { coefficients } = coefficientsFor(stats, tier, tg)
+  const { coefficients } = coefficientsFor(stats)
   return TYPES.reduce((sum, type) => sum + coefficients[type] * Math.sqrt(normalized[type]), 0)
+}
+
+function bestWholePercentFormation(stats = {}) {
+  let best = null
+
+  for (let infantry = MIN_FORMATION_PERCENT; infantry <= 100 - MIN_FORMATION_PERCENT * 2; infantry += 1) {
+    for (let cavalry = MIN_FORMATION_PERCENT; cavalry <= 100 - infantry - MIN_FORMATION_PERCENT; cavalry += 1) {
+      const archers = 100 - infantry - cavalry
+      if (archers < MIN_FORMATION_PERCENT) continue
+
+      const ratio = {
+        infantry: infantry / 100,
+        cavalry: cavalry / 100,
+        archers: archers / 100,
+      }
+      const score = computeBearDamageScore({ stats, ratio })
+
+      if (!best || score > best.score) {
+        best = { score, ratio, whole: { infantry, cavalry, archers } }
+      }
+    }
+  }
+
+  return best
 }
 
 export function optimizeBearFormation(input = {}) {
   const capacity = Math.max(1, Math.floor(number(input.capacity, 1)))
   const tier = input.tier || 'T10'
   const tg = Math.max(0, Math.min(8, Math.floor(number(input.tg))))
-  const { factors, coefficients, arcMult } = coefficientsFor(input.stats, tier, tg)
-  const sumSq = TYPES.reduce((sum, type) => sum + coefficients[type] ** 2, 0)
-  const ratio = sumSq > 0
-    ? Object.fromEntries(TYPES.map((type) => [type, coefficients[type] ** 2 / sumSq]))
-    : { infantry: 1 / 3, cavalry: 1 / 3, archers: 1 / 3 }
+  const { factors, coefficients, arcMult } = coefficientsFor(input.stats)
+  const best = bestWholePercentFormation(input.stats)
+  const ratio = best?.ratio || { infantry: 0.33, cavalry: 0.33, archers: 0.34 }
 
   const counts = {}
   let used = 0
@@ -75,9 +111,9 @@ export function optimizeBearFormation(input = {}) {
   })
   counts.archers = Math.max(0, capacity - used)
 
-  const optimizedScore = computeBearDamageScore({ stats: input.stats, ratio, tier, tg })
+  const optimizedScore = best?.score || computeBearDamageScore({ stats: input.stats, ratio })
   const balancedRatio = { infantry: 1 / 3, cavalry: 1 / 3, archers: 1 / 3 }
-  const balancedScore = computeBearDamageScore({ stats: input.stats, ratio: balancedRatio, tier, tg })
+  const balancedScore = computeBearDamageScore({ stats: input.stats, ratio: balancedRatio })
   const gainVsBalanced = balancedScore > 0 ? ((optimizedScore / balancedScore) - 1) * 100 : 0
 
   const troops = TYPES.map((type) => ({
@@ -97,19 +133,20 @@ export function optimizeBearFormation(input = {}) {
     tg,
     arcMult,
     ratio,
+    whole: best?.whole,
     troops,
     counts,
     optimizedScore,
     balancedScore,
     gainVsBalanced,
-    model: 'bear-ratio-damage-v2',
+    model: 'hunt-formation-frakinator-calibrated-v1',
   }
 }
 
 export function buildBearChatMessage(result) {
   if (!result) return ''
   const byType = Object.fromEntries(result.troops.map((troop) => [troop.type, troop]))
-  return `Bear ${result.capacity.toLocaleString()} — INF ${byType.infantry.percent.toFixed(1)}% (${byType.infantry.count.toLocaleString()}) · CAV ${byType.cavalry.percent.toFixed(1)}% (${byType.cavalry.count.toLocaleString()}) · ARC ${byType.archers.percent.toFixed(1)}% (${byType.archers.count.toLocaleString()})`
+  return `Bear ${result.capacity.toLocaleString()} — INF ${byType.infantry.percent.toFixed(0)}% (${byType.infantry.count.toLocaleString()}) · CAV ${byType.cavalry.percent.toFixed(0)}% (${byType.cavalry.count.toLocaleString()}) · ARC ${byType.archers.percent.toFixed(0)}% (${byType.archers.count.toLocaleString()})`
 }
 
-export { TROOP_META }
+export { TROOP_META, FORMATION_WEIGHTS, MIN_FORMATION_PERCENT }

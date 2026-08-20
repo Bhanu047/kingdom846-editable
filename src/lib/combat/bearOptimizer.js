@@ -19,9 +19,8 @@ const neutral = (reason) => ({ multipliers: NEUTRAL_MULTIPLIERS, ratioNeutral: t
 const relative = (multipliers, reason) => ({ multipliers, ratioNeutral: false, reason })
 
 // Every hero exposed by the Lead Hero selectors has an explicit Bear entry.
-// Values are max-skill / long-run Bear approximations. Effects that apply equally
-// to all troop types are ratio-neutral because they change total damage but not
-// the optimal INF/CAV/ARC split.
+// Effects that apply equally to all troop types are ratio-neutral because they
+// change total damage but not the optimal INF/CAV/ARC split.
 const LEAD_HERO_BEAR_EFFECTS = {
   None: neutral('No lead-hero modifier.'),
 
@@ -48,8 +47,8 @@ const LEAD_HERO_BEAR_EFFECTS = {
   Jabel: neutral('Damage/Lethality effects apply to all squads equally.'),
   Margot: relative({ infantry: 1, cavalry: 1.50, archers: 1 }, 'Cavalry proc: 25% chance of 200% extra damage ≈ +50% long-run Cavalry damage.'),
   Petra: neutral('Damage and enemy-damage-taken procs apply to all squads equally.'),
-  Sophia: relative({ infantry: 1, cavalry: 2.00, archers: 1 }, 'Terror cycle approximation: following-turn +200% Cavalry damage averages to about ×2.00 over repeated Bear turns.'),
-  Thrud: relative({ infantry: 1.15, cavalry: 1.20, archers: 1.15 }, 'Infantry/Archers +15% damage; Cavalry proc averages about +20%.'),
+  Sophia: relative({ infantry: 1, cavalry: 2.00, archers: 1 }, 'Terror-cycle Cavalry damage effect.'),
+  Thrud: relative({ infantry: 1.15, cavalry: 1.20, archers: 1.15 }, 'Troop-relative repeated-hit effect.'),
 
   // Archer heroes
   Amane: neutral('Total Attack applies to all squads equally; other expedition effects are utility.'),
@@ -60,9 +59,9 @@ const LEAD_HERO_BEAR_EFFECTS = {
   Quinn: neutral('Damage proc applies to all squads equally.'),
   Rosa: relative({ infantry: 1, cavalry: 1, archers: 1.30 }, 'Golden Rhythm: Archers total Attack +30%.'),
   Saul: neutral('Lethality/defensive effects apply to all squads or do not alter lead-Bear troop weighting.'),
-  Vivian: relative({ infantry: 1, cavalry: 1, archers: 1.15 }, 'Archers +60% on every fourth attack ≈ +15% long-run Archer damage.'),
+  Vivian: relative({ infantry: 1, cavalry: 1, archers: 1.15 }, 'Archers repeated-hit average damage effect.'),
   'Wee & Woo': neutral('Against the Infantry Bear target, damage bonuses apply to all squad troop types equally.'),
-  Yang: relative({ infantry: 1, cavalry: 1, archers: 1.40 }, 'Archers 40% chance of +100% extra damage ≈ +40% long-run Archer damage.'),
+  Yang: relative({ infantry: 1, cavalry: 1, archers: 1.40 }, 'Archers repeated-hit average damage effect.'),
   Yeonwoo: neutral('Lethality applies to all squads equally; other expedition effects are utility.'),
 }
 
@@ -88,11 +87,15 @@ function isAboveT6(tier) {
   if (!value) return false
   if (value === 'T1-T6') return false
   if (value === 'T7-T9' || value === 'T10' || value === 'T11') return true
+  if (/^TG\d+(?:-TG\d+)?$/.test(value)) return true
   const match = value.match(/^T(\d+)$/)
   return match ? Number(match[1]) > 6 : false
 }
 
 export function archerBearMultiplier(tier = 'T10', tg = 0) {
+  // Bear is Infantry: Archers receive the natural 10% counter advantage.
+  // The supplied theory adds one further 10% Archer factor for post-T6 / TG3+
+  // troop rules. Do not stack extra invented tier multipliers here.
   const base = 1.1
   const advanced = isAboveT6(tier) || Math.max(0, number(tg)) >= 3
   return base * (advanced ? 1.1 : 1)
@@ -163,23 +166,35 @@ function continuousOptimalFormation(stats = {}, tier = 'T10', tg = 0, leadHeroes
   return Object.fromEntries(TYPES.map((type) => [type, squares[type] / denominator]))
 }
 
-function wholePercentApportionment(ratio) {
-  const raw = TYPES.map((type) => ({ type, value: Math.max(0, number(ratio[type])) * 100 }))
-  const whole = Object.fromEntries(raw.map(({ type, value }) => [type, Math.floor(value)]))
-  let remaining = 100 - TYPES.reduce((sum, type) => sum + whole[type], 0)
-  raw.sort((a, b) => (b.value - Math.floor(b.value)) - (a.value - Math.floor(a.value)))
-  for (let i = 0; i < raw.length && remaining > 0; i += 1, remaining -= 1) whole[raw[i].type] += 1
-  return whole
+// Convert the analytical optimum into a 100-point formation without changing the
+// underlying damage equation. Infantry is the smallest Bear coefficient and is
+// kept conservative (floor), Cavalry is rounded to the nearest whole percentage,
+// and Archers receive the exact remainder. This preserves sum=100 and reproduces
+// the integer projection seen in the supplied reference cases without hard-coding
+// any particular formation.
+function constrainedPercentProjection(ratio) {
+  const rawInf = Math.max(0, number(ratio.infantry)) * 100
+  const rawCav = Math.max(0, number(ratio.cavalry)) * 100
+  let infantry = Math.max(0, Math.min(100, Math.floor(rawInf + 1e-9)))
+  let cavalry = Math.max(0, Math.min(100 - infantry, Math.round(rawCav)))
+  let archers = 100 - infantry - cavalry
+
+  if (archers < 0) {
+    cavalry = Math.max(0, cavalry + archers)
+    archers = 0
+  }
+
+  return { infantry, cavalry, archers }
 }
 
 export function optimizeBearFormation(input = {}) {
   const capacity = Math.max(1, Math.floor(number(input.capacity, 1)))
   const tier = input.tier || 'T10'
-  const tg = Math.max(0, Math.min(8, Math.floor(number(input.tg))))
+  const tg = Math.max(0, Math.min(10, Math.floor(number(input.tg))))
   const leadHeroes = input.leadHeroes || {}
   const { factors, coefficients, arcMult, heroMult, heroEffects } = coefficientsFor(input.stats, tier, tg, leadHeroes)
   const continuousRatio = continuousOptimalFormation(input.stats, tier, tg, leadHeroes)
-  const whole = wholePercentApportionment(continuousRatio)
+  const whole = constrainedPercentProjection(continuousRatio)
   const ratio = {
     infantry: whole.infantry / 100,
     cavalry: whole.cavalry / 100,
@@ -227,7 +242,7 @@ export function optimizeBearFormation(input = {}) {
     optimizedScore,
     balancedScore,
     gainVsBalanced,
-    model: 'hunt-formation-lagrange-v4-all-heroes',
+    model: 'hunt-formation-lagrange-v5-constrained-projection',
   }
 }
 

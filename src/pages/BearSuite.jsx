@@ -128,11 +128,11 @@ export default function BearSuite() {
     cavalry: { attack: num(stats.cavalry.attack), lethality: num(stats.cavalry.lethality) },
     archers: { attack: num(stats.archers.attack), lethality: num(stats.archers.lethality) },
   }), [stats])
-  const result = useMemo(() => optimizeBearFormation({ capacity, stats: normalizedStats, tier, tg }), [capacity, normalizedStats, tier, tg])
+  const result = useMemo(() => optimizeBearFormation({ capacity, stats: normalizedStats, tier, tg, leadHeroes }), [capacity, normalizedStats, tier, tg, leadHeroes])
   const optimalRatio = result.ratio
   const optimalScore = result.optimizedScore
   const equalScore = result.balancedScore
-  const customScore = useMemo(() => computeBearDamageScore({ stats: normalizedStats, tier, tg, ratio: customRatio }), [normalizedStats, tier, tg, customRatio])
+  const customScore = useMemo(() => computeBearDamageScore({ stats: normalizedStats, tier, tg, ratio: customRatio, leadHeroes }), [normalizedStats, tier, tg, customRatio, leadHeroes])
   const customVsOptimal = optimalScore > 0 ? customScore / optimalScore * 100 : 0
   const customVsEqual = equalScore > 0 ? ((customScore / equalScore) - 1) * 100 : 0
   const perParticipant = Math.floor(Math.max(1, num(capacity, 1)) / Math.max(1, num(participants, 1)))
@@ -203,7 +203,7 @@ export default function BearSuite() {
             <div><div className="eyebrow">Hunt Formation</div><h3 className="mt-1 font-display text-2xl font-bold text-parchment">Optimal Troop Split</h3></div>
             <div className="mt-4 space-y-3">{result.troops.map((troop) => <RatioCard key={troop.type} troop={{ ...troop, icon: TROOPS.find((item) => item.key === troop.type)?.icon }} />)}</div>
             <FormationDonut result={result} />
-            <div className="mt-4 grid grid-cols-2 gap-3"><div className="rounded-xl border border-gold/10 bg-white/[0.025] p-3"><div className="text-[9px] uppercase tracking-wider text-parchment/35">Impact gain</div><div className="mt-1 font-mono text-xl font-bold text-gold-bright">+{result.gainVsBalanced.toFixed(2)}%</div><div className="text-[10px] text-parchment/35">vs 33/33/33</div></div><div className="rounded-xl border border-gold/10 bg-white/[0.025] p-3"><div className="text-[9px] uppercase tracking-wider text-parchment/35">Archer modifier</div><div className="mt-1 font-mono text-xl font-bold text-gold-bright">×{result.arcMult.toFixed(2)}</div><div className="text-[10px] text-parchment/35">tier rule</div></div></div>
+            <div className="mt-4 grid grid-cols-2 gap-3"><div className="rounded-xl border border-gold/10 bg-white/[0.025] p-3"><div className="text-[9px] uppercase tracking-wider text-parchment/35">Impact gain</div><div className="mt-1 font-mono text-xl font-bold text-gold-bright">+{result.gainVsBalanced.toFixed(2)}%</div><div className="text-[10px] text-parchment/35">vs 33/33/33</div></div><div className="rounded-xl border border-gold/10 bg-white/[0.025] p-3"><div className="text-[9px] uppercase tracking-wider text-parchment/35">Archer modifier</div><div className="mt-1 font-mono text-xl font-bold text-gold-bright">×{(result.arcMult * (result.heroMult?.archers || 1)).toFixed(2)}</div><div className="text-[10px] text-parchment/35">tier + lead hero</div></div></div>
             <button type="button" onClick={copyFormation} className="btn-primary btn-royal mt-4 w-full justify-center"><Icon name={copied ? 'shieldCheck' : 'scroll'} size={14} /> {copied ? 'Copied' : 'Copy Hunt Formation'}</button>
             <div className="mt-3 rounded-xl border border-gold/10 bg-ink/50 p-3 font-mono text-[11px] leading-relaxed text-parchment/55">{buildBearChatMessage(result)}</div>
           </section>

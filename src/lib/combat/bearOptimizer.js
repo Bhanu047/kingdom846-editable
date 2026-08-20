@@ -22,9 +22,6 @@ function number(value, fallback = 0) {
   return Number.isFinite(parsed) ? parsed : fallback
 }
 
-// Attack-factor bridge used by the current Battle Lab. This is isolated on
-// purpose: if the exact theory-crafting definition of A changes, only this
-// function needs to be replaced while the Lagrange optimizer remains valid.
 function attackFactor(stat = {}) {
   const attack = Math.max(0, number(stat.attack))
   const lethality = Math.max(0, number(stat.lethality))
@@ -41,8 +38,6 @@ function isAboveT6(tier) {
 }
 
 export function archerBearMultiplier(tier = 'T10', tg = 0) {
-  // Bear is full Infantry, so Archers receive the base 10% counter bonus.
-  // The supplied theory notes an additional ×1.1 for >T6 / TG3+ troops.
   const base = 1.1
   const advanced = isAboveT6(tier) || Math.max(0, number(tg)) >= 3
   return base * (advanced ? 1.1 : 1)
@@ -83,8 +78,6 @@ export function computeBearDamageScore({ stats, tier = 'T10', tg = 0, ratio } = 
   return TYPES.reduce((sum, type) => sum + coefficients[type] * Math.sqrt(normalized[type]), 0)
 }
 
-// Closed-form Lagrange solution:
-// fi = ci² / Σ(c²), where c = [Ainf/3, Acav, (4/3)Aarc×modifiers].
 function continuousOptimalFormation(stats = {}, tier = 'T10', tg = 0) {
   const { coefficients } = coefficientsFor(stats, tier, tg)
   const squares = Object.fromEntries(TYPES.map((type) => [type, coefficients[type] ** 2]))
@@ -93,8 +86,6 @@ function continuousOptimalFormation(stats = {}, tier = 'T10', tg = 0) {
   return Object.fromEntries(TYPES.map((type) => [type, squares[type] / denominator]))
 }
 
-// Convert the continuous optimum to the same readable whole-percent style
-// used by the reference tool while preserving an exact total of 100%.
 function wholePercentApportionment(ratio) {
   const raw = TYPES.map((type) => ({ type, value: Math.max(0, number(ratio[type])) * 100 }))
   const whole = Object.fromEntries(raw.map(({ type, value }) => [type, Math.floor(value)]))
@@ -161,7 +152,7 @@ export function optimizeBearFormation(input = {}) {
 export function buildBearChatMessage(result) {
   if (!result) return ''
   const byType = Object.fromEntries(result.troops.map((troop) => [troop.type, troop]))
-  return `Bear ${result.capacity.toLocaleString()} — INF ${byType.infantry.percent.toFixed(0)}% (${byType.infantry.count.toLocaleString()}) · CAV ${byType.cavalry.percent.toFixed(0)}% (${byType.cavalry.count.toLocaleString()}) · ARC ${byType.archers.percent.toFixed(0)}% (${byType.archers.count.toLocaleString()})`
+  return `Bear Formation — INF ${byType.infantry.percent.toFixed(0)}% · CAV ${byType.cavalry.percent.toFixed(0)}% · ARC ${byType.archers.percent.toFixed(0)}%`
 }
 
 export { TROOP_META, FORMATION_WEIGHTS, MIN_FORMATION_PERCENT }

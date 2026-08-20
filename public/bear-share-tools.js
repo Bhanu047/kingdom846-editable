@@ -1,121 +1,19 @@
 (() => {
-  const STYLE_ID = 'k846-bear-share-style'
-  const BTN_CLASS = 'k846-share-btn'
-
-  function ensureStyles() {
-    if (document.getElementById(STYLE_ID)) return
-    const style = document.createElement('style')
-    style.id = STYLE_ID
-    style.textContent = `
-      .${BTN_CLASS}{display:inline-flex;align-items:center;justify-content:center;gap:.45rem;width:100%;margin-top:1rem;border:1px solid rgba(226,199,125,.35);border-radius:.75rem;padding:.8rem 1rem;background:linear-gradient(180deg,rgba(226,181,48,.98),rgba(173,134,32,.98));color:#071224;font-weight:900;text-transform:uppercase;letter-spacing:.06em;cursor:pointer;box-shadow:0 8px 24px rgba(0,0,0,.18)}
-      .${BTN_CLASS}:active{transform:translateY(1px)}
-      .${BTN_CLASS}.secondary{background:rgba(226,181,48,.08);color:#f2dfaa;border-color:rgba(226,199,125,.22)}
-      .k846-share-row{display:grid;grid-template-columns:1fr 1fr;gap:.7rem;margin-top:1rem}
-      .k846-share-row .${BTN_CLASS}{margin-top:0}
-      @media(max-width:640px){.k846-share-row{grid-template-columns:1fr}}
-    `
-    document.head.appendChild(style)
-  }
-
-  const clean = (v) => String(v || '').replace(/\s+/g, ' ').trim()
-
-  function getPanelByHeading(text) {
-    const headings = [...document.querySelectorAll('h2,h3')]
-    const heading = headings.find(h => clean(h.textContent).toLowerCase() === text.toLowerCase())
-    return heading?.closest('section') || null
-  }
-
-  function findKpi(panel, label) {
-    if (!panel) return ''
-    const nodes = [...panel.querySelectorAll('div')]
-    const labelNode = nodes.find(el => clean(el.textContent).toLowerCase() === label.toLowerCase())
-    if (!labelNode) return ''
-    const card = labelNode.parentElement
-    const values = card ? [...card.children].map(x => clean(x.textContent)).filter(Boolean) : []
-    return values.find(v => v.toLowerCase() !== label.toLowerCase()) || ''
-  }
-
-  function dashboardText() {
-    const panel = getPanelByHeading('Damage Analytics Dashboard')
-    if (!panel) return ''
-    const current = findKpi(panel, 'Projected Impact')
-    const optimal = findKpi(panel, 'Optimal Impact')
-    const efficiency = findKpi(panel, 'Efficiency')
-    const gain = findKpi(panel, 'Potential Gain')
-    const formation = findKpi(panel, 'Current Formation')
-    if (!current && !optimal) return ''
-    return [
-      'Kingdom846 Hunt Impact — Damage Analytics',
-      current && `Projected Impact: ${current}`,
-      optimal && `Optimal Impact: ${optimal}`,
-      efficiency && `Efficiency: ${efficiency}`,
-      gain && `Potential Gain: ${gain}`,
-      formation && `Current Formation (INF/CAV/ARC): ${formation}`,
-      `${location.origin}/#/battle-lab`,
-    ].filter(Boolean).join('\n')
-  }
-
-  function addFormationDownload() {
-    const panel = getPanelByHeading('Optimal Troop Split')
-    if (!panel || panel.querySelector('[data-k846-share="formation"]')) return
-    const existingCopy = [...panel.querySelectorAll('button')].find(b => /copy hunt formation/i.test(clean(b.textContent)))
-    if (!existingCopy) return
-    const download = document.createElement('button')
-    download.type = 'button'
-    download.className = `${BTN_CLASS} secondary`
-    download.dataset.k846Share = 'formation'
-    download.textContent = 'Download Formation Report'
-    existingCopy.insertAdjacentElement('afterend', download)
-  }
-
-  function addDashboardControls() {
-    const panel = getPanelByHeading('Damage Analytics Dashboard')
-    if (!panel || panel.querySelector('[data-k846-share="dashboard"]')) return
-    const projected = findKpi(panel, 'Projected Impact')
-    if (!projected) return
-
-    const row = document.createElement('div')
-    row.className = 'k846-share-row'
-    row.dataset.k846Share = 'dashboard'
-
-    const download = document.createElement('button')
-    download.type = 'button'
-    download.className = BTN_CLASS
-    download.textContent = 'Download Dashboard'
-
-    const copy = document.createElement('button')
-    copy.type = 'button'
-    copy.className = `${BTN_CLASS} secondary`
-    copy.textContent = 'Copy Dashboard Summary'
-    copy.addEventListener('click', async (event) => {
-      event.stopPropagation()
-      const original = copy.textContent
-      try {
-        await navigator.clipboard.writeText(dashboardText())
-        copy.textContent = 'Copied'
-      } catch {}
-      setTimeout(() => { copy.textContent = original }, 1400)
-    })
-
-    row.append(download, copy)
-    const title = [...panel.querySelectorAll('h3')].find(h => /damage analytics dashboard/i.test(clean(h.textContent)))
-    const anchor = title?.parentElement || panel
-    anchor.insertAdjacentElement('beforeend', row)
-  }
-
-  function sync() {
-    ensureStyles()
-    addFormationDownload()
-    addDashboardControls()
-  }
-
-  let timer
-  const observer = new MutationObserver(() => {
-    clearTimeout(timer)
-    timer = setTimeout(sync, 80)
-  })
-  observer.observe(document.documentElement, { childList: true, subtree: true })
-  document.addEventListener('DOMContentLoaded', sync)
-  window.addEventListener('hashchange', () => setTimeout(sync, 120))
-  setTimeout(sync, 300)
+  const STYLE_ID='k846-bear-share-style'
+  const BTN_CLASS='k846-share-btn'
+  const H2C='https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js'
+  const clean=v=>String(v||'').replace(/\s+/g,' ').trim()
+  function ensureStyles(){if(document.getElementById(STYLE_ID))return;const s=document.createElement('style');s.id=STYLE_ID;s.textContent=`.${BTN_CLASS}{display:inline-flex;align-items:center;justify-content:center;width:100%;margin-top:1rem;border:1px solid rgba(226,199,125,.35);border-radius:.75rem;padding:.8rem 1rem;background:linear-gradient(180deg,rgba(226,181,48,.98),rgba(173,134,32,.98));color:#071224;font-weight:900;text-transform:uppercase;letter-spacing:.06em;cursor:pointer}.k846-direct-row{display:grid;grid-template-columns:1fr 1fr;gap:.7rem;margin-top:1rem}.k846-direct-row .${BTN_CLASS}{margin-top:0}.k846-direct-copy{background:rgba(226,181,48,.08);color:#f2dfaa;border-color:rgba(226,199,125,.22)}@media(max-width:640px){.k846-direct-row{grid-template-columns:1fr}}`;document.head.appendChild(s)}
+  function panel(title){const h=[...document.querySelectorAll('h2,h3')].find(x=>clean(x.textContent).toLowerCase()===title.toLowerCase());return h?.closest('section')||null}
+  function common(a,b){if(!a||!b)return null;let p=a;while(p){if(p.contains(b))return p;p=p.parentElement}return null}
+  function loadH2C(){if(window.html2canvas)return Promise.resolve(window.html2canvas);if(window.__k846DirectH2C)return window.__k846DirectH2C;window.__k846DirectH2C=new Promise((res,rej)=>{const s=document.createElement('script');s.src=H2C;s.onload=()=>window.html2canvas?res(window.html2canvas):rej(new Error('Image renderer unavailable'));s.onerror=()=>rej(new Error('Image renderer failed to load'));document.head.appendChild(s)});return window.__k846DirectH2C}
+  function toast(msg){let t=document.getElementById('k846-direct-toast');if(!t){t=document.createElement('div');t.id='k846-direct-toast';Object.assign(t.style,{position:'fixed',left:'50%',bottom:'24px',transform:'translateX(-50%)',zIndex:'2147483647',padding:'12px 18px',borderRadius:'10px',background:'#07111f',border:'1px solid #76591e',color:'#f5d778',font:'700 13px Montserrat,Arial'});document.body.appendChild(t)}t.textContent=msg;t.style.display='block';clearTimeout(t._tm);t._tm=setTimeout(()=>t.style.display='none',4500)}
+  async function blobFrom(target){const h2c=await loadH2C();await document.fonts?.ready;await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));const canvas=await h2c(target,{backgroundColor:'#03060b',scale:Math.min(2,window.devicePixelRatio||1.5),useCORS:true,logging:false,removeContainer:true,ignoreElements:el=>el.matches?.('button,.k846-direct-row,[data-k846-download-direct]')});return await new Promise((res,rej)=>canvas.toBlob(b=>b?res(b):rej(new Error('PNG creation failed')),'image/png',.97))}
+  function anchorDownload(blob,name){const u=URL.createObjectURL(blob),a=document.createElement('a');a.href=u;a.download=name;a.style.display='none';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),15000)}
+  async function saveExact(target,name,button){if(!target)return toast('Could not find the report on this page.');const original=button.textContent;button.disabled=true;button.textContent='Preparing PNG…';let handle=null;try{if(window.showSaveFilePicker&&!/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)){try{handle=await window.showSaveFilePicker({suggestedName:name,types:[{description:'PNG image',accept:{'image/png':['.png']}}]})}catch(e){if(e?.name==='AbortError'){button.disabled=false;button.textContent=original;return}}}const blob=await blobFrom(target);if(handle){const w=await handle.createWritable();await w.write(blob);await w.close()}else{anchorDownload(blob,name)}toast('PNG downloaded successfully.')}catch(e){console.error('K846 direct download failed',e);toast('Download failed: '+(e?.message||'unknown error'))}finally{button.disabled=false;button.textContent=original}}
+  function dashboardText(){const p=panel('Damage Analytics Dashboard');if(!p)return'';return clean(p.textContent)}
+  function addFormation(){const out=panel('Optimal Troop Split'),input=panel('Rally Bonus Report');if(!out||!input||out.querySelector('[data-k846-download-direct="formation"]'))return;const copy=[...out.querySelectorAll('button')].find(b=>/copy hunt formation/i.test(clean(b.textContent)));if(!copy)return;const b=document.createElement('button');b.type='button';b.className=BTN_CLASS;b.dataset.k846DownloadDirect='formation';b.textContent='Download Formation Report';b.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();const target=common(input,out)||out.parentElement||out;saveExact(target,'Kingdom846-Hunt-Formation.png',b)});copy.insertAdjacentElement('afterend',b)}
+  function addImpact(){const dash=panel('Damage Analytics Dashboard'),input=panel('Battle Report');if(!dash||!input||dash.querySelector('[data-k846-download-direct="impact"]'))return;if(!clean(dash.textContent).includes('Projected Impact'))return;const row=document.createElement('div');row.className='k846-direct-row';row.dataset.k846DownloadDirect='impact';const dl=document.createElement('button');dl.type='button';dl.className=BTN_CLASS;dl.textContent='Download Dashboard';dl.addEventListener('click',e=>{e.preventDefault();e.stopPropagation();const target=common(input,dash)||dash.parentElement||dash;saveExact(target,'Kingdom846-Hunt-Impact-Dashboard.png',dl)});const cp=document.createElement('button');cp.type='button';cp.className=BTN_CLASS+' k846-direct-copy';cp.textContent='Copy Dashboard Summary';cp.addEventListener('click',async e=>{e.stopPropagation();try{await navigator.clipboard.writeText(dashboardText());const o=cp.textContent;cp.textContent='Copied';setTimeout(()=>cp.textContent=o,1200)}catch{}});row.append(dl,cp);dash.appendChild(row)}
+  function sync(){ensureStyles();addFormation();addImpact()}
+  const obs=new MutationObserver(()=>{clearTimeout(obs._t);obs._t=setTimeout(sync,120)});obs.observe(document.documentElement,{childList:true,subtree:true});document.addEventListener('DOMContentLoaded',sync);window.addEventListener('hashchange',()=>setTimeout(sync,150));setTimeout(sync,300)
 })()

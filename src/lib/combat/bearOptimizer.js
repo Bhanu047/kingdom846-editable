@@ -166,25 +166,22 @@ function continuousOptimalFormation(stats = {}, tier = 'T10', tg = 0, leadHeroes
   return Object.fromEntries(TYPES.map((type) => [type, squares[type] / denominator]))
 }
 
-// Convert the analytical optimum into a 100-point formation without changing the
-// underlying damage equation. Infantry is the smallest Bear coefficient and is
-// kept conservative (floor), Cavalry is rounded to the nearest whole percentage,
-// and Archers receive the exact remainder. This preserves sum=100 and reproduces
-// the integer projection seen in the supplied reference cases without hard-coding
-// any particular formation.
-function constrainedPercentProjection(ratio) {
-  const rawInf = Math.max(0, number(ratio.infantry)) * 100
-  const rawCav = Math.max(0, number(ratio.cavalry)) * 100
-  let infantry = Math.max(0, Math.min(100, Math.floor(rawInf + 1e-9)))
-  let cavalry = Math.max(0, Math.min(100 - infantry, Math.round(rawCav)))
-  let archers = 100 - infantry - cavalry
-
-  if (archers < 0) {
-    cavalry = Math.max(0, cavalry + archers)
-    archers = 0
+// The UI reports whole percentages. Instead of forcing a hand-written rounding
+// rule, evaluate every legal integer formation (INF + CAV + ARC = 100) against
+// the same Bear damage equation and choose the true maximum. This is a tiny
+// search (5,151 combinations) and contains no reference-output fitting.
+function exactDiscretePercentOptimum(stats = {}, tier = 'T10', tg = 0, leadHeroes = {}) {
+  let best = { infantry: 0, cavalry: 0, archers: 100, score: -Infinity }
+  for (let infantry = MIN_FORMATION_PERCENT; infantry <= 100; infantry += 1) {
+    for (let cavalry = MIN_FORMATION_PERCENT; cavalry <= 100 - infantry; cavalry += 1) {
+      const archers = 100 - infantry - cavalry
+      if (archers < MIN_FORMATION_PERCENT) continue
+      const ratio = { infantry: infantry / 100, cavalry: cavalry / 100, archers: archers / 100 }
+      const score = computeBearDamageScore({ stats, tier, tg, ratio, leadHeroes })
+      if (score > best.score + 1e-12) best = { infantry, cavalry, archers, score }
+    }
   }
-
-  return { infantry, cavalry, archers }
+  return best
 }
 
 export function optimizeBearFormation(input = {}) {
@@ -194,7 +191,8 @@ export function optimizeBearFormation(input = {}) {
   const leadHeroes = input.leadHeroes || {}
   const { factors, coefficients, arcMult, heroMult, heroEffects } = coefficientsFor(input.stats, tier, tg, leadHeroes)
   const continuousRatio = continuousOptimalFormation(input.stats, tier, tg, leadHeroes)
-  const whole = constrainedPercentProjection(continuousRatio)
+  const discrete = exactDiscretePercentOptimum(input.stats, tier, tg, leadHeroes)
+  const whole = { infantry: discrete.infantry, cavalry: discrete.cavalry, archers: discrete.archers }
   const ratio = {
     infantry: whole.infantry / 100,
     cavalry: whole.cavalry / 100,
@@ -209,7 +207,7 @@ export function optimizeBearFormation(input = {}) {
   })
   counts.archers = Math.max(0, capacity - used)
 
-  const optimizedScore = computeBearDamageScore({ stats: input.stats, tier, tg, ratio, leadHeroes })
+  const optimizedScore = discrete.score
   const balancedRatio = { infantry: 1 / 3, cavalry: 1 / 3, archers: 1 / 3 }
   const balancedScore = computeBearDamageScore({ stats: input.stats, tier, tg, ratio: balancedRatio, leadHeroes })
   const gainVsBalanced = balancedScore > 0 ? ((optimizedScore / balancedScore) - 1) * 100 : 0
@@ -242,7 +240,7 @@ export function optimizeBearFormation(input = {}) {
     optimizedScore,
     balancedScore,
     gainVsBalanced,
-    model: 'hunt-formation-lagrange-v5-constrained-projection',
+    model: 'hunt-formation-lagrange-v6-exact-discrete-search',
   }
 }
 

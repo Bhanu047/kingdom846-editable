@@ -46,22 +46,64 @@
     return []
   }
 
+  function plausibleTroopTriple(nums) {
+    if (!Array.isArray(nums) || nums.length < 3) return null
+    const triple = nums.slice(0, 3).map((v) => Math.round(v))
+    if (!triple.every((v) => Number.isFinite(v) && v >= 10000 && v <= 5000000)) return null
+    return { infantry: triple[0], cavalry: triple[1], archers: triple[2] }
+  }
+
   function detectTroopCounts(raw) {
-    const lines = String(raw || '').split(/\n+/).map((line) => line.trim()).filter(Boolean)
+    const text = String(raw || '')
+    const lines = text.split(/\n+/).map((line) => line.trim()).filter(Boolean)
+
+    // Best case: Kingshot puts our 3 values followed by the opponent's 3 values on one OCR line.
     for (const line of lines) {
-      const nums = numbersOnLine(line).filter((v) => Number.isInteger(v) && v >= 10000)
+      const nums = numbersOnLine(line).filter((v) => Number.isInteger(v) && v >= 10000 && v <= 5000000)
       if (nums.length >= 6) {
-        const first = nums.slice(0, 3)
+        const first = plausibleTroopTriple(nums.slice(0, 3))
         const second = nums.slice(3, 6)
-        const secondLooksOpponent = second.every((v) => v === second[0])
-        if (first.every((v) => v > 0) && (secondLooksOpponent || first.some((v, i) => v !== second[i]))) {
-          return { infantry: first[0], cavalry: first[1], archers: first[2] }
-        }
+        if (!first) continue
+        const opponentEqual = second.length === 3 && second.every((v) => v === second[0])
+        const sidesDiffer = second.length === 3 && [first.infantry, first.cavalry, first.archers].some((v, i) => v !== second[i])
+        if (opponentEqual || sidesDiffer) return first
       }
     }
-    const all = (String(raw || '').match(/\b\d{2,3}[, ]\d{3}\b/g) || []).map(clean).filter((v) => v >= 10000)
-    if (all.length >= 3) return { infantry: all[0], cavalry: all[1], archers: all[2] }
-    return null
+
+    // OCR often drops one or more commas. Search all 5-7 digit integer tokens and prefer a run
+    // followed by a repeated opponent triple (for example 250000/250000/250000).
+    const tokens = (text.match(/\b\d{5,7}\b|\b\d{1,3}(?:[ ,]\d{3})+\b/g) || [])
+      .map(clean)
+      .filter((v) => Number.isInteger(v) && v >= 10000 && v <= 5000000)
+    for (let i = 0; i <= tokens.length - 6; i += 1) {
+      const first = plausibleTroopTriple(tokens.slice(i, i + 3))
+      const opp = tokens.slice(i + 3, i + 6)
+      if (first && opp.length === 3 && opp.every((v) => v === opp[0])) return first
+    }
+
+    return plausibleTroopTriple(tokens)
+  }
+
+  function setNativeInput(input, value) {
+    if (!input || value == null) return
+    const descriptor = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')
+    descriptor?.set?.call(input, String(value))
+    input.dispatchEvent(new Event('input', { bubbles: true }))
+    input.dispatchEvent(new Event('change', { bubbles: true }))
+  }
+
+  function syncDetectedMarch(modal) {
+    if (!modal) return null
+    const counts = detectTroopCounts(rawText(modal))
+    if (!counts) return null
+    const capacity = counts.infantry + counts.cavalry + counts.archers
+    const capacityInput = modal.querySelector('[data-field="capacity"]')
+    if (capacityInput && clean(capacityInput.value) !== capacity) setNativeInput(capacityInput, capacity)
+    modal.dataset.k846DetectedInfantry = String(counts.infantry)
+    modal.dataset.k846DetectedCavalry = String(counts.cavalry)
+    modal.dataset.k846DetectedArchers = String(counts.archers)
+    modal.dataset.k846DetectedCapacity = String(capacity)
+    return { counts, capacity }
   }
 
   function readModalValues(modal) {
@@ -77,6 +119,12 @@
     const side = modal.querySelector('input[name="k846-report-side"]:checked')?.value
     const raw = rawText(modal)
     values.troopCounts = detectTroopCounts(raw)
+    if (values.troopCounts) {
+      const detectedCapacity = values.troopCounts.infantry + values.troopCounts.cavalry + values.troopCounts.archers
+      values.capacity = detectedCapacity
+      const capacityInput = modal.querySelector('[data-field="capacity"]')
+      if (capacityInput) setNativeInput(capacityInput, detectedCapacity)
+    }
     if (side && raw) {
       for (const troop of TYPES) {
         for (const stat of STATS) {
@@ -92,13 +140,7 @@
     return [...document.querySelectorAll('section')].find((section) => (section.textContent || '').includes(text)) || null
   }
 
-  function nativeSet(input, value) {
-    if (!input || value == null) return
-    const descriptor = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')
-    descriptor?.set?.call(input, String(value))
-    input.dispatchEvent(new Event('input', { bubbles: true }))
-    input.dispatchEvent(new Event('change', { bubbles: true }))
-  }
+  function nativeSet(input, value) { setNativeInput(input, value) }
 
   function troopCard(section, troop) {
     if (!section) return null
@@ -155,6 +197,7 @@
 
     const report = {
       savedAt: new Date().toISOString(),
+      capacity: values.capacity,
       troopCounts: values.troopCounts,
       stats: {
         infantry: { ...values.infantry }, cavalry: { ...values.cavalry }, archers: { ...values.archers },
@@ -174,19 +217,32 @@
   function countValues(values) { return TYPES.reduce((total, troop) => total + STATS.filter((stat) => clean(values[troop.key]?.[stat.key]) != null).length, 0) }
 
   document.addEventListener('click', (event) => {
+    const readButton = event.target?.closest?.(`#${MODAL_ID} [data-action="read"], #${MODAL_ID} button`)
+    if (readButton && /read screenshot/i.test(readButton.textContent || '')) {
+      // OCR is asynchronous. Re-check a few times as recognized text arrives.
+      ;[300, 700, 1300, 2200, 3500].forEach((ms) => setTimeout(() => syncDetectedMarch(document.getElementById(MODAL_ID)), ms))
+    }
+
     const button = event.target?.closest?.(`#${MODAL_ID} [data-action="apply"]`)
     if (!button || button.disabled) return
     const modal = document.getElementById(MODAL_ID); if (!modal) return
     event.preventDefault(); event.stopPropagation(); event.stopImmediatePropagation?.()
     try {
+      syncDetectedMarch(modal)
       const values = readModalValues(modal); const count = countValues(values)
       if (!count) throw new Error('No combat stats were found. Review the detected values or use Manual Entry.')
       saveToLocalProfile(values); applyToReact(values)
       const closeButton = modal.querySelector('[data-action="close"]')
       if (closeButton) setTimeout(() => closeButton.click(), 0); else { modal.remove(); document.body.style.overflow = '' }
-      const troopMsg = values.troopCounts ? ' + troop counts' : ''
+      const troopMsg = values.troopCounts ? ` + troop counts (march ${values.capacity?.toLocaleString?.() || values.capacity})` : ''
       toast(`Applied ${count} report values${troopMsg}.`)
       setTimeout(() => findSection('Combat Stats')?.scrollIntoView({ behavior:'smooth', block:'start' }), 120)
     } catch (error) { toast(error.message || 'Unable to apply imported stats.', 'error') }
   }, true)
+
+  const observer = new MutationObserver(() => {
+    const modal = document.getElementById(MODAL_ID)
+    if (modal && rawText(modal)) syncDetectedMarch(modal)
+  })
+  observer.observe(document.documentElement, { childList: true, subtree: true, characterData: true })
 })()

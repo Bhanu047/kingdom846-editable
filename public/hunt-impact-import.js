@@ -6,15 +6,40 @@
   const loadT=()=>window.Tesseract?Promise.resolve(window.Tesseract):(window.__k846TesseractPromise||(window.__k846TesseractPromise=new Promise((res,rej)=>{const s=document.createElement('script');s.src=TESSERACT_SRC;s.onload=()=>window.Tesseract?res(window.Tesseract):rej(new Error('Reader failed to load'));s.onerror=()=>rej(new Error('Reader failed to load'));document.head.appendChild(s)})))
   const norm=t=>String(t||'').replace(/[‐‑–—]/g,'-').replace(/\r/g,'').replace(/[|¦]/g,'I')
   const allNums=line=>(String(line||'').match(/[0-9][0-9,]*(?:\.[0-9]+)?/g)||[]).map(num).filter(v=>v!=='')
+
+  function largeCounts(text){
+    const raw=String(text||'')
+    const comma=(raw.match(/\d{1,3},\d{3}/g)||[]).map(num).filter(v=>v>=10000&&v<=5000000)
+    if(comma.length>=3)return comma
+    return (raw.match(/[0-9][0-9,]{4,}/g)||[]).map(num).filter(v=>v>=10000&&v<=5000000)
+  }
+
   function inferCounts(text){
-    const vals=(text.match(/[0-9][0-9,]{4,}/g)||[]).map(num).filter(v=>v>=10000&&v<=5000000)
+    const vals=largeCounts(text)
+    if(vals.length<3)return null
+
+    // Kingshot Troop Power Comparison row:
+    // INF, CAV, ARC are the first three troop-card counts; three gear counts follow.
+    // Example: 566,244 531,248 281,118 250,000 250,000 250,000.
+    for(let i=0;i<=vals.length-6;i++){
+      const trio=vals.slice(i,i+3),gear=vals.slice(i+3,i+6)
+      const troopSpread=Math.max(...trio)-Math.min(...trio)
+      const gearSpread=Math.max(...gear)-Math.min(...gear)
+      if(trio.every(v=>v>=50000)&&troopSpread>=10000&&gear.every(v=>v>=50000)&&gearSpread<=Math.max(2500,Math.max(...gear)*.02)){
+        return{infantry:trio[0],cavalry:trio[1],archers:trio[2],capacity:trio[0]+trio[1]+trio[2]}
+      }
+    }
+
+    // If OCR only catches the three troop counts, use the first plausible distinct trio.
     for(let i=0;i<=vals.length-3;i++){
-      const trio=vals.slice(i,i+3),sum=trio[0]+trio[1]+trio[2]
-      const hit=vals.find(v=>v!==trio[0]&&v!==trio[1]&&v!==trio[2]&&Math.abs(v-sum)<=Math.max(1500,sum*.015))
-      if(hit)return{infantry:trio[0],cavalry:trio[1],archers:trio[2],capacity:hit}
+      const trio=vals.slice(i,i+3),spread=Math.max(...trio)-Math.min(...trio)
+      if(trio.every(v=>v>=50000)&&spread>=10000&&new Set(trio).size>=2){
+        return{infantry:trio[0],cavalry:trio[1],archers:trio[2],capacity:trio[0]+trio[1]+trio[2]}
+      }
     }
     return null
   }
+
   function parse(text){
     const raw=norm(text),lines=raw.split('\n').map(x=>x.replace(/\s+/g,' ').trim()).filter(Boolean)
     const out={stats:{infantry:{attack:'',lethality:''},cavalry:{attack:'',lethality:''},archers:{attack:'',lethality:''}},troopCounts:{infantry:'',cavalry:'',archers:''},capacity:'',raw}
@@ -36,14 +61,15 @@
       }
     }
     for(const re of [/rall[yli]\s*(?:capacity|size)[^0-9]{0,35}([0-9][0-9,]{4,})/i,/march\s*(?:capacity|size)[^0-9]{0,35}([0-9][0-9,]{4,})/i,/(?:total\s*)?(?:troops?|deployed)[^0-9]{0,25}([0-9][0-9,]{5,})/i]){const m=raw.match(re);if(m){out.capacity=num(m[1]);break}}
-    const known=TYPES.map(([k])=>Number(out.troopCounts[k])||0)
-    if(!out.capacity&&known.every(Boolean))out.capacity=known.reduce((a,b)=>a+b,0)
     const inferred=inferCounts(raw)
     if(inferred){for(const [k] of TYPES)if(!out.troopCounts[k])out.troopCounts[k]=inferred[k];if(!out.capacity)out.capacity=inferred.capacity}
+    const known=TYPES.map(([k])=>Number(out.troopCounts[k])||0)
+    if(!out.capacity&&known.every(Boolean))out.capacity=known.reduce((a,b)=>a+b,0)
     const vals=TYPES.map(([k])=>Number(out.troopCounts[k])||0),present=vals.filter(Boolean)
     if(out.capacity&&present.length===2){const miss=TYPES.find(([k])=>!out.troopCounts[k]);const rem=Number(out.capacity)-present.reduce((a,b)=>a+b,0);if(miss&&rem>=10000)out.troopCounts[miss[0]]=rem}
     return out
   }
+
   async function enhance(file){const u=URL.createObjectURL(file);try{const img=await new Promise((r,j)=>{const i=new Image();i.onload=()=>r(i);i.onerror=j;i.src=u});const c=document.createElement('canvas'),s=Math.min(2.4,2400/Math.max(1,img.naturalWidth));c.width=Math.round(img.naturalWidth*s);c.height=Math.round(img.naturalHeight*s);const x=c.getContext('2d');x.drawImage(img,0,0,c.width,c.height);const d=x.getImageData(0,0,c.width,c.height);for(let i=0;i<d.data.length;i+=4){const g=d.data[i]*.299+d.data[i+1]*.587+d.data[i+2]*.114,q=g>145?Math.min(255,g*1.22+22):Math.max(0,g*.72-12);d.data[i]=d.data[i+1]=d.data[i+2]=q}x.putImageData(d,0,0);return c}finally{URL.revokeObjectURL(u)}}
   const pOpts=()=>'<option value="">Select</option>'+Array.from({length:15},(_,i)=>`<option>${i+1}</option>`).join('')
   const tpl=()=>`<div class="hi-backdrop" data-a="close"></div><section class="hi-dialog"><header><div><div class="eye">HUNT IMPACT · BATTLE REPORT</div><h2>Upload Battle Report</h2><p>Report values auto-fill. You only select Participants, Troop Tier and True Gold.</p></div><button data-a="close">×</button></header><div class="body"><input id="hi-file" type="file" accept="image/*" hidden><div class="drop" data-a="choose"><b>Choose Battle Report screenshot</b><span>PNG, JPG or WEBP</span></div><div class="preview" hidden><img><div><b class="name"></b><span class="meta"></span></div></div><div class="status"></div><div class="values" hidden><div class="note">AUTO FROM REPORT: Rally Capacity, Attack, Lethality and all troop counts.</div><div class="grid"><label>Rally Capacity <em>AUTO</em><input data-f="capacity" readonly></label><label>Participants <em>SELECT</em><select data-f="participants">${pOpts()}</select></label><label>Troop Tier <em>SELECT</em><select data-f="tier"><option value="">Select</option><option>T1-T6</option><option>T7-T9</option><option>T10</option><option>T11</option></select></label><label>True Gold <em>SELECT</em><select data-f="tg"><option value="">Select</option>${Array.from({length:9},(_,i)=>`<option value="${i}">TG${i}</option>`).join('')}</select></label></div>${TYPES.map(([k,l])=>`<div class="card"><b>${l}</b><label>Attack % <em>AUTO</em><input data-f="stats.${k}.attack" readonly></label><label>Lethality % <em>AUTO</em><input data-f="stats.${k}.lethality" readonly></label><label>Troops <em>AUTO</em><input data-f="troopCounts.${k}" readonly></label></div>`).join('')}</div></div><footer><button data-a="close">Cancel</button><button class="apply" data-a="apply" disabled>Apply to Hunt Impact</button></footer></section>`

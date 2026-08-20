@@ -2979,9 +2979,20 @@ const distPublic = path.join(process.cwd(), 'dist')
 const isProduction = process.env.NODE_ENV === 'production'
 ;(async () => {
   if (isProduction && fs.existsSync(distPublic)) {
-    app.use(express.static(distPublic))
+    // index.html references versioned (?v=<hash>) script URLs for cache-busting —
+    // if the browser caches index.html itself, it keeps requesting old versions
+    // forever, so index.html must never be cached while the hashed/versioned
+    // assets it points to are safe to cache normally.
+    app.use(express.static(distPublic, {
+      setHeaders: (res, filePath) => {
+        if (filePath.endsWith('index.html')) res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate')
+      }
+    }))
     // SPA fallback: any non-API GET returns index.html
-    app.get(/^\/(?!api).*/, (_req, res) => res.sendFile(path.join(distPublic, 'index.html')))
+    app.get(/^\/(?!api).*/, (_req, res) => {
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate')
+      res.sendFile(path.join(distPublic, 'index.html'))
+    })
   } else {
     const { createServer: createViteServer } = require('vite')
     const vite = await createViteServer({ server: { middlewareMode: true }, appType: 'spa' })

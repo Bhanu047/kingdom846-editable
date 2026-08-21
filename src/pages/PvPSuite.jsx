@@ -6,7 +6,8 @@ import { HUNT_JOINER_HEROES, applyJoinerBonuses } from '../lib/combat/huntImpact
 const TROOPS = [{ key: 'infantry', label: 'Infantry', short: 'INF', icon: 'shield' }, { key: 'cavalry', label: 'Cavalry', short: 'CAV', icon: 'zap' }, { key: 'archers', label: 'Archers', short: 'ARC', icon: 'crosshair' }]
 const HEROES = { infantry: ['None', 'Alcar', 'Amadeus', 'Charles', 'Eric', 'Forrest', 'Helga', 'Howard', 'Long Fei', 'Seth', 'Triton', 'Zoe'], cavalry: ['None', 'Ava', 'Chenko', 'Edwin', 'Fahd', 'Gordon', 'Hilde', 'Jabel', 'Margot', 'Petra', 'Sophia', 'Thrud'], archers: ['None', 'Amane', 'Diana', 'Jaeger', 'Marlin', 'Olive', 'Quinn', 'Rosa', 'Saul', 'Vivian', 'Wee & Woo', 'Yang', 'Yeonwoo'] }
 const STATS = [{ key: 'count', label: 'Troops', suffix: '', step: 100 }, { key: 'attack', label: 'Attack', suffix: '%', step: .1 }, { key: 'lethality', label: 'Lethality', suffix: '%', step: .1 }, { key: 'defense', label: 'Defense', suffix: '%', step: .1 }, { key: 'health', label: 'Health', suffix: '%', step: .1 }]
-const EMPTY_LINE = { count: '', attack: '', lethality: '', defense: '', health: '', widget: '', widgetStat: 'attack' }
+const WIDGET_OPTIONS = [0, 5, 7.5, 10, 12.5, 15]
+const EMPTY_LINE = { count: '', attack: '', lethality: '', defense: '', health: '', widget: '0', widgetStat: 'attack' }
 const EMPTY_ARMY = { infantry: { ...EMPTY_LINE }, cavalry: { ...EMPTY_LINE }, archers: { ...EMPTY_LINE } }
 const EMPTY_HEROES = { infantry: 'None', cavalry: 'None', archers: 'None' }
 const EMPTY_JOINERS = Array.from({ length: 4 }, () => ({ hero: 'None', skillLevel: 5 }))
@@ -50,7 +51,7 @@ function ArmyForm({ army, setArmy, heroes, setHeroes, joiners, setJoiners, accen
                 <button key={k} type="button" onClick={() => setArmy((a) => ({ ...a, [t.key]: { ...a[t.key], widgetStat: k } }))} className={`rounded px-1.5 py-1 text-[8px] font-bold uppercase ${(army[t.key].widgetStat || 'attack') === k ? 'bg-gold/15 text-gold-bright' : 'text-parchment/40'}`}>{k === 'attack' ? 'ATK' : 'LET'}</button>
               ))}
             </div>
-            <Field compact label="Widget" suffix="%" step={.1} value={army[t.key].widget} onChange={(v) => setArmy((a) => ({ ...a, [t.key]: { ...a[t.key], widget: v } }))} />
+            <Select compact label="Widget" value={army[t.key].widget} onChange={(v) => setArmy((a) => ({ ...a, [t.key]: { ...a[t.key], widget: v } }))} options={WIDGET_OPTIONS} />
           </div>
         </div>
       ))}

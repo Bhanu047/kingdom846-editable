@@ -136,8 +136,12 @@
           if (!hasAlias(line, troop.aliases) || !hasAlias(line, stat.aliases)) continue
           const { mine, theirs } = numsBeforeAfterLabel(line, [troop.aliases, stat.aliases])
           if (!mine.length && !theirs.length) continue
-          if (mine.length) out.mine[troop.key][stat.key] = mine[mine.length - 1]
-          if (theirs.length) out.opponent[troop.key][stat.key] = theirs[0]
+          // Take the number nearest the label on each side, not the
+          // farthest -- a stray digit from an unrelated icon further down
+          // the line (e.g. "+222.0% 5)") is noise, and the real paired
+          // value always sits immediately next to its label.
+          if (mine.length) out.mine[troop.key][stat.key] = mine[0]
+          if (theirs.length) out.opponent[troop.key][stat.key] = theirs[theirs.length - 1]
           break
         }
       }
@@ -214,12 +218,19 @@
   }
 
   // Kingshot's Bonus Details numbers are small, and the "current bonus"
-  // figure is rendered in a low-contrast red that Tesseract frequently
-  // fails to pick up at native screenshot resolution (it reads the
-  // higher-contrast green reference number next to it instead, or nothing
-  // at all). Upscaling before OCR is a standard mitigation for small/thin
-  // text and carries no downside for screenshots that already read fine.
-  function upscaleForOCR(file) {
+  // figure is rendered in a red that Tesseract reliably fails to pick up
+  // at native screenshot resolution -- confirmed against real screenshots
+  // where that number is completely absent from the OCR output, not just
+  // garbled (a plain 2x upscale alone didn't fix it either). Two things
+  // help here: upscaling (a standard mitigation for small/thin text), and
+  // remapping every pixel to its darkest channel instead of a luminance
+  // average. A saturated color always has at least one low RGB channel
+  // even when its weighted luminance reads as "light" -- so darkest-channel
+  // grayscale pulls colored ink away from a pale background more reliably
+  // than luminance-based grayscale, without hardcoding this UI's palette.
+  // Both are non-destructive re-renderings, not lossy thresholding, so
+  // screenshots that already read fine aren't put at risk.
+  function preprocessForOCR(file) {
     return new Promise((resolve) => {
       const img = new Image()
       img.onload = () => {
@@ -231,6 +242,13 @@
         ctx.imageSmoothingEnabled = true
         ctx.imageSmoothingQuality = 'high'
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+        const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+        const d = imgData.data
+        for (let i = 0; i < d.length; i += 4) {
+          const v = Math.min(d[i], d[i + 1], d[i + 2])
+          d[i] = d[i + 1] = d[i + 2] = v
+        }
+        ctx.putImageData(imgData, 0, 0)
         URL.revokeObjectURL(img.src)
         resolve(canvas)
       }
@@ -417,7 +435,7 @@
           status.textContent = `Reading screenshot ${i + 1} of ${entries.length}…`
           try {
             const Tesseract = await loadTesseract()
-            const prepped = await upscaleForOCR(entries[i].file)
+            const prepped = await preprocessForOCR(entries[i].file)
             const out = await Tesseract.recognize(prepped, 'eng')
             entries[i].rawText = out?.data?.text || ''
             entries[i].parsed = parseArmyText(entries[i].rawText)

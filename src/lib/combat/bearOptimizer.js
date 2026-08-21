@@ -68,9 +68,13 @@ function number(value, fallback = 0) {
   return Number.isFinite(parsed) ? parsed : fallback
 }
 
+// The "widget" field is the rally-wide ATK/LET % from an Expedition Skill widget,
+// entered manually because it's absent from a solo beast-attack battle report
+// (a terror-rally report already includes it, so it should stay 0 there).
 function attackFactor(stat = {}) {
-  const attack = Math.max(0, number(stat.attack))
-  const lethality = Math.max(0, number(stat.lethality))
+  const widget = Math.max(0, number(stat.widget))
+  const attack = Math.max(0, number(stat.attack)) + widget
+  const lethality = Math.max(0, number(stat.lethality)) + widget
   return (1 + attack / 100) * (1 + lethality / 100)
 }
 

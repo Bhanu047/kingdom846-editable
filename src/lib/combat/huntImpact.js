@@ -45,6 +45,7 @@ export function applyJoinerBonuses(stats = {}, joiners = []) {
   return Object.fromEntries(TYPES.map((type) => [type, {
     attack: Math.max(0, number(stats?.[type]?.attack)) + bonus.attack,
     lethality: Math.max(0, number(stats?.[type]?.lethality)) + bonus.lethality,
+    widget: Math.max(0, number(stats?.[type]?.widget)),
   }]))
 }
 

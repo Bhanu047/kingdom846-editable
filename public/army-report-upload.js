@@ -110,13 +110,13 @@
 
   // Battle Details' "Troop Power Comparison" bars list Infantry/Cavalry/
   // Archer as three bare heading lines with no numbers on them at all --
-  // the real troop counts sit several lines later in a single row with no
-  // troop-type text anywhere near it ("85,192 38,892 61,116 60,000 45,000
-  // 45,000"), in the same left-to-right order as the three headings above
-  // them (confirmed against a real screenshot: first three large numbers =
-  // Infantry/Cavalry/Archer count, the rest is gear power, not troops).
-  // This screen only ever shows the viewer's own army, never an opponent's
-  // (see the file-level note above), so these counts only ever fill "mine".
+  // the real troop counts sit several lines later, as TWO rows of three
+  // numbers with no troop-type text anywhere near either one ("85,192
+  // 38,892 61,116 60,000 45,000 45,000"), each in the same left-to-right
+  // order as the three headings above them. The first group of 3 (under
+  // the hero portraits) is the viewer's own troops; a second group of 3
+  // (under the gear icons) is the opponent's -- confirmed with the user
+  // directly, since neither group is labeled by side anywhere in the text.
   function inferTroopCountsFromBareRow(lines) {
     const headingIdx = TROOPS.map((t) => lines.findIndex((l) => hasAlias(l, t.aliases) && !isStatLine(l) && !l.includes('%')))
     if (headingIdx.some((i) => i === -1)) return {}
@@ -125,7 +125,15 @@
       const line = lines[i]
       if (isStatLine(line) || line.includes('%')) break
       const nums = numbersOnLine(line).filter((v) => v >= 10000)
-      if (nums.length >= 3) return { infantry: nums[0], cavalry: nums[1], archers: nums[2] }
+      if (nums.length >= 3) {
+        const out = { infantry: { mine: nums[0] }, cavalry: { mine: nums[1] }, archers: { mine: nums[2] } }
+        // The first 3 numbers (under the hero portraits) are the viewer's own
+        // troops; a second group of 3 (under the gear icons) is the
+        // opponent's -- confirmed with the user directly, since nothing in
+        // the surrounding text labels either group by side.
+        if (nums.length >= 6) { out.infantry.theirs = nums[3]; out.cavalry.theirs = nums[4]; out.archers.theirs = nums[5] }
+        return out
+      }
     }
     return {}
   }
@@ -183,7 +191,8 @@
     TROOPS.forEach((t) => {
       if (out.mine[t.key].count === undefined && counts[t.key]?.mine !== undefined) out.mine[t.key].count = counts[t.key].mine
       if (out.opponent[t.key].count === undefined && counts[t.key]?.theirs !== undefined) out.opponent[t.key].count = counts[t.key].theirs
-      if (out.mine[t.key].count === undefined && bareRowCounts[t.key] !== undefined) out.mine[t.key].count = bareRowCounts[t.key]
+      if (out.mine[t.key].count === undefined && bareRowCounts[t.key]?.mine !== undefined) out.mine[t.key].count = bareRowCounts[t.key].mine
+      if (out.opponent[t.key].count === undefined && bareRowCounts[t.key]?.theirs !== undefined) out.opponent[t.key].count = bareRowCounts[t.key].theirs
     })
     stripRepeatedConstant(out.mine)
     stripRepeatedConstant(out.opponent)

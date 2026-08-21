@@ -38,15 +38,130 @@ function ArmyForm({ army, setArmy, locked, accent }) {
   )
 }
 
-function ResultBar({ label, sub, value, max, active }) {
+export const TROOP_COLORS = { infantry: '#d9b94e', cavalry: '#7f9ed6', archers: '#c8655a' }
+
+// A horizontal power-comparison bar, the same visual language as Kingshot's
+// own in-game Troop Power Comparison screen (a blue-vs-red bar split at the
+// stronger side) — but built fresh for this site, subdivided further by
+// troop type so it shows composition shape, not just raw power, at a glance.
+export function ArmyPowerBar({ yourSide, enemySide, yourLabel = 'YOUR FORCE', enemyLabel = 'ENEMY FORCE', yourSub, enemySub }) {
+  const yTotal = Math.max(0, yourSide.infantry) + Math.max(0, yourSide.cavalry) + Math.max(0, yourSide.archers)
+  const eTotal = Math.max(0, enemySide.infantry) + Math.max(0, enemySide.cavalry) + Math.max(0, enemySide.archers)
+  const combined = Math.max(1, yTotal + eTotal)
+  const yourShare = yTotal / combined * 100
+  const seg = (side, total) => ['infantry', 'cavalry', 'archers'].map((k) => total > 0 ? Math.max(0, side[k]) / total * 100 : 0)
+  const [yi, yc, ya] = seg(yourSide, yTotal)
+  const [ei, ec, ea] = seg(enemySide, eTotal)
+  return (
+    <div className="k846-powerbar rounded-2xl border border-gold/20 bg-[#07101e] p-4 md:p-5">
+      <div className="flex items-end justify-between gap-3">
+        <div><div className="text-[9px] font-bold uppercase tracking-wider text-[#9eb9ef]">{yourLabel}</div><div className="font-mono text-lg font-bold text-parchment">{fmt(yTotal)}</div>{yourSub && <div className="text-[10px] text-parchment/40">{yourSub}</div>}</div>
+        <Icon name="swords" size={16} className="mb-1 text-gold/50" />
+        <div className="text-right"><div className="text-[9px] font-bold uppercase tracking-wider text-[#e08c80]">{enemyLabel}</div><div className="font-mono text-lg font-bold text-parchment">{fmt(eTotal)}</div>{enemySub && <div className="text-[10px] text-parchment/40">{enemySub}</div>}</div>
+      </div>
+      <div className="relative mt-3 h-9 overflow-hidden rounded-full border border-gold/15 bg-black/30">
+        <div className="absolute inset-y-0 left-0 flex" style={{ width: `${yourShare}%` }}>
+          <div style={{ width: `${yi}%`, background: TROOP_COLORS.infantry }} />
+          <div style={{ width: `${yc}%`, background: TROOP_COLORS.cavalry }} />
+          <div style={{ width: `${ya}%`, background: TROOP_COLORS.archers }} />
+        </div>
+        <div className="absolute inset-y-0 right-0 flex" style={{ width: `${100 - yourShare}%` }}>
+          <div style={{ width: `${ei}%`, background: TROOP_COLORS.infantry, opacity: .68 }} />
+          <div style={{ width: `${ec}%`, background: TROOP_COLORS.cavalry, opacity: .68 }} />
+          <div style={{ width: `${ea}%`, background: TROOP_COLORS.archers, opacity: .68 }} />
+        </div>
+        <div className="absolute inset-y-[-3px] w-[3px] -translate-x-1/2 rounded-full bg-gold-bright shadow-[0_0_10px_rgba(212,175,55,.9)]" style={{ left: `${yourShare}%` }} />
+      </div>
+      <div className="mt-2 flex justify-center gap-4 text-[10px]">
+        <span style={{ color: TROOP_COLORS.infantry }}>● Infantry</span>
+        <span style={{ color: TROOP_COLORS.cavalry }}>● Cavalry</span>
+        <span style={{ color: TROOP_COLORS.archers }}>● Archers</span>
+      </div>
+    </div>
+  )
+}
+
+// Ranked composition row — a mini I/C/A strip so the shape of each candidate
+// split is visible at a glance, not just its margin.
+export function FormationRow({ composition, sub, margin, max, active }) {
   return (
     <div className={`rounded-xl border p-3 ${active ? 'border-gold/40 bg-gold/[.05]' : 'border-gold/10 bg-white/[.02]'}`}>
-      <div className="flex items-center justify-between gap-3 text-xs">
-        <div><span className="font-semibold text-parchment/85">{label}</span><span className="ml-2 text-[10px] text-parchment/40">{sub}</span></div>
-        <span className={`font-mono text-sm font-bold ${value >= 0 ? 'text-emerald-300' : 'text-red-300'}`}>{value >= 0 ? '+' : ''}{fmt(value)}</span>
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5">
+          <div className="flex h-4 w-20 shrink-0 overflow-hidden rounded-full border border-gold/10">
+            <div style={{ width: `${composition.infantry * 100}%`, background: TROOP_COLORS.infantry }} />
+            <div style={{ width: `${composition.cavalry * 100}%`, background: TROOP_COLORS.cavalry }} />
+            <div style={{ width: `${composition.archers * 100}%`, background: TROOP_COLORS.archers }} />
+          </div>
+          <div className="text-xs"><span className="font-semibold text-parchment/85">{Math.round(composition.infantry * 100)}/{Math.round(composition.cavalry * 100)}/{Math.round(composition.archers * 100)}</span><span className="ml-2 text-[10px] text-parchment/40">{sub}</span></div>
+        </div>
+        <span className={`font-mono text-sm font-bold ${margin >= 0 ? 'text-emerald-300' : 'text-red-300'}`}>{margin >= 0 ? '+' : ''}{fmt(margin)}</span>
       </div>
       <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-black/25">
-        <div className={`h-full rounded-full ${value >= 0 ? 'bg-gradient-to-r from-emerald-400/50 to-emerald-300' : 'bg-gradient-to-r from-red-400/50 to-red-300'}`} style={{ width: `${max > 0 ? Math.max(2, Math.abs(value) / max * 100) : 0}%` }} />
+        <div className={`h-full rounded-full ${margin >= 0 ? 'bg-gradient-to-r from-emerald-400/50 to-emerald-300' : 'bg-gradient-to-r from-red-400/50 to-red-300'}`} style={{ width: `${max > 0 ? Math.max(2, Math.abs(margin) / max * 100) : 0}%` }} />
+      </div>
+    </div>
+  )
+}
+
+// OPTION B — "VS Army Cards": two side-by-side matchup cards with a crossed-
+// swords divider, each troop type shown as its own labeled progress row.
+export function VsArmyCards({ yourSide, enemySide, yourLabel = 'YOUR FORCE', enemyLabel = 'ENEMY FORCE' }) {
+  const Card = ({ side, label, border, glow, align }) => {
+    const total = Math.max(0, side.infantry) + Math.max(0, side.cavalry) + Math.max(0, side.archers)
+    return (
+      <div className={`flex-1 rounded-2xl border p-4 ${border}`} style={{ boxShadow: `inset 0 0 30px ${glow}` }}>
+        <div className={`text-[9px] font-bold uppercase tracking-wider text-parchment/50 ${align}`}>{label}</div>
+        <div className={`mt-0.5 font-mono text-2xl font-black text-parchment ${align}`}>{fmt(total)}</div>
+        <div className="mt-3 space-y-2">
+          {TROOPS.map((t) => (
+            <div key={t.key} className={`flex items-center gap-2 ${align === 'text-right' ? 'flex-row-reverse' : ''}`}>
+              <Icon name={t.icon} size={12} style={{ color: TROOP_COLORS[t.key] }} />
+              <div className="h-2 flex-1 overflow-hidden rounded-full bg-black/30"><div className="h-full rounded-full" style={{ width: `${total > 0 ? Math.max(0, side[t.key]) / total * 100 : 0}%`, background: TROOP_COLORS[t.key] }} /></div>
+              <span className="w-16 shrink-0 font-mono text-[10px] text-parchment/55" style={{ textAlign: align === 'text-right' ? 'left' : 'right' }}>{fmt(side[t.key])}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
+  return (
+    <div className="rounded-2xl border border-gold/20 bg-[#07101e] p-4 md:p-5">
+      <div className="flex items-stretch gap-2 md:gap-3">
+        <Card side={yourSide} label={yourLabel} border="border-[#7f9ed6]/25 bg-[#7f9ed6]/[.045]" glow="rgba(127,158,214,.08)" align="text-left" />
+        <div className="flex shrink-0 flex-col items-center justify-center px-1">
+          <Icon name="swords" size={20} className="text-gold-bright" />
+          <div className="mt-1 text-[8px] font-black uppercase tracking-wider text-gold/50">VS</div>
+        </div>
+        <Card side={enemySide} label={enemyLabel} border="border-[#c8655a]/25 bg-[#c8655a]/[.045]" glow="rgba(200,101,90,.08)" align="text-right" />
+      </div>
+    </div>
+  )
+}
+
+// OPTION C — "Clash Gauge": a semi-circle power gauge with a needle, like a
+// boss-fight HUD meter, needle leaning toward whichever side is stronger.
+export function ClashGauge({ yourTotal, enemyTotal, margin }) {
+  const combined = Math.max(1, yourTotal + enemyTotal)
+  const yourShare = yourTotal / combined
+  const R = 92, CX = 130, CY = 118
+  const angle = Math.PI * (1 - yourShare)
+  const pt = (a) => [CX + R * Math.cos(a), CY - R * Math.sin(a)]
+  const arc = (from, to) => { const [x1, y1] = pt(from), [x2, y2] = pt(to); const large = Math.abs(to - from) > Math.PI ? 1 : 0; return `M${x1},${y1} A${R},${R} 0 ${large} ${to < from ? 1 : 0} ${x2},${y2}` }
+  const [nx, ny] = pt(angle)
+  return (
+    <div className="rounded-2xl border border-gold/20 bg-[#07101e] p-4 md:p-5">
+      <svg viewBox="0 0 260 140" className="mx-auto w-full max-w-md">
+        <path d={arc(Math.PI, angle)} stroke="#7f9ed6" strokeWidth="16" fill="none" strokeLinecap="round" />
+        <path d={arc(angle, 0)} stroke="#c8655a" strokeWidth="16" fill="none" strokeLinecap="round" />
+        <line x1={CX} y1={CY} x2={nx} y2={ny} stroke="#e8c558" strokeWidth="3" strokeLinecap="round" />
+        <circle cx={CX} cy={CY} r="7" fill="#e8c558" stroke="#071224" strokeWidth="2" />
+        <text x="14" y="134" fontSize="11" fill="#9eb9ef" fontWeight="700">YOUR FORCE</text>
+        <text x="246" y="134" fontSize="11" fill="#e08c80" fontWeight="700" textAnchor="end">ENEMY</text>
+      </svg>
+      <div className="mt-1 text-center">
+        <div className="font-mono text-2xl font-black" style={{ color: margin >= 0 ? '#6ee7b7' : '#fca5a5' }}>{margin >= 0 ? '+' : ''}{fmt(margin)}</div>
+        <div className="text-[10px] text-parchment/40">troop margin</div>
       </div>
     </div>
   )
@@ -197,6 +312,20 @@ export default function MysticSuite() {
                 <div className="font-display text-2xl font-bold">{result.best.result.outcome === 'attacker' ? 'You Win' : result.best.result.outcome === 'defender' ? 'Still Loses' : 'Even Fight'}</div>
                 <div className="mt-1 text-xs text-parchment/50">Best split: {pct(result.best.composition.infantry)} Infantry / {pct(result.best.composition.cavalry)} Cavalry / {pct(result.best.composition.archers)} Archers · margin {result.best.margin >= 0 ? '+' : ''}{fmt(result.best.margin)} troops</div>
               </div>
+              {(() => {
+                const yourSide = { infantry: result.totalYourTroops * result.best.composition.infantry, cavalry: result.totalYourTroops * result.best.composition.cavalry, archers: result.totalYourTroops * result.best.composition.archers }
+                const enemySide = { infantry: n(opponent.infantry.count), cavalry: n(opponent.cavalry.count), archers: n(opponent.archers.count) }
+                return (
+                  <div className="space-y-3">
+                    <div className="text-center text-[10px] font-black uppercase tracking-[.2em] text-gold-bright/70">— Option A: Power Comparison Bar —</div>
+                    <ArmyPowerBar yourSide={yourSide} enemySide={enemySide} yourLabel="Your Best Split" enemyLabel="Opponent" yourSub={`${fmt(result.best.result.remainingA)} survive`} enemySub={`${fmt(result.best.result.remainingD)} survive`} />
+                    <div className="text-center text-[10px] font-black uppercase tracking-[.2em] text-gold-bright/70">— Option B: VS Army Cards —</div>
+                    <VsArmyCards yourSide={yourSide} enemySide={enemySide} yourLabel="Your Best Split" enemyLabel="Opponent" />
+                    <div className="text-center text-[10px] font-black uppercase tracking-[.2em] text-gold-bright/70">— Option C: Clash Gauge —</div>
+                    <ClashGauge yourTotal={yourSide.infantry + yourSide.cavalry + yourSide.archers} enemyTotal={enemySide.infantry + enemySide.cavalry + enemySide.archers} margin={result.best.margin} />
+                  </div>
+                )
+              })()}
               {result.classical && (
                 <div className="grid grid-cols-2 gap-3">
                   <div className="rounded-2xl border border-gold/10 bg-white/[.02] p-4">
@@ -221,7 +350,7 @@ export default function MysticSuite() {
                 <div className="mb-2 text-[10px] font-bold uppercase tracking-wider text-parchment/40">Top Compositions By Margin</div>
                 <div className="space-y-2">
                   {top.map((c, i) => (
-                    <ResultBar key={i} active={i === 0} label={`${Math.round(c.composition.infantry * 100)}/${Math.round(c.composition.cavalry * 100)}/${Math.round(c.composition.archers * 100)}`} sub={c.result.outcome === 'attacker' ? 'wins' : c.result.outcome === 'defender' ? 'loses' : 'draw'} value={c.margin} max={maxMargin} />
+                    <FormationRow key={i} active={i === 0} composition={c.composition} sub={c.result.outcome === 'attacker' ? 'wins' : c.result.outcome === 'defender' ? 'loses' : 'draw'} margin={c.margin} max={maxMargin} />
                   ))}
                 </div>
               </div>

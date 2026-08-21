@@ -244,7 +244,7 @@ export default function MysticSuite() {
           <span className="text-[10px] font-bold uppercase tracking-[.12em] text-parchment/45">Search Bounds</span>
           <button type="button" onClick={suggestBounds} disabled={!ready} className="inline-flex items-center gap-1.5 rounded-lg border border-gold/20 bg-gold/[.04] px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-gold-bright/80 hover:border-gold/40 disabled:opacity-30"><Icon name="sparkles" size={11} /> Suggest Bounds</button>
         </div>
-        <p className="mt-1 text-[10px] leading-relaxed text-parchment/35">Runs a quick wide-open pass first, then narrows Min/Max below to a window around whatever it finds — same idea as frakinator auto-narrowing its own search, run explicitly here so you can see it happen.</p>
+        <p className="mt-1 text-[10px] leading-relaxed text-parchment/35">Runs a quick wide-open pass first, then narrows the Min/Max range below to a window around whatever split it finds, so you don't have to guess where to start.</p>
         <div className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <label className="block">
             <span className="mb-1 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[.12em] text-parchment/45">Infantry Floor</span>
@@ -263,7 +263,7 @@ export default function MysticSuite() {
             <div className="relative"><input type="number" min={0} max={100} step={1} value={maxCavalry} onChange={(e) => setMaxCavalry(e.target.value)} className="w-full rounded-xl border border-gold/15 bg-ink/70 px-3 py-2.5 pr-8 text-sm font-semibold text-parchment outline-none focus:border-gold/45" /><span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-gold/45">%</span></div>
           </label>
         </div>
-        <span className="mt-2 block text-[10px] leading-relaxed text-parchment/35">Bounds narrow the search away from splits that rarely win — Infantry and Cavalry each get a Min/Max range; Archers fill whatever's left.</span>
+        <span className="mt-2 block text-[10px] leading-relaxed text-parchment/35">Bounds narrow the search away from splits that rarely win — Infantry and Cavalry each get a Min/Max range; Archers fill whatever's left. Right now the search only tests Infantry between <b className="text-parchment/55">{minInfantry || 0}%–{maxInfantry || 100}%</b> and Cavalry between <b className="text-parchment/55">{minCavalry || 0}%–{maxCavalry || 100}%</b> — widen these if you don't see the split you expect.</span>
         <div className="mt-4 rounded-xl border border-amber-300/15 bg-amber-300/[.035] p-3 text-[11px] leading-relaxed text-amber-100/60">
           This model has no randomness — the same composition always produces the same result, so there's no "number of battles" setting to average over, unlike a Monte Carlo tool.
           {hasHeroes && <> <b className="text-amber-200">{trial}</b> involves enemy heroes this model doesn't account for — try lowering the opponent's troop counts (keeping their ratio the same) for a rough estimate, since hero-boosted defenders are effectively fighting above their raw troop count.</>}

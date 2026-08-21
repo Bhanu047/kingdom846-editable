@@ -106,18 +106,27 @@ export function ClashGauge({ yourTotal, enemyTotal, margin }) {
   const R = 92, CX = 130, CY = 118
   const angle = Math.PI * (1 - yourShare)
   const pt = (a) => [CX + R * Math.cos(a), CY - R * Math.sin(a)]
-  const arc = (from, to) => { const [x1, y1] = pt(from), [x2, y2] = pt(to); const large = Math.abs(to - from) > Math.PI ? 1 : 0; return `M${x1},${y1} A${R},${R} 0 ${large} ${to < from ? 1 : 0} ${x2},${y2}` }
+  // Approximate the arc as a polyline rather than an SVG "A" (elliptical
+  // arc) path command — html2canvas 1.4.1 doesn't rasterize arc commands
+  // (they render blank in exported reports), but a fine-enough polyline
+  // looks identical on screen and exports correctly.
+  const arc = (from, to) => { const steps = 32; return Array.from({ length: steps + 1 }, (_, i) => { const [x, y] = pt(from + (to - from) * (i / steps)); return `${i ? 'L' : 'M'}${x},${y}` }).join(' ') }
   const [nx, ny] = pt(angle)
   return (
     <div className="rounded-2xl border border-gold/20 bg-[#07101e] p-4 md:p-5">
-      <svg viewBox="0 0 260 140" className="mx-auto w-full max-w-md">
-        <path d={arc(Math.PI, angle)} stroke="#7f9ed6" strokeWidth="16" fill="none" strokeLinecap="round" />
-        <path d={arc(angle, 0)} stroke="#c8655a" strokeWidth="16" fill="none" strokeLinecap="round" />
-        <line x1={CX} y1={CY} x2={nx} y2={ny} stroke="#e8c558" strokeWidth="3" strokeLinecap="round" />
-        <circle cx={CX} cy={CY} r="7" fill="#e8c558" stroke="#071224" strokeWidth="2" />
-        <text x="14" y="134" fontSize="11" fill="#9eb9ef" fontWeight="700">YOUR FORCE</text>
-        <text x="246" y="134" fontSize="11" fill="#e08c80" fontWeight="700" textAnchor="end">ENEMY</text>
-      </svg>
+      <div className="relative mx-auto w-full max-w-md">
+        <svg viewBox="0 0 260 140" className="w-full">
+          <path d={arc(Math.PI, angle)} stroke="#7f9ed6" strokeWidth="16" fill="none" strokeLinecap="round" />
+          <path d={arc(angle, 0)} stroke="#c8655a" strokeWidth="16" fill="none" strokeLinecap="round" />
+          <line x1={CX} y1={CY} x2={nx} y2={ny} stroke="#e8c558" strokeWidth="3" strokeLinecap="round" />
+          <circle cx={CX} cy={CY} r="7" fill="#e8c558" stroke="#071224" strokeWidth="2" />
+        </svg>
+        {/* Labels are plain HTML, not SVG <text> — html2canvas 1.4.1 renders
+            SVG text blank in exported reports (in fact it blanks the whole
+            SVG when text is present), so labels live outside the <svg>. */}
+        <div className="absolute bottom-[3%] left-[3%] text-[11px] font-bold text-[#9eb9ef]">YOUR FORCE</div>
+        <div className="absolute bottom-[3%] right-[3%] text-[11px] font-bold text-[#e08c80]">ENEMY</div>
+      </div>
       <div className="mt-1 text-center">
         <div className="font-mono text-2xl font-black" style={{ color: margin >= 0 ? '#6ee7b7' : '#fca5a5' }}>{margin >= 0 ? '+' : ''}{fmt(margin)}</div>
         <div className="text-[10px] text-parchment/40">troop margin</div>
@@ -275,7 +284,7 @@ export default function MysticSuite() {
                 const yourSide = { infantry: result.totalYourTroops * result.best.composition.infantry, cavalry: result.totalYourTroops * result.best.composition.cavalry, archers: result.totalYourTroops * result.best.composition.archers }
                 const enemySide = { infantry: n(opponent.infantry.count), cavalry: n(opponent.cavalry.count), archers: n(opponent.archers.count) }
                 return (
-                  <div className="space-y-4">
+                  <div data-report-clone="mystic-visual" className="space-y-4">
                     <ClashGauge yourTotal={yourSide.infantry + yourSide.cavalry + yourSide.archers} enemyTotal={enemySide.infantry + enemySide.cavalry + enemySide.archers} margin={result.best.margin} />
                     <VsArmyCards yourSide={yourSide} enemySide={enemySide} yourLabel="Your Best Split" enemyLabel="Opponent" />
                   </div>

@@ -34,9 +34,15 @@
     return b
   }
 
+  // PvP's Composition Optimizer reuses the exact same "Best Composition
+  // Found" heading as Mystic Trials, so matching on that heading alone
+  // would also fire on the PvP page and wire it to Mystic's downloader
+  // (which then fails, since PvP has no "Your Troops"/"Opponent Troops"
+  // sections). Disambiguate by requiring the page-specific heading each
+  // tool actually has ("Your Troops" for Mystic, "Your Army" for PvP).
   function addMystic() {
     const found = panel('Best Composition Found')
-    if (!found?.section || found.section.querySelector('[data-k846-report-btn="mystic"]')) return
+    if (!found?.section || !panel('Your Troops') || found.section.querySelector('[data-k846-report-btn="mystic"]')) return
     const row = document.createElement('div')
     row.className = 'k846-mp-row'
     row.dataset.k846ReportBtn = 'mystic'
@@ -54,10 +60,21 @@
     found.section.appendChild(row)
   }
 
+  function addPvpSweep() {
+    const found = panel('Best Composition Found')
+    if (!found?.section || !panel('Your Army') || found.section.querySelector('[data-k846-report-btn="pvp-sweep"]')) return
+    const row = document.createElement('div')
+    row.className = 'k846-mp-row'
+    row.dataset.k846ReportBtn = 'pvp-sweep'
+    row.appendChild(makeDownloadBtn('Download Optimizer Report', 'downloadPvpSweep'))
+    found.section.appendChild(row)
+  }
+
   function sync() {
     styles()
     addMystic()
     addPvp()
+    addPvpSweep()
   }
 
   let timer = null

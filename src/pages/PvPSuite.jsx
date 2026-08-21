@@ -159,14 +159,19 @@ function StatRadar({ yourStats, enemyStats, yourLabel = 'YOUR ARMY', enemyLabel 
   const pt = (i, val, max) => [CX + R * Math.min(1, val / max) * Math.cos(angleFor(i)), CY + R * Math.min(1, val / max) * Math.sin(angleFor(i))]
   const poly = (stats) => AXES.map((a, i) => pt(i, stats[a.key], maxes[i])).map(([x, y]) => `${x},${y}`).join(' ')
   const gridPoly = (scale) => AXES.map((a, i) => pt(i, scale, 1)).map(([x, y]) => `${x},${y}`).join(' ')
+  const VB_W = 280, VB_H = 250
   return (
     <div className="rounded-2xl border border-gold/20 bg-[#07101e] p-4 md:p-5">
-      <svg viewBox="0 0 280 250" className="mx-auto w-full max-w-md">
-        {[.25, .5, .75, 1].map((s) => <polygon key={s} points={gridPoly(s)} fill="none" stroke="rgba(226,199,125,.12)" />)}
-        <polygon points={poly(yourStats)} fill="rgba(127,158,214,.28)" stroke="#7f9ed6" strokeWidth="2" />
-        <polygon points={poly(enemyStats)} fill="rgba(200,101,90,.22)" stroke="#c8655a" strokeWidth="2" />
-        {AXES.map((a, i) => { const [x, y] = pt(i, 1.42, 1); return <text key={a.key} x={x} y={y} fontSize="11" fontWeight="800" fill="#f1e7ce" stroke="#07101e" strokeWidth="4" paintOrder="stroke" textAnchor="middle">{a.label}</text> })}
-      </svg>
+      <div className="relative mx-auto w-full max-w-md">
+        <svg viewBox={`0 0 ${VB_W} ${VB_H}`} className="w-full">
+          {[.25, .5, .75, 1].map((s) => <polygon key={s} points={gridPoly(s)} fill="none" stroke="rgba(226,199,125,.12)" />)}
+          <polygon points={poly(yourStats)} fill="rgba(127,158,214,.28)" stroke="#7f9ed6" strokeWidth="2" />
+          <polygon points={poly(enemyStats)} fill="rgba(200,101,90,.22)" stroke="#c8655a" strokeWidth="2" />
+        </svg>
+        {/* Plain HTML labels, not SVG <text> — html2canvas 1.4.1 renders SVG
+            text (and the whole SVG along with it) blank in exported reports. */}
+        {AXES.map((a, i) => { const [x, y] = pt(i, 1.42, 1); return <div key={a.key} className="absolute -translate-x-1/2 -translate-y-1/2 whitespace-nowrap text-[11px] font-extrabold text-parchment" style={{ left: `${x / VB_W * 100}%`, top: `${y / VB_H * 100}%` }}>{a.label}</div> })}
+      </div>
       <div className="mt-1 flex justify-center gap-4 text-[10px]"><span className="text-[#7f9ed6]">● {yourLabel}</span><span className="text-[#c8655a]">● {enemyLabel}</span></div>
     </div>
   )
@@ -373,10 +378,10 @@ export default function PvPSuite() {
               const yourCasualtyFraction = result.startingA > 0 ? result.attackerLosses / result.startingA : 0
               const enemyCasualtyFraction = result.startingD > 0 ? result.defenderLosses / result.startingD : 0
               return (
-                <>
+                <div data-report-clone="pvp-direct-visual" className="space-y-4">
                   <StatRadar yourStats={yourStats} enemyStats={enemyStats} />
                   <FormationBlocksMatchup yourSide={yourSide} enemySide={enemySide} yourCasualtyFraction={yourCasualtyFraction} enemyCasualtyFraction={enemyCasualtyFraction} />
-                </>
+                </div>
               )
             })()}
             <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -439,7 +444,7 @@ export default function PvPSuite() {
                 <div className="font-display text-2xl font-bold">{sweepResult.best.result.outcome === 'attacker' ? 'You Win' : sweepResult.best.result.outcome === 'defender' ? 'Still Loses' : 'Even Fight'}</div>
                 <div className="mt-1 text-xs text-parchment/50">Best split: {pct(sweepResult.best.composition.infantry)} Infantry / {pct(sweepResult.best.composition.cavalry)} Cavalry / {pct(sweepResult.best.composition.archers)} Archers · margin {sweepResult.best.margin >= 0 ? '+' : ''}{fmt(sweepResult.best.margin)} troops</div>
               </div>
-              <VictoryPodium top3={sweepTop.slice(0, 3)} />
+              <div data-report-clone="pvp-sweep-visual"><VictoryPodium top3={sweepTop.slice(0, 3)} /></div>
               {sweepResult.classical && (
                 <div className="grid grid-cols-2 gap-3">
                   <div className="rounded-2xl border border-gold/10 bg-white/[.02] p-4">

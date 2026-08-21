@@ -110,25 +110,27 @@
   // Archer as three bare heading lines with no numbers on them at all --
   // the real troop counts sit several lines later, as TWO rows of three
   // numbers with no troop-type text anywhere near either one ("85,192
-  // 38,892 61,116 60,000 45,000 45,000"), each in the same left-to-right
-  // order as the three headings above them. The first group of 3 (under
-  // the hero portraits) is the viewer's own troops; a second group of 3
-  // (under the gear icons) is the opponent's -- confirmed with the user
-  // directly, since neither group is labeled by side anywhere in the text.
+  // 38,892 61,116 60,000 45,000 45,000"). The first group of 3 (under the
+  // hero portraits) is the viewer's own troops; a second group of 3 (under
+  // the gear icons) is the opponent's -- confirmed with the user directly,
+  // since neither group is labeled by side anywhere in the text.
+  //
+  // This used to anchor on finding each of the three troop-name headings
+  // first, in order, before scanning for the number row after them. That
+  // broke on a real screenshot where OCR misread "Cavalry" as "cavarry" --
+  // one bad word match on a heading that isn't even needed for anything
+  // (it doesn't label which numbers belong to it) silently zeroed out
+  // troop counts entirely. The row itself is what matters: it's simply the
+  // first line with 3+ large numbers that appears before the first
+  // stat/percent line (i.e. still within Troop Power Comparison, not yet
+  // into Bonus Details) -- no dependency on any specific word surviving
+  // OCR intact.
   function inferTroopCountsFromBareRow(lines) {
-    const headingIdx = TROOPS.map((t) => lines.findIndex((l) => hasAlias(l, t.aliases) && !isStatLine(l) && !l.includes('%')))
-    if (headingIdx.some((i) => i === -1)) return {}
-    if (!(headingIdx[0] < headingIdx[1] && headingIdx[1] < headingIdx[2])) return {}
-    for (let i = headingIdx[2] + 1; i < lines.length; i += 1) {
-      const line = lines[i]
+    for (const line of lines) {
       if (isStatLine(line) || line.includes('%')) break
       const nums = numbersOnLine(line).filter((v) => v >= 10000)
       if (nums.length >= 3) {
         const out = { infantry: { mine: nums[0] }, cavalry: { mine: nums[1] }, archers: { mine: nums[2] } }
-        // The first 3 numbers (under the hero portraits) are the viewer's own
-        // troops; a second group of 3 (under the gear icons) is the
-        // opponent's -- confirmed with the user directly, since nothing in
-        // the surrounding text labels either group by side.
         if (nums.length >= 6) { out.infantry.theirs = nums[3]; out.cavalry.theirs = nums[4]; out.archers.theirs = nums[5] }
         return out
       }

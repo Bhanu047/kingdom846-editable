@@ -14,7 +14,7 @@ const TOOLS = [
   { id: 'mystic', title: 'Mystic', sourceLabel: 'Mystic Trials', icon: 'sparkles', image: './assets/art-hero-meta.png', description: 'See which stat sources actually count toward each Mystic Trial before you gear for it.', accent: 'from-violet-950/85 via-ink/45 to-transparent' },
   { id: 'battle', title: 'PvP', sourceLabel: 'Battle Simulator', icon: 'swords', image: './assets/art-castle-battle.png', description: 'Run a round-by-round battle between two armies and see who’s left standing.', accent: 'from-red-950/85 via-ink/45 to-transparent' },
   { id: 'formation', title: 'Formation', sourceLabel: 'Formation Optimizer', icon: 'layers', image: './assets/strategy-war-academy.png', description: 'Build and compare tactical troop formations for different targets.', accent: 'from-emerald-950/85 via-ink/45 to-transparent' },
-  { id: 'codex', title: 'Codex', sourceLabel: 'Codex', icon: 'book', image: './assets/royal-bg.jpg', description: 'The reasoning behind the formulas, verified test cases, and who deserves credit.', accent: 'from-indigo-950/85 via-ink/45 to-transparent' },
+  { id: 'codex', title: 'Codex', sourceLabel: 'Codex', icon: 'book', image: './assets/royal-bg.jpg', description: 'The reasoning behind the formulas, verified test cases, and who deserves credit.', accent: 'from-cyan-950/85 via-ink/45 to-transparent' },
 ]
 
 function readRequestedTool() {

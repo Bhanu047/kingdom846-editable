@@ -16,10 +16,6 @@ function getLeaderAvatar(user) {
   return map[slug] || './assets/avatars/queen.webp'
 }
 
-function BetaBadge() {
-  return <span className="ml-auto rounded-full border border-amber-300/25 bg-amber-300/[0.06] px-2 py-0.5 text-[8px] font-bold uppercase tracking-[0.12em] text-amber-100/75">Beta</span>
-}
-
 export default function Sidebar({ active, onNavigate, onLogin, onSignOut, user, isAdmin }) {
   const isShoni = user?.role === 'leader' && user?.username === 'shoni'
 

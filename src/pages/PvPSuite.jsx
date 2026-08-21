@@ -221,10 +221,10 @@ export default function PvPSuite() {
       <section className="panel p-4 md:p-5">
         <div className="eyebrow">Battles with Heroes</div>
         <h2 className="mt-1 font-display text-2xl font-bold text-parchment">PvP Battle Simulator</h2>
-        <p className="mt-1 text-xs text-parchment/50">Two ways to model a PvP fight: run a single Direct Attack with the exact compositions below, or run a Composition Sweep to find the split of your total troops that wins by the widest margin — closer to garrisoning a tower or defending a rally against a known enemy force.</p>
+        <p className="mt-1 text-xs text-parchment/50">Two ways to model a PvP fight: run a single Direct Attack with the exact compositions below, or run the Composition Optimizer to find the split of your total troops that wins by the widest margin — closer to garrisoning a tower or defending a rally against a known enemy force.</p>
         <div className="mt-4 inline-flex rounded-xl border border-gold/15 bg-black/25 p-1">
           <button type="button" onClick={() => setMode('direct')} className={`rounded-lg px-4 py-2 text-xs font-bold uppercase ${mode === 'direct' ? 'bg-gold/15 text-gold-bright' : 'text-parchment/45'}`}>Direct Attack</button>
-          <button type="button" onClick={() => setMode('sweep')} className={`rounded-lg px-4 py-2 text-xs font-bold uppercase ${mode === 'sweep' ? 'bg-gold/15 text-gold-bright' : 'text-parchment/45'}`}>Composition Sweep</button>
+          <button type="button" onClick={() => setMode('sweep')} className={`rounded-lg px-4 py-2 text-xs font-bold uppercase ${mode === 'sweep' ? 'bg-gold/15 text-gold-bright' : 'text-parchment/45'}`}>Composition Optimizer</button>
         </div>
       </section>
 
@@ -232,7 +232,7 @@ export default function PvPSuite() {
         <section className="panel p-5 md:p-6">
           <div className="eyebrow">Your Stats</div>
           <h3 className="mt-1 font-display text-xl font-bold text-parchment">Your Army</h3>
-          <p className="mt-1 text-[10px] leading-relaxed text-parchment/35">{mode === 'sweep' ? 'In Composition Sweep, only the total across the three Troops fields matters — the search decides how to split it. Lead Hero, Troop Tier, Joiners and Widget stay fixed per type either way.' : 'Lead Hero and Troop Tier are for the record — if your Attack/Lethality already come from an in-game report, that hero\'s stat bonus is already inside those numbers. Joiners and Widget add on top.'}</p>
+          <p className="mt-1 text-[10px] leading-relaxed text-parchment/35">{mode === 'sweep' ? 'In the Composition Optimizer, only the total across the three Troops fields matters — the search decides how to split it. Lead Hero, Troop Tier, Joiners and Widget stay fixed per type either way.' : 'Lead Hero and Troop Tier are for the record — if your Attack/Lethality already come from an in-game report, that hero\'s stat bonus is already inside those numbers. Joiners and Widget add on top.'}</p>
           <div className="mt-4"><ArmyForm army={attacker} setArmy={setAttacker} heroes={attackerHeroes} setHeroes={setAttackerHeroes} joiners={attackerJoiners} setJoiners={setAttackerJoiners} tier={attackerTier} setTier={setAttackerTier} tg={attackerTg} setTg={setAttackerTg} accent="text-[#7f9ed6]" /></div>
         </section>
         <section className="panel p-5 md:p-6">
@@ -297,7 +297,7 @@ export default function PvPSuite() {
           </div>
           <span className="mt-2 block text-[10px] leading-relaxed text-parchment/35">Bounds narrow the search away from splits that rarely win — Infantry and Cavalry each get a Min/Max range; Archers fill whatever's left.</span>
           <div className="mt-4 rounded-xl border border-amber-300/15 bg-amber-300/[.035] p-3 text-[11px] leading-relaxed text-amber-100/60">This model has no randomness, so there's no true "win rate %" or "mean resident" survivor average to report the way a Monte Carlo tool would — the same composition always fights out the same way. What you get below is the deterministic best split and its exact survivor margin against the enemy army entered above.</div>
-          <div className="mt-4 flex justify-center"><button onClick={runSweep} disabled={!ready} className="btn-primary btn-royal px-8 disabled:opacity-40"><Icon name="sparkles" size={15} /> Run Composition Sweep</button></div>
+          <div className="mt-4 flex justify-center"><button onClick={runSweep} disabled={!ready} className="btn-primary btn-royal px-8 disabled:opacity-40"><Icon name="sparkles" size={15} /> Run Composition Optimizer</button></div>
         </section>
       )}
 

@@ -374,9 +374,7 @@ export default function PvPSuite() {
               const enemyCasualtyFraction = result.startingD > 0 ? result.defenderLosses / result.startingD : 0
               return (
                 <>
-                  <div className="text-center text-[10px] font-black uppercase tracking-[.2em] text-gold-bright/70">— New Option 1: Stat Radar —</div>
                   <StatRadar yourStats={yourStats} enemyStats={enemyStats} />
-                  <div className="text-center text-[10px] font-black uppercase tracking-[.2em] text-gold-bright/70">— New Option 2: Formation Blocks (casualties dim) —</div>
                   <FormationBlocksMatchup yourSide={yourSide} enemySide={enemySide} yourCasualtyFraction={yourCasualtyFraction} enemyCasualtyFraction={enemyCasualtyFraction} />
                 </>
               )
@@ -441,18 +439,7 @@ export default function PvPSuite() {
                 <div className="font-display text-2xl font-bold">{sweepResult.best.result.outcome === 'attacker' ? 'You Win' : sweepResult.best.result.outcome === 'defender' ? 'Still Loses' : 'Even Fight'}</div>
                 <div className="mt-1 text-xs text-parchment/50">Best split: {pct(sweepResult.best.composition.infantry)} Infantry / {pct(sweepResult.best.composition.cavalry)} Cavalry / {pct(sweepResult.best.composition.archers)} Archers · margin {sweepResult.best.margin >= 0 ? '+' : ''}{fmt(sweepResult.best.margin)} troops</div>
               </div>
-              {(() => {
-                const yourSide = { infantry: sweepResult.totalYourTroops * sweepResult.best.composition.infantry, cavalry: sweepResult.totalYourTroops * sweepResult.best.composition.cavalry, archers: sweepResult.totalYourTroops * sweepResult.best.composition.archers }
-                const enemySide = { infantry: n(defender.infantry.count), cavalry: n(defender.cavalry.count), archers: n(defender.archers.count) }
-                return (
-                  <div className="space-y-4">
-                    <div className="text-center text-[10px] font-black uppercase tracking-[.2em] text-gold-bright/70">— New Option 1: Formation Blocks —</div>
-                    <FormationBlocksMatchup yourSide={yourSide} enemySide={enemySide} yourLabel="Your Best Split" enemyLabel="Enemy Army" />
-                    <div className="text-center text-[10px] font-black uppercase tracking-[.2em] text-gold-bright/70">— New Option 2: Victory Podium (top 3) —</div>
-                    <VictoryPodium top3={sweepTop.slice(0, 3)} />
-                  </div>
-                )
-              })()}
+              <VictoryPodium top3={sweepTop.slice(0, 3)} />
               {sweepResult.classical && (
                 <div className="grid grid-cols-2 gap-3">
                   <div className="rounded-2xl border border-gold/10 bg-white/[.02] p-4">

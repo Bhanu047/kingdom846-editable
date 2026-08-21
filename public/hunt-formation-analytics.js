@@ -35,16 +35,19 @@
       let p = node
       for (let i = 0; i < 6 && p && p !== root; i++, p = p.parentElement) {
         const cs = p.querySelectorAll('input,select')
-        if (cs.length === 3) return p
+        if (cs.length >= 3) return p
       }
     }
     return null
   }
   function troopInput(root, name) {
     const b = troopBlock(root, name)
-    if (!b) return { attack: 0, lethality: 0, hero: 'None' }
+    if (!b) return { attack: 0, lethality: 0, hero: 'None', widget: 0, widgetStat: 'attack' }
     const cs = [...b.querySelectorAll('input,select')]
-    return { attack: num(controlValue(cs[0])), lethality: num(controlValue(cs[1])), hero: controlValue(cs[2]) || 'None' }
+    const widget = cs.length >= 4 ? num(controlValue(cs[3])) : 0
+    const toggle = [...b.querySelectorAll('button')].find(btn => /^(ATK|LET)$/i.test(clean(btn.textContent)) && /bg-gold/.test(btn.className))
+    const widgetStat = toggle && /LET/i.test(clean(toggle.textContent)) ? 'lethality' : 'attack'
+    return { attack: num(controlValue(cs[0])), lethality: num(controlValue(cs[1])), hero: controlValue(cs[2]) || 'None', widget, widgetStat }
   }
   function tierValue(root) {
     for (const lab of root.querySelectorAll('label')) {
@@ -58,7 +61,13 @@
     const m = text.match(new RegExp(name + '\\s*([0-9.]+)%', 'i'))
     return m ? num(m[1]) : 0
   }
-  function attackFactor(s) { return (1 + Math.max(0, s.attack) / 100) * (1 + Math.max(0, s.lethality) / 100) }
+  function attackFactor(s) {
+    const widget = Math.max(0, s.widget || 0)
+    const widgetStat = s.widgetStat === 'lethality' ? 'lethality' : 'attack'
+    const attack = Math.max(0, s.attack) + (widgetStat === 'attack' ? widget : 0)
+    const lethality = Math.max(0, s.lethality) + (widgetStat === 'lethality' ? widget : 0)
+    return (1 + attack / 100) * (1 + lethality / 100)
+  }
   function heroMultipliers(inputs) {
     const out = { infantry: 1, cavalry: 1, archers: 1 }
     TYPES.forEach(slot => {

@@ -331,22 +331,25 @@ export function armyFromProfile(profile, counts) {
 // its underlying sim has randomness; simulateT10Battle here is deterministic
 // (same inputs always produce the same outcome), so repeating a candidate
 // doesn't change its result — there's no "number of battles" to vary. Sparsity
-// and Min Infantry Fraction still do real work: sparsity sets the grid step,
-// and minInfantryFraction skips compositions with too little Infantry up
-// front (mirrors frakinator's stated reason: those compositions are rarely
-// competitive, so skipping them saves search time).
-export function optimizeMysticComposition({ yourArmy, opponentArmy, sparsity = 0.05, minInfantryFraction = 0, maxRounds = 50 } = {}) {
+// and the fraction bounds still do real work: sparsity sets the grid step,
+// and the bounds skip compositions outside a plausible range up front
+// (mirrors frakinator's stated reason: those splits are rarely competitive,
+// so skipping them saves search time).
+export function optimizeMysticComposition({ yourArmy, opponentArmy, sparsity = 0.05, minInfantryFraction = 0, maxInfantryFraction = 1, minCavalryFraction = 0, maxCavalryFraction = 1, maxRounds = 50 } = {}) {
   const yours = cloneArmy(yourArmy)
   const opponent = cloneArmy(opponentArmy)
   const totalYourTroops = totalTroops(yours)
   const step = clamp(n(sparsity, 0.05), 0.005, 0.5)
   const minInf = clamp(n(minInfantryFraction, 0), 0, 1)
+  const maxInf = clamp(n(maxInfantryFraction, 1), minInf, 1)
+  const minCav = clamp(n(minCavalryFraction, 0), 0, 1)
+  const maxCav = clamp(n(maxCavalryFraction, 1), minCav, 1)
   if (totalYourTroops <= 0) return { candidates: [], best: null, totalYourTroops: 0 }
 
   const candidates = []
-  for (let inf = minInf; inf <= 1 + 1e-9; inf += step) {
-    const infClamped = Math.min(1, inf)
-    for (let cav = 0; cav + infClamped <= 1 + 1e-9; cav += step) {
+  for (let inf = minInf; inf <= maxInf + 1e-9; inf += step) {
+    const infClamped = Math.min(maxInf, inf)
+    for (let cav = minCav; cav + infClamped <= 1 + 1e-9 && cav <= maxCav + 1e-9; cav += step) {
       const arc = Math.max(0, 1 - infClamped - cav)
       const composition = { infantry: infClamped, cavalry: cav, archers: arc }
       const army = {}

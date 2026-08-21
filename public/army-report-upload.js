@@ -26,7 +26,11 @@
     pvp: { introHeading: 'PvP Battle Simulator', sides: { mine: 'Your Army', opponent: 'Enemy Army' } },
   }
 
-  function clean(v) { const n = Number(String(v ?? '').replace(/,/g, '').replace(/[^0-9.]/g, '')); return Number.isFinite(n) ? n : '' }
+  // Number('') is 0 in JS, so a naive Number(str) can't tell "empty" from
+  // "zero" — that would make every undetected field silently read as 0 and
+  // count as a detected value. Strip non-numeric characters first and check
+  // emptiness on what's left.
+  function clean(v) { const stripped = String(v ?? '').replace(/,/g, '').replace(/[^0-9.]/g, ''); if (stripped === '' || stripped === '.') return ''; const n = Number(stripped); return Number.isFinite(n) ? n : '' }
   function hasAlias(text, aliases) { const low = String(text || '').toLowerCase(); return aliases.some((a) => new RegExp(`\\b${a}\\b`, 'i').test(low)) }
   function numbersOnLine(line) { return (String(line || '').match(/[0-9][0-9,]*(?:\.[0-9]+)?\s*%?/g) || []).map(clean).filter((v) => v !== '') }
 
@@ -298,14 +302,19 @@
       if (action === 'apply') {
         const readSide = (side) => { const s = {}; TROOPS.forEach((t) => { s[t.key] = {}; STATS.forEach((st) => { s[t.key][st.key] = clean(root.querySelector(`[data-side="${side}"][data-field="${t.key}.${st.key}"]`)?.value) }) }); return s }
         try {
-          const appliedMine = applyToSide(mineHeading, readSide('mine'))
-          const appliedOpp = applyToSide(opponentHeading, readSide('opponent'))
+          const mineStats = readSide('mine'), oppStats = readSide('opponent')
+          const noTroopCounts = TROOPS.every((t) => mineStats[t.key].count === '') && TROOPS.every((t) => oppStats[t.key].count === '')
+          const appliedMine = applyToSide(mineHeading, mineStats)
+          const appliedOpp = applyToSide(opponentHeading, oppStats)
           close()
           const toast = document.createElement('div')
-          toast.textContent = `Applied ${appliedMine} values to ${mineHeading}, ${appliedOpp} to ${opponentHeading}.`
-          Object.assign(toast.style, { position: 'fixed', left: '50%', bottom: '26px', zIndex: 10070, transform: 'translateX(-50%)', padding: '11px 15px', borderRadius: '10px', font: '700 11px Montserrat, sans-serif', color: '#f6e5ad', background: 'rgba(10,24,43,.98)', border: '1px solid rgba(212,175,55,.34)' })
+          const warn = noTroopCounts
+          toast.textContent = warn
+            ? 'Warning: troop counts were probably not detected. Make sure the report is set to show troop numbers, not percentages, then fill in Troops by hand.'
+            : `Applied ${appliedMine} values to ${mineHeading}, ${appliedOpp} to ${opponentHeading}.`
+          Object.assign(toast.style, { position: 'fixed', left: '50%', bottom: '26px', zIndex: 10070, transform: 'translateX(-50%)', maxWidth: '90vw', padding: '11px 15px', borderRadius: '10px', font: '700 11px Montserrat, sans-serif', color: warn ? '#fde68a' : '#f6e5ad', background: warn ? 'rgba(120,53,15,.95)' : 'rgba(10,24,43,.98)', border: `1px solid ${warn ? 'rgba(251,191,36,.4)' : 'rgba(212,175,55,.34)'}` })
           document.body.appendChild(toast)
-          setTimeout(() => toast.remove(), 3200)
+          setTimeout(() => toast.remove(), warn ? 6000 : 3200)
         } catch (err) {
           status.textContent = err.message || 'Could not apply detected values.'
         }

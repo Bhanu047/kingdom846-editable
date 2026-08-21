@@ -13,11 +13,10 @@
   // read both numbers on the line at once: the varying figure that changes
   // per stat sits before the label (the report owner's real value), while
   // the number after the label is what fills "Opponent Troops" — even on
-  // the reports where it repeats across many stats, since a reference tool
-  // the user already relies on (Frakinator) transcribes it exactly as
-  // shown rather than filtering it out. So one upload fills both "Your
-  // Troops" and "Opponent Troops" in a single pass; there's no separate
-  // "opponent's report" to ask for.
+  // the reports where it repeats across many stats, since it's transcribed
+  // exactly as shown rather than filtered out. So one upload fills both
+  // "Your Troops" and "Opponent Troops" in a single pass; there's no
+  // separate "opponent's report" to ask for.
   const STATS = [
     { key: 'count', label: 'Troops', aliases: ['troops', 'quantity', 'count'] },
     { key: 'attack', label: 'Attack', aliases: ['attack', 'atk'] },
@@ -142,10 +141,8 @@
   // value across many stats far more often than not -- it's some kind of
   // category-level cap or tier threshold the game always shows next to the
   // real per-stat figure, not independently-tracked opponent combat data.
-  // But a reference tool the user already relies on (Frakinator) copies
-  // that number into its own "Opponent stats" fields exactly as shown, no
-  // matter how repetitive it is, and that's the behavior expected here too
-  // -- every number visible in the report gets transcribed as-is, without
+  // But the user expects it transcribed exactly as shown regardless, so
+  // every number visible in the report gets copied over as-is here without
   // this parser second-guessing which ones "look real."
   function parseArmyText(text) {
     const lines = String(text || '').replace(/[‐‑–—]/g, '-').split(/\n+/).map((l) => l.replace(/\s+/g, ' ').trim()).filter(Boolean)
@@ -360,8 +357,8 @@
             <div class="au-swap"><span>Reading the report backwards? Swap which column is which.</span><button type="button" data-action="swap">Swap Sides</button></div>
             <div class="au-title">Detected Values — Review Before Applying</div>
             <div class="au-sides">
-              <div class="au-side-col"><h4 data-side-label="mine">Your stats</h4>${sideCard('mine')}</div>
-              <div class="au-side-col"><h4 data-side-label="opponent">Opponent stats</h4>${sideCard('opponent')}</div>
+              <div class="au-side-col"><h4 data-side-label="mine">${mineHeading}</h4>${sideCard('mine')}</div>
+              <div class="au-side-col"><h4 data-side-label="opponent">${opponentHeading}</h4>${sideCard('opponent')}</div>
             </div>
             <button type="button" class="au-raw-toggle" data-action="raw-toggle">Show Raw Scanned Text</button>
             <textarea class="au-raw-text" readonly hidden></textarea>
@@ -412,8 +409,8 @@
       if (!lastParsed) return
       const left = swapped ? lastParsed.opponent : lastParsed.mine
       const right = swapped ? lastParsed.mine : lastParsed.opponent
-      root.querySelector('[data-side-label="mine"]').textContent = 'Your stats'
-      root.querySelector('[data-side-label="opponent"]').textContent = 'Opponent stats'
+      root.querySelector('[data-side-label="mine"]').textContent = mineHeading
+      root.querySelector('[data-side-label="opponent"]').textContent = opponentHeading
       TROOPS.forEach((t) => STATS.forEach((s) => {
         const mineInput = root.querySelector(`[data-side="mine"][data-field="${t.key}.${s.key}"]`)
         const oppInput = root.querySelector(`[data-side="opponent"][data-field="${t.key}.${s.key}"]`)

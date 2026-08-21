@@ -57,10 +57,6 @@ const LEAD_HERO_BEAR_EFFECTS = {
   ),
 }
 
-const LEAD_HERO_RELATIVE_MULTIPLIERS = Object.fromEntries(
-  Object.entries(LEAD_HERO_BEAR_EFFECTS).map(([hero, effect]) => [hero, effect.multipliers]),
-)
-
 const MIN_FORMATION_PERCENT = 0
 
 function number(value, fallback = 0) {
@@ -99,7 +95,7 @@ function normalizedTierGroup(tier = 'TG5-TG7', tg = 0) {
   return 'T7-TG2'
 }
 
-export function archerBearMultiplier(tier = 'TG5-TG7', tg = 0) {
+function archerBearMultiplier(tier = 'TG5-TG7', tg = 0) {
   // Bear is Infantry, so Archers receive the natural 10% counter advantage.
   // Post-T6 / True-Gold troop families receive the additional 10% Archer factor
   // described by the supplied Bear theory. It is one additional factor, not one
@@ -255,5 +251,3 @@ export function buildBearChatMessage(result) {
   const byType = Object.fromEntries(result.troops.map((troop) => [troop.type, troop]))
   return `Bear Formation — INF ${byType.infantry.percent.toFixed(0)}% · CAV ${byType.cavalry.percent.toFixed(0)}% · ARC ${byType.archers.percent.toFixed(0)}%`
 }
-
-export { TROOP_META, FORMATION_WEIGHTS, MIN_FORMATION_PERCENT, LEAD_HERO_BEAR_EFFECTS, LEAD_HERO_RELATIVE_MULTIPLIERS }

@@ -32,7 +32,7 @@ export function RoyalSectionHeader({ icon, eyebrow, title, action }) {
 /**
  * StatusRibbon — small pulse-dot ribbon for "Live", "Open", "Next" status.
  */
-export function StatusRibbon({ label, tone = 'gold' }) {
+function StatusRibbon({ label, tone = 'gold' }) {
   const tones = {
     gold: 'border-gold/40 bg-gold/10 text-gold',
     red: 'border-crimson/40 bg-crimson/10 text-crimson',

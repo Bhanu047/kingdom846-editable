@@ -31,7 +31,7 @@ function number(value, fallback = 0) {
   return Number.isFinite(parsed) ? parsed : fallback
 }
 
-export function normalizeJoiners(joiners = []) {
+function normalizeJoiners(joiners = []) {
   return Array.from({ length: 4 }, (_, i) => {
     const slot = joiners[i]
     if (typeof slot === 'string') return { hero: HUNT_JOINER_HEROES.includes(slot) ? slot : 'None', skillLevel: 5 }
@@ -41,7 +41,7 @@ export function normalizeJoiners(joiners = []) {
   })
 }
 
-export function getJoinerBonuses(joiners = []) {
+function getJoinerBonuses(joiners = []) {
   return normalizeJoiners(joiners).reduce((acc, slot) => {
     const effect = JOINER_EFFECTS[slot.hero] || JOINER_EFFECTS.None
     const bonus = effect.values[slot.skillLevel - 1] || 0
@@ -91,5 +91,3 @@ export function computeHuntImpact({ stats, tier, tg = 0, ratio, leadHeroes = {},
     model: 'hunt-impact-v2-joiner-aware-relative-index',
   }
 }
-
-export { JOINER_EFFECTS }

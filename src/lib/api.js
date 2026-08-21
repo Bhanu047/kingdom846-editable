@@ -36,23 +36,3 @@ export const apiJson = async (path, options = {}) => {
   }
   return res.json()
 }
-
-// Download a binary file (e.g. CSV export) using the same auth/base-url handling.
-// Triggers a browser download with the given filename.
-export async function apiDownload(path, filename) {
-  const res = await apiFetch(path)
-  if (!res.ok) {
-    let msg = `Download failed (${res.status})`
-    try { msg = (await res.json()).error || msg } catch {}
-    throw new Error(msg)
-  }
-  const blob = await res.blob()
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = filename
-  document.body.appendChild(a)
-  a.click()
-  a.remove()
-  URL.revokeObjectURL(url)
-}

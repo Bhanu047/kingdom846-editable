@@ -1,4 +1,4 @@
-export function Skeleton({ className = '' }) {
+function Skeleton({ className = '' }) {
   return (
     <div className={`animate-pulse rounded-lg bg-white/5 ${className}`}>
       <div className="h-full w-full rounded-lg bg-gradient-to-r from-white/5 via-white/10 to-white/5" />
@@ -6,7 +6,7 @@ export function Skeleton({ className = '' }) {
   )
 }
 
-export function SkeletonCard() {
+function SkeletonCard() {
   return (
     <div className="panel p-4">
       <div className="flex items-center justify-between">
@@ -19,7 +19,7 @@ export function SkeletonCard() {
   )
 }
 
-export function SkeletonGrid({ count = 4 }) {
+function SkeletonGrid({ count = 4 }) {
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
       {Array.from({ length: count }).map((_, i) => <SkeletonCard key={i} />)}

@@ -4,7 +4,7 @@ import Icon from '../components/Icon'
 const TRANSFER_FORM_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSdx8MNgIjTr-em6u7eMgZLfVIrfsJHoAX3Q4b95x5lu5aTB0g/viewform?embedded=true'
 const TRANSFER_FORM_LINK = 'https://docs.google.com/forms/d/e/1FAIpQLSdx8MNgIjTr-em6u7eMgZLfVIrfsJHoAX3Q4b95x5lu5aTB0g/viewform'
 
-export function TransferMonitor({ isAdmin }) {
+function TransferMonitor({ isAdmin }) {
   return (
     <Panel className="p-0 overflow-hidden">
       <iframe

@@ -33,6 +33,32 @@
   function clean(v) { const stripped = String(v ?? '').replace(/,/g, '').replace(/[^0-9.]/g, ''); if (stripped === '' || stripped === '.') return ''; const n = Number(stripped); return Number.isFinite(n) ? n : '' }
   function hasAlias(text, aliases) { const low = String(text || '').toLowerCase(); return aliases.some((a) => new RegExp(`\\b${a}\\b`, 'i').test(low)) }
   function numbersOnLine(line) { return (String(line || '').match(/[0-9][0-9,]*(?:\.[0-9]+)?\s*%?/g) || []).map(clean).filter((v) => v !== '') }
+  const isStatLine = (line) => /attack|atk|lethal|\blet\b|defen|health|\bhp\b|bonus/i.test(line)
+
+  // The Mail battle-overview report's "Stat Bonuses" section is the only
+  // place with clean per-troop-type + per-stat text, and it doesn't carry
+  // troop counts at all. Troop counts only show up in the "Troop Power
+  // Comparison" section once toggled to numbers — a bare troop-type label
+  // near two large numbers (mine, theirs), no "Troops"/"count" wording on
+  // the line. Ports the same >=10,000 large-count heuristic already proven
+  // in hunt-impact-import.js's card-based parser, extended for two sides.
+  function inferTroopCounts(lines) {
+    const out = {}
+    for (const troop of TROOPS) {
+      for (let i = 0; i < lines.length; i += 1) {
+        const line = lines[i]
+        if (!hasAlias(line, troop.aliases) || isStatLine(line) || line.includes('%')) continue
+        let nums = numbersOnLine(line).filter((v) => v >= 10000)
+        for (let j = 1; j <= 2 && nums.length < 2; j += 1) {
+          const next = lines[i + j] || ''
+          if (isStatLine(next) || next.includes('%')) break
+          nums = nums.concat(numbersOnLine(next).filter((v) => v >= 10000))
+        }
+        if (nums.length) { out[troop.key] = nums; break }
+      }
+    }
+    return out
+  }
 
   // Parses one screenshot's OCR text into BOTH sides at once.
   function parseArmyText(text) {
@@ -51,6 +77,13 @@
         }
       }
     }
+    const counts = inferTroopCounts(lines)
+    TROOPS.forEach((t) => {
+      if (out.mine[t.key].count !== undefined || !counts[t.key]?.length) return
+      const nums = counts[t.key]
+      out.mine[t.key].count = nums[0]
+      out.opponent[t.key].count = nums.length > 1 ? nums[nums.length - 1] : nums[0]
+    })
     return out
   }
 

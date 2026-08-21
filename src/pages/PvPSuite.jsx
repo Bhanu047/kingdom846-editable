@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import Icon from '../components/Icon'
-import { calculateHeroSynergy, simulateT10Battle } from '../lib/combat/battleLabEngine'
+import { calculateHeroSynergy, optimizeMysticComposition, simulateT10Battle } from '../lib/combat/battleLabEngine'
 import { HUNT_JOINER_HEROES, applyJoinerBonuses } from '../lib/combat/huntImpact'
 
 const TROOPS = [{ key: 'infantry', label: 'Infantry', short: 'INF', icon: 'shield' }, { key: 'cavalry', label: 'Cavalry', short: 'CAV', icon: 'zap' }, { key: 'archers', label: 'Archers', short: 'ARC', icon: 'crosshair' }]
@@ -14,6 +14,7 @@ const EMPTY_JOINERS = Array.from({ length: 4 }, () => ({ hero: 'None', skillLeve
 const EMPTY_EFFECTS = Array.from({ length: 6 }, () => ({ group: 'A', percent: '' }))
 const n = (v, f = 0) => Number.isFinite(Number(v)) ? Number(v) : f
 const fmt = (v) => Number.isFinite(v) ? Math.round(v).toLocaleString() : '—'
+const pct = (v) => `${Math.round(v * 100)}%`
 
 function Field({ label, value, onChange, suffix, step, compact }) {
   return (
@@ -123,6 +124,20 @@ function RoundChart({ rounds }) {
   )
 }
 
+function ResultBar({ label, sub, value, max, active }) {
+  return (
+    <div className={`rounded-xl border p-3 ${active ? 'border-gold/40 bg-gold/[.05]' : 'border-gold/10 bg-white/[.02]'}`}>
+      <div className="flex items-center justify-between gap-3 text-xs">
+        <div><span className="font-semibold text-parchment/85">{label}</span><span className="ml-2 text-[10px] text-parchment/40">{sub}</span></div>
+        <span className={`font-mono text-sm font-bold ${value >= 0 ? 'text-emerald-300' : 'text-red-300'}`}>{value >= 0 ? '+' : ''}{fmt(value)}</span>
+      </div>
+      <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-black/25">
+        <div className={`h-full rounded-full ${value >= 0 ? 'bg-gradient-to-r from-emerald-400/50 to-emerald-300' : 'bg-gradient-to-r from-red-400/50 to-red-300'}`} style={{ width: `${max > 0 ? Math.max(2, Math.abs(value) / max * 100) : 0}%` }} />
+      </div>
+    </div>
+  )
+}
+
 function SynergyPanel({ effects, setEffects }) {
   const result = useMemo(() => calculateHeroSynergy(effects.map((e) => ({ group: e.group, percent: n(e.percent) }))), [effects])
   return (
@@ -161,6 +176,14 @@ export default function PvPSuite() {
   const [defenderTg, setDefenderTg] = useState(0)
   const [effects, setEffects] = useState(EMPTY_EFFECTS)
   const [result, setResult] = useState(null)
+  const [mode, setMode] = useState('direct')
+
+  const [sweepSparsity, setSweepSparsity] = useState('0.05')
+  const [sweepMinInfantry, setSweepMinInfantry] = useState('0')
+  const [sweepMaxInfantry, setSweepMaxInfantry] = useState('100')
+  const [sweepMinCavalry, setSweepMinCavalry] = useState('0')
+  const [sweepMaxCavalry, setSweepMaxCavalry] = useState('100')
+  const [sweepResult, setSweepResult] = useState(null)
 
   const ready = totalCount(attacker) > 0 && totalCount(defender) > 0
   const runBattle = () => setResult(simulateT10Battle({
@@ -168,32 +191,61 @@ export default function PvPSuite() {
     defender: effectiveArmy(defender, defenderJoiners),
   }))
 
+  const runSweep = () => setSweepResult(optimizeMysticComposition({
+    yourArmy: effectiveArmy(attacker, attackerJoiners),
+    opponentArmy: effectiveArmy(defender, defenderJoiners),
+    sparsity: n(sweepSparsity, 0.05),
+    minInfantryFraction: n(sweepMinInfantry, 0) / 100, maxInfantryFraction: n(sweepMaxInfantry, 100) / 100,
+    minCavalryFraction: n(sweepMinCavalry, 0) / 100, maxCavalryFraction: n(sweepMaxCavalry, 100) / 100,
+  }))
+
+  // Same auto-narrowing idea used in Mystic Trials: a fast wide-open pass
+  // first, then the fraction bounds narrow to a window around whatever that
+  // pass found.
+  const suggestSweepBounds = () => {
+    if (!ready) return
+    const coarse = optimizeMysticComposition({ yourArmy: effectiveArmy(attacker, attackerJoiners), opponentArmy: effectiveArmy(defender, defenderJoiners), sparsity: 0.1 })
+    if (!coarse.best) return
+    const window = 0.2
+    setSweepMinInfantry(String(Math.round(Math.max(0, coarse.best.composition.infantry - window) * 100)))
+    setSweepMaxInfantry(String(Math.round(Math.min(1, coarse.best.composition.infantry + window) * 100)))
+    setSweepMinCavalry(String(Math.round(Math.max(0, coarse.best.composition.cavalry - window) * 100)))
+    setSweepMaxCavalry(String(Math.round(Math.min(1, coarse.best.composition.cavalry + window) * 100)))
+  }
+
+  const sweepTop = useMemo(() => sweepResult?.candidates?.slice(0, 8) || [], [sweepResult])
+  const sweepMaxMargin = useMemo(() => Math.max(1, ...sweepTop.map((c) => Math.abs(c.margin))), [sweepTop])
+
   return (
     <div className="space-y-5">
       <section className="panel p-4 md:p-5">
         <div className="eyebrow">Battles with Heroes</div>
         <h2 className="mt-1 font-display text-2xl font-bold text-parchment">PvP Battle Simulator</h2>
-        <p className="mt-1 text-xs text-parchment/50">Model a round-by-round T10 field fight between two armies, including lead heroes, joiners and rally widgets.</p>
+        <p className="mt-1 text-xs text-parchment/50">Two ways to model a PvP fight: run a single Direct Attack with the exact compositions below, or run a Composition Sweep to find the split of your total troops that wins by the widest margin — closer to garrisoning a tower or defending a rally against a known enemy force.</p>
+        <div className="mt-4 inline-flex rounded-xl border border-gold/15 bg-black/25 p-1">
+          <button type="button" onClick={() => setMode('direct')} className={`rounded-lg px-4 py-2 text-xs font-bold uppercase ${mode === 'direct' ? 'bg-gold/15 text-gold-bright' : 'text-parchment/45'}`}>Direct Attack</button>
+          <button type="button" onClick={() => setMode('sweep')} className={`rounded-lg px-4 py-2 text-xs font-bold uppercase ${mode === 'sweep' ? 'bg-gold/15 text-gold-bright' : 'text-parchment/45'}`}>Composition Sweep</button>
+        </div>
       </section>
 
       <div className="grid gap-5 lg:grid-cols-2">
         <section className="panel p-5 md:p-6">
           <div className="eyebrow">Your Stats</div>
           <h3 className="mt-1 font-display text-xl font-bold text-parchment">Your Army</h3>
-          <p className="mt-1 text-[10px] leading-relaxed text-parchment/35">Lead Hero and Troop Tier are for the record — if your Attack/Lethality already come from an in-game report, that hero's stat bonus is already inside those numbers. Joiners and Widget add on top.</p>
+          <p className="mt-1 text-[10px] leading-relaxed text-parchment/35">{mode === 'sweep' ? 'In Composition Sweep, only the total across the three Troops fields matters — the search decides how to split it. Lead Hero, Troop Tier, Joiners and Widget stay fixed per type either way.' : 'Lead Hero and Troop Tier are for the record — if your Attack/Lethality already come from an in-game report, that hero\'s stat bonus is already inside those numbers. Joiners and Widget add on top.'}</p>
           <div className="mt-4"><ArmyForm army={attacker} setArmy={setAttacker} heroes={attackerHeroes} setHeroes={setAttackerHeroes} joiners={attackerJoiners} setJoiners={setAttackerJoiners} tier={attackerTier} setTier={setAttackerTier} tg={attackerTg} setTg={setAttackerTg} accent="text-[#7f9ed6]" /></div>
         </section>
         <section className="panel p-5 md:p-6">
           <div className="eyebrow">Opponent Stats</div>
           <h3 className="mt-1 font-display text-xl font-bold text-parchment">Enemy Army</h3>
-          <p className="mt-1 text-[10px] leading-relaxed text-parchment/35">Same rule applies here — enter what the opponent's report already shows, then their Joiners and Widget on top.</p>
+          <p className="mt-1 text-[10px] leading-relaxed text-parchment/35">{mode === 'sweep' ? 'This side stays exactly as entered — the search only re-splits your own troops above, never the opponent\'s.' : 'Same rule applies here — enter what the opponent\'s report already shows, then their Joiners and Widget on top.'}</p>
           <div className="mt-4"><ArmyForm army={defender} setArmy={setDefender} heroes={defenderHeroes} setHeroes={setDefenderHeroes} joiners={defenderJoiners} setJoiners={setDefenderJoiners} tier={defenderTier} setTier={setDefenderTier} tg={defenderTg} setTg={setDefenderTg} accent="text-[#c8655a]" /></div>
         </section>
       </div>
 
-      <div className="flex justify-center"><button onClick={runBattle} disabled={!ready} className="btn-primary btn-royal px-8 disabled:opacity-40"><Icon name="swords" size={15} /> Run Battle</button></div>
+      {mode === 'direct' && <div className="flex justify-center"><button onClick={runBattle} disabled={!ready} className="btn-primary btn-royal px-8 disabled:opacity-40"><Icon name="swords" size={15} /> Run Battle</button></div>}
 
-      {result && (
+      {mode === 'direct' && result && (
         <section className="panel panel-glow p-4 md:p-6">
           <div className="eyebrow">Result</div>
           <h3 className="mt-1 font-display text-2xl font-bold text-parchment">Battle Outcome</h3>
@@ -208,6 +260,89 @@ export default function PvPSuite() {
             <RoundChart rounds={result.rounds} />
             <div className="rounded-xl border border-amber-300/15 bg-amber-300/[.035] p-3 text-[11px] leading-relaxed text-amber-100/60">Experimental T10 field-battle model — a projection based on Attack/Lethality vs Defense/Health (Joiners and Widget already folded in) and the Infantry→Cavalry→Archer→Infantry counter cycle, not a guarantee of any real fight's outcome.</div>
           </div>
+        </section>
+      )}
+
+      {mode === 'sweep' && (
+        <section className="panel p-5 md:p-6">
+          <div className="eyebrow">Search Settings</div>
+          <h3 className="mt-1 font-display text-xl font-bold text-parchment">Simulation Parameters</h3>
+          <label className="mt-4 block max-w-xs">
+            <span className="mb-1 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[.12em] text-parchment/45">Sparsity</span>
+            <input type="number" min={.005} max={.5} step={.005} value={sweepSparsity} onChange={(e) => setSweepSparsity(e.target.value)} className="w-full rounded-xl border border-gold/15 bg-ink/70 px-3 py-2.5 text-sm font-semibold text-parchment outline-none focus:border-gold/45" />
+            <span className="mt-1 block text-[10px] leading-relaxed text-parchment/35">Grid step between compositions tested. 0.05 is a good start; use 0.025 for a finer (slower) search.</span>
+          </label>
+          <div className="mt-4 flex items-center justify-between gap-3">
+            <span className="text-[10px] font-bold uppercase tracking-[.12em] text-parchment/45">Search Bounds</span>
+            <button type="button" onClick={suggestSweepBounds} disabled={!ready} className="inline-flex items-center gap-1.5 rounded-lg border border-gold/20 bg-gold/[.04] px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-gold-bright/80 hover:border-gold/40 disabled:opacity-30"><Icon name="sparkles" size={11} /> Suggest Bounds</button>
+          </div>
+          <p className="mt-1 text-[10px] leading-relaxed text-parchment/35">Runs a quick wide-open pass first, then narrows Min/Max below to a window around whatever it finds.</p>
+          <div className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <label className="block">
+              <span className="mb-1 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[.12em] text-parchment/45">Min Infantry</span>
+              <div className="relative"><input type="number" min={0} max={100} step={1} value={sweepMinInfantry} onChange={(e) => setSweepMinInfantry(e.target.value)} className="w-full rounded-xl border border-gold/15 bg-ink/70 px-3 py-2.5 pr-8 text-sm font-semibold text-parchment outline-none focus:border-gold/45" /><span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-gold/45">%</span></div>
+            </label>
+            <label className="block">
+              <span className="mb-1 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[.12em] text-parchment/45">Max Infantry</span>
+              <div className="relative"><input type="number" min={0} max={100} step={1} value={sweepMaxInfantry} onChange={(e) => setSweepMaxInfantry(e.target.value)} className="w-full rounded-xl border border-gold/15 bg-ink/70 px-3 py-2.5 pr-8 text-sm font-semibold text-parchment outline-none focus:border-gold/45" /><span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-gold/45">%</span></div>
+            </label>
+            <label className="block">
+              <span className="mb-1 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[.12em] text-parchment/45">Min Cavalry</span>
+              <div className="relative"><input type="number" min={0} max={100} step={1} value={sweepMinCavalry} onChange={(e) => setSweepMinCavalry(e.target.value)} className="w-full rounded-xl border border-gold/15 bg-ink/70 px-3 py-2.5 pr-8 text-sm font-semibold text-parchment outline-none focus:border-gold/45" /><span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-gold/45">%</span></div>
+            </label>
+            <label className="block">
+              <span className="mb-1 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[.12em] text-parchment/45">Max Cavalry</span>
+              <div className="relative"><input type="number" min={0} max={100} step={1} value={sweepMaxCavalry} onChange={(e) => setSweepMaxCavalry(e.target.value)} className="w-full rounded-xl border border-gold/15 bg-ink/70 px-3 py-2.5 pr-8 text-sm font-semibold text-parchment outline-none focus:border-gold/45" /><span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-gold/45">%</span></div>
+            </label>
+          </div>
+          <span className="mt-2 block text-[10px] leading-relaxed text-parchment/35">Bounds narrow the search away from splits that rarely win — Infantry and Cavalry each get a Min/Max range; Archers fill whatever's left.</span>
+          <div className="mt-4 rounded-xl border border-amber-300/15 bg-amber-300/[.035] p-3 text-[11px] leading-relaxed text-amber-100/60">This model has no randomness, so there's no true "win rate %" or "mean resident" survivor average to report the way a Monte Carlo tool would — the same composition always fights out the same way. What you get below is the deterministic best split and its exact survivor margin against the enemy army entered above.</div>
+          <div className="mt-4 flex justify-center"><button onClick={runSweep} disabled={!ready} className="btn-primary btn-royal px-8 disabled:opacity-40"><Icon name="sparkles" size={15} /> Run Composition Sweep</button></div>
+        </section>
+      )}
+
+      {mode === 'sweep' && sweepResult && (
+        <section className="panel panel-glow p-4 md:p-6">
+          <div className="eyebrow">Result</div>
+          <h3 className="mt-1 font-display text-2xl font-bold text-parchment">Best Composition Found</h3>
+          {sweepResult.best ? (
+            <div className="mt-4 space-y-4">
+              <div className={`rounded-2xl border p-5 text-center ${sweepResult.best.margin >= 0 ? 'border-emerald-300/25 bg-emerald-300/[.05] text-emerald-200' : 'border-red-400/25 bg-red-400/[.05] text-red-300'}`}>
+                <div className="font-display text-2xl font-bold">{sweepResult.best.result.outcome === 'attacker' ? 'You Win' : sweepResult.best.result.outcome === 'defender' ? 'Still Loses' : 'Even Fight'}</div>
+                <div className="mt-1 text-xs text-parchment/50">Best split: {pct(sweepResult.best.composition.infantry)} Infantry / {pct(sweepResult.best.composition.cavalry)} Cavalry / {pct(sweepResult.best.composition.archers)} Archers · margin {sweepResult.best.margin >= 0 ? '+' : ''}{fmt(sweepResult.best.margin)} troops</div>
+              </div>
+              {sweepResult.classical && (
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="rounded-2xl border border-gold/10 bg-white/[.02] p-4">
+                    <div className="text-[9px] uppercase tracking-wider text-parchment/35">Classical 50/25/25 (the default guess)</div>
+                    <div className={`mt-1 font-mono text-lg font-bold ${sweepResult.classical.margin >= 0 ? 'text-emerald-300' : 'text-red-300'}`}>{sweepResult.classical.margin >= 0 ? '+' : ''}{fmt(sweepResult.classical.margin)}</div>
+                    <div className="mt-0.5 text-[10px] text-parchment/40">{sweepResult.classical.result.outcome === 'attacker' ? 'wins' : sweepResult.classical.result.outcome === 'defender' ? 'loses' : 'draw'}</div>
+                  </div>
+                  <div className="rounded-2xl border border-gold/20 bg-gold/[.04] p-4">
+                    <div className="text-[9px] uppercase tracking-wider text-parchment/35">Optimal split found above</div>
+                    <div className={`mt-1 font-mono text-lg font-bold ${sweepResult.best.margin >= 0 ? 'text-emerald-300' : 'text-red-300'}`}>{sweepResult.best.margin >= 0 ? '+' : ''}{fmt(sweepResult.best.margin)}</div>
+                    <div className="mt-0.5 text-[10px] text-gold-bright/70">{sweepResult.best.margin - sweepResult.classical.margin >= 0 ? '+' : ''}{fmt(sweepResult.best.margin - sweepResult.classical.margin)} troops vs. classical</div>
+                  </div>
+                </div>
+              )}
+              <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+                <div className="rounded-2xl border border-gold/10 bg-white/[.025] p-4"><div className="text-[9px] uppercase tracking-wider text-parchment/35">Infantry</div><div className="mt-1 font-mono text-xl font-bold text-parchment">{fmt(sweepResult.totalYourTroops * sweepResult.best.composition.infantry)}</div></div>
+                <div className="rounded-2xl border border-gold/10 bg-white/[.025] p-4"><div className="text-[9px] uppercase tracking-wider text-parchment/35">Cavalry</div><div className="mt-1 font-mono text-xl font-bold text-parchment">{fmt(sweepResult.totalYourTroops * sweepResult.best.composition.cavalry)}</div></div>
+                <div className="rounded-2xl border border-gold/10 bg-white/[.025] p-4"><div className="text-[9px] uppercase tracking-wider text-parchment/35">Archers</div><div className="mt-1 font-mono text-xl font-bold text-parchment">{fmt(sweepResult.totalYourTroops * sweepResult.best.composition.archers)}</div></div>
+                <div className="rounded-2xl border border-gold/10 bg-white/[.025] p-4"><div className="text-[9px] uppercase tracking-wider text-parchment/35">Compositions Tested</div><div className="mt-1 font-mono text-xl font-bold text-parchment">{sweepResult.candidates.length}</div></div>
+              </div>
+              <div>
+                <div className="mb-2 text-[10px] font-bold uppercase tracking-wider text-parchment/40">Top Compositions By Margin</div>
+                <div className="space-y-2">
+                  {sweepTop.map((c, i) => (
+                    <ResultBar key={i} active={i === 0} label={`${Math.round(c.composition.infantry * 100)}/${Math.round(c.composition.cavalry * 100)}/${Math.round(c.composition.archers * 100)}`} sub={c.result.outcome === 'attacker' ? 'wins' : c.result.outcome === 'defender' ? 'loses' : 'draw'} value={c.margin} max={sweepMaxMargin} />
+                  ))}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="mt-4 text-sm text-parchment/50">No composition found — check your troop totals above.</div>
+          )}
         </section>
       )}
 

@@ -41,7 +41,7 @@ const Admin = lazy(() => import('./pages/Admin'))
 const MasterConsole = lazy(() => import('./pages/MasterConsole'))
 const LeaderPortal = lazy(() => import('./pages/LeaderPortal'))
 const WarRoom = lazy(() => import('./pages/WarRoom'))
-const BattleLab = lazy(() => import('./pages/BattleLab'))
+const BattleLab = lazy(() => import('./pages/BattleLabHub'))
 const Settings = lazy(() => import('./pages/Settings'))
 
 const titles = {

@@ -1,20 +1,20 @@
-import { useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
 import Icon from '../components/Icon'
-import LegacyBattleLab from './BattleLab.jsx'
 import BearSuite from './BearSuite.jsx'
 import MysticSuite from './MysticSuite.jsx'
 import PvPSuite from './PvPSuite.jsx'
+import FormationSuite from './FormationSuite.jsx'
 import CodexSuite from './CodexSuite.jsx'
 
 const REQUEST_KEY = 'kingdom846.battleLab.requestedModule'
-const DEDICATED = { bear: BearSuite, mystic: MysticSuite, battle: PvPSuite, codex: CodexSuite }
+const DEDICATED = { bear: BearSuite, mystic: MysticSuite, battle: PvPSuite, formation: FormationSuite, codex: CodexSuite }
 
 const TOOLS = [
-  { id: 'bear', title: 'Bear', sourceLabel: 'Bear Optimizer', icon: 'target', image: './assets/art-bear-trap.png', description: 'Build your Hunt Formation and measure Hunt Impact for your exact rally stats.', accent: 'from-amber-950/85 via-ink/45 to-transparent' },
-  { id: 'mystic', title: 'Mystic', sourceLabel: 'Mystic Trials', icon: 'sparkles', image: './assets/art-hero-meta.png', description: 'Enter both sides of a Mystic Trial battle report and find the troop split that wins by the widest margin.', accent: 'from-violet-950/85 via-ink/45 to-transparent' },
-  { id: 'battle', title: 'PvP', sourceLabel: 'Battle Simulator', icon: 'swords', image: './assets/art-castle-battle.png', description: 'Run a round-by-round battle between two armies and see who’s left standing.', accent: 'from-red-950/85 via-ink/45 to-transparent' },
-  { id: 'formation', title: 'Formation', sourceLabel: 'Formation Optimizer', icon: 'layers', image: './assets/strategy-war-academy.png', description: 'Build and compare tactical troop formations for different targets.', accent: 'from-emerald-950/85 via-ink/45 to-transparent' },
-  { id: 'codex', title: 'Codex', sourceLabel: 'Codex', icon: 'book', image: './assets/royal-bg.jpg', description: 'The reasoning behind the formulas, verified test cases, and who deserves credit.', accent: 'from-cyan-950/85 via-ink/45 to-transparent' },
+  { id: 'bear', title: 'Bear', icon: 'target', image: './assets/art-bear-trap.png', description: 'Build your Hunt Formation and measure Hunt Impact for your exact rally stats.', accent: 'from-amber-950/85 via-ink/45 to-transparent' },
+  { id: 'mystic', title: 'Mystic', icon: 'sparkles', image: './assets/art-hero-meta.png', description: 'Enter both sides of a Mystic Trial battle report and find the troop split that wins by the widest margin.', accent: 'from-violet-950/85 via-ink/45 to-transparent' },
+  { id: 'battle', title: 'PvP', icon: 'swords', image: './assets/art-castle-battle.png', description: 'Run a round-by-round battle between two armies and see who’s left standing.', accent: 'from-red-950/85 via-ink/45 to-transparent' },
+  { id: 'formation', title: 'Formation', icon: 'layers', image: './assets/strategy-war-academy.png', description: 'Build and compare tactical troop formations for different targets.', accent: 'from-emerald-950/85 via-ink/45 to-transparent' },
+  { id: 'codex', title: 'Codex', icon: 'book', image: './assets/royal-bg.jpg', description: 'The reasoning behind the formulas, verified test cases, and who deserves credit.', accent: 'from-cyan-950/85 via-ink/45 to-transparent' },
 ]
 
 function readRequestedTool() {
@@ -48,26 +48,8 @@ function ToolCard({ tool, onOpen }) {
 
 export default function BattleLabHub() {
   const [activeTool, setActiveTool] = useState(readRequestedTool)
-  const legacyRef = useRef(null)
   const tool = TOOLS.find((item) => item.id === activeTool)
   const Dedicated = DEDICATED[activeTool]
-
-  useEffect(() => {
-    if (!activeTool || Dedicated) return
-    const sourceLabel = TOOLS.find((item) => item.id === activeTool)?.sourceLabel
-    if (!sourceLabel) return
-    let attempts = 0
-    const timer = window.setInterval(() => {
-      attempts += 1
-      const root = legacyRef.current
-      const button = root && [...root.querySelectorAll('button')].find((node) => (node.textContent || '').includes(sourceLabel))
-      if (button) {
-        button.click()
-        window.clearInterval(timer)
-      } else if (attempts > 30) window.clearInterval(timer)
-    }, 60)
-    return () => window.clearInterval(timer)
-  }, [activeTool, Dedicated])
 
   if (!activeTool) {
     return (
@@ -89,7 +71,6 @@ export default function BattleLabHub() {
 
   return (
     <div className="space-y-6">
-      {!Dedicated && <style>{`.bl-final-tool > div > section { display:none !important; }.bl-final-tool > div > div.grid { grid-template-columns:minmax(0,.72fr) minmax(0,1.28fr); }@media(max-width:1279px){.bl-final-tool > div > div.grid{grid-template-columns:minmax(0,1fr);}}`}</style>}
       <section className="relative min-h-[250px] overflow-hidden rounded-[26px] border border-gold/25 bg-ink shadow-[0_20px_70px_rgba(0,0,0,.34)] md:min-h-[310px]">
         <img src={tool.image} alt="" className="absolute inset-0 h-full w-full object-cover" />
         <div className={`absolute inset-0 bg-gradient-to-r ${tool.accent}`} />
@@ -99,7 +80,7 @@ export default function BattleLabHub() {
           <div><div className="mb-3 grid h-12 w-12 place-items-center rounded-2xl border border-gold/35 bg-black/45 text-gold-bright backdrop-blur"><Icon name={tool.icon} size={23} /></div><h1 className="font-display text-4xl font-bold uppercase tracking-[0.04em] text-parchment drop-shadow md:text-5xl">{tool.title}</h1><p className="mt-2 max-w-2xl text-sm leading-relaxed text-parchment/80 drop-shadow md:text-base">{tool.description}</p></div>
         </div>
       </section>
-      {Dedicated ? <Dedicated /> : <div ref={legacyRef} className="bl-final-tool"><LegacyBattleLab /></div>}
+      <Dedicated />
     </div>
   )
 }

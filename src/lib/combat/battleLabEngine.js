@@ -8,7 +8,7 @@ export const TROOP_LABELS = {
 
 // Expedition-style T10 base values used only by the experimental battle simulator.
 // Battle Lab keeps them isolated so additional tiers can be added without changing UI code.
-export const T10_BASE = {
+const T10_BASE = {
   infantry: { attack: 472, hp: 1416, lethality: 10, defense: 10 },
   cavalry: { attack: 1416, hp: 472, lethality: 10, defense: 10 },
   archers: { attack: 1888, hp: 354, lethality: 10, defense: 10 },
@@ -307,20 +307,6 @@ export function simulateT10Battle({ attacker, defender, maxRounds = 50 }) {
     armyMin,
     model: 'experimental-t10-expedition-v1',
   }
-}
-
-export function armyFromProfile(profile, counts) {
-  const army = {}
-  TYPES.forEach((type) => {
-    army[type] = {
-      count: Math.max(0, Math.floor(n(counts?.[type]))),
-      attack: Math.max(0, n(profile?.stats?.[type]?.attack)),
-      lethality: Math.max(0, n(profile?.stats?.[type]?.lethality)),
-      defense: Math.max(0, n(profile?.stats?.[type]?.defense)),
-      health: Math.max(0, n(profile?.stats?.[type]?.health)),
-    }
-  })
-  return army
 }
 
 // A Mystic Trial fight is a fixed-size army (yours) against a fixed opponent

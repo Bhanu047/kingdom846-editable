@@ -360,8 +360,8 @@
             <div class="au-swap"><span>Reading the report backwards? Swap which column is which.</span><button type="button" data-action="swap">Swap Sides</button></div>
             <div class="au-title">Detected Values — Review Before Applying</div>
             <div class="au-sides">
-              <div class="au-side-col"><h4 data-side-label="mine">${mineHeading}</h4>${sideCard('mine')}</div>
-              <div class="au-side-col"><h4 data-side-label="opponent">${opponentHeading}</h4>${sideCard('opponent')}</div>
+              <div class="au-side-col"><h4 data-side-label="mine">Your stats</h4>${sideCard('mine')}</div>
+              <div class="au-side-col"><h4 data-side-label="opponent">Opponent stats</h4>${sideCard('opponent')}</div>
             </div>
             <button type="button" class="au-raw-toggle" data-action="raw-toggle">Show Raw Scanned Text</button>
             <textarea class="au-raw-text" readonly hidden></textarea>
@@ -412,8 +412,8 @@
       if (!lastParsed) return
       const left = swapped ? lastParsed.opponent : lastParsed.mine
       const right = swapped ? lastParsed.mine : lastParsed.opponent
-      root.querySelector('[data-side-label="mine"]').textContent = mineHeading
-      root.querySelector('[data-side-label="opponent"]').textContent = opponentHeading
+      root.querySelector('[data-side-label="mine"]').textContent = 'Your stats'
+      root.querySelector('[data-side-label="opponent"]').textContent = 'Opponent stats'
       TROOPS.forEach((t) => STATS.forEach((s) => {
         const mineInput = root.querySelector(`[data-side="mine"][data-field="${t.key}.${s.key}"]`)
         const oppInput = root.querySelector(`[data-side="opponent"][data-field="${t.key}.${s.key}"]`)

@@ -2,17 +2,28 @@ import { computeBearDamageScore, optimizeBearFormation } from './bearOptimizer'
 
 const TYPES = ['infantry', 'cavalry', 'archers']
 
-// Only heroes whose FIRST Expedition skill contributes offensive rally value.
-// These are the joiner choices used by the Bear calculator; lead-hero lists are separate.
-export const HUNT_JOINER_HEROES = ['None', 'Chenko', 'Amane', 'Hilde', 'Yeonwoo', 'Margot']
+// The real joiner pool (confirmed against a reference calculator's own
+// documentation): Yeonwoo and Amadeus are strictly equivalent to Chenko as
+// joiners, and Amane is strictly equivalent to Margot, so only one of each
+// equivalent pair needs to be a selectable option. Gordon, Howard, Saul,
+// Fahd, Eric, Petra and Thrud are real joiner options too, but we don't yet
+// have a verified per-level attack/lethality value for them — they're
+// selectable (so the roster is accurate) but contribute 0 until modeled,
+// same convention as "no verified modifier" elsewhere in this codebase.
+export const HUNT_JOINER_HEROES = ['None', 'Chenko', 'Amane', 'Hilde', 'Gordon', 'Howard', 'Saul', 'Fahd', 'Eric', 'Petra', 'Thrud']
 
 const JOINER_EFFECTS = {
-  None: { type: 'none', values: [0, 0, 0, 0, 0], skill: '—' },
-  Chenko: { type: 'lethality', values: [5, 10, 15, 20, 25], skill: 'Stand of Arms' },
-  Amane: { type: 'attack', values: [5, 10, 15, 20, 25], skill: 'Tri Phalanx' },
-  Hilde: { type: 'attack', values: [3, 6, 9, 12, 15], skill: 'Noble Path' },
-  Yeonwoo: { type: 'lethality', values: [5, 10, 15, 20, 25], skill: 'On Guard' },
-  Margot: { type: 'attack', values: [5, 10, 15, 20, 25], skill: 'Warbringer' },
+  None: { type: 'none', values: [0, 0, 0, 0, 0], skill: '—', modeled: true },
+  Chenko: { type: 'lethality', values: [5, 10, 15, 20, 25], skill: 'Stand of Arms', modeled: true },
+  Amane: { type: 'attack', values: [5, 10, 15, 20, 25], skill: 'Tri Phalanx', modeled: true },
+  Hilde: { type: 'attack', values: [3, 6, 9, 12, 15], skill: 'Noble Path', modeled: true },
+  Gordon: { type: 'none', values: [0, 0, 0, 0, 0], skill: 'Not yet modeled', modeled: false },
+  Howard: { type: 'none', values: [0, 0, 0, 0, 0], skill: 'Not yet modeled', modeled: false },
+  Saul: { type: 'none', values: [0, 0, 0, 0, 0], skill: 'Not yet modeled', modeled: false },
+  Fahd: { type: 'none', values: [0, 0, 0, 0, 0], skill: 'Not yet modeled', modeled: false },
+  Eric: { type: 'none', values: [0, 0, 0, 0, 0], skill: 'Not yet modeled', modeled: false },
+  Petra: { type: 'none', values: [0, 0, 0, 0, 0], skill: 'Not yet modeled', modeled: false },
+  Thrud: { type: 'none', values: [0, 0, 0, 0, 0], skill: 'Not yet modeled', modeled: false },
 }
 
 function number(value, fallback = 0) {

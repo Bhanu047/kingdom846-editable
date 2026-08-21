@@ -1,11 +1,15 @@
 import { useMemo, useState } from 'react'
 import Icon from '../components/Icon'
 import { calculateHeroSynergy, simulateT10Battle } from '../lib/combat/battleLabEngine'
+import { HUNT_JOINER_HEROES, applyJoinerBonuses } from '../lib/combat/huntImpact'
 
 const TROOPS = [{ key: 'infantry', label: 'Infantry', short: 'INF', icon: 'shield' }, { key: 'cavalry', label: 'Cavalry', short: 'CAV', icon: 'zap' }, { key: 'archers', label: 'Archers', short: 'ARC', icon: 'crosshair' }]
+const HEROES = { infantry: ['None', 'Alcar', 'Amadeus', 'Charles', 'Eric', 'Forrest', 'Helga', 'Howard', 'Long Fei', 'Seth', 'Triton', 'Zoe'], cavalry: ['None', 'Ava', 'Chenko', 'Edwin', 'Fahd', 'Gordon', 'Hilde', 'Jabel', 'Margot', 'Petra', 'Sophia', 'Thrud'], archers: ['None', 'Amane', 'Diana', 'Jaeger', 'Marlin', 'Olive', 'Quinn', 'Rosa', 'Saul', 'Vivian', 'Wee & Woo', 'Yang', 'Yeonwoo'] }
 const STATS = [{ key: 'count', label: 'Troops', suffix: '', step: 100 }, { key: 'attack', label: 'Attack', suffix: '%', step: .1 }, { key: 'lethality', label: 'Lethality', suffix: '%', step: .1 }, { key: 'defense', label: 'Defense', suffix: '%', step: .1 }, { key: 'health', label: 'Health', suffix: '%', step: .1 }]
-const EMPTY_LINE = { count: '', attack: '', lethality: '', defense: '', health: '' }
+const EMPTY_LINE = { count: '', attack: '', lethality: '', defense: '', health: '', widget: '', widgetStat: 'attack' }
 const EMPTY_ARMY = { infantry: { ...EMPTY_LINE }, cavalry: { ...EMPTY_LINE }, archers: { ...EMPTY_LINE } }
+const EMPTY_HEROES = { infantry: 'None', cavalry: 'None', archers: 'None' }
+const EMPTY_JOINERS = Array.from({ length: 4 }, () => ({ hero: 'None', skillLevel: 5 }))
 const EMPTY_EFFECTS = Array.from({ length: 6 }, () => ({ group: 'A', percent: '' }))
 const n = (v, f = 0) => Number.isFinite(Number(v)) ? Number(v) : f
 const fmt = (v) => Number.isFinite(v) ? Math.round(v).toLocaleString() : '—'
@@ -19,7 +23,16 @@ function Field({ label, value, onChange, suffix, step, compact }) {
   )
 }
 
-function ArmyForm({ title, army, setArmy, accent }) {
+function Select({ label, value, onChange, options, compact }) {
+  return (
+    <label className="block">
+      <span className={`mb-1 block font-bold uppercase tracking-[.1em] text-parchment/40 ${compact ? 'text-[8px]' : 'text-[9px]'}`}>{label}</span>
+      <select value={value} onChange={(e) => onChange(e.target.value)} className={`w-full rounded-lg border border-gold/15 bg-ink font-semibold text-parchment outline-none ${compact ? 'px-2 py-1.5 text-xs' : 'px-2.5 py-2 text-sm'}`}>{options.map((o) => <option key={o}>{o}</option>)}</select>
+    </label>
+  )
+}
+
+function ArmyForm({ army, setArmy, heroes, setHeroes, joiners, setJoiners, accent }) {
   return (
     <div className="space-y-3">
       {TROOPS.map((t) => (
@@ -30,13 +43,49 @@ function ArmyForm({ title, army, setArmy, accent }) {
               <Field key={s.key} compact label={s.label} suffix={s.suffix} step={s.step} value={army[t.key][s.key]} onChange={(v) => setArmy((a) => ({ ...a, [t.key]: { ...a[t.key], [s.key]: v } }))} />
             ))}
           </div>
+          <div className="mt-1.5 grid grid-cols-[1fr_auto_60px] items-end gap-1.5">
+            <Select compact label="Lead Hero" value={heroes[t.key]} onChange={(v) => setHeroes((h) => ({ ...h, [t.key]: v }))} options={HEROES[t.key]} />
+            <div className="inline-flex rounded-lg border border-gold/15 bg-black/25 p-0.5">
+              {['attack', 'lethality'].map((k) => (
+                <button key={k} type="button" onClick={() => setArmy((a) => ({ ...a, [t.key]: { ...a[t.key], widgetStat: k } }))} className={`rounded px-1.5 py-1 text-[8px] font-bold uppercase ${(army[t.key].widgetStat || 'attack') === k ? 'bg-gold/15 text-gold-bright' : 'text-parchment/40'}`}>{k === 'attack' ? 'ATK' : 'LET'}</button>
+              ))}
+            </div>
+            <Field compact label="Widget" suffix="%" step={.1} value={army[t.key].widget} onChange={(v) => setArmy((a) => ({ ...a, [t.key]: { ...a[t.key], widget: v } }))} />
+          </div>
         </div>
       ))}
+      <div className="rounded-2xl border border-gold/10 bg-white/[.025] p-3.5">
+        <div className="mb-2 text-[10px] font-bold uppercase tracking-wider text-parchment/45">Joiners</div>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+          {joiners.map((slot, i) => (
+            <div key={i} className="space-y-1">
+              <Select compact label={`Joiner ${i + 1}`} value={slot.hero} onChange={(v) => setJoiners((j) => j.map((x, k) => k === i ? { ...x, hero: v } : x))} options={HUNT_JOINER_HEROES} />
+              <Select compact label="Skill" value={String(slot.skillLevel)} onChange={(v) => setJoiners((j) => j.map((x, k) => k === i ? { ...x, skillLevel: Number(v) } : x))} options={['1', '2', '3', '4', '5']} />
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   )
 }
 
 function totalCount(army) { return TROOPS.reduce((s, t) => s + Math.max(0, n(army[t.key].count)), 0) }
+
+function effectiveArmy(army, joiners) {
+  const raw = Object.fromEntries(TROOPS.map((t) => [t.key, { attack: n(army[t.key].attack), lethality: n(army[t.key].lethality), widget: n(army[t.key].widget), widgetStat: army[t.key].widgetStat === 'lethality' ? 'lethality' : 'attack' }]))
+  const withJoiners = applyJoinerBonuses(raw, joiners)
+  return Object.fromEntries(TROOPS.map((t) => {
+    const s = withJoiners[t.key]
+    const widget = Math.max(0, s.widget)
+    return [t.key, {
+      count: Math.max(0, n(army[t.key].count)),
+      attack: s.attack + (s.widgetStat === 'attack' ? widget : 0),
+      lethality: s.lethality + (s.widgetStat === 'lethality' ? widget : 0),
+      defense: n(army[t.key].defense),
+      health: n(army[t.key].health),
+    }]
+  }))
+}
 
 function OutcomeBanner({ outcome, attackerLeft, defenderLeft, rounds }) {
   const label = outcome === 'attacker' ? 'Your Army Wins' : outcome === 'defender' ? 'Enemy Army Wins' : 'Mutual Wipe / Draw'
@@ -96,32 +145,40 @@ function SynergyPanel({ effects, setEffects }) {
 
 export default function PvPSuite() {
   const [attacker, setAttacker] = useState(EMPTY_ARMY)
+  const [attackerHeroes, setAttackerHeroes] = useState(EMPTY_HEROES)
+  const [attackerJoiners, setAttackerJoiners] = useState(EMPTY_JOINERS)
   const [defender, setDefender] = useState(EMPTY_ARMY)
+  const [defenderHeroes, setDefenderHeroes] = useState(EMPTY_HEROES)
+  const [defenderJoiners, setDefenderJoiners] = useState(EMPTY_JOINERS)
   const [effects, setEffects] = useState(EMPTY_EFFECTS)
   const [result, setResult] = useState(null)
 
   const ready = totalCount(attacker) > 0 && totalCount(defender) > 0
-  const armyFor = (army) => Object.fromEntries(TROOPS.map((t) => [t.key, { count: n(army[t.key].count), attack: n(army[t.key].attack), lethality: n(army[t.key].lethality), defense: n(army[t.key].defense), health: n(army[t.key].health) }]))
-  const runBattle = () => setResult(simulateT10Battle({ attacker: armyFor(attacker), defender: armyFor(defender) }))
+  const runBattle = () => setResult(simulateT10Battle({
+    attacker: effectiveArmy(attacker, attackerJoiners),
+    defender: effectiveArmy(defender, defenderJoiners),
+  }))
 
   return (
     <div className="space-y-5">
       <section className="panel p-4 md:p-5">
         <div className="eyebrow">Battles with Heroes</div>
         <h2 className="mt-1 font-display text-2xl font-bold text-parchment">PvP Battle Simulator</h2>
-        <p className="mt-1 text-xs text-parchment/50">Model a round-by-round T10 field fight between two armies from their combat stats and troop counts.</p>
+        <p className="mt-1 text-xs text-parchment/50">Model a round-by-round T10 field fight between two armies, including lead heroes, joiners and rally widgets.</p>
       </section>
 
       <div className="grid gap-5 lg:grid-cols-2">
         <section className="panel p-5 md:p-6">
-          <div className="eyebrow">Attacker</div>
+          <div className="eyebrow">Your Stats</div>
           <h3 className="mt-1 font-display text-xl font-bold text-parchment">Your Army</h3>
-          <div className="mt-4"><ArmyForm army={attacker} setArmy={setAttacker} accent="text-[#7f9ed6]" /></div>
+          <p className="mt-1 text-[10px] leading-relaxed text-parchment/35">Lead Hero is for the record — if your Attack/Lethality already come from an in-game report, that hero's stat bonus is already inside those numbers. Joiners and Widget add on top.</p>
+          <div className="mt-4"><ArmyForm army={attacker} setArmy={setAttacker} heroes={attackerHeroes} setHeroes={setAttackerHeroes} joiners={attackerJoiners} setJoiners={setAttackerJoiners} accent="text-[#7f9ed6]" /></div>
         </section>
         <section className="panel p-5 md:p-6">
-          <div className="eyebrow">Defender</div>
+          <div className="eyebrow">Opponent Stats</div>
           <h3 className="mt-1 font-display text-xl font-bold text-parchment">Enemy Army</h3>
-          <div className="mt-4"><ArmyForm army={defender} setArmy={setDefender} accent="text-[#c8655a]" /></div>
+          <p className="mt-1 text-[10px] leading-relaxed text-parchment/35">Same rule applies here — enter what the opponent's report already shows, then their Joiners and Widget on top.</p>
+          <div className="mt-4"><ArmyForm army={defender} setArmy={setDefender} heroes={defenderHeroes} setHeroes={setDefenderHeroes} joiners={defenderJoiners} setJoiners={setDefenderJoiners} accent="text-[#c8655a]" /></div>
         </section>
       </div>
 
@@ -140,7 +197,7 @@ export default function PvPSuite() {
               <div className="rounded-2xl border border-gold/10 bg-white/[.025] p-4"><div className="text-[9px] uppercase tracking-wider text-parchment/35">Enemy Starting</div><div className="mt-1 font-mono text-xl font-bold text-parchment">{fmt(result.startingD)}</div></div>
             </div>
             <RoundChart rounds={result.rounds} />
-            <div className="rounded-xl border border-amber-300/15 bg-amber-300/[.035] p-3 text-[11px] leading-relaxed text-amber-100/60">Experimental T10 field-battle model — a projection based on Attack/Lethality vs Defense/Health and the Infantry→Cavalry→Archer→Infantry counter cycle, not a guarantee of any real fight's outcome.</div>
+            <div className="rounded-xl border border-amber-300/15 bg-amber-300/[.035] p-3 text-[11px] leading-relaxed text-amber-100/60">Experimental T10 field-battle model — a projection based on Attack/Lethality vs Defense/Health (Joiners and Widget already folded in) and the Infantry→Cavalry→Archer→Infantry counter cycle, not a guarantee of any real fight's outcome.</div>
           </div>
         </section>
       )}

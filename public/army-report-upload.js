@@ -7,10 +7,12 @@
     { key: 'archers', label: 'Archers', aliases: ['archer', 'archers', 'arc'] },
   ]
   // Kingshot's battle-overview report always shows both sides on the same
-  // report at once — "<mine> Label <theirs>" per line — with the account
-  // holder's own column on the left and the opponent's on the right. So one
-  // upload fills both "Your Troops" and "Opponent Troops" in a single pass;
-  // there's no separate "opponent's report" to ask for.
+  // report at once — "<theirs> Label <mine>" per line — with the opponent's
+  // column on the left and the account holder's own on the right (confirmed
+  // against real screenshots: the number trailing the label is consistently
+  // the report owner's own value). So one upload fills both "Your Troops"
+  // and "Opponent Troops" in a single pass; there's no separate "opponent's
+  // report" to ask for.
   const STATS = [
     { key: 'count', label: 'Troops', aliases: ['troops', 'quantity', 'count'] },
     { key: 'attack', label: 'Attack', aliases: ['attack', 'atk'] },
@@ -56,7 +58,10 @@
   function numsBeforeAfterLabel(line, aliasGroups) {
     const span = labelSpan(line, aliasGroups)
     if (!span) return { mine: [], theirs: [] }
-    return { mine: numbersOnLine(line.slice(0, span.start)), theirs: numbersOnLine(line.slice(span.end)) }
+    // The number trailing the label is the report owner's own value; the
+    // number leading it is the opponent's — verified against real
+    // screenshots, not assumed.
+    return { mine: numbersOnLine(line.slice(span.end)), theirs: numbersOnLine(line.slice(0, span.start)) }
   }
 
   // The Mail battle-overview report's "Stat Bonuses" section is the only
@@ -72,12 +77,12 @@
       for (let i = 0; i < lines.length; i += 1) {
         const line = lines[i]
         if (!hasAlias(line, troop.aliases) || isStatLine(line) || line.includes('%')) continue
-        // Unlike Stat Bonuses' "<mine> Label <theirs>" layout, Troop Power
+        // Unlike Stat Bonuses' "<theirs> Label <mine>" layout, Troop Power
         // Comparison puts the label first with both counts after it
-        // ("Infantry 245,000 198,500") — so two numbers on one side split
-        // as [mine, theirs] in order, while a single lone number (dropped
-        // by OCR, not just visually absent) only fills the side it's
-        // actually next to, never both.
+        // ("Infantry 245,000 198,500") — so two numbers landing on the same
+        // side split as [mine, theirs] in order, while a single lone number
+        // (dropped by OCR, not just visually absent) only fills the side
+        // it's actually next to, never both.
         const bySide = numsBeforeAfterLabel(line, [troop.aliases])
         let mine = bySide.mine.filter((v) => v >= 10000)
         let theirs = bySide.theirs.filter((v) => v >= 10000)

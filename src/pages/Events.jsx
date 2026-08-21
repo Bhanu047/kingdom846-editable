@@ -30,8 +30,11 @@ function resolveEventArt(item) {
 
 function buildUpcoming(events) {
   return [
-    ...timeline.filter((t) => t.status === 'upcoming' || t.status === 'future').map((t) => ({
-      id: 'tl-' + t.date,
+    ...timeline.filter((t) => t.status === 'upcoming' || t.status === 'future').map((t, i) => ({
+      // Two milestones legitimately launch on the same date (e.g. a hero
+      // generation and its matching pet generation both on 2026-08-17) --
+      // date alone isn't a unique key, so fold in the loop index too.
+      id: 'tl-' + t.date + '-' + i,
       title: t.name,
       type: t.category.toUpperCase(),
       art: resolveEventArt(t),

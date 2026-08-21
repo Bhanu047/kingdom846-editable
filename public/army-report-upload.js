@@ -6,6 +6,10 @@
     { key: 'cavalry', label: 'Cavalry', aliases: ['cavalry', 'cav'] },
     { key: 'archers', label: 'Archers', aliases: ['archer', 'archers', 'arc'] },
   ]
+  // Kingshot's comparison reports (Battle Overview, Stat Bonuses, the toggled
+  // Troop Power Comparison) show BOTH sides on one line: "<mine>% Label <theirs>%".
+  // A single-value line (a report screen with only one side's numbers) still
+  // works — we just use whichever one number is there.
   const STATS = [
     { key: 'count', label: 'Troops', aliases: ['troops', 'quantity', 'count'] },
     { key: 'attack', label: 'Attack', aliases: ['attack', 'atk'] },
@@ -24,7 +28,7 @@
   function hasAlias(text, aliases) { const low = String(text || '').toLowerCase(); return aliases.some((a) => new RegExp(`\\b${a}\\b`, 'i').test(low)) }
   function numbersOnLine(line) { return (String(line || '').match(/[0-9][0-9,]*(?:\.[0-9]+)?\s*%?/g) || []).map(clean).filter((v) => v !== '') }
 
-  function parseArmyText(text) {
+  function parseArmyText(text, side) {
     const lines = String(text || '').replace(/[‐‑–—]/g, '-').split(/\n+/).map((l) => l.replace(/\s+/g, ' ').trim()).filter(Boolean)
     const stats = {}
     TROOPS.forEach((t) => { stats[t.key] = {} })
@@ -34,8 +38,9 @@
           if (!hasAlias(line, troop.aliases) || !hasAlias(line, stat.aliases)) continue
           const nums = numbersOnLine(line)
           if (!nums.length) continue
-          // Troop counts are large integers (thousands+); percentages are typically small.
-          const candidate = stat.key === 'count' ? nums.find((v) => v >= 100) : nums[nums.length - 1]
+          // One number on the line: use it. Two (a side-by-side comparison
+          // report): pick the one on the requested side of the label.
+          const candidate = nums.length === 1 ? nums[0] : (side === 'right' ? nums[nums.length - 1] : nums[0])
           if (candidate !== undefined) { stats[troop.key][stat.key] = candidate; break }
         }
       }
@@ -135,6 +140,12 @@
       #${MODAL_ID} .au-read:disabled,#${MODAL_ID} .au-apply:disabled{opacity:.4;cursor:not-allowed}
       #${MODAL_ID} .au-status{margin-top:9px;font-size:10px;color:rgba(241,231,206,.5)}
       #${MODAL_ID} .au-title{margin:16px 0 8px;font-family:Cinzel,serif;color:#ead393;font-weight:800}
+      #${MODAL_ID} .au-side{margin-top:14px;padding:14px;border:1px solid rgba(232,199,102,.3);border-radius:14px;background:rgba(212,175,55,.05)}
+      #${MODAL_ID} .au-side .au-title{margin:0 0 6px}
+      #${MODAL_ID} .au-side-hint{margin:0 0 10px;font-size:10px;line-height:1.55;color:rgba(241,231,206,.5)}
+      #${MODAL_ID} .au-side-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+      #${MODAL_ID} .au-side-btn{border:1px solid rgba(212,175,55,.24);border-radius:10px;padding:10px;background:transparent;color:#f1e7ce;font-weight:800;font-size:11px;cursor:pointer}
+      #${MODAL_ID} .au-side-btn.active{border-color:#f0d17a;background:linear-gradient(#d4af37,#ad8620);color:#071224}
       #${MODAL_ID} .au-card{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:8px;padding:12px;border:1px solid rgba(212,175,59,.12);border-radius:13px}
       #${MODAL_ID} .au-card>b{grid-column:1/-1;font-family:Cinzel,serif}
       #${MODAL_ID} label{font-size:9px;text-transform:uppercase;color:rgba(241,231,206,.5)}
@@ -170,6 +181,14 @@
           <button class="au-add" data-action="choose" hidden>+ Add another screenshot</button>
           <button class="au-read" data-action="read" disabled>Scan All Screenshots</button>
           <div class="au-status"></div>
+          <div class="au-side" hidden>
+            <div class="au-title">Which column is "${sideHeading}"?</div>
+            <p class="au-side-hint">Kingshot's battle-overview report shows both sides on the same lines (e.g. one number, then "Infantry Attack", then another number). Pick which one is "${sideHeading}" — you can switch back and forth to compare before applying.</p>
+            <div class="au-side-btns">
+              <button type="button" class="au-side-btn" data-side="left">Left column</button>
+              <button type="button" class="au-side-btn" data-side="right">Right column</button>
+            </div>
+          </div>
           <div class="au-values" hidden>
             <div class="au-title">Detected Values — Review Before Applying</div>
             ${TROOPS.map((t) => `<div class="au-card"><b>${t.label}</b>${STATS.map((s) => `<label>${s.label}<input type="number" step="0.1" data-field="${t.key}.${s.key}"></label>`).join('')}</div>`).join('')}
@@ -193,8 +212,24 @@
     document.body.appendChild(root)
     document.body.style.overflow = 'hidden'
 
-    const fileInput = root.querySelector('#au-file'), drop = root.querySelector('.au-drop'), filesList = root.querySelector('.au-files'), addBtn = root.querySelector('.au-add'), readBtn = root.querySelector('.au-read'), applyBtn = root.querySelector('.au-apply'), values = root.querySelector('.au-values'), status = root.querySelector('.au-status')
+    const fileInput = root.querySelector('#au-file'), drop = root.querySelector('.au-drop'), filesList = root.querySelector('.au-files'), addBtn = root.querySelector('.au-add'), readBtn = root.querySelector('.au-read'), applyBtn = root.querySelector('.au-apply'), values = root.querySelector('.au-values'), status = root.querySelector('.au-status'), sideBlock = root.querySelector('.au-side')
     const entries = []
+    let currentSide = null
+
+    function applySide(side) {
+      currentSide = side
+      root.querySelectorAll('.au-side-btn').forEach((b) => b.classList.toggle('active', b.dataset.side === side))
+      let merged = {}
+      for (const entry of entries) {
+        if (!entry.rawText) continue
+        merged = mergeArmyStats(merged, parseArmyText(entry.rawText, side))
+      }
+      TROOPS.forEach((t) => STATS.forEach((s) => { const input = root.querySelector(`[data-field="${t.key}.${s.key}"]`); if (input) input.value = merged[t.key]?.[s.key] ?? '' }))
+      values.hidden = false
+      const detected = TROOPS.reduce((sum, t) => sum + STATS.filter((s) => merged[t.key]?.[s.key] !== undefined && merged[t.key][s.key] !== '').length, 0)
+      applyBtn.disabled = detected === 0
+      status.textContent = detected ? `${detected}/${TROOPS.length * STATS.length} values detected using the ${side} column. Review them below — switch columns above if these look wrong.` : `No values detected in the ${side} column. Try the other column, or enter values manually on the page.`
+    }
     const close = () => { entries.forEach((e) => e.url && URL.revokeObjectURL(e.url)); root.remove(); document.body.style.overflow = '' }
 
     function renderFiles() {
@@ -223,6 +258,9 @@
       const removeIdx = e.target?.dataset?.remove
       if (removeIdx !== undefined) { const [rm] = entries.splice(Number(removeIdx), 1); if (rm?.url) URL.revokeObjectURL(rm.url); renderFiles(); return }
 
+      const sideBtn = e.target.closest('.au-side-btn')
+      if (sideBtn) { applySide(sideBtn.dataset.side); return }
+
       const action = e.target.closest('[data-action]')?.dataset.action
       if (!action) return
       if (action === 'close') return close()
@@ -230,26 +268,26 @@
       if (action === 'read') {
         if (!entries.length) return
         readBtn.disabled = true
-        let merged = {}
+        values.hidden = true
+        sideBlock.hidden = true
         for (let i = 0; i < entries.length; i += 1) {
           status.textContent = `Reading screenshot ${i + 1} of ${entries.length}…`
           try {
             const Tesseract = await loadTesseract()
             const out = await Tesseract.recognize(entries[i].file, 'eng')
-            const parsed = parseArmyText(out?.data?.text || '')
-            merged = mergeArmyStats(merged, parsed)
+            entries[i].rawText = out?.data?.text || ''
             entries[i].status = 'ok'
             renderFiles()
           } catch (err) {
             status.textContent = `Screenshot ${i + 1} failed to read: ${err.message || 'unknown error'}`
           }
         }
-        TROOPS.forEach((t) => STATS.forEach((s) => { const input = root.querySelector(`[data-field="${t.key}.${s.key}"]`); if (input) input.value = merged[t.key]?.[s.key] ?? '' }))
-        values.hidden = false
-        const detected = TROOPS.reduce((sum, t) => sum + STATS.filter((s) => merged[t.key]?.[s.key] !== undefined && merged[t.key][s.key] !== '').length, 0)
-        applyBtn.disabled = detected === 0
-        status.textContent = detected ? `${detected}/${TROOPS.length * STATS.length} values detected across ${entries.length} screenshot${entries.length === 1 ? '' : 's'}. Review them below, then apply.` : 'No values detected. Review the screenshots or enter values manually on the page.'
         readBtn.disabled = false
+        const anyRead = entries.some((e) => e.rawText)
+        if (!anyRead) { status.textContent = 'Could not read any of these screenshots. Try clearer images or enter values manually.'; return }
+        sideBlock.hidden = false
+        status.textContent = 'Screenshots read. Answer the question above to fill in the values.'
+        sideBlock.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
       }
       if (action === 'apply') {
         const stats = {}

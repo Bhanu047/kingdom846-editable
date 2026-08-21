@@ -44,42 +44,67 @@ export const TROOP_COLORS = { infantry: '#d9b94e', cavalry: '#7f9ed6', archers: 
 
 const MEDALS = ['🥇', '🥈', '🥉']
 
-// Ranked composition row — a leaderboard entry, not just a bar: a medal or
-// rank badge on the left (this IS a ranked list, so it should read like
-// one), a mini I/C/A strip so the shape of each candidate split is visible
-// at a glance, and the #1 pick gets a shine sweep + glowing border to mark
-// it as the crown pick. Margin shows as a percentage of your total troops
-// committed, not a raw troop count -- a bare number like "-2,271" doesn't
-// mean anything without knowing your army size, but "-2.3%" reads the same
-// regardless of scale.
-export function FormationRow({ composition, sub, margin, max, active, total, rank = 0 }) {
+// A ranked composition list rendered as an actual diverging bar chart
+// (a "tornado chart") rather than a styled list of rows -- each candidate
+// split gets one horizontal bar growing from a shared zero line, right for
+// a winning margin and left for a losing one, so the whole ranked set reads
+// as one chart with a real sense of scale instead of a stack of separate
+// cards. Margin shows as a percentage of your total troops committed, not
+// a raw troop count -- a bare number like "-2,271" doesn't mean anything
+// without knowing your army size, but "-2.3%" reads the same regardless.
+export function CompositionChart({ items, total }) {
   const reveal = useReveal()
-  const pct = total > 0 ? (margin / total) * 100 : 0
-  // .stagger-in and .glow-badge each set the CSS `animation` shorthand, so
-  // putting both on the same element lets one silently clobber the other
-  // (whichever wins the cascade discards the other's keyframes entirely) --
-  // that left the #1 row stuck at opacity:0 forever, since .glow-badge's
-  // rule happened to win and .stagger-in's fade/rise-in keyframe never ran.
-  // Splitting them onto an outer (entrance) and inner (ambient glow)
-  // element keeps both animations running independently.
+  const gid = useId()
+  if (!items.length) return null
+  const ROW_H = 44, PAD = 10, L = 128, R = 64, W = 900
+  const H = items.length * ROW_H + PAD * 2
+  const pcts = items.map((c) => total > 0 ? (c.margin / total) * 100 : 0)
+  const maxV = Math.max(0, ...pcts), minV = Math.min(0, ...pcts)
+  const span = Math.max(0.001, maxV - minV)
+  const chartW = W - L - R
+  const xFor = (v) => L + (v - minV) / span * chartW
+  const zeroX = xFor(0)
+  const barH = ROW_H - 16
+  const rowTop = (i) => PAD + i * ROW_H
+  const ticks = [minV, minV + span / 2, maxV]
   return (
-    <div className="stagger-in">
-      <div className={`relative overflow-hidden rounded-xl border p-3 ${active ? 'badge-shine glow-badge border-gold/50 bg-gold/[.06]' : 'border-gold/10 bg-white/[.02]'}`}>
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5">
-            <div className={`grid h-6 w-6 shrink-0 place-items-center rounded-full text-[11px] font-black ${rank < 3 ? '' : 'border border-gold/20 bg-black/25 text-parchment/45'}`}>{rank < 3 ? MEDALS[rank] : `#${rank + 1}`}</div>
-            <div className="flex h-4 w-20 shrink-0 overflow-hidden rounded-full border border-gold/15 shadow-[inset_0_1px_2px_rgba(0,0,0,.5)]">
-              <div style={{ width: `${composition.infantry * 100}%`, background: `linear-gradient(180deg, rgba(255,255,255,.35), ${TROOP_COLORS.infantry})` }} />
-              <div style={{ width: `${composition.cavalry * 100}%`, background: `linear-gradient(180deg, rgba(255,255,255,.35), ${TROOP_COLORS.cavalry})` }} />
-              <div style={{ width: `${composition.archers * 100}%`, background: `linear-gradient(180deg, rgba(255,255,255,.35), ${TROOP_COLORS.archers})` }} />
+    <div className="relative rounded-2xl border border-gold/15 bg-[#07101e] p-4">
+      <svg viewBox={`0 0 ${W} ${H}`} className="w-full">
+        <defs>
+          <linearGradient id={`${gid}-w`} x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stopColor="#34d399" stopOpacity=".55" /><stop offset="100%" stopColor="#6ee7b7" /></linearGradient>
+          <linearGradient id={`${gid}-l`} x1="1" y1="0" x2="0" y2="0"><stop offset="0%" stopColor="#f87171" stopOpacity=".55" /><stop offset="100%" stopColor="#fca5a5" /></linearGradient>
+        </defs>
+        {[0, .25, .5, .75, 1].map((t) => <line key={t} x1={L + t * chartW} x2={L + t * chartW} y1={0} y2={H} stroke="rgba(226,199,125,.07)" />)}
+        <line x1={zeroX} x2={zeroX} y1={0} y2={H} stroke="rgba(226,199,125,.3)" strokeWidth="1.5" />
+        {items.map((c, i) => {
+          const v = pcts[i], win = v >= 0, endX = xFor(v)
+          const x = Math.min(zeroX, endX), w = Math.max(0.001, Math.abs(endX - zeroX))
+          return <rect key={i} x={x} y={rowTop(i) + 8} width={w} height={barH} rx={barH / 2} fill={`url(#${gid}-${win ? 'w' : 'l'})`} style={{ transformBox: 'fill-box', transformOrigin: win ? 'left' : 'right', transform: reveal ? 'scaleX(1)' : 'scaleX(0)', transition: `transform .9s cubic-bezier(.16,1,.3,1) ${i * 70}ms`, filter: `drop-shadow(0 0 6px ${win ? '#34d39990' : '#f8717190'})` }} />
+        })}
+      </svg>
+      {/* Plain HTML labels, not SVG <text> — html2canvas 1.4.1 renders SVG
+          text (and the whole SVG along with it) blank in exported reports. */}
+      {items.map((c, i) => {
+        const v = pcts[i], win = v >= 0, endX = xFor(v)
+        const cy = (rowTop(i) + ROW_H / 2) / H * 100
+        return (
+          <div key={i} className="pointer-events-none absolute -translate-y-1/2" style={{ top: `${cy}%`, left: '0.5%' }}>
+            <div className="flex items-center gap-1.5">
+              <span className={`grid h-5 w-5 shrink-0 place-items-center rounded-full text-[10px] font-black ${i < 3 ? '' : 'border border-gold/20 bg-black/30 text-parchment/40'}`}>{i < 3 ? MEDALS[i] : <span className="text-[8px]">#{i + 1}</span>}</span>
+              <span className="whitespace-nowrap font-mono text-[10px] font-semibold text-parchment/75">{Math.round(c.composition.infantry * 100)}/{Math.round(c.composition.cavalry * 100)}/{Math.round(c.composition.archers * 100)}</span>
             </div>
-            <div className="text-xs"><span className="font-semibold text-parchment/85">{Math.round(composition.infantry * 100)}/{Math.round(composition.cavalry * 100)}/{Math.round(composition.archers * 100)}</span><span className="ml-2 text-[10px] text-parchment/40">{sub}</span></div>
           </div>
-          <span className={`font-mono text-sm font-bold ${margin >= 0 ? 'text-emerald-300' : 'text-red-300'}`}>{pct >= 0 ? '+' : ''}{pct.toFixed(1)}%</span>
-        </div>
-        <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-black/25">
-          <div className={`h-full rounded-full ${margin >= 0 ? 'bg-gradient-to-r from-emerald-400/50 to-emerald-300' : 'bg-gradient-to-r from-red-400/50 to-red-300'}`} style={{ width: reveal ? `${max > 0 ? Math.max(2, Math.abs(margin) / max * 100) : 0}%` : '0%', transition: 'width 1s cubic-bezier(.16,1,.3,1)', boxShadow: margin >= 0 ? '0 0 6px rgba(110,231,183,.55)' : '0 0 6px rgba(252,165,165,.55)' }} />
-        </div>
+        )
+      })}
+      {items.map((c, i) => {
+        const v = pcts[i], win = v >= 0, endX = xFor(v)
+        const cy = (rowTop(i) + ROW_H / 2) / H * 100
+        return (
+          <div key={i} className={`pointer-events-none absolute -translate-y-1/2 whitespace-nowrap font-mono text-[11px] font-bold ${win ? 'text-emerald-300' : 'text-red-300'}`} style={{ top: `${cy}%`, left: `${(endX + (win ? 8 : -8)) / W * 100}%`, transform: `translateY(-50%) ${win ? '' : 'translateX(-100%)'}` }}>{v >= 0 ? '+' : ''}{v.toFixed(1)}%</div>
+        )
+      })}
+      <div className="pointer-events-none absolute bottom-1 flex justify-between text-[9px] text-parchment/30" style={{ left: `${L / W * 100}%`, right: `${R / W * 100}%` }}>
+        {ticks.map((t, i) => <span key={i}>{t >= 0 ? '+' : ''}{t.toFixed(0)}%</span>)}
       </div>
     </div>
   )
@@ -227,7 +252,6 @@ export default function MysticSuite() {
   }
 
   const top = useMemo(() => result?.candidates?.slice(0, 8) || [], [result])
-  const maxMargin = useMemo(() => Math.max(1, ...top.map((c) => Math.abs(c.margin))), [top])
 
   const reset = () => {
     setYours(EMPTY_ARMY)
@@ -377,11 +401,7 @@ export default function MysticSuite() {
               </div>
               <div>
                 <div className="mb-2 text-[10px] font-bold uppercase tracking-wider text-parchment/40">Top Compositions By Margin</div>
-                <div className="space-y-2">
-                  {top.map((c, i) => (
-                    <FormationRow key={i} rank={i} active={i === 0} composition={c.composition} sub={c.result.outcome === 'attacker' ? 'wins' : c.result.outcome === 'defender' ? 'loses' : 'draw'} margin={c.margin} max={maxMargin} total={result.totalYourTroops} />
-                  ))}
-                </div>
+                <CompositionChart items={top} total={result.totalYourTroops} />
               </div>
             </div>
           ) : (

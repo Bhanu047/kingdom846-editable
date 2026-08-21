@@ -2,7 +2,7 @@ import { useId, useMemo, useState } from 'react'
 import Icon from '../components/Icon'
 import { calculateHeroSynergy, optimizeMysticComposition, simulateT10Battle } from '../lib/combat/battleLabEngine'
 import { HUNT_JOINER_HEROES, applyJoinerBonuses } from '../lib/combat/huntImpact'
-import { TROOP_COLORS, FormationRow } from './MysticSuite'
+import { TROOP_COLORS, CompositionChart } from './MysticSuite'
 import { smoothPath, useReveal } from '../lib/chartAnim'
 import CountUp from '../components/CountUp'
 
@@ -348,7 +348,6 @@ export default function PvPSuite() {
   }
 
   const sweepTop = useMemo(() => sweepResult?.candidates?.slice(0, 8) || [], [sweepResult])
-  const sweepMaxMargin = useMemo(() => Math.max(1, ...sweepTop.map((c) => Math.abs(c.margin))), [sweepTop])
 
   return (
     <div className="space-y-5">
@@ -485,11 +484,7 @@ export default function PvPSuite() {
               </div>
               <div>
                 <div className="mb-2 text-[10px] font-bold uppercase tracking-wider text-parchment/40">Top Compositions By Margin</div>
-                <div className="space-y-2">
-                  {sweepTop.map((c, i) => (
-                    <FormationRow key={i} rank={i} active={i === 0} composition={c.composition} sub={c.result.outcome === 'attacker' ? 'wins' : c.result.outcome === 'defender' ? 'loses' : 'draw'} margin={c.margin} max={sweepMaxMargin} total={sweepResult.totalYourTroops} />
-                  ))}
-                </div>
+                <CompositionChart items={sweepTop} total={sweepResult.totalYourTroops} />
               </div>
             </div>
           ) : (

@@ -124,16 +124,172 @@ function RoundChart({ rounds }) {
   )
 }
 
-function ResultBar({ label, sub, value, max, active }) {
+const TROOP_COLORS = { infantry: '#d9b94e', cavalry: '#7f9ed6', archers: '#c8655a' }
+
+// Direct Attack is a live round-by-round fight, so its headline visual is a
+// start→end HP-bar duel (the classic "boss fight" depletion bar) rather than
+// the search-result gauge used by Mystic/Composition Optimizer.
+function BattleHPBars({ yourStart, yourEnd, enemyStart, enemyEnd, yourLabel = 'YOUR ARMY', enemyLabel = 'ENEMY ARMY' }) {
+  const Bar = ({ start, end, label, color }) => {
+    const alive = start > 0 ? end / start * 100 : 0
+    return (
+      <div>
+        <div className="flex items-baseline justify-between text-xs">
+          <span className="font-bold uppercase tracking-wider" style={{ color }}>{label}</span>
+          <span className="font-mono text-parchment/60">{fmt(start)} <span className="text-parchment/30">→</span> <b className="text-parchment">{fmt(end)}</b></span>
+        </div>
+        <div className="relative mt-1.5 h-6 overflow-hidden rounded-full border border-gold/10 bg-black/40">
+          <div className="h-full rounded-full" style={{ width: `${alive}%`, background: `linear-gradient(90deg, ${color}aa, ${color})`, boxShadow: `0 0 10px ${color}66` }} />
+        </div>
+        <div className="mt-0.5 text-right text-[10px] text-parchment/35">{(100 - alive).toFixed(1)}% lost</div>
+      </div>
+    )
+  }
+  return (
+    <div className="space-y-4 rounded-2xl border border-gold/20 bg-[#07101e] p-4 md:p-5">
+      <Bar start={yourStart} end={yourEnd} label={yourLabel} color="#7f9ed6" />
+      <Bar start={enemyStart} end={enemyEnd} label={enemyLabel} color="#c8655a" />
+    </div>
+  )
+}
+
+// VS matchup cards — used by the Composition Optimizer result, same visual
+// language as Mystic Trials' equivalent so the two "find the best split"
+// tools read as one family, distinct from Direct Attack's HP-bar duel.
+function VsArmyCards({ yourSide, enemySide, yourLabel = 'YOUR FORCE', enemyLabel = 'ENEMY FORCE' }) {
+  const Card = ({ side, label, border, glow, align }) => {
+    const total = Math.max(0, side.infantry) + Math.max(0, side.cavalry) + Math.max(0, side.archers)
+    return (
+      <div className={`flex-1 rounded-2xl border p-4 ${border}`} style={{ boxShadow: `inset 0 0 30px ${glow}` }}>
+        <div className={`text-[9px] font-bold uppercase tracking-wider text-parchment/50 ${align}`}>{label}</div>
+        <div className={`mt-0.5 font-mono text-2xl font-black text-parchment ${align}`}>{fmt(total)}</div>
+        <div className="mt-3 space-y-2">
+          {TROOPS.map((t) => (
+            <div key={t.key} className={`flex items-center gap-2 ${align === 'text-right' ? 'flex-row-reverse' : ''}`}>
+              <Icon name={t.icon} size={12} style={{ color: TROOP_COLORS[t.key] }} />
+              <div className="h-2 flex-1 overflow-hidden rounded-full bg-black/30"><div className="h-full rounded-full" style={{ width: `${total > 0 ? Math.max(0, side[t.key]) / total * 100 : 0}%`, background: TROOP_COLORS[t.key] }} /></div>
+              <span className="w-24 shrink-0 font-mono text-[10px] text-parchment/55" style={{ textAlign: align === 'text-right' ? 'left' : 'right' }}>{fmt(side[t.key])} <span className="text-parchment/35">({total > 0 ? Math.round(Math.max(0, side[t.key]) / total * 100) : 0}%)</span></span>
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
+  return (
+    <div className="rounded-2xl border border-gold/20 bg-[#07101e] p-4 md:p-5">
+      <div className="flex items-stretch gap-2 md:gap-3">
+        <Card side={yourSide} label={yourLabel} border="border-[#7f9ed6]/25 bg-[#7f9ed6]/[.045]" glow="rgba(127,158,214,.08)" align="text-left" />
+        <div className="flex shrink-0 flex-col items-center justify-center px-1">
+          <Icon name="swords" size={20} className="text-gold-bright" />
+          <div className="mt-1 text-[8px] font-black uppercase tracking-wider text-gold/50">VS</div>
+        </div>
+        <Card side={enemySide} label={enemyLabel} border="border-[#c8655a]/25 bg-[#c8655a]/[.045]" glow="rgba(200,101,90,.08)" align="text-right" />
+      </div>
+    </div>
+  )
+}
+
+function ClashGauge({ yourTotal, enemyTotal, margin }) {
+  const combined = Math.max(1, yourTotal + enemyTotal)
+  const yourShare = yourTotal / combined
+  const R = 92, CX = 130, CY = 118
+  const angle = Math.PI * (1 - yourShare)
+  const pt = (a) => [CX + R * Math.cos(a), CY - R * Math.sin(a)]
+  const arc = (from, to) => { const [x1, y1] = pt(from), [x2, y2] = pt(to); const large = Math.abs(to - from) > Math.PI ? 1 : 0; return `M${x1},${y1} A${R},${R} 0 ${large} ${to < from ? 1 : 0} ${x2},${y2}` }
+  const [nx, ny] = pt(angle)
+  return (
+    <div className="rounded-2xl border border-gold/20 bg-[#07101e] p-4 md:p-5">
+      <svg viewBox="0 0 260 140" className="mx-auto w-full max-w-md">
+        <path d={arc(Math.PI, angle)} stroke="#7f9ed6" strokeWidth="16" fill="none" strokeLinecap="round" />
+        <path d={arc(angle, 0)} stroke="#c8655a" strokeWidth="16" fill="none" strokeLinecap="round" />
+        <line x1={CX} y1={CY} x2={nx} y2={ny} stroke="#e8c558" strokeWidth="3" strokeLinecap="round" />
+        <circle cx={CX} cy={CY} r="7" fill="#e8c558" stroke="#071224" strokeWidth="2" />
+        <text x="14" y="134" fontSize="11" fill="#9eb9ef" fontWeight="700">YOUR FORCE</text>
+        <text x="246" y="134" fontSize="11" fill="#e08c80" fontWeight="700" textAnchor="end">ENEMY</text>
+      </svg>
+      <div className="mt-1 text-center">
+        <div className="font-mono text-2xl font-black" style={{ color: margin >= 0 ? '#6ee7b7' : '#fca5a5' }}>{margin >= 0 ? '+' : ''}{fmt(margin)}</div>
+        <div className="text-[10px] text-parchment/40">troop margin</div>
+      </div>
+    </div>
+  )
+}
+
+function FormationRow({ composition, sub, margin, max, active }) {
   return (
     <div className={`rounded-xl border p-3 ${active ? 'border-gold/40 bg-gold/[.05]' : 'border-gold/10 bg-white/[.02]'}`}>
-      <div className="flex items-center justify-between gap-3 text-xs">
-        <div><span className="font-semibold text-parchment/85">{label}</span><span className="ml-2 text-[10px] text-parchment/40">{sub}</span></div>
-        <span className={`font-mono text-sm font-bold ${value >= 0 ? 'text-emerald-300' : 'text-red-300'}`}>{value >= 0 ? '+' : ''}{fmt(value)}</span>
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5">
+          <div className="flex h-4 w-20 shrink-0 overflow-hidden rounded-full border border-gold/10">
+            <div style={{ width: `${composition.infantry * 100}%`, background: TROOP_COLORS.infantry }} />
+            <div style={{ width: `${composition.cavalry * 100}%`, background: TROOP_COLORS.cavalry }} />
+            <div style={{ width: `${composition.archers * 100}%`, background: TROOP_COLORS.archers }} />
+          </div>
+          <div className="text-xs"><span className="font-semibold text-parchment/85">{Math.round(composition.infantry * 100)}/{Math.round(composition.cavalry * 100)}/{Math.round(composition.archers * 100)}</span><span className="ml-2 text-[10px] text-parchment/40">{sub}</span></div>
+        </div>
+        <span className={`font-mono text-sm font-bold ${margin >= 0 ? 'text-emerald-300' : 'text-red-300'}`}>{margin >= 0 ? '+' : ''}{fmt(margin)}</span>
       </div>
       <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-black/25">
-        <div className={`h-full rounded-full ${value >= 0 ? 'bg-gradient-to-r from-emerald-400/50 to-emerald-300' : 'bg-gradient-to-r from-red-400/50 to-red-300'}`} style={{ width: `${max > 0 ? Math.max(2, Math.abs(value) / max * 100) : 0}%` }} />
+        <div className={`h-full rounded-full ${margin >= 0 ? 'bg-gradient-to-r from-emerald-400/50 to-emerald-300' : 'bg-gradient-to-r from-red-400/50 to-red-300'}`} style={{ width: `${max > 0 ? Math.max(2, Math.abs(margin) / max * 100) : 0}%` }} />
       </div>
+    </div>
+  )
+}
+
+// DIRECT ATTACK — OPTION 2: "Casualty Rings", two radial survival rings
+// (stamina/activity-ring style) instead of horizontal HP bars.
+function CasualtyRings({ yourStart, yourEnd, enemyStart, enemyEnd, yourLabel = 'YOUR ARMY', enemyLabel = 'ENEMY ARMY' }) {
+  const Ring = ({ start, end, label, color }) => {
+    const alive = start > 0 ? end / start * 100 : 0
+    const R = 54, C = 2 * Math.PI * R
+    const dash = C * Math.max(0, Math.min(100, alive)) / 100
+    return (
+      <div className="flex flex-col items-center">
+        <svg width="140" height="140" viewBox="0 0 140 140">
+          <circle cx="70" cy="70" r={R} fill="none" stroke="rgba(255,255,255,.07)" strokeWidth="14" />
+          <circle cx="70" cy="70" r={R} fill="none" stroke={color} strokeWidth="14" strokeDasharray={`${dash} ${C - dash}`} strokeLinecap="round" transform="rotate(-90 70 70)" />
+          <text x="70" y="66" textAnchor="middle" fontSize="20" fontWeight="900" fill="#f1e7ce">{alive.toFixed(0)}%</text>
+          <text x="70" y="83" textAnchor="middle" fontSize="9" fill="rgba(241,231,206,.4)">SURVIVED</text>
+        </svg>
+        <div className="mt-1 text-xs font-bold uppercase tracking-wider" style={{ color }}>{label}</div>
+        <div className="font-mono text-sm text-parchment/70">{fmt(end)} / {fmt(start)}</div>
+      </div>
+    )
+  }
+  return (
+    <div className="rounded-2xl border border-gold/20 bg-[#07101e] p-4 md:p-5">
+      <div className="flex items-center justify-center gap-6 md:gap-10">
+        <Ring start={yourStart} end={yourEnd} label={yourLabel} color="#7f9ed6" />
+        <Icon name="swords" size={22} className="text-gold/50" />
+        <Ring start={enemyStart} end={enemyEnd} label={enemyLabel} color="#c8655a" />
+      </div>
+    </div>
+  )
+}
+
+// COMPOSITION OPTIMIZER — OPTION 2: "Formation Ribbon", two stacked full-width
+// composition ribbons with an outcome badge between them, instead of a gauge.
+function FormationRibbon({ yourSide, enemySide, yourLabel = 'YOUR BEST SPLIT', enemyLabel = 'ENEMY ARMY', margin }) {
+  const Ribbon = ({ side, label }) => {
+    const total = side.infantry + side.cavalry + side.archers
+    return (
+      <div>
+        <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider text-parchment/50"><span>{label}</span><span className="font-mono text-parchment/70">{fmt(total)}</span></div>
+        <div className="mt-1 flex h-8 overflow-hidden rounded-lg border border-gold/10">
+          {TROOPS.map((t) => (
+            <div key={t.key} className="flex items-center justify-center text-[10px] font-bold text-black/70" style={{ width: `${total > 0 ? side[t.key] / total * 100 : 0}%`, background: TROOP_COLORS[t.key] }}>
+              {total > 0 && side[t.key] / total * 100 > 12 ? `${Math.round(side[t.key] / total * 100)}%` : ''}
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
+  return (
+    <div className="space-y-3 rounded-2xl border border-gold/20 bg-[#07101e] p-4 md:p-5">
+      <Ribbon side={yourSide} label={yourLabel} />
+      <div className="flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-wider text-gold-bright"><Icon name="swords" size={12} /> margin {margin >= 0 ? '+' : ''}{fmt(margin)} <Icon name="swords" size={12} /></div>
+      <Ribbon side={enemySide} label={enemyLabel} />
     </div>
   )
 }
@@ -251,6 +407,10 @@ export default function PvPSuite() {
           <h3 className="mt-1 font-display text-2xl font-bold text-parchment">Battle Outcome</h3>
           <div className="mt-4 space-y-4">
             <OutcomeBanner outcome={result.outcome} attackerLeft={result.remainingA} defenderLeft={result.remainingD} rounds={result.rounds.length} />
+            <div className="text-center text-[10px] font-black uppercase tracking-[.2em] text-gold-bright/70">— Direct Attack Option 1: Battle HP Bars —</div>
+            <BattleHPBars yourStart={result.startingA} yourEnd={result.remainingA} enemyStart={result.startingD} enemyEnd={result.remainingD} />
+            <div className="text-center text-[10px] font-black uppercase tracking-[.2em] text-gold-bright/70">— Direct Attack Option 2: Casualty Rings —</div>
+            <CasualtyRings yourStart={result.startingA} yourEnd={result.remainingA} enemyStart={result.startingD} enemyEnd={result.remainingD} />
             <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
               <div className="rounded-2xl border border-gold/10 bg-white/[.025] p-4"><div className="text-[9px] uppercase tracking-wider text-parchment/35">Your Losses</div><div className="mt-1 font-mono text-xl font-bold text-parchment">{fmt(result.attackerLosses)}</div></div>
               <div className="rounded-2xl border border-gold/10 bg-white/[.025] p-4"><div className="text-[9px] uppercase tracking-wider text-parchment/35">Enemy Losses</div><div className="mt-1 font-mono text-xl font-bold text-parchment">{fmt(result.defenderLosses)}</div></div>
@@ -311,6 +471,19 @@ export default function PvPSuite() {
                 <div className="font-display text-2xl font-bold">{sweepResult.best.result.outcome === 'attacker' ? 'You Win' : sweepResult.best.result.outcome === 'defender' ? 'Still Loses' : 'Even Fight'}</div>
                 <div className="mt-1 text-xs text-parchment/50">Best split: {pct(sweepResult.best.composition.infantry)} Infantry / {pct(sweepResult.best.composition.cavalry)} Cavalry / {pct(sweepResult.best.composition.archers)} Archers · margin {sweepResult.best.margin >= 0 ? '+' : ''}{fmt(sweepResult.best.margin)} troops</div>
               </div>
+              {(() => {
+                const yourSide = { infantry: sweepResult.totalYourTroops * sweepResult.best.composition.infantry, cavalry: sweepResult.totalYourTroops * sweepResult.best.composition.cavalry, archers: sweepResult.totalYourTroops * sweepResult.best.composition.archers }
+                const enemySide = { infantry: n(defender.infantry.count), cavalry: n(defender.cavalry.count), archers: n(defender.archers.count) }
+                return (
+                  <div className="space-y-4">
+                    <div className="text-center text-[10px] font-black uppercase tracking-[.2em] text-gold-bright/70">— Optimizer Option 1: Clash Gauge + VS Cards —</div>
+                    <ClashGauge yourTotal={yourSide.infantry + yourSide.cavalry + yourSide.archers} enemyTotal={enemySide.infantry + enemySide.cavalry + enemySide.archers} margin={sweepResult.best.margin} />
+                    <VsArmyCards yourSide={yourSide} enemySide={enemySide} yourLabel="Your Best Split" enemyLabel="Enemy Army" />
+                    <div className="text-center text-[10px] font-black uppercase tracking-[.2em] text-gold-bright/70">— Optimizer Option 2: Formation Ribbon —</div>
+                    <FormationRibbon yourSide={yourSide} enemySide={enemySide} margin={sweepResult.best.margin} />
+                  </div>
+                )
+              })()}
               {sweepResult.classical && (
                 <div className="grid grid-cols-2 gap-3">
                   <div className="rounded-2xl border border-gold/10 bg-white/[.02] p-4">
@@ -335,7 +508,7 @@ export default function PvPSuite() {
                 <div className="mb-2 text-[10px] font-bold uppercase tracking-wider text-parchment/40">Top Compositions By Margin</div>
                 <div className="space-y-2">
                   {sweepTop.map((c, i) => (
-                    <ResultBar key={i} active={i === 0} label={`${Math.round(c.composition.infantry * 100)}/${Math.round(c.composition.cavalry * 100)}/${Math.round(c.composition.archers * 100)}`} sub={c.result.outcome === 'attacker' ? 'wins' : c.result.outcome === 'defender' ? 'loses' : 'draw'} value={c.margin} max={sweepMaxMargin} />
+                    <FormationRow key={i} active={i === 0} composition={c.composition} sub={c.result.outcome === 'attacker' ? 'wins' : c.result.outcome === 'defender' ? 'loses' : 'draw'} margin={c.margin} max={sweepMaxMargin} />
                   ))}
                 </div>
               </div>

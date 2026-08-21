@@ -56,8 +56,8 @@ export default function BattleLabHub() {
       <div className="space-y-6">
         <section className="relative min-h-[300px] overflow-hidden rounded-[26px] border border-gold/25 bg-[#06101f] px-6 py-9 text-center shadow-[0_20px_70px_rgba(0,0,0,.32)] md:min-h-[360px] md:px-10 md:py-12">
           <img src="./assets/strategy-war-academy.png" alt="" className="absolute inset-0 h-full w-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#030816]/95 via-[#06101f]/70 to-[#06101f]/35" />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/45 via-transparent to-black/35" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#030816]/90 via-[#06101f]/50 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/35 via-transparent to-black/25" />
           <div className="relative flex min-h-[230px] flex-col items-center justify-center md:min-h-[280px]">
             <div className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-2xl border border-gold/30 bg-black/45 text-gold-bright backdrop-blur"><Icon name="crosshair" size={27} /></div>
             <h1 className="font-display text-4xl font-bold uppercase tracking-[0.05em] text-parchment drop-shadow md:text-5xl">Battle Lab</h1>

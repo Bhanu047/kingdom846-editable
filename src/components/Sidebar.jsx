@@ -76,7 +76,7 @@ export default function Sidebar({ active, onNavigate, onLogin, onSignOut, user, 
 
             {n.id === 'guides' && (
               <button onClick={openBattleLab} className={`nav-item w-full text-left ${active === 'battle-lab' ? 'active nav-glow' : ''}`}>
-                <Icon name="crosshair" size={17} /><span>Battle Lab</span><BetaBadge />
+                <Icon name="crosshair" size={17} /><span>Battle Lab</span>
               </button>
             )}
           </Fragment>

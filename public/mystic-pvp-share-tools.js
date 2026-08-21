@@ -35,7 +35,7 @@
   }
 
   function addMystic() {
-    const found = panel('All Trials Ranked')
+    const found = panel('Eligible Total by Trial')
     if (!found?.section || found.section.querySelector('[data-k846-report-btn="mystic"]')) return
     const row = document.createElement('div')
     row.className = 'k846-mp-row'

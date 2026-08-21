@@ -110,25 +110,29 @@
 
   // Parses one screenshot's OCR text into BOTH sides at once.
   // Bonus Details rows show a real per-stat bonus next to a fixed
-  // reference/cap number that repeats identically on every line
+  // reference/cap number that repeats identically on EVERY line
   // ("+222.0%" for all 12 Infantry/Cavalry/Archer stats, verified against
   // real screenshots) — when OCR can only read the constant, blindly
   // keeping it makes every stat look identical, which is worse than
   // leaving the field blank: it presents a value that was never actually
-  // read as if it were real per-stat data. A value repeated across most of
-  // a side's percentage fields is that constant, not a coincidence.
+  // read as if it were real per-stat data. But real bonuses legitimately
+  // repeat too (a flat bonus source can land the same percentage on 3-4
+  // different stats, confirmed against a real screenshot), so a count-based
+  // threshold can't tell the two apart without also deleting genuine data.
+  // The real distinguishing signal is that the constant is the ONLY value
+  // present -- it replaces every real number OCR should have read, whereas
+  // a coincidental repeat always sits alongside other, different values on
+  // the same side.
   function stripRepeatedConstant(side) {
-    const tally = {}
+    const values = []
     TROOPS.forEach((t) => STATS.forEach((s) => {
       if (s.key === 'count') return
       const v = side[t.key][s.key]
-      if (v === undefined) return
-      tally[v] = (tally[v] || 0) + 1
+      if (v !== undefined) values.push(v)
     }))
+    if (values.length < 2 || new Set(values).size > 1) return
     TROOPS.forEach((t) => STATS.forEach((s) => {
-      if (s.key === 'count') return
-      const v = side[t.key][s.key]
-      if (v !== undefined && tally[v] >= 4) delete side[t.key][s.key]
+      if (s.key !== 'count') delete side[t.key][s.key]
     }))
   }
 

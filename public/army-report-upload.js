@@ -185,6 +185,8 @@
       #${MODAL_ID} .au-swap span{font-size:11px;color:rgba(241,231,206,.65)}
       #${MODAL_ID} .au-swap button{border:1px solid rgba(212,175,55,.28);border-radius:9px;padding:7px 11px;background:transparent;color:#d4af37;font-weight:800;font-size:10px;cursor:pointer;white-space:nowrap}
       #${MODAL_ID} .au-sides{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+      #${MODAL_ID} .au-raw-toggle{margin-top:14px;border:1px solid rgba(212,175,55,.2);border-radius:9px;padding:7px 11px;background:transparent;color:rgba(241,231,206,.55);font-weight:700;font-size:10px;cursor:pointer}
+      #${MODAL_ID} .au-raw-text{display:block;width:100%;margin-top:8px;height:160px;border:1px solid rgba(212,175,55,.2);border-radius:10px;background:rgba(0,0,0,.35);color:rgba(241,231,206,.75);font:11px/1.5 monospace;padding:10px;resize:vertical}
       #${MODAL_ID} .au-side-col h4{margin:0 0 6px;font-family:Cinzel,serif;font-size:12px;color:#ead393}
       #${MODAL_ID} .au-card{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-top:8px;padding:10px;border:1px solid rgba(212,175,59,.12);border-radius:12px}
       #${MODAL_ID} .au-card>b{grid-column:1/-1;font-family:Cinzel,serif;font-size:11px}
@@ -230,6 +232,8 @@
               <div class="au-side-col"><h4 data-side-label="mine">${mineHeading}</h4>${sideCard('mine')}</div>
               <div class="au-side-col"><h4 data-side-label="opponent">${opponentHeading}</h4>${sideCard('opponent')}</div>
             </div>
+            <button type="button" class="au-raw-toggle" data-action="raw-toggle">Show Raw Scanned Text</button>
+            <textarea class="au-raw-text" readonly hidden></textarea>
           </div>
         </div>
         <footer><button data-action="close" class="au-cancel">Cancel</button><button data-action="apply" class="au-apply" disabled>Apply Both Sides</button></footer>
@@ -305,6 +309,15 @@
       if (action === 'close') return close()
       if (action === 'choose') { e.preventDefault(); fileInput.click(); return }
       if (action === 'swap') { swapped = !swapped; renderValues(); return }
+      if (action === 'raw-toggle') {
+        const rawBox = root.querySelector('.au-raw-text'), btn = e.target.closest('[data-action]')
+        const showing = !rawBox.hidden
+        if (showing) { rawBox.hidden = true; btn.textContent = 'Show Raw Scanned Text'; return }
+        rawBox.value = entries.map((en, i) => `--- Screenshot ${i + 1}: ${en.file.name} ---\n${en.rawText || '(not scanned yet)'}`).join('\n\n')
+        rawBox.hidden = false
+        btn.textContent = 'Hide Raw Scanned Text'
+        return
+      }
       if (action === 'read') {
         if (!entries.length) return
         readBtn.disabled = true
@@ -314,7 +327,8 @@
           try {
             const Tesseract = await loadTesseract()
             const out = await Tesseract.recognize(entries[i].file, 'eng')
-            entries[i].parsed = parseArmyText(out?.data?.text || '')
+            entries[i].rawText = out?.data?.text || ''
+            entries[i].parsed = parseArmyText(entries[i].rawText)
             entries[i].status = 'ok'
             renderFiles()
           } catch (err) {

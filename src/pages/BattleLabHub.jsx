@@ -28,10 +28,6 @@ function readRequestedTool() {
   return null
 }
 
-function BetaBadge() {
-  return <span className="rounded-full border border-amber-300/30 bg-black/35 px-3 py-1 text-[9px] font-bold uppercase tracking-[0.18em] text-amber-100/90 backdrop-blur">Beta</span>
-}
-
 function ToolCard({ tool, onOpen }) {
   return (
     <button type="button" onClick={() => onOpen(tool.id)} className="group relative isolate min-h-[290px] overflow-hidden rounded-[24px] border border-gold/25 bg-ink text-left shadow-[0_18px_60px_rgba(0,0,0,.34)] transition duration-300 hover:-translate-y-1 hover:border-gold/60 hover:shadow-[0_22px_70px_rgba(212,175,55,.13)] md:min-h-[350px]">
@@ -40,7 +36,6 @@ function ToolCard({ tool, onOpen }) {
       <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/25 to-black/5" />
       <div className="absolute inset-x-0 top-0 flex items-start justify-between p-5 md:p-6">
         <div className="grid h-12 w-12 place-items-center rounded-2xl border border-gold/35 bg-black/45 text-gold-bright shadow-lg backdrop-blur"><Icon name={tool.icon} size={23} /></div>
-        <BetaBadge />
       </div>
       <div className="absolute inset-x-0 bottom-0 p-5 md:p-7">
         <h2 className="font-display text-3xl font-bold uppercase tracking-[0.04em] text-parchment drop-shadow md:text-4xl">{tool.title}</h2>
@@ -85,7 +80,6 @@ export default function BattleLabHub() {
             <div className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-2xl border border-gold/30 bg-black/45 text-gold-bright backdrop-blur"><Icon name="crosshair" size={27} /></div>
             <h1 className="font-display text-4xl font-bold uppercase tracking-[0.05em] text-parchment drop-shadow md:text-5xl">Battle Lab</h1>
             <p className="mx-auto mt-3 max-w-2xl text-sm text-parchment/75 drop-shadow md:text-base">Five tactical tools. Choose your mission.</p>
-            <div className="mt-4"><BetaBadge /></div>
           </div>
         </section>
         <section className="grid gap-4 md:grid-cols-2 md:gap-5">{TOOLS.map((item) => <ToolCard key={item.id} tool={item} onOpen={setActiveTool} />)}</section>
@@ -101,7 +95,7 @@ export default function BattleLabHub() {
         <div className={`absolute inset-0 bg-gradient-to-r ${tool.accent}`} />
         <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-black/20" />
         <div className="relative flex min-h-[250px] flex-col justify-between p-5 md:min-h-[310px] md:p-8">
-          <div className="flex items-center justify-between gap-3"><button type="button" onClick={() => setActiveTool(null)} className="inline-flex items-center gap-2 rounded-xl border border-gold/25 bg-black/45 px-3 py-2 text-xs font-bold uppercase tracking-[0.12em] text-parchment/80 backdrop-blur hover:border-gold/45 hover:text-parchment">← Battle Lab</button><BetaBadge /></div>
+          <div className="flex items-center justify-between gap-3"><button type="button" onClick={() => setActiveTool(null)} className="inline-flex items-center gap-2 rounded-xl border border-gold/25 bg-black/45 px-3 py-2 text-xs font-bold uppercase tracking-[0.12em] text-parchment/80 backdrop-blur hover:border-gold/45 hover:text-parchment">← Battle Lab</button></div>
           <div><div className="mb-3 grid h-12 w-12 place-items-center rounded-2xl border border-gold/35 bg-black/45 text-gold-bright backdrop-blur"><Icon name={tool.icon} size={23} /></div><h1 className="font-display text-4xl font-bold uppercase tracking-[0.04em] text-parchment drop-shadow md:text-5xl">{tool.title}</h1><p className="mt-2 max-w-2xl text-sm leading-relaxed text-parchment/80 drop-shadow md:text-base">{tool.description}</p></div>
         </div>
       </section>

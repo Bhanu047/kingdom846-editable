@@ -32,9 +32,9 @@ const TROOPS = [
 const MODULES = [
   { id: 'bear', label: 'Bear Optimizer', icon: 'target', status: 'Live', tone: 'verified' },
   { id: 'mystic', label: 'Mystic Trials', icon: 'sparkles', status: 'Live', tone: 'verified' },
-  { id: 'battle', label: 'Battle Simulator', icon: 'swords', status: 'Beta', tone: 'experimental' },
+  { id: 'battle', label: 'Battle Simulator', icon: 'swords', status: 'Live', tone: 'verified' },
   { id: 'heroes', label: 'Hero Synergy', icon: 'crown', status: 'Live', tone: 'community' },
-  { id: 'formation', label: 'Formation Optimizer', icon: 'layers', status: 'Beta', tone: 'experimental' },
+  { id: 'formation', label: 'Formation Optimizer', icon: 'layers', status: 'Live', tone: 'verified' },
 ]
 
 function toNumber(value, fallback = 0) {

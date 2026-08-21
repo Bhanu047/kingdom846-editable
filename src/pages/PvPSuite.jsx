@@ -28,14 +28,18 @@ function Select({ label, value, onChange, options, compact }) {
   return (
     <label className="block">
       <span className={`mb-1 block font-bold uppercase tracking-[.1em] text-parchment/40 ${compact ? 'text-[8px]' : 'text-[9px]'}`}>{label}</span>
-      <select value={value} onChange={(e) => onChange(e.target.value)} className={`w-full rounded-lg border border-gold/15 bg-ink font-semibold text-parchment outline-none ${compact ? 'px-2 py-1.5 text-xs' : 'px-2.5 py-2 text-sm'}`}>{options.map((o) => <option key={o}>{o}</option>)}</select>
+      <select value={value} onChange={(e) => onChange(e.target.value)} className={`w-full rounded-lg border border-gold/15 bg-ink font-semibold text-parchment outline-none ${compact ? 'px-2 py-1.5 text-xs' : 'px-2.5 py-2 text-sm'}`}>{options.map((o) => typeof o === 'object' ? <option key={o.value} value={o.value}>{o.label}</option> : <option key={o}>{o}</option>)}</select>
     </label>
   )
 }
 
-function ArmyForm({ army, setArmy, heroes, setHeroes, joiners, setJoiners, accent }) {
+function ArmyForm({ army, setArmy, heroes, setHeroes, joiners, setJoiners, tier, setTier, tg, setTg, accent }) {
   return (
     <div className="space-y-3">
+      <div className="grid grid-cols-2 gap-2">
+        <Select compact label="Troop Tier" value={tier} onChange={setTier} options={['T1-T6', 'T7-T9', 'T10', 'T11']} />
+        <Select compact label="True Gold" value={String(tg)} onChange={(v) => setTg(Number(v))} options={Array.from({ length: 9 }, (_, i) => ({ value: String(i), label: `TG${i}` }))} />
+      </div>
       {TROOPS.map((t) => (
         <div key={t.key} className="rounded-2xl border border-gold/10 bg-white/[.025] p-3.5">
           <div className="mb-2.5 flex items-center gap-2 text-xs font-bold text-parchment"><Icon name={t.icon} size={13} className={accent} />{t.label}</div>
@@ -148,9 +152,13 @@ export default function PvPSuite() {
   const [attacker, setAttacker] = useState(EMPTY_ARMY)
   const [attackerHeroes, setAttackerHeroes] = useState(EMPTY_HEROES)
   const [attackerJoiners, setAttackerJoiners] = useState(EMPTY_JOINERS)
+  const [attackerTier, setAttackerTier] = useState('T10')
+  const [attackerTg, setAttackerTg] = useState(0)
   const [defender, setDefender] = useState(EMPTY_ARMY)
   const [defenderHeroes, setDefenderHeroes] = useState(EMPTY_HEROES)
   const [defenderJoiners, setDefenderJoiners] = useState(EMPTY_JOINERS)
+  const [defenderTier, setDefenderTier] = useState('T10')
+  const [defenderTg, setDefenderTg] = useState(0)
   const [effects, setEffects] = useState(EMPTY_EFFECTS)
   const [result, setResult] = useState(null)
 
@@ -172,14 +180,14 @@ export default function PvPSuite() {
         <section className="panel p-5 md:p-6">
           <div className="eyebrow">Your Stats</div>
           <h3 className="mt-1 font-display text-xl font-bold text-parchment">Your Army</h3>
-          <p className="mt-1 text-[10px] leading-relaxed text-parchment/35">Lead Hero is for the record — if your Attack/Lethality already come from an in-game report, that hero's stat bonus is already inside those numbers. Joiners and Widget add on top.</p>
-          <div className="mt-4"><ArmyForm army={attacker} setArmy={setAttacker} heroes={attackerHeroes} setHeroes={setAttackerHeroes} joiners={attackerJoiners} setJoiners={setAttackerJoiners} accent="text-[#7f9ed6]" /></div>
+          <p className="mt-1 text-[10px] leading-relaxed text-parchment/35">Lead Hero and Troop Tier are for the record — if your Attack/Lethality already come from an in-game report, that hero's stat bonus is already inside those numbers. Joiners and Widget add on top.</p>
+          <div className="mt-4"><ArmyForm army={attacker} setArmy={setAttacker} heroes={attackerHeroes} setHeroes={setAttackerHeroes} joiners={attackerJoiners} setJoiners={setAttackerJoiners} tier={attackerTier} setTier={setAttackerTier} tg={attackerTg} setTg={setAttackerTg} accent="text-[#7f9ed6]" /></div>
         </section>
         <section className="panel p-5 md:p-6">
           <div className="eyebrow">Opponent Stats</div>
           <h3 className="mt-1 font-display text-xl font-bold text-parchment">Enemy Army</h3>
           <p className="mt-1 text-[10px] leading-relaxed text-parchment/35">Same rule applies here — enter what the opponent's report already shows, then their Joiners and Widget on top.</p>
-          <div className="mt-4"><ArmyForm army={defender} setArmy={setDefender} heroes={defenderHeroes} setHeroes={setDefenderHeroes} joiners={defenderJoiners} setJoiners={setDefenderJoiners} accent="text-[#c8655a]" /></div>
+          <div className="mt-4"><ArmyForm army={defender} setArmy={setDefender} heroes={defenderHeroes} setHeroes={setDefenderHeroes} joiners={defenderJoiners} setJoiners={setDefenderJoiners} tier={defenderTier} setTier={setDefenderTier} tg={defenderTg} setTg={setDefenderTg} accent="text-[#c8655a]" /></div>
         </section>
       </div>
 

@@ -326,7 +326,7 @@
     if (document.getElementById('k846-au-btn-style')) return
     const s = document.createElement('style')
     s.id = 'k846-au-btn-style'
-    s.textContent = `.k846-au-upload-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;width:100%;max-width:360px;margin-top:.8rem;border:1px solid rgba(226,199,125,.35);border-radius:.75rem;padding:.7rem 1rem;background:linear-gradient(180deg,rgba(226,181,48,.2),rgba(173,134,32,.14));color:#f2dfaa;font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:.06em;cursor:pointer}`
+    s.textContent = `.k846-au-upload-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;width:100%;max-width:360px;margin-top:.8rem;border:1px solid rgba(226,199,125,.35);border-radius:.75rem;padding:.7rem 1rem;background:linear-gradient(180deg,rgba(226,181,48,.2),rgba(173,134,32,.14));color:#f2dfaa;font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:.06em;cursor:pointer}.k846-au-upload-caption{max-width:360px;margin-top:.45rem;font-size:10px;line-height:1.5;color:rgba(241,231,206,.4)}.k846-au-upload-caption b{color:rgba(253,230,138,.75)}`
     document.head.appendChild(s)
   }
 
@@ -342,9 +342,11 @@
       btn.dataset.k846Au = tool.introHeading
       btn.textContent = 'Upload Battle Report'
       btn.addEventListener('click', (e) => { e.preventDefault(); open() })
+      const caption = document.createElement('div')
+      caption.className = 'k846-au-upload-caption'
+      caption.innerHTML = '<b>Make sure the report shows troop numbers, not percentages</b> — tap the switch icon on Troop Power Comparison if it\'s showing bars. PNG, JPG or WEBP, multiple screenshots allowed.'
       const p = section.querySelector('p')
-      if (p) p.insertAdjacentElement('afterend', btn)
-      else section.appendChild(btn)
+      if (p) { p.insertAdjacentElement('afterend', caption); p.insertAdjacentElement('afterend', btn) } else { section.appendChild(btn); section.appendChild(caption) }
     }
   }
 

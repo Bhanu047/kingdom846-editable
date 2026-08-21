@@ -363,5 +363,15 @@ export function optimizeMysticComposition({ yourArmy, opponentArmy, sparsity = 0
   }
 
   candidates.sort((a, b) => b.margin - a.margin)
-  return { candidates, best: candidates[0] || null, totalYourTroops }
+
+  // A 50/25/25 split shows up constantly as the "obvious" default guess —
+  // running it alongside the search gives a concrete before/after instead of
+  // just the optimum in isolation.
+  const classicalComposition = { infantry: .5, cavalry: .25, archers: .25 }
+  const classicalArmy = {}
+  TYPES.forEach((type) => { classicalArmy[type] = { ...yours[type], count: Math.round(totalYourTroops * classicalComposition[type]) } })
+  const classicalResult = simulateT10Battle({ attacker: classicalArmy, defender: opponent, maxRounds })
+  const classical = { composition: classicalComposition, result: classicalResult, margin: classicalResult.remainingA - classicalResult.remainingD }
+
+  return { candidates, best: candidates[0] || null, classical, totalYourTroops }
 }

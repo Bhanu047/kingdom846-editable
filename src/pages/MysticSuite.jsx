@@ -93,6 +93,23 @@ export default function MysticSuite() {
     setResult(null)
   }
 
+  // Runs a fast, wide-open search first, then narrows the fraction bounds
+  // to a window around whatever that pass found — the same idea as
+  // frakinator auto-narrowing its own bounds before the real search, without
+  // guessing at its exact heuristic (which isn't public).
+  const suggestBounds = () => {
+    if (!ready) return
+    const yourArmy = Object.fromEntries(TROOPS.map((t) => [t.key, { count: n(yours[t.key].count), attack: n(yours[t.key].attack), lethality: n(yours[t.key].lethality), defense: n(yours[t.key].defense), health: n(yours[t.key].health) }]))
+    const opponentArmy = Object.fromEntries(TROOPS.map((t) => [t.key, { count: n(opponent[t.key].count), attack: n(opponent[t.key].attack), lethality: n(opponent[t.key].lethality), defense: n(opponent[t.key].defense), health: n(opponent[t.key].health) }]))
+    const coarse = optimizeMysticComposition({ yourArmy, opponentArmy, sparsity: 0.1 })
+    if (!coarse.best) return
+    const window = 0.2
+    setMinInfantry(String(Math.round(Math.max(0, coarse.best.composition.infantry - window) * 100)))
+    setMaxInfantry(String(Math.round(Math.min(1, coarse.best.composition.infantry + window) * 100)))
+    setMinCavalry(String(Math.round(Math.max(0, coarse.best.composition.cavalry - window) * 100)))
+    setMaxCavalry(String(Math.round(Math.min(1, coarse.best.composition.cavalry + window) * 100)))
+  }
+
   return (
     <div className="space-y-5">
       <section className="panel p-4 md:p-5">
@@ -136,7 +153,12 @@ export default function MysticSuite() {
             <span className="mt-1 block text-[10px] leading-relaxed text-parchment/35">Grid step between compositions tested. 0.05 is a good start; use 0.025 for a finer (slower) search.</span>
           </label>
         </div>
-        <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-4 flex items-center justify-between gap-3">
+          <span className="text-[10px] font-bold uppercase tracking-[.12em] text-parchment/45">Search Bounds</span>
+          <button type="button" onClick={suggestBounds} disabled={!ready} className="inline-flex items-center gap-1.5 rounded-lg border border-gold/20 bg-gold/[.04] px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-gold-bright/80 hover:border-gold/40 disabled:opacity-30"><Icon name="sparkles" size={11} /> Suggest Bounds</button>
+        </div>
+        <p className="mt-1 text-[10px] leading-relaxed text-parchment/35">Runs a quick wide-open pass first, then narrows Min/Max below to a window around whatever it finds — same idea as frakinator auto-narrowing its own search, run explicitly here so you can see it happen.</p>
+        <div className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <label className="block">
             <span className="mb-1 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[.12em] text-parchment/45">Min Infantry</span>
             <div className="relative"><input type="number" min={0} max={100} step={1} value={minInfantry} onChange={(e) => setMinInfantry(e.target.value)} className="w-full rounded-xl border border-gold/15 bg-ink/70 px-3 py-2.5 pr-8 text-sm font-semibold text-parchment outline-none focus:border-gold/45" /><span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-gold/45">%</span></div>
@@ -175,6 +197,20 @@ export default function MysticSuite() {
                 <div className="font-display text-2xl font-bold">{result.best.result.outcome === 'attacker' ? 'You Win' : result.best.result.outcome === 'defender' ? 'Still Loses' : 'Even Fight'}</div>
                 <div className="mt-1 text-xs text-parchment/50">Best split: {pct(result.best.composition.infantry)} Infantry / {pct(result.best.composition.cavalry)} Cavalry / {pct(result.best.composition.archers)} Archers · margin {result.best.margin >= 0 ? '+' : ''}{fmt(result.best.margin)} troops</div>
               </div>
+              {result.classical && (
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="rounded-2xl border border-gold/10 bg-white/[.02] p-4">
+                    <div className="text-[9px] uppercase tracking-wider text-parchment/35">Classical 50/25/25 (the default guess)</div>
+                    <div className={`mt-1 font-mono text-lg font-bold ${result.classical.margin >= 0 ? 'text-emerald-300' : 'text-red-300'}`}>{result.classical.margin >= 0 ? '+' : ''}{fmt(result.classical.margin)}</div>
+                    <div className="mt-0.5 text-[10px] text-parchment/40">{result.classical.result.outcome === 'attacker' ? 'wins' : result.classical.result.outcome === 'defender' ? 'loses' : 'draw'}</div>
+                  </div>
+                  <div className="rounded-2xl border border-gold/20 bg-gold/[.04] p-4">
+                    <div className="text-[9px] uppercase tracking-wider text-parchment/35">Optimal split found above</div>
+                    <div className={`mt-1 font-mono text-lg font-bold ${result.best.margin >= 0 ? 'text-emerald-300' : 'text-red-300'}`}>{result.best.margin >= 0 ? '+' : ''}{fmt(result.best.margin)}</div>
+                    <div className="mt-0.5 text-[10px] text-gold-bright/70">{result.best.margin - result.classical.margin >= 0 ? '+' : ''}{fmt(result.best.margin - result.classical.margin)} troops vs. classical</div>
+                  </div>
+                </div>
+              )}
               <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
                 <div className="rounded-2xl border border-gold/10 bg-white/[.025] p-4"><div className="text-[9px] uppercase tracking-wider text-parchment/35">Infantry</div><div className="mt-1 font-mono text-xl font-bold text-parchment">{fmt(result.totalYourTroops * result.best.composition.infantry)}</div></div>
                 <div className="rounded-2xl border border-gold/10 bg-white/[.025] p-4"><div className="text-[9px] uppercase tracking-wider text-parchment/35">Cavalry</div><div className="mt-1 font-mono text-xl font-bold text-parchment">{fmt(result.totalYourTroops * result.best.composition.cavalry)}</div></div>

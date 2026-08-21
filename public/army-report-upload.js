@@ -504,7 +504,7 @@
     if (document.getElementById('k846-au-btn-style')) return
     const s = document.createElement('style')
     s.id = 'k846-au-btn-style'
-    s.textContent = `.k846-au-upload-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;width:100%;max-width:360px;margin-top:.8rem;border:1px solid rgba(226,199,125,.35);border-radius:.75rem;padding:.7rem 1rem;background:linear-gradient(180deg,rgba(226,181,48,.2),rgba(173,134,32,.14));color:#f2dfaa;font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:.06em;cursor:pointer}.k846-au-upload-caption{max-width:360px;margin-top:.45rem;font-size:10px;line-height:1.5;color:rgba(241,231,206,.4)}.k846-au-upload-caption b{color:rgba(253,230,138,.75)}`
+    s.textContent = `.k846-au-upload-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;width:100%;max-width:360px;margin-top:.8rem;border:1px solid rgba(226,199,125,.35);border-radius:.75rem;padding:.7rem 1rem;background:linear-gradient(180deg,rgba(226,181,48,.2),rgba(173,134,32,.14));color:#f2dfaa;font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:.06em;cursor:pointer}.k846-au-upload-caption{max-width:360px;margin-top:.45rem;font-size:10px;line-height:1.5;color:rgba(241,231,206,.4)}.k846-au-upload-caption b{color:rgba(253,230,138,.75)}.k846-au-upload-img{display:block;width:100%;max-width:360px;margin-top:.6rem;border:1px solid rgba(212,175,55,.22);border-radius:.75rem;overflow:hidden}`
     document.head.appendChild(s)
   }
 
@@ -523,8 +523,13 @@
       const caption = document.createElement('div')
       caption.className = 'k846-au-upload-caption'
       caption.innerHTML = '<b>Upload both sections</b>: Stat Bonuses (for Attack/Lethality/Defense/Health) and Troop Power Comparison switched to numbers, not bars — tap the switch icon top-right (for Troops). PNG, JPG or WEBP, multiple screenshots allowed.'
+      const img = document.createElement('img')
+      img.className = 'k846-au-upload-img'
+      img.src = '/assets/mystic-trial-troop-toggle.webp'
+      img.alt = 'Troop Power Comparison panel with the switch-to-numbers icon circled top-right'
+      img.loading = 'lazy'
       const p = section.querySelector('p')
-      if (p) { p.insertAdjacentElement('afterend', caption); p.insertAdjacentElement('afterend', btn) } else { section.appendChild(btn); section.appendChild(caption) }
+      if (p) { p.insertAdjacentElement('afterend', caption); p.insertAdjacentElement('afterend', btn); caption.insertAdjacentElement('afterend', img) } else { section.appendChild(btn); section.appendChild(caption); section.appendChild(img) }
     }
   }
 

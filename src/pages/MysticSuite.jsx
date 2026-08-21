@@ -64,7 +64,7 @@ export function FormationRow({ composition, sub, margin, max, active, total }) {
         <span className={`font-mono text-sm font-bold ${margin >= 0 ? 'text-emerald-300' : 'text-red-300'}`}>{pct >= 0 ? '+' : ''}{pct.toFixed(1)}%</span>
       </div>
       <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-black/25">
-        <div className={`h-full rounded-full ${margin >= 0 ? 'bg-gradient-to-r from-emerald-400/50 to-emerald-300' : 'bg-gradient-to-r from-red-400/50 to-red-300'}`} style={{ width: reveal ? `${max > 0 ? Math.max(2, Math.abs(margin) / max * 100) : 0}%` : '0%', transition: 'width 1s cubic-bezier(.16,1,.3,1)' }} />
+        <div className={`h-full rounded-full ${margin >= 0 ? 'bg-gradient-to-r from-emerald-400/50 to-emerald-300' : 'bg-gradient-to-r from-red-400/50 to-red-300'}`} style={{ width: reveal ? `${max > 0 ? Math.max(2, Math.abs(margin) / max * 100) : 0}%` : '0%', transition: 'width 1s cubic-bezier(.16,1,.3,1)', boxShadow: margin >= 0 ? '0 0 6px rgba(110,231,183,.55)' : '0 0 6px rgba(252,165,165,.55)' }} />
       </div>
     </div>
   )
@@ -84,7 +84,7 @@ export function VsArmyCards({ yourSide, enemySide, yourLabel = 'YOUR FORCE', ene
           {TROOPS.map((t, i) => (
             <div key={t.key} className={`flex items-center gap-2 ${align === 'text-right' ? 'flex-row-reverse' : ''}`}>
               <Icon name={t.icon} size={12} style={{ color: TROOP_COLORS[t.key] }} />
-              <div className="h-2 flex-1 overflow-hidden rounded-full bg-black/30"><div className="h-full rounded-full" style={{ width: reveal ? `${total > 0 ? Math.max(0, side[t.key]) / total * 100 : 0}%` : '0%', background: TROOP_COLORS[t.key], transition: `width 1s cubic-bezier(.16,1,.3,1) ${i * 100}ms` }} /></div>
+              <div className="h-2 flex-1 overflow-hidden rounded-full bg-black/30"><div className="h-full rounded-full" style={{ width: reveal ? `${total > 0 ? Math.max(0, side[t.key]) / total * 100 : 0}%` : '0%', background: TROOP_COLORS[t.key], transition: `width 1s cubic-bezier(.16,1,.3,1) ${i * 100}ms`, boxShadow: `0 0 6px ${TROOP_COLORS[t.key]}88` }} /></div>
               <span className="w-24 shrink-0 font-mono text-[10px] text-parchment/55" style={{ textAlign: align === 'text-right' ? 'left' : 'right' }}>{fmt(side[t.key])} <span className="text-parchment/35">({total > 0 ? Math.round(Math.max(0, side[t.key]) / total * 100) : 0}%)</span></span>
             </div>
           ))}

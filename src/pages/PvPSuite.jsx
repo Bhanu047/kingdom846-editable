@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useId, useMemo, useState } from 'react'
 import Icon from '../components/Icon'
 import { calculateHeroSynergy, optimizeMysticComposition, simulateT10Battle } from '../lib/combat/battleLabEngine'
 import { HUNT_JOINER_HEROES, applyJoinerBonuses } from '../lib/combat/huntImpact'
@@ -109,20 +109,43 @@ function OutcomeBanner({ outcome, attackerLeft, defenderLeft, rounds }) {
 
 function RoundChart({ rounds }) {
   const reveal = useReveal()
+  const gid = useId()
   if (!rounds.length) return null
-  const W = 760, H = 220, L = 48, R = 18, T = 20, B = 34
+  const W = 760, H = 260, L = 48, R = 18, T = 20, B = 40, base = H - B
+  const last = rounds.length - 1
   const maxV = Math.max(...rounds.map((r) => Math.max(r.attackerRemaining, r.defenderRemaining)), 1)
-  const x = (i) => L + i / Math.max(1, rounds.length - 1) * (W - L - R)
+  const x = (i) => L + i / Math.max(1, last) * (W - L - R)
   const y = (v) => H - B - v / maxV * (H - T - B)
-  const path = (key) => smoothPath(rounds.map((r, i) => ({ x: x(i), y: y(r[key]) })))
+  const linePath = (key) => smoothPath(rounds.map((r, i) => ({ x: x(i), y: y(r[key]) })))
+  const areaPath = (key) => `${linePath(key)} L${x(last)},${base} L${x(0)},${base} Z`
+  const ticks = [0, Math.round(last / 2), last]
   return (
     <div className="rounded-2xl border border-gold/15 bg-[#07101e] p-4">
       <div className="text-[9px] font-bold uppercase tracking-[.15em] text-gold/60">Troops Remaining by Round</div>
-      <svg viewBox={`0 0 ${W} ${H}`} className="mt-2 w-full">
-        {[0, .25, .5, .75, 1].map((t) => <line key={t} x1={L} x2={W - R} y1={T + t * (H - T - B)} y2={T + t * (H - T - B)} stroke="rgba(226,199,125,.10)" />)}
-        <path d={path('attackerRemaining')} pathLength="1" strokeDasharray="1" strokeDashoffset={reveal ? 0 : 1} fill="none" stroke="#7f9ed6" strokeWidth="3" style={{ transition: 'stroke-dashoffset 1.1s cubic-bezier(.16,1,.3,1)', filter: 'drop-shadow(0 0 4px #7f9ed655)' }} />
-        <path d={path('defenderRemaining')} pathLength="1" strokeDasharray="1" strokeDashoffset={reveal ? 0 : 1} fill="none" stroke="#c8655a" strokeWidth="3" style={{ transition: 'stroke-dashoffset 1.1s cubic-bezier(.16,1,.3,1) .15s', filter: 'drop-shadow(0 0 4px #c8655a55)' }} />
-      </svg>
+      <div className="relative mt-2">
+        <svg viewBox={`0 0 ${W} ${H}`} className="w-full">
+          <defs>
+            <linearGradient id={`${gid}-a`} x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#7f9ed6" stopOpacity=".5"/><stop offset="100%" stopColor="#7f9ed6" stopOpacity="0"/></linearGradient>
+            <linearGradient id={`${gid}-d`} x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#c8655a" stopOpacity=".42"/><stop offset="100%" stopColor="#c8655a" stopOpacity="0"/></linearGradient>
+          </defs>
+          {[0, .25, .5, .75, 1].map((t) => <line key={t} x1={L} x2={W - R} y1={T + t * (H - T - B)} y2={T + t * (H - T - B)} stroke="rgba(226,199,125,.10)" />)}
+          <g style={{ transformOrigin: `${L}px ${base}px`, transform: reveal ? 'scaleX(1)' : 'scaleX(0)', transition: 'transform 1.1s cubic-bezier(.16,1,.3,1)' }}>
+            <path d={areaPath('attackerRemaining')} fill={`url(#${gid}-a)`} />
+            <path d={areaPath('defenderRemaining')} fill={`url(#${gid}-d)`} />
+          </g>
+          <path d={linePath('attackerRemaining')} pathLength="1" strokeDasharray="1" strokeDashoffset={reveal ? 0 : 1} fill="none" stroke="#7f9ed6" strokeWidth="3" style={{ transition: 'stroke-dashoffset 1.1s cubic-bezier(.16,1,.3,1)', filter: 'drop-shadow(0 0 5px #7f9ed680)' }} />
+          <path d={linePath('defenderRemaining')} pathLength="1" strokeDasharray="1" strokeDashoffset={reveal ? 0 : 1} fill="none" stroke="#c8655a" strokeWidth="3" style={{ transition: 'stroke-dashoffset 1.1s cubic-bezier(.16,1,.3,1) .15s', filter: 'drop-shadow(0 0 5px #c8655a80)' }} />
+          <g style={{ opacity: reveal ? 1 : 0, transition: 'opacity .4s ease 1s' }}>
+            <circle cx={x(last)} cy={y(rounds[last].attackerRemaining)} r="9" fill="#7f9ed6" opacity=".22" style={{ animation: 'glow-breathe 2.2s ease-in-out infinite' }} />
+            <circle cx={x(last)} cy={y(rounds[last].attackerRemaining)} r="4.5" fill="#c7d7f5" stroke="#07101e" strokeWidth="2" />
+            <circle cx={x(last)} cy={y(rounds[last].defenderRemaining)} r="9" fill="#c8655a" opacity=".22" style={{ animation: 'glow-breathe 2.2s ease-in-out infinite .3s' }} />
+            <circle cx={x(last)} cy={y(rounds[last].defenderRemaining)} r="4.5" fill="#f2c4bc" stroke="#07101e" strokeWidth="2" />
+          </g>
+        </svg>
+        {/* Plain HTML labels, not SVG <text> — html2canvas 1.4.1 renders SVG
+            text (and the whole SVG along with it) blank in exported reports. */}
+        {ticks.map((i) => <div key={i} className="pointer-events-none absolute -translate-x-1/2 whitespace-nowrap text-[10px] font-semibold text-parchment/40" style={{ left: `${x(i) / W * 100}%`, top: `${(H - 14) / H * 100}%` }}>Round {i + 1}</div>)}
+      </div>
       <div className="mt-1 flex justify-center gap-4 text-[10px]"><span className="text-[#7f9ed6]">● Your Army</span><span className="text-[#c8655a]">● Enemy Army</span></div>
     </div>
   )

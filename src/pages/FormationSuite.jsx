@@ -51,7 +51,7 @@ function FormationCards({ troops }) {
             </div>
           </div>
           <div className="mt-3 h-2 overflow-hidden rounded-full bg-ink/80">
-            <div className="h-full rounded-full bg-gradient-to-r from-gold/55 to-gold-bright" style={{ width: reveal ? `${Math.max(2, Math.min(100, troop.percent))}%` : '0%', transition: `width 1s cubic-bezier(.16,1,.3,1) ${i * 80}ms` }} />
+            <div className="h-full rounded-full bg-gradient-to-r from-gold/55 to-gold-bright" style={{ width: reveal ? `${Math.max(2, Math.min(100, troop.percent))}%` : '0%', transition: `width 1s cubic-bezier(.16,1,.3,1) ${i * 80}ms`, boxShadow: '0 0 8px rgba(226,181,48,.5)' }} />
           </div>
         </div>
       ))}

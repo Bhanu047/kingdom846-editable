@@ -107,7 +107,7 @@ function Risk({mean,sigma}){
   const chance=t=>clamp((1-.5*(1+erf((t-mean)/(sigma*Math.SQRT2))))*100,0,100),thresholds=[.85,.95,1.05,1.15,1.25].map(v=>mean*v)
   return <div className="rounded-2xl border border-gold/15 bg-[#07101e] p-4">
     <div className="text-[9px] font-bold uppercase tracking-[.15em] text-gold/60">Percentile / Risk — Chance to Exceed</div>
-    <div className="mt-4 space-y-3">{thresholds.map((t,i)=>{const c=chance(t);return <div key={t}><div className="mb-1 flex justify-between text-xs"><span className="text-parchment/55">Above {fmt(t)}</span><span className="font-mono font-bold text-gold-bright">{c.toFixed(1)}%</span></div><div className="h-2 overflow-hidden rounded-full bg-white/5"><div className="h-full rounded-full bg-gold/70" style={{width:reveal?`${c}%`:'0%',transition:`width 1s cubic-bezier(.16,1,.3,1) ${i*80}ms`}}/></div></div>})}</div>
+    <div className="mt-4 space-y-3">{thresholds.map((t,i)=>{const c=chance(t);return <div key={t}><div className="mb-1 flex justify-between text-xs"><span className="text-parchment/55">Above {fmt(t)}</span><span className="font-mono font-bold text-gold-bright">{c.toFixed(1)}%</span></div><div className="h-2 overflow-hidden rounded-full bg-white/5"><div className="h-full rounded-full bg-gradient-to-r from-gold/70 to-gold-bright" style={{width:reveal?`${c}%`:'0%',transition:`width 1s cubic-bezier(.16,1,.3,1) ${i*80}ms`,boxShadow:'0 0 8px rgba(226,181,48,.55)'}}/></div></div>})}</div>
   </div>
 }
 
@@ -116,7 +116,7 @@ function CompareBars({current,optimal}){
   const max=Math.max(current,optimal,1)
   return <div className="rounded-2xl border border-gold/15 bg-[#07101e] p-4">
     <div className="text-[9px] font-bold uppercase tracking-[.15em] text-gold/60">Current vs Optimal Summary</div>
-    <div className="mt-5 space-y-5">{[['Current',current,'bg-[#7f9ed6]'],['Optimal',optimal,'bg-gold/80']].map(([l,v,c])=><div key={l}><div className="mb-2 flex justify-between"><span className="text-xs text-parchment/60">{l}</span><span className="font-mono font-bold text-parchment">{fmt(v)}</span></div><div className="h-5 overflow-hidden rounded bg-white/5"><div className={`h-full ${c}`} style={{width:reveal?`${v/max*100}%`:'0%',transition:'width 1.1s cubic-bezier(.16,1,.3,1)'}}/></div></div>)}</div>
+    <div className="mt-5 space-y-5">{[['Current',current,'bg-[#7f9ed6]','rgba(127,158,214,.55)'],['Optimal',optimal,'bg-gold/80','rgba(226,181,48,.55)']].map(([l,v,c,glow])=><div key={l}><div className="mb-2 flex justify-between"><span className="text-xs text-parchment/60">{l}</span><span className="font-mono font-bold text-parchment">{fmt(v)}</span></div><div className="h-5 overflow-hidden rounded bg-white/5"><div className={`h-full ${c}`} style={{width:reveal?`${v/max*100}%`:'0%',transition:'width 1.1s cubic-bezier(.16,1,.3,1)',boxShadow:`0 0 10px ${glow}`}}/></div></div>)}</div>
   </div>
 }
 

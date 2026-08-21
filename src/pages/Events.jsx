@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Panel, Pill, ArtImage, ArtCard } from '../components/ui'
 import { RoyalSectionHeader } from '../components/VisualElements'
-import { timeline, countdownTo } from '../data/kingdom'
+import { timeline, countdownTo, hasPassed } from '../data/kingdom'
 import { useSiteData } from '../context/SiteDataContext'
 
 // Re-render every second so all countdowns tick live (no manual refresh needed)
@@ -30,7 +30,7 @@ function resolveEventArt(item) {
 
 function buildUpcoming(events) {
   return [
-    ...timeline.filter((t) => t.status === 'upcoming' || t.status === 'future').map((t, i) => ({
+    ...timeline.filter((t) => (t.status === 'upcoming' || t.status === 'future') && !hasPassed(t.date)).map((t, i) => ({
       // Two milestones legitimately launch on the same date (e.g. a hero
       // generation and its matching pet generation both on 2026-08-17) --
       // date alone isn't a unique key, so fold in the loop index too.

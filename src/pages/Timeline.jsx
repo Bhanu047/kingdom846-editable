@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Panel, Pill, ArtImage } from '../components/ui'
 import Icon from '../components/Icon'
-import { timeline, countdownTo, kingdom } from '../data/kingdom'
+import { timeline, countdownTo, kingdom, hasPassed } from '../data/kingdom'
 
 const catTone = {
   Heroes: 'gold', Pets: 'green', Truegold: 'blue', Feature: 'muted', PvP: 'red', Anniversary: 'gold'
@@ -23,11 +23,11 @@ export default function Timeline() {
 
   const items = timeline.filter((t) => {
     if (filter === 'All') return true
-    if (filter === 'Upcoming') return t.status !== 'past'
+    if (filter === 'Upcoming') return t.status !== 'past' && !hasPassed(t.date)
     return t.category === filter
   })
 
-  const next = timeline.find((t) => t.status !== 'past')
+  const next = timeline.find((t) => t.status !== 'past' && !hasPassed(t.date))
 
   return (
     <div className="space-y-6">
@@ -78,7 +78,8 @@ export default function Timeline() {
           <div className="absolute left-[26px] top-4 bottom-4 w-px bg-gradient-to-b from-gold/40 via-gold/20 to-transparent sm:left-[30px]" />
           <ul className="space-y-1">
             {items.map((t, i) => {
-              const cd = t.status !== 'past' ? countdownTo(t.date) : null
+              const isPast = t.status === 'past' || hasPassed(t.date)
+              const cd = !isPast ? countdownTo(t.date) : null
               return (
                 <li key={i} className="relative flex gap-4 py-2.5 sm:gap-5">
                   <div className="relative z-10 mt-0.5">
@@ -90,9 +91,9 @@ export default function Timeline() {
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="text-sm font-semibold text-parchment">{t.name}</span>
                       <Pill tone={catTone[t.category] || 'muted'}>{t.category}</Pill>
-                      {t.status === 'predicted' && <Pill tone="muted">Predicted</Pill>}
-                      {t.status === 'upcoming' && <Pill tone="gold">Upcoming</Pill>}
-                      {t.status === 'future' && <Pill tone="blue">Future</Pill>}
+                      {!isPast && t.status === 'predicted' && <Pill tone="muted">Predicted</Pill>}
+                      {!isPast && t.status === 'upcoming' && <Pill tone="gold">Upcoming</Pill>}
+                      {!isPast && t.status === 'future' && <Pill tone="blue">Future</Pill>}
                     </div>
                     <div className="mt-0.5 text-xs text-parchment/40">
                       {new Date(t.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}

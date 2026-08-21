@@ -276,12 +276,10 @@ export const guides = [
   }
 ]
 
-// Featured upcoming events — derived from the real timeline.
-export const events = [
-  { id: 'kvk-castle', title: 'KvK Castle Battle', date: '2026-08-15', category: 'Castle Battle', featured: true, art: './assets/art-kvk-prep.png', desc: 'The realm clashes in the KvK Castle Battle for the crown stronghold. The king changes every 14 days after this battle.' },
-  { id: 'swordland', title: 'Swordland Summit Championship', date: '2026-08-16', time: '12:00 UTC', category: 'Castle Battle', featured: true, art: './assets/art-castle-battle.png', desc: 'The kingdom\'s premier castle battle championship. Rallies clash for supremacy — kicks off at 12:00 UTC.' },
-  { id: 'anniversary', title: 'First Anniversary', date: '2026-08-16', category: 'Anniversary', featured: true, art: './assets/art-season-opening.png', desc: 'Kingdom 846 celebrates one year. Anniversary rewards, kingdom-wide buff, and a ceremonial gathering at the capital.' }
-]
+// Featured upcoming events — derived from the real timeline. Kept empty
+// until fresh dated events are available; stale past-dated entries should
+// never sit here since buildUpcoming() surfaces them as "upcoming".
+export const events = []
 
 // Kingdom milestone timeline — sourced from kingshotoptimizer.com/kingdom-timeline/846
 export const timeline = [
@@ -317,9 +315,9 @@ export const timeline = [
   { name: '4th Master Unlocked (Cassia)', date: '2026-05-25', category: 'Feature', status: 'past' },
   { name: 'Truegold 8 — Tempered Truegold', date: '2026-06-22', category: 'Truegold', status: 'past' },
   { name: '5th & 6th Masters Unlocked', date: '2026-07-20', category: 'Feature', status: 'past' },
-  { name: 'Generation 6 Heroes (Triton, Sophia, Yang)', date: '2026-08-17', category: 'Heroes', status: 'upcoming' },
-  { name: 'Generation 6 Pets (Regal White Lion, Ironclad War Elephant)', date: '2026-08-17', category: 'Pets', status: 'upcoming' },
-  { name: 'First Flamedragon Tyrant Competition', date: '2026-08-30', category: 'PvP', status: 'upcoming', art: './assets/art-fire-tyrant.png' },
+  { name: 'Generation 6 Heroes (Triton, Sophia, Yang)', date: '2026-08-17', category: 'Heroes', status: 'past' },
+  { name: 'Generation 6 Pets (Regal White Lion, Ironclad War Elephant)', date: '2026-08-17', category: 'Pets', status: 'past' },
+  { name: 'First Flamedragon Tyrant Competition', date: '2026-08-30', category: 'PvP', status: 'upcoming', art: './assets/art-fire-tyrant.png', featured: true },
   { name: 'Generation 7 Heroes (Wee & Woo, Ava, Charles)', date: '2026-11-09', category: 'Heroes', status: 'future' },
   { name: 'Generation 7 Pets (Ironclad War Bear)', date: '2026-11-09', category: 'Pets', status: 'future' },
   { name: 'Advanced Truegold Research', date: '2026-12-21', category: 'Truegold', status: 'future' },
@@ -403,6 +401,15 @@ export function countdownTo(iso) {
   const mins = Math.floor((diff % 3600000) / 60000)
   const secs = Math.floor((diff % 60000) / 1000)
   return { days, hours, mins, secs, total: diff }
+}
+
+// Whether a timeline/event date has actually occurred yet. Milestone `status`
+// strings ('upcoming', 'future', 'predicted') are hand-authored and go stale
+// the moment their date passes -- this is the ground truth every consumer
+// should defer to instead of trusting a frozen label, the same way
+// countdownTo/nextRecurringDate never freeze once their anchor date passes.
+export function hasPassed(iso) {
+  return new Date(iso + 'T00:00:00').getTime() < Date.now()
 }
 
 // Shared alliance banner lookup (used by Dashboard, Rankings, Transfer, etc.)

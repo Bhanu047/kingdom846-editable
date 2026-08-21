@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Panel, SectionTitle, Pill, ArtImage } from '../components/ui'
 import Icon from '../components/Icon'
 import { RoyalSectionHeader, GraphicTile } from '../components/VisualElements'
-import { kingdom, countdownTo, nextRecurringDate, BANNERS } from '../data/kingdom'
+import { kingdom, countdownTo, nextRecurringDate, hasPassed, timeline, BANNERS } from '../data/kingdom'
 import { tracker846 } from '../data/tracker846'
 import { apiJson } from '../lib/api'
 import { useAuth } from '../context/AuthContext'
@@ -39,7 +39,12 @@ export default function Dashboard({ onNavigate }) {
   const events = data.events
   const isAdmin = user?.role === 'admin'
   useNow()
-  const featured = events[0]
+  // Upcoming Event card: prefer a curated featured event, then fall back to
+  // the nearest still-upcoming timeline milestone so this never goes stale
+  // once a specific dated event passes.
+  const upcomingTimeline = timeline.filter((t) => (t.status === 'upcoming' || t.status === 'future') && !hasPassed(t.date))
+  const nextMilestone = upcomingTimeline.find((t) => t.featured) || upcomingTimeline[0]
+  const featured = events[0] || (nextMilestone && { title: nextMilestone.name, category: nextMilestone.category, art: nextMilestone.art || './assets/art-kvk-prep.png', date: nextMilestone.date })
   const cd = featured ? countdownTo(featured.date) : { days: 0, hours: 0, mins: 0, secs: 0 }
   const top4 = alliances.slice(0, 4)
   const about = () => onNavigate('about')
@@ -171,7 +176,7 @@ export default function Dashboard({ onNavigate }) {
         {/* Event Countdown */}
         {featured && (
         <Panel glow className="aurora-border">
-          <SectionTitle eyebrow="Upcoming Event" title="Castle Battle" action={<Pill tone="gold">{featured.category}</Pill>} />
+          <SectionTitle eyebrow="Upcoming Event" title={featured.title} action={<Pill tone="gold">{featured.category}</Pill>} />
           <div className="mb-4">
             <ArtImage src={featured.art} alt={featured.title} className="h-24 w-full rounded-lg" />
           </div>

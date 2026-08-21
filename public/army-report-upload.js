@@ -6,10 +6,11 @@
     { key: 'cavalry', label: 'Cavalry', aliases: ['cavalry', 'cav'] },
     { key: 'archers', label: 'Archers', aliases: ['archer', 'archers', 'arc'] },
   ]
-  // Kingshot's comparison reports (Battle Overview, Stat Bonuses, the toggled
-  // Troop Power Comparison) show BOTH sides on one line: "<mine>% Label <theirs>%".
-  // A single-value line (a report screen with only one side's numbers) still
-  // works — we just use whichever one number is there.
+  // Kingshot's battle-overview report always shows both sides on the same
+  // report at once — "<mine> Label <theirs>" per line — with the account
+  // holder's own column on the left and the opponent's on the right. So one
+  // upload fills both "Your Troops" and "Opponent Troops" in a single pass;
+  // there's no separate "opponent's report" to ask for.
   const STATS = [
     { key: 'count', label: 'Troops', aliases: ['troops', 'quantity', 'count'] },
     { key: 'attack', label: 'Attack', aliases: ['attack', 'atk'] },
@@ -18,34 +19,35 @@
     { key: 'health', label: 'Health', aliases: ['health', 'hp'] },
   ]
 
-  // Two configurations this same modal can fill, picked by which tool is on screen.
+  // Each tool this modal can fill: which section holds the intro copy (where
+  // the upload button lives) and which two sections are "mine" / "opponent".
   const TOOLS = {
-    mystic: { match: () => !!findSection('Your Troops') && !!findSection('Opponent Troops'), sides: { mine: 'Your Troops', opponent: 'Opponent Troops' } },
-    pvp: { match: () => !!findSection('Your Army') && !!findSection('Enemy Army'), sides: { mine: 'Your Army', opponent: 'Enemy Army' } },
+    mystic: { introHeading: 'Troop Composition Optimizer', sides: { mine: 'Your Troops', opponent: 'Opponent Troops' } },
+    pvp: { introHeading: 'PvP Battle Simulator', sides: { mine: 'Your Army', opponent: 'Enemy Army' } },
   }
 
   function clean(v) { const n = Number(String(v ?? '').replace(/,/g, '').replace(/[^0-9.]/g, '')); return Number.isFinite(n) ? n : '' }
   function hasAlias(text, aliases) { const low = String(text || '').toLowerCase(); return aliases.some((a) => new RegExp(`\\b${a}\\b`, 'i').test(low)) }
   function numbersOnLine(line) { return (String(line || '').match(/[0-9][0-9,]*(?:\.[0-9]+)?\s*%?/g) || []).map(clean).filter((v) => v !== '') }
 
-  function parseArmyText(text, side) {
+  // Parses one screenshot's OCR text into BOTH sides at once.
+  function parseArmyText(text) {
     const lines = String(text || '').replace(/[‐‑–—]/g, '-').split(/\n+/).map((l) => l.replace(/\s+/g, ' ').trim()).filter(Boolean)
-    const stats = {}
-    TROOPS.forEach((t) => { stats[t.key] = {} })
+    const out = { mine: {}, opponent: {} }
+    TROOPS.forEach((t) => { out.mine[t.key] = {}; out.opponent[t.key] = {} })
     for (const troop of TROOPS) {
       for (const stat of STATS) {
         for (const line of lines) {
           if (!hasAlias(line, troop.aliases) || !hasAlias(line, stat.aliases)) continue
           const nums = numbersOnLine(line)
           if (!nums.length) continue
-          // One number on the line: use it. Two (a side-by-side comparison
-          // report): pick the one on the requested side of the label.
-          const candidate = nums.length === 1 ? nums[0] : (side === 'right' ? nums[nums.length - 1] : nums[0])
-          if (candidate !== undefined) { stats[troop.key][stat.key] = candidate; break }
+          out.mine[troop.key][stat.key] = nums[0]
+          out.opponent[troop.key][stat.key] = nums.length > 1 ? nums[nums.length - 1] : nums[0]
+          break
         }
       }
     }
-    return stats
+    return out
   }
 
   function mergeArmyStats(a, b) {
@@ -117,13 +119,15 @@
       #${MODAL_ID}{position:fixed;inset:0;z-index:10060;display:grid;place-items:center;padding:12px;font-family:Montserrat,system-ui}
       #${MODAL_ID} [hidden]{display:none!important}
       #${MODAL_ID} .au-backdrop{position:absolute;inset:0;background:rgba(2,8,20,.86);backdrop-filter:blur(6px)}
-      #${MODAL_ID} .au-dialog{position:relative;width:min(720px,100%);max-height:92vh;overflow:hidden;border:1px solid rgba(212,175,55,.28);border-radius:22px;background:#08172a;color:#f1e7ce;box-shadow:0 25px 90px rgba(0,0,0,.6);display:flex;flex-direction:column}
+      #${MODAL_ID} .au-dialog{position:relative;width:min(760px,100%);max-height:92vh;overflow:hidden;border:1px solid rgba(212,175,55,.28);border-radius:22px;background:#08172a;color:#f1e7ce;box-shadow:0 25px 90px rgba(0,0,0,.6);display:flex;flex-direction:column}
       #${MODAL_ID} .au-head{display:flex;justify-content:space-between;gap:12px;padding:20px;border-bottom:1px solid rgba(212,175,55,.14)}
       #${MODAL_ID} .au-eye{font-size:9px;letter-spacing:.16em;color:#d4af37;font-weight:800}
       #${MODAL_ID} h2{margin:4px 0;font-family:Cinzel,serif;color:#f6e5ad}
       #${MODAL_ID} p{margin:0;font-size:11px;color:rgba(241,231,206,.5)}
       #${MODAL_ID} .au-head button{border:0;background:transparent;color:#f1e7ce;font-size:28px;cursor:pointer}
       #${MODAL_ID} .au-body{padding:18px;overflow:auto}
+      #${MODAL_ID} .au-warn{margin-bottom:14px;padding:10px 12px;border:1px solid rgba(251,191,36,.28);border-radius:12px;background:rgba(251,191,36,.05);font-size:11px;line-height:1.55;color:rgba(254,243,199,.75)}
+      #${MODAL_ID} .au-warn b{color:#fde68a}
       #${MODAL_ID} .au-drop{display:grid;place-items:center;align-content:center;gap:8px;min-height:140px;border:1.5px dashed rgba(212,175,55,.46);border-radius:16px;background:rgba(212,175,55,.04);cursor:pointer;text-align:center}
       #${MODAL_ID} .au-drop.au-drag{border-color:#f0d17a;background:rgba(212,175,55,.12)}
       #${MODAL_ID} .au-drop span{font-size:10px;color:rgba(241,231,206,.4)}
@@ -140,96 +144,80 @@
       #${MODAL_ID} .au-read:disabled,#${MODAL_ID} .au-apply:disabled{opacity:.4;cursor:not-allowed}
       #${MODAL_ID} .au-status{margin-top:9px;font-size:10px;color:rgba(241,231,206,.5)}
       #${MODAL_ID} .au-title{margin:16px 0 8px;font-family:Cinzel,serif;color:#ead393;font-weight:800}
-      #${MODAL_ID} .au-side{margin-top:14px;padding:14px;border:1px solid rgba(232,199,102,.3);border-radius:14px;background:rgba(212,175,55,.05)}
-      #${MODAL_ID} .au-side .au-title{margin:0 0 6px}
-      #${MODAL_ID} .au-side-hint{margin:0 0 10px;font-size:10px;line-height:1.55;color:rgba(241,231,206,.5)}
-      #${MODAL_ID} .au-side-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-      #${MODAL_ID} .au-side-btn{border:1px solid rgba(212,175,55,.24);border-radius:10px;padding:10px;background:transparent;color:#f1e7ce;font-weight:800;font-size:11px;cursor:pointer}
-      #${MODAL_ID} .au-side-btn.active{border-color:#f0d17a;background:linear-gradient(#d4af37,#ad8620);color:#071224}
-      #${MODAL_ID} .au-card{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:8px;padding:12px;border:1px solid rgba(212,175,59,.12);border-radius:13px}
-      #${MODAL_ID} .au-card>b{grid-column:1/-1;font-family:Cinzel,serif}
-      #${MODAL_ID} label{font-size:9px;text-transform:uppercase;color:rgba(241,231,206,.5)}
-      #${MODAL_ID} input[type=number]{box-sizing:border-box;width:100%;margin-top:4px;border:1px solid rgba(212,175,55,.18);border-radius:9px;background:#06111f;color:#f1e7ce;padding:8px}
+      #${MODAL_ID} .au-swap{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:14px;padding:10px 12px;border:1px solid rgba(212,175,55,.2);border-radius:12px;background:rgba(255,255,255,.02)}
+      #${MODAL_ID} .au-swap span{font-size:11px;color:rgba(241,231,206,.65)}
+      #${MODAL_ID} .au-swap button{border:1px solid rgba(212,175,55,.28);border-radius:9px;padding:7px 11px;background:transparent;color:#d4af37;font-weight:800;font-size:10px;cursor:pointer;white-space:nowrap}
+      #${MODAL_ID} .au-sides{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+      #${MODAL_ID} .au-side-col h4{margin:0 0 6px;font-family:Cinzel,serif;font-size:12px;color:#ead393}
+      #${MODAL_ID} .au-card{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-top:8px;padding:10px;border:1px solid rgba(212,175,59,.12);border-radius:12px}
+      #${MODAL_ID} .au-card>b{grid-column:1/-1;font-family:Cinzel,serif;font-size:11px}
+      #${MODAL_ID} label{font-size:8px;text-transform:uppercase;color:rgba(241,231,206,.5)}
+      #${MODAL_ID} input[type=number]{box-sizing:border-box;width:100%;margin-top:3px;border:1px solid rgba(212,175,55,.18);border-radius:8px;background:#06111f;color:#f1e7ce;padding:6px}
       #${MODAL_ID} footer{display:flex;justify-content:flex-end;gap:8px;padding:14px 18px;border-top:1px solid rgba(212,175,55,.12)}
       #${MODAL_ID} footer button{border-radius:10px;padding:10px 14px;font-weight:800;cursor:pointer}
       #${MODAL_ID} .au-cancel{background:transparent;border:1px solid rgba(212,175,55,.18);color:#f1e7ce}
       #${MODAL_ID} .au-apply{border:1px solid rgba(232,199,102,.4);background:linear-gradient(#d4af37,#ad8620);color:#071224}
-      @media(max-width:640px){#${MODAL_ID}{align-items:end;padding:6px}#${MODAL_ID} .au-dialog{border-radius:20px 20px 8px 8px}#${MODAL_ID} .au-card{grid-template-columns:repeat(2,1fr)}}
+      @media(max-width:640px){#${MODAL_ID}{align-items:end;padding:6px}#${MODAL_ID} .au-dialog{border-radius:20px 20px 8px 8px}#${MODAL_ID} .au-sides{grid-template-columns:1fr}}
     `
     document.head.appendChild(s)
   }
 
-  function template(sideHeading, otherHeading) {
+  function template(mineHeading, opponentHeading) {
+    const sideCard = (label) => TROOPS.map((t) => `<div class="au-card"><b>${t.label}</b>${STATS.map((s) => `<label>${s.label}<input type="number" step="0.1" data-side="${label}" data-field="${t.key}.${s.key}"></label>`).join('')}</div>`).join('')
     return `
       <div class="au-backdrop" data-action="close"></div>
       <section class="au-dialog" role="dialog" aria-modal="true">
         <header class="au-head">
           <div>
             <div class="au-eye">BATTLE REPORT IMPORT</div>
-            <h2>Upload — ${sideHeading}</h2>
-            <p>Add every screenshot of this report (a full report is often 3-4 screens). This fills "${sideHeading}", not "${otherHeading}".</p>
+            <h2>Upload Battle Report</h2>
+            <p>Fills both "${mineHeading}" and "${opponentHeading}" from the same screenshots.</p>
           </div>
           <button data-action="close">×</button>
         </header>
         <div class="au-body">
+          <div class="au-warn"><b>Before you screenshot:</b> set the report to show actual troop numbers, not percentages — tap the switch icon on Troop Power Comparison if it's showing bars/percentages.</div>
           <input id="au-file" type="file" accept="image/png,image/jpeg,image/webp" multiple hidden>
           <div class="au-drop" data-action="choose" role="button" tabindex="0">
             <strong>Drag & drop screenshots here</strong>
-            <span>or tap to choose — PNG, JPG or WEBP, multiple allowed</span>
+            <span>or tap to choose — a full report is often 3-4 screens, add them all</span>
           </div>
           <div class="au-files"></div>
           <button class="au-add" data-action="choose" hidden>+ Add another screenshot</button>
           <button class="au-read" data-action="read" disabled>Scan All Screenshots</button>
           <div class="au-status"></div>
-          <div class="au-side" hidden>
-            <div class="au-title">Which column is "${sideHeading}"?</div>
-            <p class="au-side-hint">Kingshot's battle-overview report shows both sides on the same lines (e.g. one number, then "Infantry Attack", then another number). Pick which one is "${sideHeading}" — you can switch back and forth to compare before applying.</p>
-            <div class="au-side-btns">
-              <button type="button" class="au-side-btn" data-side="left">Left column</button>
-              <button type="button" class="au-side-btn" data-side="right">Right column</button>
+          <div class="au-values" hidden>
+            <div class="au-swap"><span>Reading the report backwards? Swap which column is which.</span><button type="button" data-action="swap">Swap Sides</button></div>
+            <div class="au-title">Detected Values — Review Before Applying</div>
+            <div class="au-sides">
+              <div class="au-side-col"><h4 data-side-label="mine">${mineHeading}</h4>${sideCard('mine')}</div>
+              <div class="au-side-col"><h4 data-side-label="opponent">${opponentHeading}</h4>${sideCard('opponent')}</div>
             </div>
           </div>
-          <div class="au-values" hidden>
-            <div class="au-title">Detected Values — Review Before Applying</div>
-            ${TROOPS.map((t) => `<div class="au-card"><b>${t.label}</b>${STATS.map((s) => `<label>${s.label}<input type="number" step="0.1" data-field="${t.key}.${s.key}"></label>`).join('')}</div>`).join('')}
-          </div>
         </div>
-        <footer><button data-action="close" class="au-cancel">Cancel</button><button data-action="apply" class="au-apply" disabled>Apply to ${sideHeading}</button></footer>
+        <footer><button data-action="close" class="au-cancel">Cancel</button><button data-action="apply" class="au-apply" disabled>Apply Both Sides</button></footer>
       </section>`
   }
 
-  function open(sideKey) {
-    const tool = Object.values(TOOLS).find((t) => t.match())
+  function open() {
+    const tool = Object.values(TOOLS).find((t) => findSection(t.introHeading) && findSection(t.sides.mine) && findSection(t.sides.opponent))
     if (!tool) return
-    const sideHeading = sideKey === 'mine' ? tool.sides.mine : tool.sides.opponent
-    const otherHeading = sideKey === 'mine' ? tool.sides.opponent : tool.sides.mine
+    let mineHeading = tool.sides.mine
+    let opponentHeading = tool.sides.opponent
 
     document.getElementById(MODAL_ID)?.remove()
     styles()
     const root = document.createElement('div')
     root.id = MODAL_ID
-    root.innerHTML = template(sideHeading, otherHeading)
+    root.innerHTML = template(mineHeading, opponentHeading)
     document.body.appendChild(root)
     document.body.style.overflow = 'hidden'
 
-    const fileInput = root.querySelector('#au-file'), drop = root.querySelector('.au-drop'), filesList = root.querySelector('.au-files'), addBtn = root.querySelector('.au-add'), readBtn = root.querySelector('.au-read'), applyBtn = root.querySelector('.au-apply'), values = root.querySelector('.au-values'), status = root.querySelector('.au-status'), sideBlock = root.querySelector('.au-side')
+    const fileInput = root.querySelector('#au-file'), drop = root.querySelector('.au-drop'), filesList = root.querySelector('.au-files'), addBtn = root.querySelector('.au-add'), readBtn = root.querySelector('.au-read'), applyBtn = root.querySelector('.au-apply'), values = root.querySelector('.au-values'), status = root.querySelector('.au-status')
     const entries = []
-    let currentSide = null
+    let swapped = false
+    let lastParsed = null
 
-    function applySide(side) {
-      currentSide = side
-      root.querySelectorAll('.au-side-btn').forEach((b) => b.classList.toggle('active', b.dataset.side === side))
-      let merged = {}
-      for (const entry of entries) {
-        if (!entry.rawText) continue
-        merged = mergeArmyStats(merged, parseArmyText(entry.rawText, side))
-      }
-      TROOPS.forEach((t) => STATS.forEach((s) => { const input = root.querySelector(`[data-field="${t.key}.${s.key}"]`); if (input) input.value = merged[t.key]?.[s.key] ?? '' }))
-      values.hidden = false
-      const detected = TROOPS.reduce((sum, t) => sum + STATS.filter((s) => merged[t.key]?.[s.key] !== undefined && merged[t.key][s.key] !== '').length, 0)
-      applyBtn.disabled = detected === 0
-      status.textContent = detected ? `${detected}/${TROOPS.length * STATS.length} values detected using the ${side} column. Review them below — switch columns above if these look wrong.` : `No values detected in the ${side} column. Try the other column, or enter values manually on the page.`
-    }
     const close = () => { entries.forEach((e) => e.url && URL.revokeObjectURL(e.url)); root.remove(); document.body.style.overflow = '' }
 
     function renderFiles() {
@@ -248,6 +236,23 @@
       status.textContent = entries.length ? `${entries.length} screenshot${entries.length === 1 ? '' : 's'} ready. Tap Scan All Screenshots.` : ''
     }
 
+    function renderValues() {
+      if (!lastParsed) return
+      const left = swapped ? lastParsed.opponent : lastParsed.mine
+      const right = swapped ? lastParsed.mine : lastParsed.opponent
+      root.querySelector('[data-side-label="mine"]').textContent = mineHeading
+      root.querySelector('[data-side-label="opponent"]').textContent = opponentHeading
+      TROOPS.forEach((t) => STATS.forEach((s) => {
+        const mineInput = root.querySelector(`[data-side="mine"][data-field="${t.key}.${s.key}"]`)
+        const oppInput = root.querySelector(`[data-side="opponent"][data-field="${t.key}.${s.key}"]`)
+        if (mineInput) mineInput.value = left[t.key]?.[s.key] ?? ''
+        if (oppInput) oppInput.value = right[t.key]?.[s.key] ?? ''
+      }))
+      const detected = TROOPS.reduce((sum, t) => sum + STATS.filter((s) => (left[t.key]?.[s.key] ?? '') !== '' || (right[t.key]?.[s.key] ?? '') !== '').length, 0)
+      applyBtn.disabled = detected === 0
+      status.textContent = detected ? `${detected} field${detected === 1 ? '' : 's'} detected. Review both sides below — use Swap Sides if the columns are backwards.` : 'No values detected. Review the screenshots or enter values manually on the page.'
+    }
+
     fileInput.addEventListener('change', () => { addFiles(fileInput.files); fileInput.value = '' })
     drop.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInput.click() } })
     ;['dragenter', 'dragover'].forEach((t) => drop.addEventListener(t, (e) => { e.preventDefault(); e.stopPropagation(); drop.classList.add('au-drag') }))
@@ -258,24 +263,21 @@
       const removeIdx = e.target?.dataset?.remove
       if (removeIdx !== undefined) { const [rm] = entries.splice(Number(removeIdx), 1); if (rm?.url) URL.revokeObjectURL(rm.url); renderFiles(); return }
 
-      const sideBtn = e.target.closest('.au-side-btn')
-      if (sideBtn) { applySide(sideBtn.dataset.side); return }
-
       const action = e.target.closest('[data-action]')?.dataset.action
       if (!action) return
       if (action === 'close') return close()
       if (action === 'choose') { e.preventDefault(); fileInput.click(); return }
+      if (action === 'swap') { swapped = !swapped; renderValues(); return }
       if (action === 'read') {
         if (!entries.length) return
         readBtn.disabled = true
         values.hidden = true
-        sideBlock.hidden = true
         for (let i = 0; i < entries.length; i += 1) {
           status.textContent = `Reading screenshot ${i + 1} of ${entries.length}…`
           try {
             const Tesseract = await loadTesseract()
             const out = await Tesseract.recognize(entries[i].file, 'eng')
-            entries[i].rawText = out?.data?.text || ''
+            entries[i].parsed = parseArmyText(out?.data?.text || '')
             entries[i].status = 'ok'
             renderFiles()
           } catch (err) {
@@ -283,23 +285,27 @@
           }
         }
         readBtn.disabled = false
-        const anyRead = entries.some((e) => e.rawText)
-        if (!anyRead) { status.textContent = 'Could not read any of these screenshots. Try clearer images or enter values manually.'; return }
-        sideBlock.hidden = false
-        status.textContent = 'Screenshots read. Answer the question above to fill in the values.'
-        sideBlock.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+        const parsedEntries = entries.filter((en) => en.parsed)
+        if (!parsedEntries.length) { status.textContent = 'Could not read any of these screenshots. Try clearer images or enter values manually.'; return }
+        let mine = {}, opponent = {}
+        for (const en of parsedEntries) { mine = mergeArmyStats(mine, en.parsed.mine); opponent = mergeArmyStats(opponent, en.parsed.opponent) }
+        lastParsed = { mine, opponent }
+        swapped = false
+        values.hidden = false
+        renderValues()
+        values.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
       }
       if (action === 'apply') {
-        const stats = {}
-        TROOPS.forEach((t) => { stats[t.key] = {}; STATS.forEach((s) => { stats[t.key][s.key] = clean(root.querySelector(`[data-field="${t.key}.${s.key}"]`)?.value) }) })
+        const readSide = (side) => { const s = {}; TROOPS.forEach((t) => { s[t.key] = {}; STATS.forEach((st) => { s[t.key][st.key] = clean(root.querySelector(`[data-side="${side}"][data-field="${t.key}.${st.key}"]`)?.value) }) }); return s }
         try {
-          const applied = applyToSide(sideHeading, stats)
+          const appliedMine = applyToSide(mineHeading, readSide('mine'))
+          const appliedOpp = applyToSide(opponentHeading, readSide('opponent'))
           close()
           const toast = document.createElement('div')
-          toast.textContent = `Applied ${applied} values to ${sideHeading}.`
+          toast.textContent = `Applied ${appliedMine} values to ${mineHeading}, ${appliedOpp} to ${opponentHeading}.`
           Object.assign(toast.style, { position: 'fixed', left: '50%', bottom: '26px', zIndex: 10070, transform: 'translateX(-50%)', padding: '11px 15px', borderRadius: '10px', font: '700 11px Montserrat, sans-serif', color: '#f6e5ad', background: 'rgba(10,24,43,.98)', border: '1px solid rgba(212,175,55,.34)' })
           document.body.appendChild(toast)
-          setTimeout(() => toast.remove(), 2800)
+          setTimeout(() => toast.remove(), 3200)
         } catch (err) {
           status.textContent = err.message || 'Could not apply detected values.'
         }
@@ -311,28 +317,25 @@
     if (document.getElementById('k846-au-btn-style')) return
     const s = document.createElement('style')
     s.id = 'k846-au-btn-style'
-    s.textContent = `.k846-au-upload-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;width:100%;margin-top:.6rem;border:1px solid rgba(226,199,125,.3);border-radius:.7rem;padding:.6rem .9rem;background:rgba(226,181,48,.08);color:#f2dfaa;font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:.06em;cursor:pointer}`
+    s.textContent = `.k846-au-upload-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;width:100%;max-width:360px;margin-top:.8rem;border:1px solid rgba(226,199,125,.35);border-radius:.75rem;padding:.7rem 1rem;background:linear-gradient(180deg,rgba(226,181,48,.2),rgba(173,134,32,.14));color:#f2dfaa;font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:.06em;cursor:pointer}`
     document.head.appendChild(s)
   }
 
   function injectButtons() {
     styleUploadButton()
     for (const tool of Object.values(TOOLS)) {
-      if (!tool.match()) continue
-      for (const sideKey of ['mine', 'opponent']) {
-        const heading = sideKey === 'mine' ? tool.sides.mine : tool.sides.opponent
-        const section = findSection(heading)
-        if (!section || section.querySelector(`[data-k846-au="${sideKey}-${heading}"]`)) continue
-        const btn = document.createElement('button')
-        btn.type = 'button'
-        btn.className = 'k846-au-upload-btn'
-        btn.dataset.k846Au = `${sideKey}-${heading}`
-        btn.textContent = `Upload ${heading} Screenshot`
-        btn.addEventListener('click', (e) => { e.preventDefault(); open(sideKey) })
-        const p = section.querySelector('p')
-        if (p) p.insertAdjacentElement('afterend', btn)
-        else section.appendChild(btn)
-      }
+      const section = findSection(tool.introHeading)
+      if (!section || !findSection(tool.sides.mine) || !findSection(tool.sides.opponent)) continue
+      if (section.querySelector('[data-k846-au]')) continue
+      const btn = document.createElement('button')
+      btn.type = 'button'
+      btn.className = 'k846-au-upload-btn'
+      btn.dataset.k846Au = tool.introHeading
+      btn.textContent = 'Upload Battle Report'
+      btn.addEventListener('click', (e) => { e.preventDefault(); open() })
+      const p = section.querySelector('p')
+      if (p) p.insertAdjacentElement('afterend', btn)
+      else section.appendChild(btn)
     }
   }
 

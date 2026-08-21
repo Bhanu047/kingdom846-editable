@@ -56,7 +56,7 @@ export function CompositionChart({ items, total }) {
   const reveal = useReveal()
   const gid = useId()
   if (!items.length) return null
-  const ROW_H = 44, PAD = 10, L = 128, R = 64, W = 900
+  const ROW_H = 44, PAD = 10, L = 158, R = 64, W = 900
   const H = items.length * ROW_H + PAD * 2
   const pcts = items.map((c) => total > 0 ? (c.margin / total) * 100 : 0)
   const maxV = Math.max(0, ...pcts), minV = Math.min(0, ...pcts)
@@ -91,6 +91,11 @@ export function CompositionChart({ items, total }) {
           <div key={i} className="pointer-events-none absolute -translate-y-1/2" style={{ top: `${cy}%`, left: '0.5%' }}>
             <div className="flex items-center gap-1.5">
               <span className={`grid h-5 w-5 shrink-0 place-items-center rounded-full text-[10px] font-black ${i < 3 ? '' : 'border border-gold/20 bg-black/30 text-parchment/40'}`}>{i < 3 ? MEDALS[i] : <span className="text-[8px]">#{i + 1}</span>}</span>
+              <div className="flex h-3 w-10 shrink-0 overflow-hidden rounded-full border border-gold/15">
+                <div style={{ width: `${c.composition.infantry * 100}%`, background: TROOP_COLORS.infantry }} />
+                <div style={{ width: `${c.composition.cavalry * 100}%`, background: TROOP_COLORS.cavalry }} />
+                <div style={{ width: `${c.composition.archers * 100}%`, background: TROOP_COLORS.archers }} />
+              </div>
               <span className="whitespace-nowrap font-mono text-[10px] font-semibold text-parchment/75">{Math.round(c.composition.infantry * 100)}/{Math.round(c.composition.cavalry * 100)}/{Math.round(c.composition.archers * 100)}</span>
             </div>
           </div>

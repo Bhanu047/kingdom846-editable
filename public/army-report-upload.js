@@ -35,6 +35,30 @@
   function numbersOnLine(line) { return (String(line || '').match(/[0-9][0-9,]*(?:\.[0-9]+)?\s*%?/g) || []).map(clean).filter((v) => v !== '') }
   const isStatLine = (line) => /attack|atk|lethal|\blet\b|defen|health|\bhp\b|bonus/i.test(line)
 
+  // Real screenshots regularly lose one side's number to OCR (colored text
+  // is less reliable than plain black) — a line like "Infantry Attack
+  // +1729.3%" with only the opponent's number surviving is common, not the
+  // exception. Splitting on the label's position and reading numbers from
+  // the "before" and "after" halves separately means a lone surviving
+  // number lands on the correct side instead of getting duplicated onto
+  // both (which silently fabricated a "your side" value that was never
+  // actually read).
+  function labelSpan(line, aliasGroups) {
+    let start = Infinity, end = -Infinity
+    for (const aliases of aliasGroups) {
+      for (const a of aliases) {
+        const m = new RegExp(`\\b${a}\\b`, 'i').exec(line)
+        if (m) { start = Math.min(start, m.index); end = Math.max(end, m.index + m[0].length) }
+      }
+    }
+    return start === Infinity ? null : { start, end }
+  }
+  function numsBeforeAfterLabel(line, aliasGroups) {
+    const span = labelSpan(line, aliasGroups)
+    if (!span) return { mine: [], theirs: [] }
+    return { mine: numbersOnLine(line.slice(0, span.start)), theirs: numbersOnLine(line.slice(span.end)) }
+  }
+
   // The Mail battle-overview report's "Stat Bonuses" section is the only
   // place with clean per-troop-type + per-stat text, and it doesn't carry
   // troop counts at all. Troop counts only show up in the "Troop Power
@@ -48,13 +72,26 @@
       for (let i = 0; i < lines.length; i += 1) {
         const line = lines[i]
         if (!hasAlias(line, troop.aliases) || isStatLine(line) || line.includes('%')) continue
-        let nums = numbersOnLine(line).filter((v) => v >= 10000)
-        for (let j = 1; j <= 2 && nums.length < 2; j += 1) {
+        // Unlike Stat Bonuses' "<mine> Label <theirs>" layout, Troop Power
+        // Comparison puts the label first with both counts after it
+        // ("Infantry 245,000 198,500") — so two numbers on one side split
+        // as [mine, theirs] in order, while a single lone number (dropped
+        // by OCR, not just visually absent) only fills the side it's
+        // actually next to, never both.
+        const bySide = numsBeforeAfterLabel(line, [troop.aliases])
+        let mine = bySide.mine.filter((v) => v >= 10000)
+        let theirs = bySide.theirs.filter((v) => v >= 10000)
+        if (!mine.length && theirs.length >= 2) { mine = [theirs[0]]; theirs = [theirs[1]] }
+        else if (!theirs.length && mine.length >= 2) { theirs = [mine[mine.length - 1]]; mine = [mine[0]] }
+        for (let j = 1; j <= 2 && mine.length + theirs.length < 2; j += 1) {
           const next = lines[i + j] || ''
           if (isStatLine(next) || next.includes('%')) break
-          nums = nums.concat(numbersOnLine(next).filter((v) => v >= 10000))
+          for (const v of numbersOnLine(next).filter((v) => v >= 10000)) {
+            if (!mine.length) mine = [v]
+            else if (!theirs.length) theirs = [v]
+          }
         }
-        if (nums.length) { out[troop.key] = nums; break }
+        if (mine.length || theirs.length) { out[troop.key] = { mine: mine[0], theirs: theirs[0] }; break }
       }
     }
     return out
@@ -69,20 +106,18 @@
       for (const stat of STATS) {
         for (const line of lines) {
           if (!hasAlias(line, troop.aliases) || !hasAlias(line, stat.aliases)) continue
-          const nums = numbersOnLine(line)
-          if (!nums.length) continue
-          out.mine[troop.key][stat.key] = nums[0]
-          out.opponent[troop.key][stat.key] = nums.length > 1 ? nums[nums.length - 1] : nums[0]
+          const { mine, theirs } = numsBeforeAfterLabel(line, [troop.aliases, stat.aliases])
+          if (!mine.length && !theirs.length) continue
+          if (mine.length) out.mine[troop.key][stat.key] = mine[mine.length - 1]
+          if (theirs.length) out.opponent[troop.key][stat.key] = theirs[0]
           break
         }
       }
     }
     const counts = inferTroopCounts(lines)
     TROOPS.forEach((t) => {
-      if (out.mine[t.key].count !== undefined || !counts[t.key]?.length) return
-      const nums = counts[t.key]
-      out.mine[t.key].count = nums[0]
-      out.opponent[t.key].count = nums.length > 1 ? nums[nums.length - 1] : nums[0]
+      if (out.mine[t.key].count === undefined && counts[t.key]?.mine !== undefined) out.mine[t.key].count = counts[t.key].mine
+      if (out.opponent[t.key].count === undefined && counts[t.key]?.theirs !== undefined) out.opponent[t.key].count = counts[t.key].theirs
     })
     return out
   }

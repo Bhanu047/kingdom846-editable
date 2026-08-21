@@ -108,6 +108,28 @@
     return out
   }
 
+  // Battle Details' "Troop Power Comparison" bars list Infantry/Cavalry/
+  // Archer as three bare heading lines with no numbers on them at all --
+  // the real troop counts sit several lines later in a single row with no
+  // troop-type text anywhere near it ("85,192 38,892 61,116 60,000 45,000
+  // 45,000"), in the same left-to-right order as the three headings above
+  // them (confirmed against a real screenshot: first three large numbers =
+  // Infantry/Cavalry/Archer count, the rest is gear power, not troops).
+  // This screen only ever shows the viewer's own army, never an opponent's
+  // (see the file-level note above), so these counts only ever fill "mine".
+  function inferTroopCountsFromBareRow(lines) {
+    const headingIdx = TROOPS.map((t) => lines.findIndex((l) => hasAlias(l, t.aliases) && !isStatLine(l) && !l.includes('%')))
+    if (headingIdx.some((i) => i === -1)) return {}
+    if (!(headingIdx[0] < headingIdx[1] && headingIdx[1] < headingIdx[2])) return {}
+    for (let i = headingIdx[2] + 1; i < lines.length; i += 1) {
+      const line = lines[i]
+      if (isStatLine(line) || line.includes('%')) break
+      const nums = numbersOnLine(line).filter((v) => v >= 10000)
+      if (nums.length >= 3) return { infantry: nums[0], cavalry: nums[1], archers: nums[2] }
+    }
+    return {}
+  }
+
   // Parses one screenshot's OCR text into BOTH sides at once.
   // Bonus Details rows show a real per-stat bonus next to a fixed
   // reference/cap number that repeats identically on EVERY line
@@ -157,9 +179,11 @@
       }
     }
     const counts = inferTroopCounts(lines)
+    const bareRowCounts = inferTroopCountsFromBareRow(lines)
     TROOPS.forEach((t) => {
       if (out.mine[t.key].count === undefined && counts[t.key]?.mine !== undefined) out.mine[t.key].count = counts[t.key].mine
       if (out.opponent[t.key].count === undefined && counts[t.key]?.theirs !== undefined) out.opponent[t.key].count = counts[t.key].theirs
+      if (out.mine[t.key].count === undefined && bareRowCounts[t.key] !== undefined) out.mine[t.key].count = bareRowCounts[t.key]
     })
     stripRepeatedConstant(out.mine)
     stripRepeatedConstant(out.opponent)

@@ -322,3 +322,43 @@ export function armyFromProfile(profile, counts) {
   })
   return army
 }
+
+// A Mystic Trial fight is a fixed-size army (yours) against a fixed opponent
+// army — the only thing you control is how you split your own troop total
+// across Infantry/Cavalry/Archers. This grid-searches that split.
+//
+// frakinator's version runs Monte Carlo battles per candidate split because
+// its underlying sim has randomness; simulateT10Battle here is deterministic
+// (same inputs always produce the same outcome), so repeating a candidate
+// doesn't change its result — there's no "number of battles" to vary. Sparsity
+// and Min Infantry Fraction still do real work: sparsity sets the grid step,
+// and minInfantryFraction skips compositions with too little Infantry up
+// front (mirrors frakinator's stated reason: those compositions are rarely
+// competitive, so skipping them saves search time).
+export function optimizeMysticComposition({ yourArmy, opponentArmy, sparsity = 0.05, minInfantryFraction = 0, maxRounds = 50 } = {}) {
+  const yours = cloneArmy(yourArmy)
+  const opponent = cloneArmy(opponentArmy)
+  const totalYourTroops = totalTroops(yours)
+  const step = clamp(n(sparsity, 0.05), 0.005, 0.5)
+  const minInf = clamp(n(minInfantryFraction, 0), 0, 1)
+  if (totalYourTroops <= 0) return { candidates: [], best: null, totalYourTroops: 0 }
+
+  const candidates = []
+  for (let inf = minInf; inf <= 1 + 1e-9; inf += step) {
+    const infClamped = Math.min(1, inf)
+    for (let cav = 0; cav + infClamped <= 1 + 1e-9; cav += step) {
+      const arc = Math.max(0, 1 - infClamped - cav)
+      const composition = { infantry: infClamped, cavalry: cav, archers: arc }
+      const army = {}
+      TYPES.forEach((type) => {
+        army[type] = { ...yours[type], count: Math.round(totalYourTroops * composition[type]) }
+      })
+      const result = simulateT10Battle({ attacker: army, defender: opponent, maxRounds })
+      const margin = result.remainingA - result.remainingD
+      candidates.push({ composition, result, margin })
+    }
+  }
+
+  candidates.sort((a, b) => b.margin - a.margin)
+  return { candidates, best: candidates[0] || null, totalYourTroops }
+}

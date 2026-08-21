@@ -35,12 +35,12 @@
   }
 
   function addMystic() {
-    const found = panel('Eligible Total by Trial')
+    const found = panel('Best Composition Found')
     if (!found?.section || found.section.querySelector('[data-k846-report-btn="mystic"]')) return
     const row = document.createElement('div')
     row.className = 'k846-mp-row'
     row.dataset.k846ReportBtn = 'mystic'
-    row.appendChild(makeDownloadBtn('Download Stat Source Report', 'downloadMystic'))
+    row.appendChild(makeDownloadBtn('Download Optimizer Report', 'downloadMystic'))
     found.section.appendChild(row)
   }
 

@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react'
 import Icon from '../components/Icon'
 import { TROOP_LABELS, optimizeFormation } from '../lib/combat/battleLabEngine'
+import { useReveal } from '../lib/chartAnim'
+import CountUp from '../components/CountUp'
 
 const TYPES = ['infantry', 'cavalry', 'archers']
 const TROOPS = [
@@ -33,22 +35,23 @@ function NumberField({ label, value, onChange, min = 0, step = 1, suffix, compac
 }
 
 function FormationCards({ troops }) {
+  const reveal = useReveal()
   return (
     <div className="space-y-3">
-      {troops.map((troop) => (
-        <div key={troop.type} className="rounded-2xl border border-gold/15 bg-white/[0.035] p-4">
+      {troops.map((troop, i) => (
+        <div key={troop.type} className="stagger-in rounded-2xl border border-gold/15 bg-white/[0.035] p-4">
           <div className="flex items-center justify-between gap-4">
             <div>
               <div className="text-[9px] uppercase tracking-[0.18em] text-gold/55">{troop.short}</div>
               <div className="mt-0.5 font-display text-base font-bold text-parchment">{troop.label}</div>
             </div>
             <div className="text-right">
-              <div className="font-mono text-lg font-bold text-gold-bright">{troop.count.toLocaleString()}</div>
-              <div className="text-xs font-semibold text-parchment/50">{troop.percent.toFixed(1)}%</div>
+              <div className="font-mono text-lg font-bold text-gold-bright"><CountUp value={troop.count} /></div>
+              <div className="text-xs font-semibold text-parchment/50"><CountUp value={troop.percent} format={(v) => `${v.toFixed(1)}%`} /></div>
             </div>
           </div>
           <div className="mt-3 h-2 overflow-hidden rounded-full bg-ink/80">
-            <div className="h-full rounded-full bg-gradient-to-r from-gold/55 to-gold-bright" style={{ width: `${Math.max(2, Math.min(100, troop.percent))}%` }} />
+            <div className="h-full rounded-full bg-gradient-to-r from-gold/55 to-gold-bright" style={{ width: reveal ? `${Math.max(2, Math.min(100, troop.percent))}%` : '0%', transition: `width 1s cubic-bezier(.16,1,.3,1) ${i * 80}ms` }} />
           </div>
         </div>
       ))}
@@ -121,7 +124,7 @@ export default function FormationSuite() {
             <div className="mt-4">
               <FormationCards troops={state.result.troops} />
               <div className="mt-4 flex flex-wrap gap-2">
-                {state.result.troops.filter((troop) => troop.counter).map((troop) => <span key={troop.type} className="rounded-full border border-emerald-300/15 bg-emerald-300/[0.04] px-2.5 py-1 text-[10px] font-semibold text-emerald-100/65">{troop.label} receives counter bonus</span>)}
+                {state.result.troops.filter((troop) => troop.counter).map((troop) => <span key={troop.type} className="stagger-in rounded-full border border-emerald-300/15 bg-emerald-300/[0.04] px-2.5 py-1 text-[10px] font-semibold text-emerald-100/65">{troop.label} receives counter bonus</span>)}
               </div>
             </div>
           )}

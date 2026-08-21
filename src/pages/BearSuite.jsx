@@ -2,6 +2,7 @@ import { useEffect, useId, useMemo, useState } from 'react'
 import Icon from '../components/Icon'
 import { buildBearChatMessage, computeBearDamageScore, optimizeBearFormation } from '../lib/combat/bearOptimizer'
 import { applyJoinerBonuses, computeHuntImpact, HUNT_JOINER_HEROES } from '../lib/combat/huntImpact'
+import { smoothPath, useCountUp, useReveal } from '../lib/chartAnim'
 
 const TROOPS=[{key:'infantry',label:'Infantry',short:'INF',icon:'shield',color:'#d9b94e'},{key:'cavalry',label:'Cavalry',short:'CAV',icon:'zap',color:'#7f9ed6'},{key:'archers',label:'Archers',short:'ARC',icon:'crosshair',color:'#c8655a'}]
 const WIDGET_OPTIONS=[0,5,7.5,10,12.5,15]
@@ -12,17 +13,6 @@ const validStats=s=>TROOPS.every(t=>n(s[t.key].attack)>0&&n(s[t.key].lethality)>
 const normalized=s=>Object.fromEntries(TROOPS.map(t=>[t.key,{attack:n(s[t.key].attack),lethality:n(s[t.key].lethality),widget:n(s[t.key].widget),widgetStat:s[t.key].widgetStat==='lethality'?'lethality':'attack'}]))
 function ratioFromCounts(c){const total=TROOPS.reduce((s,t)=>s+Math.max(0,n(c[t.key])),0);return total?Object.fromEntries(TROOPS.map(t=>[t.key,Math.max(0,n(c[t.key]))/total])):{infantry:0,cavalry:0,archers:0}}
 function fmt(v){if(!Number.isFinite(v))return'—';if(Math.abs(v)>=1e6)return`${(v/1e6).toFixed(2)}M`;if(Math.abs(v)>=1e3)return`${(v/1e3).toFixed(1)}K`;return v.toFixed(2)}
-
-// Drives the "reveal" transitions below: flips true one paint after mount, so
-// every chart animates in from its hidden state instead of popping in fully
-// formed. Since these live inside a conditional (!calculated ? prompt : dashboard),
-// React fully unmounts/remounts them each time Calculate is pressed, so the
-// animation genuinely replays on every recalculation, not just the first.
-function useReveal(){const[on,setOn]=useState(false);useEffect(()=>{const id=requestAnimationFrame(()=>requestAnimationFrame(()=>setOn(true)));return()=>cancelAnimationFrame(id)},[]);return on}
-function useCountUp(target,duration=900){const[v,setV]=useState(0);useEffect(()=>{let raf,start;const step=ts=>{if(!start)start=ts;const p=Math.min(1,(ts-start)/duration),eased=1-Math.pow(1-p,3);setV(target*eased);if(p<1)raf=requestAnimationFrame(step)};raf=requestAnimationFrame(step);return()=>cancelAnimationFrame(raf)},[target,duration]);return v}
-// Uniform Catmull-Rom -> cubic Bezier conversion, so a handful of gaussian
-// sample points reads as a smooth curve instead of a jagged bar chart.
-function smoothPath(pts){if(pts.length<2)return'';let d=`M${pts[0].x},${pts[0].y}`;for(let i=0;i<pts.length-1;i++){const p0=pts[i===0?0:i-1],p1=pts[i],p2=pts[i+1],p3=pts[i+2<pts.length?i+2:i+1];const c1x=p1.x+(p2.x-p0.x)/6,c1y=p1.y+(p2.y-p0.y)/6,c2x=p2.x-(p3.x-p1.x)/6,c2y=p2.y-(p3.y-p1.y)/6;d+=`C${c1x},${c1y} ${c2x},${c2y} ${p2.x},${p2.y}`}return d}
 
 function Field({label,value,onChange,suffix,step=.1,min=0}){return <label className="block"><span className="mb-1 flex justify-between text-[10px] font-bold uppercase tracking-[.12em] text-parchment/45"><span>{label}</span>{suffix&&<span className="text-gold/55">{suffix}</span>}</span><input type="number" value={value} min={min} step={step} onChange={e=>onChange(e.target.value)} className="w-full rounded-xl border border-gold/15 bg-ink/70 px-3 py-2.5 text-sm font-semibold text-parchment outline-none focus:border-gold/45"/></label>}
 function Select({label,value,onChange,children}){return <label className="block"><span className="mb-1 block text-[10px] font-bold uppercase tracking-[.12em] text-parchment/45">{label}</span><select value={value} onChange={e=>onChange(e.target.value)} className="w-full rounded-xl border border-gold/15 bg-ink px-3 py-2.5 text-sm font-semibold text-parchment outline-none">{children}</select></label>}
@@ -69,24 +59,28 @@ function Histogram({mean,optimal,sigma}){
   const linePath=pts=>smoothPath(pts.map(d=>({x:x(d.x),y:y(d.y)})))
   return <div className="rounded-2xl border border-gold/20 bg-[#07101e] p-3 md:p-4">
     <div className="flex flex-wrap justify-between gap-2"><div><div className="text-[9px] font-bold uppercase tracking-[.16em] text-gold/60">Current vs Optimal Damage Distribution</div><div className="font-display text-lg font-bold text-parchment">10,000-Hunt Projection</div></div><div className="text-[10px] text-parchment/50"><span className="text-[#7f9ed6]">● Current</span> &nbsp; <span className="text-gold-bright">● Optimal</span></div></div>
-    <svg viewBox={`0 0 ${W} ${H}`} className="mt-2 w-full">
-      <defs>
-        <linearGradient id={`${gid}-cur`} x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#7f9ed6" stopOpacity=".55"/><stop offset="100%" stopColor="#7f9ed6" stopOpacity="0"/></linearGradient>
-        <linearGradient id={`${gid}-opt`} x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#e3ba41" stopOpacity=".45"/><stop offset="100%" stopColor="#e3ba41" stopOpacity="0"/></linearGradient>
-      </defs>
-      {[0,.25,.5,.75,1].map(t=><line key={t} x1={L} x2={W-R} y1={T+t*(H-T-B)} y2={T+t*(H-T-B)} stroke="rgba(226,199,125,.10)"/>)}
-      <g style={{transformOrigin:`${L}px ${base}px`,transform:reveal?'scaleX(1)':'scaleX(0)',transition:'transform 1.1s cubic-bezier(.16,1,.3,1)'}}>
-        <path d={areaPath(cur)} fill={`url(#${gid}-cur)`}/>
-        <path d={linePath(cur)} fill="none" stroke="#9eb9ef" strokeWidth="2.5"/>
-        <path d={areaPath(opt)} fill={`url(#${gid}-opt)`}/>
-        <path d={linePath(opt)} fill="none" stroke="#e8c558" strokeWidth="2.5"/>
-      </g>
-      <line x1={x(mean)} x2={x(mean)} y1={T} y2={base} stroke="#7f9ed6" strokeDasharray="5 5" strokeWidth="2"/>
-      <line x1={x(optimal)} x2={x(optimal)} y1={T} y2={base} stroke="#e3ba41" strokeDasharray="5 5" strokeWidth="2"/>
-      <text x={x(mean)} y="14" textAnchor="middle" fill="#9eb9ef" fontSize="12">Current {fmt(mean)}</text>
-      <text x={x(optimal)} y="28" textAnchor="middle" fill="#e8c558" fontSize="12">Optimal {fmt(optimal)}</text>
-      <text x={W/2} y={H-8} textAnchor="middle" fill="rgba(244,236,211,.5)" fontSize="11">Projected Hunt Impact</text>
-    </svg>
+    <div className="relative mt-2">
+      <svg viewBox={`0 0 ${W} ${H}`} className="w-full">
+        <defs>
+          <linearGradient id={`${gid}-cur`} x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#7f9ed6" stopOpacity=".55"/><stop offset="100%" stopColor="#7f9ed6" stopOpacity="0"/></linearGradient>
+          <linearGradient id={`${gid}-opt`} x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#e3ba41" stopOpacity=".45"/><stop offset="100%" stopColor="#e3ba41" stopOpacity="0"/></linearGradient>
+        </defs>
+        {[0,.25,.5,.75,1].map(t=><line key={t} x1={L} x2={W-R} y1={T+t*(H-T-B)} y2={T+t*(H-T-B)} stroke="rgba(226,199,125,.10)"/>)}
+        <g style={{transformOrigin:`${L}px ${base}px`,transform:reveal?'scaleX(1)':'scaleX(0)',transition:'transform 1.1s cubic-bezier(.16,1,.3,1)'}}>
+          <path d={areaPath(cur)} fill={`url(#${gid}-cur)`}/>
+          <path d={linePath(cur)} fill="none" stroke="#9eb9ef" strokeWidth="2.5"/>
+          <path d={areaPath(opt)} fill={`url(#${gid}-opt)`}/>
+          <path d={linePath(opt)} fill="none" stroke="#e8c558" strokeWidth="2.5"/>
+        </g>
+        <line x1={x(mean)} x2={x(mean)} y1={T} y2={base} stroke="#7f9ed6" strokeDasharray="5 5" strokeWidth="2"/>
+        <line x1={x(optimal)} x2={x(optimal)} y1={T} y2={base} stroke="#e3ba41" strokeDasharray="5 5" strokeWidth="2"/>
+      </svg>
+      {/* Plain HTML labels, not SVG <text> -- html2canvas 1.4.1 renders SVG
+          text (and the whole SVG along with it) blank in exported reports. */}
+      <div className="pointer-events-none absolute -translate-x-1/2 whitespace-nowrap text-[12px] font-semibold text-[#9eb9ef]" style={{left:`${x(mean)/W*100}%`,top:`${2/H*100}%`}}>Current {fmt(mean)}</div>
+      <div className="pointer-events-none absolute -translate-x-1/2 whitespace-nowrap text-[12px] font-semibold text-[#e8c558]" style={{left:`${x(optimal)/W*100}%`,top:`${16/H*100}%`}}>Optimal {fmt(optimal)}</div>
+      <div className="pointer-events-none absolute -translate-x-1/2 whitespace-nowrap text-[11px] text-parchment/50" style={{left:'50%',top:`${(H-18)/H*100}%`}}>Projected Hunt Impact</div>
+    </div>
   </div>
 }
 

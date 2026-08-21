@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react'
 import Icon from '../components/Icon'
 import { optimizeMysticComposition } from '../lib/combat/battleLabEngine'
+import { useCountUp, useReveal } from '../lib/chartAnim'
+import CountUp from '../components/CountUp'
 
 const TROOPS = [{ key: 'infantry', label: 'Infantry', short: 'INF', icon: 'shield' }, { key: 'cavalry', label: 'Cavalry', short: 'CAV', icon: 'zap' }, { key: 'archers', label: 'Archers', short: 'ARC', icon: 'crosshair' }]
 const TRIALS = ['Coliseum', 'Forest of Life', 'Crystal Cave', 'Knowledge Nexus', 'Molten Fort', 'Radiant Spire']
@@ -46,9 +48,10 @@ export const TROOP_COLORS = { infantry: '#d9b94e', cavalry: '#7f9ed6', archers: 
 // bare number like "-2,271" doesn't mean anything without knowing your
 // army size, but "-2.3%" reads the same regardless of scale.
 export function FormationRow({ composition, sub, margin, max, active, total }) {
+  const reveal = useReveal()
   const pct = total > 0 ? (margin / total) * 100 : 0
   return (
-    <div className={`rounded-xl border p-3 ${active ? 'border-gold/40 bg-gold/[.05]' : 'border-gold/10 bg-white/[.02]'}`}>
+    <div className={`stagger-in rounded-xl border p-3 ${active ? 'border-gold/40 bg-gold/[.05]' : 'border-gold/10 bg-white/[.02]'}`}>
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2.5">
           <div className="flex h-4 w-20 shrink-0 overflow-hidden rounded-full border border-gold/10">
@@ -61,7 +64,7 @@ export function FormationRow({ composition, sub, margin, max, active, total }) {
         <span className={`font-mono text-sm font-bold ${margin >= 0 ? 'text-emerald-300' : 'text-red-300'}`}>{pct >= 0 ? '+' : ''}{pct.toFixed(1)}%</span>
       </div>
       <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-black/25">
-        <div className={`h-full rounded-full ${margin >= 0 ? 'bg-gradient-to-r from-emerald-400/50 to-emerald-300' : 'bg-gradient-to-r from-red-400/50 to-red-300'}`} style={{ width: `${max > 0 ? Math.max(2, Math.abs(margin) / max * 100) : 0}%` }} />
+        <div className={`h-full rounded-full ${margin >= 0 ? 'bg-gradient-to-r from-emerald-400/50 to-emerald-300' : 'bg-gradient-to-r from-red-400/50 to-red-300'}`} style={{ width: reveal ? `${max > 0 ? Math.max(2, Math.abs(margin) / max * 100) : 0}%` : '0%', transition: 'width 1s cubic-bezier(.16,1,.3,1)' }} />
       </div>
     </div>
   )
@@ -70,17 +73,18 @@ export function FormationRow({ composition, sub, margin, max, active, total }) {
 // OPTION B — "VS Army Cards": two side-by-side matchup cards with a crossed-
 // swords divider, each troop type shown as its own labeled progress row.
 export function VsArmyCards({ yourSide, enemySide, yourLabel = 'YOUR FORCE', enemyLabel = 'ENEMY FORCE' }) {
+  const reveal = useReveal()
   const Card = ({ side, label, border, glow, align }) => {
     const total = Math.max(0, side.infantry) + Math.max(0, side.cavalry) + Math.max(0, side.archers)
     return (
       <div className={`flex-1 rounded-2xl border p-4 ${border}`} style={{ boxShadow: `inset 0 0 30px ${glow}` }}>
         <div className={`text-[9px] font-bold uppercase tracking-wider text-parchment/50 ${align}`}>{label}</div>
-        <div className={`mt-0.5 font-mono text-2xl font-black text-parchment ${align}`}>{fmt(total)}</div>
+        <div className={`mt-0.5 font-mono text-2xl font-black text-parchment ${align}`}>{fmt(useCountUp(total))}</div>
         <div className="mt-3 space-y-2">
-          {TROOPS.map((t) => (
+          {TROOPS.map((t, i) => (
             <div key={t.key} className={`flex items-center gap-2 ${align === 'text-right' ? 'flex-row-reverse' : ''}`}>
               <Icon name={t.icon} size={12} style={{ color: TROOP_COLORS[t.key] }} />
-              <div className="h-2 flex-1 overflow-hidden rounded-full bg-black/30"><div className="h-full rounded-full" style={{ width: `${total > 0 ? Math.max(0, side[t.key]) / total * 100 : 0}%`, background: TROOP_COLORS[t.key] }} /></div>
+              <div className="h-2 flex-1 overflow-hidden rounded-full bg-black/30"><div className="h-full rounded-full" style={{ width: reveal ? `${total > 0 ? Math.max(0, side[t.key]) / total * 100 : 0}%` : '0%', background: TROOP_COLORS[t.key], transition: `width 1s cubic-bezier(.16,1,.3,1) ${i * 100}ms` }} /></div>
               <span className="w-24 shrink-0 font-mono text-[10px] text-parchment/55" style={{ textAlign: align === 'text-right' ? 'left' : 'right' }}>{fmt(side[t.key])} <span className="text-parchment/35">({total > 0 ? Math.round(Math.max(0, side[t.key]) / total * 100) : 0}%)</span></span>
             </div>
           ))}
@@ -105,6 +109,8 @@ export function VsArmyCards({ yourSide, enemySide, yourLabel = 'YOUR FORCE', ene
 // OPTION C — "Clash Gauge": a semi-circle power gauge with a needle, like a
 // boss-fight HUD meter, needle leaning toward whichever side is stronger.
 export function ClashGauge({ yourTotal, enemyTotal, margin }) {
+  const reveal = useReveal()
+  const animatedMargin = useCountUp(margin)
   const combined = Math.max(1, yourTotal + enemyTotal)
   const yourShare = yourTotal / combined
   const R = 92, CX = 130, CY = 118
@@ -120,10 +126,12 @@ export function ClashGauge({ yourTotal, enemyTotal, margin }) {
     <div className="rounded-2xl border border-gold/20 bg-[#07101e] p-4 md:p-5">
       <div className="relative mx-auto w-full max-w-md">
         <svg viewBox="0 0 260 140" className="w-full">
-          <path d={arc(Math.PI, angle)} stroke="#7f9ed6" strokeWidth="16" fill="none" strokeLinecap="round" />
-          <path d={arc(angle, 0)} stroke="#c8655a" strokeWidth="16" fill="none" strokeLinecap="round" />
-          <line x1={CX} y1={CY} x2={nx} y2={ny} stroke="#e8c558" strokeWidth="3" strokeLinecap="round" />
-          <circle cx={CX} cy={CY} r="7" fill="#e8c558" stroke="#071224" strokeWidth="2" />
+          <path d={arc(Math.PI, angle)} pathLength="1" strokeDasharray="1" strokeDashoffset={reveal ? 0 : 1} stroke="#7f9ed6" strokeWidth="16" fill="none" strokeLinecap="round" style={{ transition: 'stroke-dashoffset 1s cubic-bezier(.16,1,.3,1)' }} />
+          <path d={arc(angle, 0)} pathLength="1" strokeDasharray="1" strokeDashoffset={reveal ? 0 : 1} stroke="#c8655a" strokeWidth="16" fill="none" strokeLinecap="round" style={{ transition: 'stroke-dashoffset 1s cubic-bezier(.16,1,.3,1) .15s' }} />
+          <g style={{ transformOrigin: `${CX}px ${CY}px`, opacity: reveal ? 1 : 0, transform: reveal ? 'scale(1)' : 'scale(.4)', transition: 'opacity .5s ease .9s, transform .5s cubic-bezier(.34,1.56,.64,1) .9s' }}>
+            <line x1={CX} y1={CY} x2={nx} y2={ny} stroke="#e8c558" strokeWidth="3" strokeLinecap="round" />
+            <circle cx={CX} cy={CY} r="7" fill="#e8c558" stroke="#071224" strokeWidth="2" />
+          </g>
         </svg>
         {/* Labels are plain HTML, not SVG <text> — html2canvas 1.4.1 renders
             SVG text blank in exported reports (in fact it blanks the whole
@@ -132,7 +140,7 @@ export function ClashGauge({ yourTotal, enemyTotal, margin }) {
         <div className="absolute bottom-[3%] right-[3%] text-[11px] font-bold text-[#e08c80]">ENEMY</div>
       </div>
       <div className="mt-1 text-center">
-        <div className="font-mono text-2xl font-black" style={{ color: margin >= 0 ? '#6ee7b7' : '#fca5a5' }}>{margin >= 0 ? '+' : ''}{fmt(margin)}</div>
+        <div className="font-mono text-2xl font-black" style={{ color: margin >= 0 ? '#6ee7b7' : '#fca5a5' }}>{margin >= 0 ? '+' : ''}{fmt(animatedMargin)}</div>
         <div className="text-[10px] text-parchment/40">troop margin</div>
       </div>
     </div>
@@ -149,6 +157,7 @@ export default function MysticSuite() {
   const [maxCavalry, setMaxCavalry] = useState('100')
   const [trial, setTrial] = useState(TRIALS[0])
   const [result, setResult] = useState(null)
+  const [runId, setRunId] = useState(0)
 
   const yourTotal = TROOPS.reduce((s, t) => s + Math.max(0, n(yours[t.key].count)), 0)
   const opponentTotal = TROOPS.reduce((s, t) => s + Math.max(0, n(opponent[t.key].count)), 0)
@@ -163,6 +172,7 @@ export default function MysticSuite() {
       minInfantryFraction: n(minInfantry, 0) / 100, maxInfantryFraction: n(maxInfantry, 100) / 100,
       minCavalryFraction: n(minCavalry, 0) / 100, maxCavalryFraction: n(maxCavalry, 100) / 100,
     }))
+    setRunId((id) => id + 1)
   }
 
   const top = useMemo(() => result?.candidates?.slice(0, 8) || [], [result])
@@ -275,12 +285,12 @@ export default function MysticSuite() {
       </section>
 
       {result && (
-        <section className="panel panel-glow p-4 md:p-6">
+        <section key={runId} className="panel panel-glow p-4 md:p-6">
           <div className="eyebrow">Result</div>
           <h3 className="mt-1 font-display text-2xl font-bold text-parchment">Best Composition Found</h3>
           {result.best ? (
             <div className="mt-4 space-y-4">
-              <div className={`rounded-2xl border p-5 text-center ${result.best.margin >= 0 ? 'border-emerald-300/25 bg-emerald-300/[.05] text-emerald-200' : 'border-red-400/25 bg-red-400/[.05] text-red-300'}`}>
+              <div className={`stagger-in rounded-2xl border p-5 text-center ${result.best.margin >= 0 ? 'border-emerald-300/25 bg-emerald-300/[.05] text-emerald-200' : 'border-red-400/25 bg-red-400/[.05] text-red-300'}`}>
                 <div className="font-display text-2xl font-bold">{result.best.result.outcome === 'attacker' ? 'You Win' : result.best.result.outcome === 'defender' ? 'Still Loses' : 'Even Fight'}</div>
                 <div className="mt-1 text-xs text-parchment/50">Best split: {pct(result.best.composition.infantry)} Infantry / {pct(result.best.composition.cavalry)} Cavalry / {pct(result.best.composition.archers)} Archers · margin {result.best.margin >= 0 ? '+' : ''}{fmt(result.best.margin)} troops</div>
               </div>
@@ -288,7 +298,7 @@ export default function MysticSuite() {
                 const yourSide = { infantry: result.totalYourTroops * result.best.composition.infantry, cavalry: result.totalYourTroops * result.best.composition.cavalry, archers: result.totalYourTroops * result.best.composition.archers }
                 const enemySide = { infantry: n(opponent.infantry.count), cavalry: n(opponent.cavalry.count), archers: n(opponent.archers.count) }
                 return (
-                  <div data-report-clone="mystic-visual" className="space-y-4">
+                  <div data-report-clone="mystic-visual" className="stagger-in space-y-4">
                     <ClashGauge yourTotal={yourSide.infantry + yourSide.cavalry + yourSide.archers} enemyTotal={enemySide.infantry + enemySide.cavalry + enemySide.archers} margin={result.best.margin} />
                     <VsArmyCards yourSide={yourSide} enemySide={enemySide} yourLabel="Your Best Split" enemyLabel="Opponent" />
                   </div>
@@ -296,23 +306,23 @@ export default function MysticSuite() {
               })()}
               {result.classical && (
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="rounded-2xl border border-gold/10 bg-white/[.02] p-4">
+                  <div className="stagger-in rounded-2xl border border-gold/10 bg-white/[.02] p-4">
                     <div className="text-[9px] uppercase tracking-wider text-parchment/35">Classical 50/25/25 (the default guess)</div>
-                    <div className={`mt-1 font-mono text-lg font-bold ${result.classical.margin >= 0 ? 'text-emerald-300' : 'text-red-300'}`}>{result.classical.margin >= 0 ? '+' : ''}{fmt(result.classical.margin)}</div>
+                    <div className={`mt-1 font-mono text-lg font-bold ${result.classical.margin >= 0 ? 'text-emerald-300' : 'text-red-300'}`}>{result.classical.margin >= 0 ? '+' : ''}<CountUp value={result.classical.margin} format={fmt} /></div>
                     <div className="mt-0.5 text-[10px] text-parchment/40">{result.classical.result.outcome === 'attacker' ? 'wins' : result.classical.result.outcome === 'defender' ? 'loses' : 'draw'}</div>
                   </div>
-                  <div className="rounded-2xl border border-gold/20 bg-gold/[.04] p-4">
+                  <div className="stagger-in rounded-2xl border border-gold/20 bg-gold/[.04] p-4">
                     <div className="text-[9px] uppercase tracking-wider text-parchment/35">Optimal split found above</div>
-                    <div className={`mt-1 font-mono text-lg font-bold ${result.best.margin >= 0 ? 'text-emerald-300' : 'text-red-300'}`}>{result.best.margin >= 0 ? '+' : ''}{fmt(result.best.margin)}</div>
+                    <div className={`mt-1 font-mono text-lg font-bold ${result.best.margin >= 0 ? 'text-emerald-300' : 'text-red-300'}`}>{result.best.margin >= 0 ? '+' : ''}<CountUp value={result.best.margin} format={fmt} /></div>
                     <div className="mt-0.5 text-[10px] text-gold-bright/70">{result.best.margin - result.classical.margin >= 0 ? '+' : ''}{fmt(result.best.margin - result.classical.margin)} troops vs. classical</div>
                   </div>
                 </div>
               )}
               <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-                <div className="rounded-2xl border border-gold/10 bg-white/[.025] p-4"><div className="text-[9px] uppercase tracking-wider text-parchment/35">Infantry</div><div className="mt-1 font-mono text-xl font-bold text-parchment">{fmt(result.totalYourTroops * result.best.composition.infantry)}</div></div>
-                <div className="rounded-2xl border border-gold/10 bg-white/[.025] p-4"><div className="text-[9px] uppercase tracking-wider text-parchment/35">Cavalry</div><div className="mt-1 font-mono text-xl font-bold text-parchment">{fmt(result.totalYourTroops * result.best.composition.cavalry)}</div></div>
-                <div className="rounded-2xl border border-gold/10 bg-white/[.025] p-4"><div className="text-[9px] uppercase tracking-wider text-parchment/35">Archers</div><div className="mt-1 font-mono text-xl font-bold text-parchment">{fmt(result.totalYourTroops * result.best.composition.archers)}</div></div>
-                <div className="rounded-2xl border border-gold/10 bg-white/[.025] p-4"><div className="text-[9px] uppercase tracking-wider text-parchment/35">Compositions Tested</div><div className="mt-1 font-mono text-xl font-bold text-parchment">{result.candidates.length}</div></div>
+                <div className="stagger-in rounded-2xl border border-gold/10 bg-white/[.025] p-4"><div className="text-[9px] uppercase tracking-wider text-parchment/35">Infantry</div><div className="mt-1 font-mono text-xl font-bold text-parchment"><CountUp value={result.totalYourTroops * result.best.composition.infantry} format={fmt} /></div></div>
+                <div className="stagger-in rounded-2xl border border-gold/10 bg-white/[.025] p-4"><div className="text-[9px] uppercase tracking-wider text-parchment/35">Cavalry</div><div className="mt-1 font-mono text-xl font-bold text-parchment"><CountUp value={result.totalYourTroops * result.best.composition.cavalry} format={fmt} /></div></div>
+                <div className="stagger-in rounded-2xl border border-gold/10 bg-white/[.025] p-4"><div className="text-[9px] uppercase tracking-wider text-parchment/35">Archers</div><div className="mt-1 font-mono text-xl font-bold text-parchment"><CountUp value={result.totalYourTroops * result.best.composition.archers} format={fmt} /></div></div>
+                <div className="stagger-in rounded-2xl border border-gold/10 bg-white/[.025] p-4"><div className="text-[9px] uppercase tracking-wider text-parchment/35">Compositions Tested</div><div className="mt-1 font-mono text-xl font-bold text-parchment"><CountUp value={result.candidates.length} /></div></div>
               </div>
               <div>
                 <div className="mb-2 text-[10px] font-bold uppercase tracking-wider text-parchment/40">Top Compositions By Margin</div>

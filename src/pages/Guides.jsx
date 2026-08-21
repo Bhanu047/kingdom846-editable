@@ -87,6 +87,7 @@ export default function Guides() {
                   <img
                     src={g.art || './assets/guide-strategy.png'}
                     alt=""
+                    style={g.artPosition ? { objectPosition: g.artPosition } : undefined}
                     className="w-14 h-14 rounded-lg object-cover"
                     loading="lazy"
                   />
@@ -107,7 +108,7 @@ export default function Guides() {
               {isActive && (
                 <div className="mt-1 mb-1 p-3 rounded-lg border border-gold/30 bg-ink-2/80 stagger-in space-y-3 gold-corners">
                   <div className="relative h-24 rounded-lg overflow-hidden">
-                    <img src={g.art || './assets/guide-strategy.png'} alt="" className="w-full h-full object-cover" />
+                    <img src={g.art || './assets/guide-strategy.png'} alt="" style={g.artPosition ? { objectPosition: g.artPosition } : undefined} className="w-full h-full object-cover" />
                     <div className="absolute inset-0 bg-gradient-to-t from-ink-2 via-transparent to-transparent" />
                     <Pill tone="blue">{g.category}</Pill>
                   </div>

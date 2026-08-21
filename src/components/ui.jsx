@@ -31,10 +31,10 @@ export function Pill({ children, tone = 'gold' }) {
   )
 }
 
-export function ArtImage({ src, alt, className = '' }) {
+export function ArtImage({ src, alt, className = '', imagePosition }) {
   return (
     <div className={`relative overflow-hidden rounded-lg ${className}`}>
-      <img src={src} alt={alt} loading="lazy" className="h-full w-full object-cover" />
+      <img src={src} alt={alt} loading="lazy" style={imagePosition ? { objectPosition: imagePosition } : undefined} className="h-full w-full object-cover" />
       <div className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-gold/20" />
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-ink/70 via-transparent to-transparent" />
     </div>

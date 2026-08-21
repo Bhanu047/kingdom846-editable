@@ -227,7 +227,7 @@ export const guides = [
     ].join('\n\n')
   },
   {
-    id: 'bear-trap', title: 'Bear Hunt Rally Guide', category: 'PvE', art: './assets/art-bear-trap.png', read: '6 min',
+    id: 'bear-trap', title: 'Bear Hunt Rally Guide', category: 'PvE', art: './assets/art-bear-trap.png', artPosition: '50% 15%', read: '6 min',
     excerpt: 'Optimal trap formations and reward-maximizing math for the bear hunt.',
     body: [
       'The Bear Hunt is a PvE event where alliances rally to defeat a bear boss. Higher damage means better rewards for all participants.',

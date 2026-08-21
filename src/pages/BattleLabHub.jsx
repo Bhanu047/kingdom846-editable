@@ -10,7 +10,7 @@ const REQUEST_KEY = 'kingdom846.battleLab.requestedModule'
 const DEDICATED = { bear: BearSuite, mystic: MysticSuite, battle: PvPSuite, formation: FormationSuite, codex: CodexSuite }
 
 const TOOLS = [
-  { id: 'bear', title: 'Bear', icon: 'target', image: './assets/art-bear-trap.png', description: 'Build your Hunt Formation and measure Hunt Impact for your exact rally stats.', accent: 'from-amber-950/85 via-ink/45 to-transparent' },
+  { id: 'bear', title: 'Bear', icon: 'target', image: './assets/art-bear-trap.png', imagePosition: '50% 15%', description: 'Build your Hunt Formation and measure Hunt Impact for your exact rally stats.', accent: 'from-amber-950/85 via-ink/45 to-transparent' },
   { id: 'mystic', title: 'Mystic', icon: 'sparkles', image: './assets/art-hero-meta.png', description: 'Enter both sides of a Mystic Trial battle report and find the troop split that wins by the widest margin.', accent: 'from-violet-950/85 via-ink/45 to-transparent' },
   { id: 'battle', title: 'PvP', icon: 'swords', image: './assets/art-castle-battle.png', description: 'Run a round-by-round battle between two armies and see who’s left standing.', accent: 'from-red-950/85 via-ink/45 to-transparent' },
   { id: 'formation', title: 'Formation', icon: 'layers', image: './assets/strategy-war-academy.png', description: 'Build and compare tactical troop formations for different targets.', accent: 'from-emerald-950/85 via-ink/45 to-transparent' },
@@ -31,7 +31,7 @@ function readRequestedTool() {
 function ToolCard({ tool, onOpen }) {
   return (
     <button type="button" onClick={() => onOpen(tool.id)} className="group relative isolate min-h-[290px] overflow-hidden rounded-[24px] border border-gold/25 bg-ink text-left shadow-[0_18px_60px_rgba(0,0,0,.34)] transition duration-300 hover:-translate-y-1 hover:border-gold/60 hover:shadow-[0_22px_70px_rgba(212,175,55,.13)] md:min-h-[350px]">
-      <img src={tool.image} alt="" className="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-[1.035]" />
+      <img src={tool.image} alt="" style={tool.imagePosition ? { objectPosition: tool.imagePosition } : undefined} className="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-[1.035]" />
       <div className={`absolute inset-0 bg-gradient-to-t ${tool.accent}`} />
       <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/25 to-black/5" />
       <div className="absolute inset-x-0 top-0 flex items-start justify-between p-5 md:p-6">
@@ -72,7 +72,7 @@ export default function BattleLabHub() {
   return (
     <div className="space-y-6">
       <section className="relative min-h-[250px] overflow-hidden rounded-[26px] border border-gold/25 bg-ink shadow-[0_20px_70px_rgba(0,0,0,.34)] md:min-h-[310px]">
-        <img src={tool.image} alt="" className="absolute inset-0 h-full w-full object-cover" />
+        <img src={tool.image} alt="" style={tool.imagePosition ? { objectPosition: tool.imagePosition } : undefined} className="absolute inset-0 h-full w-full object-cover" />
         <div className={`absolute inset-0 bg-gradient-to-r ${tool.accent}`} />
         <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-black/20" />
         <div className="relative flex min-h-[250px] flex-col justify-between p-5 md:min-h-[310px] md:p-8">

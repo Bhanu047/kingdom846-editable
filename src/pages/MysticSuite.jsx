@@ -41,8 +41,12 @@ function ArmyForm({ army, setArmy, locked, accent }) {
 export const TROOP_COLORS = { infantry: '#d9b94e', cavalry: '#7f9ed6', archers: '#c8655a' }
 
 // Ranked composition row — a mini I/C/A strip so the shape of each candidate
-// split is visible at a glance, not just its margin.
-export function FormationRow({ composition, sub, margin, max, active }) {
+// split is visible at a glance, not just its margin. Margin shows as a
+// percentage of your total troops committed, not a raw troop count -- a
+// bare number like "-2,271" doesn't mean anything without knowing your
+// army size, but "-2.3%" reads the same regardless of scale.
+export function FormationRow({ composition, sub, margin, max, active, total }) {
+  const pct = total > 0 ? (margin / total) * 100 : 0
   return (
     <div className={`rounded-xl border p-3 ${active ? 'border-gold/40 bg-gold/[.05]' : 'border-gold/10 bg-white/[.02]'}`}>
       <div className="flex items-center justify-between gap-3">
@@ -54,7 +58,7 @@ export function FormationRow({ composition, sub, margin, max, active }) {
           </div>
           <div className="text-xs"><span className="font-semibold text-parchment/85">{Math.round(composition.infantry * 100)}/{Math.round(composition.cavalry * 100)}/{Math.round(composition.archers * 100)}</span><span className="ml-2 text-[10px] text-parchment/40">{sub}</span></div>
         </div>
-        <span className={`font-mono text-sm font-bold ${margin >= 0 ? 'text-emerald-300' : 'text-red-300'}`}>{margin >= 0 ? '+' : ''}{fmt(margin)}</span>
+        <span className={`font-mono text-sm font-bold ${margin >= 0 ? 'text-emerald-300' : 'text-red-300'}`}>{pct >= 0 ? '+' : ''}{pct.toFixed(1)}%</span>
       </div>
       <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-black/25">
         <div className={`h-full rounded-full ${margin >= 0 ? 'bg-gradient-to-r from-emerald-400/50 to-emerald-300' : 'bg-gradient-to-r from-red-400/50 to-red-300'}`} style={{ width: `${max > 0 ? Math.max(2, Math.abs(margin) / max * 100) : 0}%` }} />
@@ -314,7 +318,7 @@ export default function MysticSuite() {
                 <div className="mb-2 text-[10px] font-bold uppercase tracking-wider text-parchment/40">Top Compositions By Margin</div>
                 <div className="space-y-2">
                   {top.map((c, i) => (
-                    <FormationRow key={i} active={i === 0} composition={c.composition} sub={c.result.outcome === 'attacker' ? 'wins' : c.result.outcome === 'defender' ? 'loses' : 'draw'} margin={c.margin} max={maxMargin} />
+                    <FormationRow key={i} active={i === 0} composition={c.composition} sub={c.result.outcome === 'attacker' ? 'wins' : c.result.outcome === 'defender' ? 'loses' : 'draw'} margin={c.margin} max={maxMargin} total={result.totalYourTroops} />
                   ))}
                 </div>
               </div>

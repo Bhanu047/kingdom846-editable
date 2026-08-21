@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import Icon from '../components/Icon'
 import { calculateHeroSynergy, optimizeMysticComposition, simulateT10Battle } from '../lib/combat/battleLabEngine'
 import { HUNT_JOINER_HEROES, applyJoinerBonuses } from '../lib/combat/huntImpact'
+import { TROOP_COLORS, FormationRow } from './MysticSuite'
 
 const TROOPS = [{ key: 'infantry', label: 'Infantry', short: 'INF', icon: 'shield' }, { key: 'cavalry', label: 'Cavalry', short: 'CAV', icon: 'zap' }, { key: 'archers', label: 'Archers', short: 'ARC', icon: 'crosshair' }]
 const HEROES = { infantry: ['None', 'Alcar', 'Amadeus', 'Charles', 'Eric', 'Forrest', 'Helga', 'Howard', 'Long Fei', 'Seth', 'Triton', 'Zoe'], cavalry: ['None', 'Ava', 'Chenko', 'Edwin', 'Fahd', 'Gordon', 'Hilde', 'Jabel', 'Margot', 'Petra', 'Sophia', 'Thrud'], archers: ['None', 'Amane', 'Diana', 'Jaeger', 'Marlin', 'Olive', 'Quinn', 'Rosa', 'Saul', 'Vivian', 'Wee & Woo', 'Yang', 'Yeonwoo'] }
@@ -120,29 +121,6 @@ function RoundChart({ rounds }) {
         <path d={path('defenderRemaining')} fill="none" stroke="#c8655a" strokeWidth="3" />
       </svg>
       <div className="mt-1 flex justify-center gap-4 text-[10px]"><span className="text-[#7f9ed6]">● Your Army</span><span className="text-[#c8655a]">● Enemy Army</span></div>
-    </div>
-  )
-}
-
-const TROOP_COLORS = { infantry: '#d9b94e', cavalry: '#7f9ed6', archers: '#c8655a' }
-
-function FormationRow({ composition, sub, margin, max, active }) {
-  return (
-    <div className={`rounded-xl border p-3 ${active ? 'border-gold/40 bg-gold/[.05]' : 'border-gold/10 bg-white/[.02]'}`}>
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2.5">
-          <div className="flex h-4 w-20 shrink-0 overflow-hidden rounded-full border border-gold/10">
-            <div style={{ width: `${composition.infantry * 100}%`, background: TROOP_COLORS.infantry }} />
-            <div style={{ width: `${composition.cavalry * 100}%`, background: TROOP_COLORS.cavalry }} />
-            <div style={{ width: `${composition.archers * 100}%`, background: TROOP_COLORS.archers }} />
-          </div>
-          <div className="text-xs"><span className="font-semibold text-parchment/85">{Math.round(composition.infantry * 100)}/{Math.round(composition.cavalry * 100)}/{Math.round(composition.archers * 100)}</span><span className="ml-2 text-[10px] text-parchment/40">{sub}</span></div>
-        </div>
-        <span className={`font-mono text-sm font-bold ${margin >= 0 ? 'text-emerald-300' : 'text-red-300'}`}>{margin >= 0 ? '+' : ''}{fmt(margin)}</span>
-      </div>
-      <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-black/25">
-        <div className={`h-full rounded-full ${margin >= 0 ? 'bg-gradient-to-r from-emerald-400/50 to-emerald-300' : 'bg-gradient-to-r from-red-400/50 to-red-300'}`} style={{ width: `${max > 0 ? Math.max(2, Math.abs(margin) / max * 100) : 0}%` }} />
-      </div>
     </div>
   )
 }
@@ -469,7 +447,7 @@ export default function PvPSuite() {
                 <div className="mb-2 text-[10px] font-bold uppercase tracking-wider text-parchment/40">Top Compositions By Margin</div>
                 <div className="space-y-2">
                   {sweepTop.map((c, i) => (
-                    <FormationRow key={i} active={i === 0} composition={c.composition} sub={c.result.outcome === 'attacker' ? 'wins' : c.result.outcome === 'defender' ? 'loses' : 'draw'} margin={c.margin} max={sweepMaxMargin} />
+                    <FormationRow key={i} active={i === 0} composition={c.composition} sub={c.result.outcome === 'attacker' ? 'wins' : c.result.outcome === 'defender' ? 'loses' : 'draw'} margin={c.margin} max={sweepMaxMargin} total={sweepResult.totalYourTroops} />
                   ))}
                 </div>
               </div>

@@ -68,13 +68,16 @@ function number(value, fallback = 0) {
   return Number.isFinite(parsed) ? parsed : fallback
 }
 
-// The "widget" field is the rally-wide ATK/LET % from an Expedition Skill widget,
-// entered manually because it's absent from a solo beast-attack battle report
-// (a terror-rally report already includes it, so it should stay 0 there).
+// The "widget" field is the rally-wide ATK/LET % from a hero's Exclusive Gear
+// widget skill, entered manually because it's absent from a solo beast-attack
+// battle report (a terror-rally report already includes it, so it should stay
+// 0 there). Each widget boosts exactly one stat, not both — widgetStat picks
+// which one this particular hero's widget affects.
 function attackFactor(stat = {}) {
   const widget = Math.max(0, number(stat.widget))
-  const attack = Math.max(0, number(stat.attack)) + widget
-  const lethality = Math.max(0, number(stat.lethality)) + widget
+  const widgetStat = stat.widgetStat === 'lethality' ? 'lethality' : 'attack'
+  const attack = Math.max(0, number(stat.attack)) + (widgetStat === 'attack' ? widget : 0)
+  const lethality = Math.max(0, number(stat.lethality)) + (widgetStat === 'lethality' ? widget : 0)
   return (1 + attack / 100) * (1 + lethality / 100)
 }
 

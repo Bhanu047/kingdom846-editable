@@ -276,7 +276,7 @@ export default function Dashboard({ onNavigate }) {
           <SectionTitle eyebrow="Strategy" title="Guides & Playbooks" action={<button onClick={() => onNavigate('guides')} className="text-xs text-gold hover:underline">All →</button>} />
           <div className="grid gap-4 md:grid-cols-3">
             {displayGuides.slice(0, 3).map((g) => (
-              <button key={g.id} onClick={() => onNavigate('guides')} className="panel overflow-hidden text-left transition hover:panel-glow">
+              <button key={g.id} onClick={() => onNavigate('guides')} className="panel overflow-hidden text-left transition hover:panel-glow flex flex-col">
                 <div className="relative h-24">
                   <ArtImage src={g.art} alt={g.title} className="h-full w-full" />
                   <div className="absolute inset-x-0 bottom-0 p-2"><h3 className="text-sm font-bold text-parchment drop-shadow">{g.title}</h3></div>

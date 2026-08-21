@@ -35,7 +35,7 @@ export default function Alliances() {
         {alliances.map((a) => {
           const c = colorMap[a.color] || colorMap.blue
           return (
-            <button key={a.slug} onClick={() => setActive(a)} className="royal-grid-card group overflow-hidden text-left cursor-pointer">
+            <button key={a.slug} onClick={() => setActive(a)} className="royal-grid-card group overflow-hidden text-left cursor-pointer flex flex-col">
               <div className="relative h-28">
                 <ArtImage src={a.art} alt={a.name} className="h-full w-full" />
                 <div className={`absolute inset-0 bg-gradient-to-r ${c.grad}`} />

@@ -126,95 +126,6 @@ function RoundChart({ rounds }) {
 
 const TROOP_COLORS = { infantry: '#d9b94e', cavalry: '#7f9ed6', archers: '#c8655a' }
 
-// Direct Attack is a live round-by-round fight, so its headline visual is a
-// start→end HP-bar duel (the classic "boss fight" depletion bar) rather than
-// the search-result gauge used by Mystic/Composition Optimizer.
-function BattleHPBars({ yourStart, yourEnd, enemyStart, enemyEnd, yourLabel = 'YOUR ARMY', enemyLabel = 'ENEMY ARMY' }) {
-  const Bar = ({ start, end, label, color }) => {
-    const alive = start > 0 ? end / start * 100 : 0
-    return (
-      <div>
-        <div className="flex items-baseline justify-between text-xs">
-          <span className="font-bold uppercase tracking-wider" style={{ color }}>{label}</span>
-          <span className="font-mono text-parchment/60">{fmt(start)} <span className="text-parchment/30">→</span> <b className="text-parchment">{fmt(end)}</b></span>
-        </div>
-        <div className="relative mt-1.5 h-6 overflow-hidden rounded-full border border-gold/10 bg-black/40">
-          <div className="h-full rounded-full" style={{ width: `${alive}%`, background: `linear-gradient(90deg, ${color}aa, ${color})`, boxShadow: `0 0 10px ${color}66` }} />
-        </div>
-        <div className="mt-0.5 text-right text-[10px] text-parchment/35">{(100 - alive).toFixed(1)}% lost</div>
-      </div>
-    )
-  }
-  return (
-    <div className="space-y-4 rounded-2xl border border-gold/20 bg-[#07101e] p-4 md:p-5">
-      <Bar start={yourStart} end={yourEnd} label={yourLabel} color="#7f9ed6" />
-      <Bar start={enemyStart} end={enemyEnd} label={enemyLabel} color="#c8655a" />
-    </div>
-  )
-}
-
-// VS matchup cards — used by the Composition Optimizer result, same visual
-// language as Mystic Trials' equivalent so the two "find the best split"
-// tools read as one family, distinct from Direct Attack's HP-bar duel.
-function VsArmyCards({ yourSide, enemySide, yourLabel = 'YOUR FORCE', enemyLabel = 'ENEMY FORCE' }) {
-  const Card = ({ side, label, border, glow, align }) => {
-    const total = Math.max(0, side.infantry) + Math.max(0, side.cavalry) + Math.max(0, side.archers)
-    return (
-      <div className={`flex-1 rounded-2xl border p-4 ${border}`} style={{ boxShadow: `inset 0 0 30px ${glow}` }}>
-        <div className={`text-[9px] font-bold uppercase tracking-wider text-parchment/50 ${align}`}>{label}</div>
-        <div className={`mt-0.5 font-mono text-2xl font-black text-parchment ${align}`}>{fmt(total)}</div>
-        <div className="mt-3 space-y-2">
-          {TROOPS.map((t) => (
-            <div key={t.key} className={`flex items-center gap-2 ${align === 'text-right' ? 'flex-row-reverse' : ''}`}>
-              <Icon name={t.icon} size={12} style={{ color: TROOP_COLORS[t.key] }} />
-              <div className="h-2 flex-1 overflow-hidden rounded-full bg-black/30"><div className="h-full rounded-full" style={{ width: `${total > 0 ? Math.max(0, side[t.key]) / total * 100 : 0}%`, background: TROOP_COLORS[t.key] }} /></div>
-              <span className="w-24 shrink-0 font-mono text-[10px] text-parchment/55" style={{ textAlign: align === 'text-right' ? 'left' : 'right' }}>{fmt(side[t.key])} <span className="text-parchment/35">({total > 0 ? Math.round(Math.max(0, side[t.key]) / total * 100) : 0}%)</span></span>
-            </div>
-          ))}
-        </div>
-      </div>
-    )
-  }
-  return (
-    <div className="rounded-2xl border border-gold/20 bg-[#07101e] p-4 md:p-5">
-      <div className="flex items-stretch gap-2 md:gap-3">
-        <Card side={yourSide} label={yourLabel} border="border-[#7f9ed6]/25 bg-[#7f9ed6]/[.045]" glow="rgba(127,158,214,.08)" align="text-left" />
-        <div className="flex shrink-0 flex-col items-center justify-center px-1">
-          <Icon name="swords" size={20} className="text-gold-bright" />
-          <div className="mt-1 text-[8px] font-black uppercase tracking-wider text-gold/50">VS</div>
-        </div>
-        <Card side={enemySide} label={enemyLabel} border="border-[#c8655a]/25 bg-[#c8655a]/[.045]" glow="rgba(200,101,90,.08)" align="text-right" />
-      </div>
-    </div>
-  )
-}
-
-function ClashGauge({ yourTotal, enemyTotal, margin }) {
-  const combined = Math.max(1, yourTotal + enemyTotal)
-  const yourShare = yourTotal / combined
-  const R = 92, CX = 130, CY = 118
-  const angle = Math.PI * (1 - yourShare)
-  const pt = (a) => [CX + R * Math.cos(a), CY - R * Math.sin(a)]
-  const arc = (from, to) => { const [x1, y1] = pt(from), [x2, y2] = pt(to); const large = Math.abs(to - from) > Math.PI ? 1 : 0; return `M${x1},${y1} A${R},${R} 0 ${large} ${to < from ? 1 : 0} ${x2},${y2}` }
-  const [nx, ny] = pt(angle)
-  return (
-    <div className="rounded-2xl border border-gold/20 bg-[#07101e] p-4 md:p-5">
-      <svg viewBox="0 0 260 140" className="mx-auto w-full max-w-md">
-        <path d={arc(Math.PI, angle)} stroke="#7f9ed6" strokeWidth="16" fill="none" strokeLinecap="round" />
-        <path d={arc(angle, 0)} stroke="#c8655a" strokeWidth="16" fill="none" strokeLinecap="round" />
-        <line x1={CX} y1={CY} x2={nx} y2={ny} stroke="#e8c558" strokeWidth="3" strokeLinecap="round" />
-        <circle cx={CX} cy={CY} r="7" fill="#e8c558" stroke="#071224" strokeWidth="2" />
-        <text x="14" y="134" fontSize="11" fill="#9eb9ef" fontWeight="700">YOUR FORCE</text>
-        <text x="246" y="134" fontSize="11" fill="#e08c80" fontWeight="700" textAnchor="end">ENEMY</text>
-      </svg>
-      <div className="mt-1 text-center">
-        <div className="font-mono text-2xl font-black" style={{ color: margin >= 0 ? '#6ee7b7' : '#fca5a5' }}>{margin >= 0 ? '+' : ''}{fmt(margin)}</div>
-        <div className="text-[10px] text-parchment/40">troop margin</div>
-      </div>
-    </div>
-  )
-}
-
 function FormationRow({ composition, sub, margin, max, active }) {
   return (
     <div className={`rounded-xl border p-3 ${active ? 'border-gold/40 bg-gold/[.05]' : 'border-gold/10 bg-white/[.02]'}`}>
@@ -236,60 +147,104 @@ function FormationRow({ composition, sub, margin, max, active }) {
   )
 }
 
-// DIRECT ATTACK — OPTION 2: "Casualty Rings", two radial survival rings
-// (stamina/activity-ring style) instead of horizontal HP bars.
-function CasualtyRings({ yourStart, yourEnd, enemyStart, enemyEnd, yourLabel = 'YOUR ARMY', enemyLabel = 'ENEMY ARMY' }) {
-  const Ring = ({ start, end, label, color }) => {
-    const alive = start > 0 ? end / start * 100 : 0
-    const R = 54, C = 2 * Math.PI * R
-    const dash = C * Math.max(0, Math.min(100, alive)) / 100
-    return (
-      <div className="flex flex-col items-center">
-        <svg width="140" height="140" viewBox="0 0 140 140">
-          <circle cx="70" cy="70" r={R} fill="none" stroke="rgba(255,255,255,.07)" strokeWidth="14" />
-          <circle cx="70" cy="70" r={R} fill="none" stroke={color} strokeWidth="14" strokeDasharray={`${dash} ${C - dash}`} strokeLinecap="round" transform="rotate(-90 70 70)" />
-          <text x="70" y="66" textAnchor="middle" fontSize="20" fontWeight="900" fill="#f1e7ce">{alive.toFixed(0)}%</text>
-          <text x="70" y="83" textAnchor="middle" fontSize="9" fill="rgba(241,231,206,.4)">SURVIVED</text>
-        </svg>
-        <div className="mt-1 text-xs font-bold uppercase tracking-wider" style={{ color }}>{label}</div>
-        <div className="font-mono text-sm text-parchment/70">{fmt(end)} / {fmt(start)}</div>
-      </div>
-    )
-  }
+// NEW OPTION — "Stat Radar": a 5-axis polygon comparing overall army stat
+// profiles (troop-weighted Attack/Lethality/Defense/Health, plus Troops) —
+// a chart type not used anywhere else on the site, good for Direct Attack's
+// pre-battle matchup since it has full per-side stat data.
+function StatRadar({ yourStats, enemyStats, yourLabel = 'YOUR ARMY', enemyLabel = 'ENEMY ARMY' }) {
+  const AXES = [{ key: 'attack', label: 'ATK' }, { key: 'lethality', label: 'LET' }, { key: 'defense', label: 'DEF' }, { key: 'health', label: 'HP' }, { key: 'troops', label: 'TROOPS' }]
+  const R = 72, CX = 140, CY = 116
+  const angleFor = (i) => -Math.PI / 2 + i * (2 * Math.PI / AXES.length)
+  const maxes = AXES.map((a) => Math.max(1, yourStats[a.key], enemyStats[a.key]))
+  const pt = (i, val, max) => [CX + R * Math.min(1, val / max) * Math.cos(angleFor(i)), CY + R * Math.min(1, val / max) * Math.sin(angleFor(i))]
+  const poly = (stats) => AXES.map((a, i) => pt(i, stats[a.key], maxes[i])).map(([x, y]) => `${x},${y}`).join(' ')
+  const gridPoly = (scale) => AXES.map((a, i) => pt(i, scale, 1)).map(([x, y]) => `${x},${y}`).join(' ')
   return (
     <div className="rounded-2xl border border-gold/20 bg-[#07101e] p-4 md:p-5">
-      <div className="flex items-center justify-center gap-6 md:gap-10">
-        <Ring start={yourStart} end={yourEnd} label={yourLabel} color="#7f9ed6" />
-        <Icon name="swords" size={22} className="text-gold/50" />
-        <Ring start={enemyStart} end={enemyEnd} label={enemyLabel} color="#c8655a" />
+      <svg viewBox="0 0 280 250" className="mx-auto w-full max-w-md">
+        {[.25, .5, .75, 1].map((s) => <polygon key={s} points={gridPoly(s)} fill="none" stroke="rgba(226,199,125,.12)" />)}
+        <polygon points={poly(yourStats)} fill="rgba(127,158,214,.28)" stroke="#7f9ed6" strokeWidth="2" />
+        <polygon points={poly(enemyStats)} fill="rgba(200,101,90,.22)" stroke="#c8655a" strokeWidth="2" />
+        {AXES.map((a, i) => { const [x, y] = pt(i, 1.42, 1); return <text key={a.key} x={x} y={y} fontSize="11" fontWeight="800" fill="#f1e7ce" stroke="#07101e" strokeWidth="4" paintOrder="stroke" textAnchor="middle">{a.label}</text> })}
+      </svg>
+      <div className="mt-1 flex justify-center gap-4 text-[10px]"><span className="text-[#7f9ed6]">● {yourLabel}</span><span className="text-[#c8655a]">● {enemyLabel}</span></div>
+    </div>
+  )
+}
+
+// NEW OPTION — "Formation Blocks": a pictorial icon-grid army display (one
+// row per troop type, one block per slice of that type's share) instead of
+// an abstract chart — reads like an actual formation roster, and doubles as
+// a casualty display when casualtyFraction is passed (blocks dim to show losses).
+function FormationBlocks({ side, casualtyFraction, label, color }) {
+  const total = Math.max(0, side.infantry) + Math.max(0, side.cavalry) + Math.max(0, side.archers)
+  const BLOCKS_PER_ROW = 36
+  const rows = TROOPS.map((t) => {
+    const count = Math.max(0, side[t.key])
+    const blockCount = total > 0 && count > 0 ? Math.max(1, Math.round(count / total * BLOCKS_PER_ROW)) : 0
+    const lostBlocks = casualtyFraction != null ? Math.round(blockCount * Math.max(0, Math.min(1, casualtyFraction))) : 0
+    return { key: t.key, label: t.label, count, blockCount, lostBlocks, color: TROOP_COLORS[t.key] }
+  })
+  return (
+    <div className="rounded-2xl border border-gold/15 bg-black/20 p-3.5">
+      <div className="flex items-baseline justify-between"><div className="text-[10px] font-bold uppercase tracking-wider" style={{ color }}>{label}</div><div className="font-mono text-xs text-parchment/50">{fmt(total)}</div></div>
+      <div className="mt-2 space-y-1.5">
+        {rows.map((r) => (
+          <div key={r.key} className="flex items-center gap-1.5">
+            <span className="w-8 shrink-0 text-[8px] font-bold uppercase text-parchment/35">{r.label.slice(0, 3)}</span>
+            <div className="flex flex-1 flex-wrap gap-[2px]">
+              {Array.from({ length: r.blockCount }).map((_, i) => (
+                <div key={i} className="h-2.5 w-2.5 rounded-[2px]" style={{ background: r.color, opacity: i < r.blockCount - r.lostBlocks ? 1 : .15 }} />
+              ))}
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   )
 }
 
-// COMPOSITION OPTIMIZER — OPTION 2: "Formation Ribbon", two stacked full-width
-// composition ribbons with an outcome badge between them, instead of a gauge.
-function FormationRibbon({ yourSide, enemySide, yourLabel = 'YOUR BEST SPLIT', enemyLabel = 'ENEMY ARMY', margin }) {
-  const Ribbon = ({ side, label }) => {
-    const total = side.infantry + side.cavalry + side.archers
-    return (
-      <div>
-        <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider text-parchment/50"><span>{label}</span><span className="font-mono text-parchment/70">{fmt(total)}</span></div>
-        <div className="mt-1 flex h-8 overflow-hidden rounded-lg border border-gold/10">
-          {TROOPS.map((t) => (
-            <div key={t.key} className="flex items-center justify-center text-[10px] font-bold text-black/70" style={{ width: `${total > 0 ? side[t.key] / total * 100 : 0}%`, background: TROOP_COLORS[t.key] }}>
-              {total > 0 && side[t.key] / total * 100 > 12 ? `${Math.round(side[t.key] / total * 100)}%` : ''}
-            </div>
-          ))}
-        </div>
-      </div>
-    )
-  }
+function FormationBlocksMatchup({ yourSide, enemySide, yourLabel = 'YOUR ARMY', enemyLabel = 'ENEMY ARMY', yourCasualtyFraction, enemyCasualtyFraction }) {
   return (
-    <div className="space-y-3 rounded-2xl border border-gold/20 bg-[#07101e] p-4 md:p-5">
-      <Ribbon side={yourSide} label={yourLabel} />
-      <div className="flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-wider text-gold-bright"><Icon name="swords" size={12} /> margin {margin >= 0 ? '+' : ''}{fmt(margin)} <Icon name="swords" size={12} /></div>
-      <Ribbon side={enemySide} label={enemyLabel} />
+    <div className="grid gap-3 rounded-2xl border border-gold/20 bg-[#07101e] p-4 md:grid-cols-2 md:p-5">
+      <FormationBlocks side={yourSide} label={yourLabel} color="#7f9ed6" casualtyFraction={yourCasualtyFraction} />
+      <FormationBlocks side={enemySide} label={enemyLabel} color="#c8655a" casualtyFraction={enemyCasualtyFraction} />
+    </div>
+  )
+}
+
+// NEW OPTION — "Victory Podium": top 3 compositions shown as a leaderboard
+// podium (1st/2nd/3rd place blocks), leaning into game-leaderboard styling
+// rather than a chart at all.
+function VictoryPodium({ top3 }) {
+  if (!top3.length) return null
+  const order = [1, 0, 2].filter((i) => top3[i])
+  const HEIGHTS = { 0: 84, 1: 56, 2: 36 }
+  const MEDALS = { 0: '🥇', 1: '🥈', 2: '🥉' }
+  const ROW_H = 176
+  return (
+    <div className="rounded-2xl border border-gold/20 bg-[#07101e] p-4 md:p-5">
+      <div className="flex justify-center gap-3" style={{ height: ROW_H }}>
+        {order.map((i) => {
+          const c = top3[i]
+          return (
+            <div key={i} className="relative w-28" style={{ height: ROW_H }}>
+              <div className="absolute inset-x-0 flex flex-col items-center" style={{ bottom: HEIGHTS[i] + 8 }}>
+                <div className="text-lg">{MEDALS[i]}</div>
+                <div className="mt-1 flex h-3 w-20 overflow-hidden rounded-full border border-gold/10">
+                  <div style={{ width: `${c.composition.infantry * 100}%`, background: TROOP_COLORS.infantry }} />
+                  <div style={{ width: `${c.composition.cavalry * 100}%`, background: TROOP_COLORS.cavalry }} />
+                  <div style={{ width: `${c.composition.archers * 100}%`, background: TROOP_COLORS.archers }} />
+                </div>
+                <div className="mt-1 font-mono text-[10px] text-parchment/60">{Math.round(c.composition.infantry * 100)}/{Math.round(c.composition.cavalry * 100)}/{Math.round(c.composition.archers * 100)}</div>
+              </div>
+              <div className={`absolute inset-x-0 bottom-0 flex items-end justify-center rounded-t-lg border-x border-t ${i === 0 ? 'border-gold/40 bg-gold/[.08]' : 'border-gold/15 bg-white/[.03]'}`} style={{ height: `${HEIGHTS[i]}px` }}>
+                <div className="pb-2 font-mono text-sm font-black text-gold-bright">{c.margin >= 0 ? '+' : ''}{fmt(c.margin)}</div>
+              </div>
+            </div>
+          )
+        })}
+      </div>
     </div>
   )
 }
@@ -407,10 +362,25 @@ export default function PvPSuite() {
           <h3 className="mt-1 font-display text-2xl font-bold text-parchment">Battle Outcome</h3>
           <div className="mt-4 space-y-4">
             <OutcomeBanner outcome={result.outcome} attackerLeft={result.remainingA} defenderLeft={result.remainingD} rounds={result.rounds.length} />
-            <div className="text-center text-[10px] font-black uppercase tracking-[.2em] text-gold-bright/70">— Direct Attack Option 1: Battle HP Bars —</div>
-            <BattleHPBars yourStart={result.startingA} yourEnd={result.remainingA} enemyStart={result.startingD} enemyEnd={result.remainingD} />
-            <div className="text-center text-[10px] font-black uppercase tracking-[.2em] text-gold-bright/70">— Direct Attack Option 2: Casualty Rings —</div>
-            <CasualtyRings yourStart={result.startingA} yourEnd={result.remainingA} enemyStart={result.startingD} enemyEnd={result.remainingD} />
+            {(() => {
+              const yourStart = effectiveArmy(attacker, attackerJoiners)
+              const enemyStart = effectiveArmy(defender, defenderJoiners)
+              const weighted = (army, key) => { const total = TROOPS.reduce((s, t) => s + army[t.key].count, 0); return total > 0 ? TROOPS.reduce((s, t) => s + army[t.key].count * army[t.key][key], 0) / total : 0 }
+              const yourStats = { attack: weighted(yourStart, 'attack'), lethality: weighted(yourStart, 'lethality'), defense: weighted(yourStart, 'defense'), health: weighted(yourStart, 'health'), troops: result.startingA }
+              const enemyStats = { attack: weighted(enemyStart, 'attack'), lethality: weighted(enemyStart, 'lethality'), defense: weighted(enemyStart, 'defense'), health: weighted(enemyStart, 'health'), troops: result.startingD }
+              const yourSide = { infantry: yourStart.infantry.count, cavalry: yourStart.cavalry.count, archers: yourStart.archers.count }
+              const enemySide = { infantry: enemyStart.infantry.count, cavalry: enemyStart.cavalry.count, archers: enemyStart.archers.count }
+              const yourCasualtyFraction = result.startingA > 0 ? result.attackerLosses / result.startingA : 0
+              const enemyCasualtyFraction = result.startingD > 0 ? result.defenderLosses / result.startingD : 0
+              return (
+                <>
+                  <div className="text-center text-[10px] font-black uppercase tracking-[.2em] text-gold-bright/70">— New Option 1: Stat Radar —</div>
+                  <StatRadar yourStats={yourStats} enemyStats={enemyStats} />
+                  <div className="text-center text-[10px] font-black uppercase tracking-[.2em] text-gold-bright/70">— New Option 2: Formation Blocks (casualties dim) —</div>
+                  <FormationBlocksMatchup yourSide={yourSide} enemySide={enemySide} yourCasualtyFraction={yourCasualtyFraction} enemyCasualtyFraction={enemyCasualtyFraction} />
+                </>
+              )
+            })()}
             <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
               <div className="rounded-2xl border border-gold/10 bg-white/[.025] p-4"><div className="text-[9px] uppercase tracking-wider text-parchment/35">Your Losses</div><div className="mt-1 font-mono text-xl font-bold text-parchment">{fmt(result.attackerLosses)}</div></div>
               <div className="rounded-2xl border border-gold/10 bg-white/[.025] p-4"><div className="text-[9px] uppercase tracking-wider text-parchment/35">Enemy Losses</div><div className="mt-1 font-mono text-xl font-bold text-parchment">{fmt(result.defenderLosses)}</div></div>
@@ -476,11 +446,10 @@ export default function PvPSuite() {
                 const enemySide = { infantry: n(defender.infantry.count), cavalry: n(defender.cavalry.count), archers: n(defender.archers.count) }
                 return (
                   <div className="space-y-4">
-                    <div className="text-center text-[10px] font-black uppercase tracking-[.2em] text-gold-bright/70">— Optimizer Option 1: Clash Gauge + VS Cards —</div>
-                    <ClashGauge yourTotal={yourSide.infantry + yourSide.cavalry + yourSide.archers} enemyTotal={enemySide.infantry + enemySide.cavalry + enemySide.archers} margin={sweepResult.best.margin} />
-                    <VsArmyCards yourSide={yourSide} enemySide={enemySide} yourLabel="Your Best Split" enemyLabel="Enemy Army" />
-                    <div className="text-center text-[10px] font-black uppercase tracking-[.2em] text-gold-bright/70">— Optimizer Option 2: Formation Ribbon —</div>
-                    <FormationRibbon yourSide={yourSide} enemySide={enemySide} margin={sweepResult.best.margin} />
+                    <div className="text-center text-[10px] font-black uppercase tracking-[.2em] text-gold-bright/70">— New Option 1: Formation Blocks —</div>
+                    <FormationBlocksMatchup yourSide={yourSide} enemySide={enemySide} yourLabel="Your Best Split" enemyLabel="Enemy Army" />
+                    <div className="text-center text-[10px] font-black uppercase tracking-[.2em] text-gold-bright/70">— New Option 2: Victory Podium (top 3) —</div>
+                    <VictoryPodium top3={sweepTop.slice(0, 3)} />
                   </div>
                 )
               })()}

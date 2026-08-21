@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useId, useMemo, useState } from 'react'
 import Icon from '../components/Icon'
 import { optimizeMysticComposition } from '../lib/combat/battleLabEngine'
 import { useCountUp, useReveal } from '../lib/chartAnim'
@@ -42,31 +42,60 @@ function ArmyForm({ army, setArmy, locked, accent }) {
 
 export const TROOP_COLORS = { infantry: '#d9b94e', cavalry: '#7f9ed6', archers: '#c8655a' }
 
-// Ranked composition row — a mini I/C/A strip so the shape of each candidate
-// split is visible at a glance, not just its margin. Margin shows as a
-// percentage of your total troops committed, not a raw troop count -- a
-// bare number like "-2,271" doesn't mean anything without knowing your
-// army size, but "-2.3%" reads the same regardless of scale.
-export function FormationRow({ composition, sub, margin, max, active, total }) {
+const MEDALS = ['🥇', '🥈', '🥉']
+
+// Ranked composition row — a leaderboard entry, not just a bar: a medal or
+// rank badge on the left (this IS a ranked list, so it should read like
+// one), a mini I/C/A strip so the shape of each candidate split is visible
+// at a glance, and the #1 pick gets a shine sweep + glowing border to mark
+// it as the crown pick. Margin shows as a percentage of your total troops
+// committed, not a raw troop count -- a bare number like "-2,271" doesn't
+// mean anything without knowing your army size, but "-2.3%" reads the same
+// regardless of scale.
+export function FormationRow({ composition, sub, margin, max, active, total, rank = 0 }) {
   const reveal = useReveal()
   const pct = total > 0 ? (margin / total) * 100 : 0
+  // .stagger-in and .glow-badge each set the CSS `animation` shorthand, so
+  // putting both on the same element lets one silently clobber the other
+  // (whichever wins the cascade discards the other's keyframes entirely) --
+  // that left the #1 row stuck at opacity:0 forever, since .glow-badge's
+  // rule happened to win and .stagger-in's fade/rise-in keyframe never ran.
+  // Splitting them onto an outer (entrance) and inner (ambient glow)
+  // element keeps both animations running independently.
   return (
-    <div className={`stagger-in rounded-xl border p-3 ${active ? 'border-gold/40 bg-gold/[.05]' : 'border-gold/10 bg-white/[.02]'}`}>
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2.5">
-          <div className="flex h-4 w-20 shrink-0 overflow-hidden rounded-full border border-gold/10">
-            <div style={{ width: `${composition.infantry * 100}%`, background: TROOP_COLORS.infantry }} />
-            <div style={{ width: `${composition.cavalry * 100}%`, background: TROOP_COLORS.cavalry }} />
-            <div style={{ width: `${composition.archers * 100}%`, background: TROOP_COLORS.archers }} />
+    <div className="stagger-in">
+      <div className={`relative overflow-hidden rounded-xl border p-3 ${active ? 'badge-shine glow-badge border-gold/50 bg-gold/[.06]' : 'border-gold/10 bg-white/[.02]'}`}>
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <div className={`grid h-6 w-6 shrink-0 place-items-center rounded-full text-[11px] font-black ${rank < 3 ? '' : 'border border-gold/20 bg-black/25 text-parchment/45'}`}>{rank < 3 ? MEDALS[rank] : `#${rank + 1}`}</div>
+            <div className="flex h-4 w-20 shrink-0 overflow-hidden rounded-full border border-gold/15 shadow-[inset_0_1px_2px_rgba(0,0,0,.5)]">
+              <div style={{ width: `${composition.infantry * 100}%`, background: `linear-gradient(180deg, rgba(255,255,255,.35), ${TROOP_COLORS.infantry})` }} />
+              <div style={{ width: `${composition.cavalry * 100}%`, background: `linear-gradient(180deg, rgba(255,255,255,.35), ${TROOP_COLORS.cavalry})` }} />
+              <div style={{ width: `${composition.archers * 100}%`, background: `linear-gradient(180deg, rgba(255,255,255,.35), ${TROOP_COLORS.archers})` }} />
+            </div>
+            <div className="text-xs"><span className="font-semibold text-parchment/85">{Math.round(composition.infantry * 100)}/{Math.round(composition.cavalry * 100)}/{Math.round(composition.archers * 100)}</span><span className="ml-2 text-[10px] text-parchment/40">{sub}</span></div>
           </div>
-          <div className="text-xs"><span className="font-semibold text-parchment/85">{Math.round(composition.infantry * 100)}/{Math.round(composition.cavalry * 100)}/{Math.round(composition.archers * 100)}</span><span className="ml-2 text-[10px] text-parchment/40">{sub}</span></div>
+          <span className={`font-mono text-sm font-bold ${margin >= 0 ? 'text-emerald-300' : 'text-red-300'}`}>{pct >= 0 ? '+' : ''}{pct.toFixed(1)}%</span>
         </div>
-        <span className={`font-mono text-sm font-bold ${margin >= 0 ? 'text-emerald-300' : 'text-red-300'}`}>{pct >= 0 ? '+' : ''}{pct.toFixed(1)}%</span>
-      </div>
-      <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-black/25">
-        <div className={`h-full rounded-full ${margin >= 0 ? 'bg-gradient-to-r from-emerald-400/50 to-emerald-300' : 'bg-gradient-to-r from-red-400/50 to-red-300'}`} style={{ width: reveal ? `${max > 0 ? Math.max(2, Math.abs(margin) / max * 100) : 0}%` : '0%', transition: 'width 1s cubic-bezier(.16,1,.3,1)', boxShadow: margin >= 0 ? '0 0 6px rgba(110,231,183,.55)' : '0 0 6px rgba(252,165,165,.55)' }} />
+        <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-black/25">
+          <div className={`h-full rounded-full ${margin >= 0 ? 'bg-gradient-to-r from-emerald-400/50 to-emerald-300' : 'bg-gradient-to-r from-red-400/50 to-red-300'}`} style={{ width: reveal ? `${max > 0 ? Math.max(2, Math.abs(margin) / max * 100) : 0}%` : '0%', transition: 'width 1s cubic-bezier(.16,1,.3,1)', boxShadow: margin >= 0 ? '0 0 6px rgba(110,231,183,.55)' : '0 0 6px rgba(252,165,165,.55)' }} />
+        </div>
       </div>
     </div>
+  )
+}
+
+// Four small L-shaped corner brackets, like a targeting reticle or an
+// official-document frame -- reads as "this panel matters" rather than a
+// plain box. Parent must be position:relative.
+function CornerAccents({ color = 'rgba(226,199,125,.55)' }) {
+  return (
+    <>
+      <span className="pointer-events-none absolute left-2 top-2 h-3 w-3 border-l-2 border-t-2" style={{ borderColor: color }} />
+      <span className="pointer-events-none absolute right-2 top-2 h-3 w-3 border-r-2 border-t-2" style={{ borderColor: color }} />
+      <span className="pointer-events-none absolute bottom-2 left-2 h-3 w-3 border-b-2 border-l-2" style={{ borderColor: color }} />
+      <span className="pointer-events-none absolute bottom-2 right-2 h-3 w-3 border-b-2 border-r-2" style={{ borderColor: color }} />
+    </>
   )
 }
 
@@ -77,17 +106,18 @@ export function FormationRow({ composition, sub, margin, max, active, total }) {
 // clock re-renders the whole tree every second, that turned the "Your
 // Best Split" / "Opponent" totals below into numbers that never stopped
 // climbing. Defining it at module scope keeps its identity stable.
-function ArmyCard({ side, label, border, glow, align, reveal }) {
+function ArmyCard({ side, label, border, glow, align, reveal, accent }) {
   const total = Math.max(0, side.infantry) + Math.max(0, side.cavalry) + Math.max(0, side.archers)
   return (
-    <div className={`flex-1 rounded-2xl border p-4 ${border}`} style={{ boxShadow: `inset 0 0 30px ${glow}` }}>
+    <div className={`relative flex-1 overflow-hidden rounded-2xl border p-4 ${border}`} style={{ boxShadow: `inset 0 0 30px ${glow}` }}>
+      <CornerAccents color={accent} />
       <div className={`text-[9px] font-bold uppercase tracking-wider text-parchment/50 ${align}`}>{label}</div>
-      <div className={`mt-0.5 font-mono text-2xl font-black text-parchment ${align}`}>{fmt(useCountUp(total))}</div>
+      <div className={`badge-shine mt-0.5 rounded-lg font-mono text-2xl font-black text-parchment ${align}`}>{fmt(useCountUp(total))}</div>
       <div className="mt-3 space-y-2">
         {TROOPS.map((t, i) => (
           <div key={t.key} className={`flex items-center gap-2 ${align === 'text-right' ? 'flex-row-reverse' : ''}`}>
             <Icon name={t.icon} size={12} style={{ color: TROOP_COLORS[t.key] }} />
-            <div className="h-2 flex-1 overflow-hidden rounded-full bg-black/30"><div className="h-full rounded-full" style={{ width: reveal ? `${total > 0 ? Math.max(0, side[t.key]) / total * 100 : 0}%` : '0%', background: TROOP_COLORS[t.key], transition: `width 1s cubic-bezier(.16,1,.3,1) ${i * 100}ms`, boxShadow: `0 0 6px ${TROOP_COLORS[t.key]}88` }} /></div>
+            <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-black/40 shadow-[inset_0_1px_2px_rgba(0,0,0,.5)]"><div className="h-full rounded-full" style={{ width: reveal ? `${total > 0 ? Math.max(0, side[t.key]) / total * 100 : 0}%` : '0%', background: `linear-gradient(180deg, rgba(255,255,255,.4), ${TROOP_COLORS[t.key]} 35%, ${TROOP_COLORS[t.key]})`, transition: `width 1s cubic-bezier(.16,1,.3,1) ${i * 100}ms`, boxShadow: `0 0 7px ${TROOP_COLORS[t.key]}aa` }} /></div>
             <span className="w-24 shrink-0 font-mono text-[10px] text-parchment/55" style={{ textAlign: align === 'text-right' ? 'left' : 'right' }}>{fmt(side[t.key])} <span className="text-parchment/35">({total > 0 ? Math.round(Math.max(0, side[t.key]) / total * 100) : 0}%)</span></span>
           </div>
         ))}
@@ -103,12 +133,12 @@ export function VsArmyCards({ yourSide, enemySide, yourLabel = 'YOUR FORCE', ene
   return (
     <div className="rounded-2xl border border-gold/20 bg-[#07101e] p-4 md:p-5">
       <div className="flex items-stretch gap-2 md:gap-3">
-        <ArmyCard side={yourSide} label={yourLabel} border="border-[#7f9ed6]/25 bg-[#7f9ed6]/[.045]" glow="rgba(127,158,214,.08)" align="text-left" reveal={reveal} />
+        <ArmyCard side={yourSide} label={yourLabel} border="border-[#7f9ed6]/25 bg-[#7f9ed6]/[.045]" glow="rgba(127,158,214,.08)" align="text-left" reveal={reveal} accent="rgba(127,158,214,.6)" />
         <div className="flex shrink-0 flex-col items-center justify-center px-1">
           <Icon name="swords" size={20} className="text-gold-bright" />
           <div className="mt-1 text-[8px] font-black uppercase tracking-wider text-gold/50">VS</div>
         </div>
-        <ArmyCard side={enemySide} label={enemyLabel} border="border-[#c8655a]/25 bg-[#c8655a]/[.045]" glow="rgba(200,101,90,.08)" align="text-right" reveal={reveal} />
+        <ArmyCard side={enemySide} label={enemyLabel} border="border-[#c8655a]/25 bg-[#c8655a]/[.045]" glow="rgba(200,101,90,.08)" align="text-right" reveal={reveal} accent="rgba(200,101,90,.6)" />
       </div>
     </div>
   )
@@ -116,38 +146,51 @@ export function VsArmyCards({ yourSide, enemySide, yourLabel = 'YOUR FORCE', ene
 
 // OPTION C — "Clash Gauge": a semi-circle power gauge with a needle, like a
 // boss-fight HUD meter, needle leaning toward whichever side is stronger.
+// Styled as a jeweled instrument dial rather than flat colored arcs: metallic
+// gradient fills, tick marks around the rim, a diamond-tipped needle with a
+// glowing pivot jewel, and an ambient shine sweep across the margin readout.
 export function ClashGauge({ yourTotal, enemyTotal, margin }) {
   const reveal = useReveal()
   const animatedMargin = useCountUp(margin)
+  const gid = useId()
   const combined = Math.max(1, yourTotal + enemyTotal)
   const yourShare = yourTotal / combined
   const R = 92, CX = 130, CY = 118
   const angle = Math.PI * (1 - yourShare)
-  const pt = (a) => [CX + R * Math.cos(a), CY - R * Math.sin(a)]
-  // Approximate the arc as a polyline rather than an SVG "A" (elliptical
-  // arc) path command — html2canvas 1.4.1 doesn't rasterize arc commands
-  // (they render blank in exported reports), but a fine-enough polyline
-  // looks identical on screen and exports correctly.
-  const arc = (from, to) => { const steps = 32; return Array.from({ length: steps + 1 }, (_, i) => { const [x, y] = pt(from + (to - from) * (i / steps)); return `${i ? 'L' : 'M'}${x},${y}` }).join(' ') }
+  const pt = (a, r = R) => [CX + r * Math.cos(a), CY - r * Math.sin(a)]
+  // Approximate arcs as polylines rather than SVG "A" (elliptical arc) path
+  // commands — html2canvas 1.4.1 doesn't rasterize arc commands (they render
+  // blank in exported reports), but a fine-enough polyline looks identical
+  // on screen and exports correctly.
+  const arc = (from, to, r = R) => { const steps = 32; return Array.from({ length: steps + 1 }, (_, i) => { const [x, y] = pt(from + (to - from) * (i / steps), r); return `${i ? 'L' : 'M'}${x},${y}` }).join(' ') }
   const [nx, ny] = pt(angle)
+  const ticks = Array.from({ length: 9 }, (_, i) => Math.PI * (i / 8))
   return (
     <div className="rounded-2xl border border-gold/20 bg-[#07101e] p-4 md:p-5">
       <div className="relative mx-auto w-full max-w-md">
         <svg viewBox="0 0 260 140" className="w-full">
-          <path d={arc(Math.PI, angle)} pathLength="1" strokeDasharray="1" strokeDashoffset={reveal ? 0 : 1} stroke="#7f9ed6" strokeWidth="16" fill="none" strokeLinecap="round" style={{ transition: 'stroke-dashoffset 1s cubic-bezier(.16,1,.3,1)' }} />
-          <path d={arc(angle, 0)} pathLength="1" strokeDasharray="1" strokeDashoffset={reveal ? 0 : 1} stroke="#c8655a" strokeWidth="16" fill="none" strokeLinecap="round" style={{ transition: 'stroke-dashoffset 1s cubic-bezier(.16,1,.3,1) .15s' }} />
+          <defs>
+            <linearGradient id={`${gid}-y`} x1="0" y1="1" x2="1" y2="0"><stop offset="0%" stopColor="#4d6ea3"/><stop offset="100%" stopColor="#b7cdf0"/></linearGradient>
+            <linearGradient id={`${gid}-e`} x1="1" y1="1" x2="0" y2="0"><stop offset="0%" stopColor="#9c4238"/><stop offset="100%" stopColor="#eda296"/></linearGradient>
+          </defs>
+          <path d={arc(Math.PI, 0)} stroke="rgba(226,199,125,.16)" strokeWidth="20" fill="none" strokeLinecap="round" />
+          {ticks.map((a, i) => { const [ox, oy] = pt(a, R + 11), [ix, iy] = pt(a, R + 2); return <line key={i} x1={ix} y1={iy} x2={ox} y2={oy} stroke="rgba(226,199,125,.4)" strokeWidth="1.5" /> })}
+          <path d={arc(Math.PI, angle)} pathLength="1" strokeDasharray="1" strokeDashoffset={reveal ? 0 : 1} stroke={`url(#${gid}-y)`} strokeWidth="16" fill="none" strokeLinecap="round" style={{ transition: 'stroke-dashoffset 1.1s cubic-bezier(.16,1,.3,1)', filter: 'drop-shadow(0 0 7px #7f9ed690)' }} />
+          <path d={arc(angle, 0)} pathLength="1" strokeDasharray="1" strokeDashoffset={reveal ? 0 : 1} stroke={`url(#${gid}-e)`} strokeWidth="16" fill="none" strokeLinecap="round" style={{ transition: 'stroke-dashoffset 1.1s cubic-bezier(.16,1,.3,1) .15s', filter: 'drop-shadow(0 0 7px #c8655a90)' }} />
           <g style={{ transformOrigin: `${CX}px ${CY}px`, opacity: reveal ? 1 : 0, transform: reveal ? 'scale(1)' : 'scale(.4)', transition: 'opacity .5s ease .9s, transform .5s cubic-bezier(.34,1.56,.64,1) .9s' }}>
             <line x1={CX} y1={CY} x2={nx} y2={ny} stroke="#e8c558" strokeWidth="3" strokeLinecap="round" />
-            <circle cx={CX} cy={CY} r="7" fill="#e8c558" stroke="#071224" strokeWidth="2" />
+            <rect x={nx - 5} y={ny - 5} width="10" height="10" fill="#f5d778" stroke="#a67f1f" strokeWidth="1" transform={`rotate(45 ${nx} ${ny})`} style={{ filter: 'drop-shadow(0 0 5px #f5d778aa)' }} />
+            <circle cx={CX} cy={CY} r="8" fill="#f5d778" stroke="#071224" strokeWidth="2" style={{ filter: 'drop-shadow(0 0 6px #f5d77899)' }} />
+            <circle cx={CX} cy={CY} r="3" fill="#fff6dd" />
           </g>
         </svg>
         {/* Labels are plain HTML, not SVG <text> — html2canvas 1.4.1 renders
             SVG text blank in exported reports (in fact it blanks the whole
             SVG when text is present), so labels live outside the <svg>. */}
-        <div className="absolute bottom-[3%] left-[3%] text-[11px] font-bold text-[#9eb9ef]">YOUR FORCE</div>
-        <div className="absolute bottom-[3%] right-[3%] text-[11px] font-bold text-[#e08c80]">ENEMY</div>
+        <div className="absolute bottom-[3%] left-[3%] text-[11px] font-bold tracking-wide text-[#9eb9ef]">YOUR FORCE</div>
+        <div className="absolute bottom-[3%] right-[3%] text-[11px] font-bold tracking-wide text-[#e08c80]">ENEMY</div>
       </div>
-      <div className="mt-1 text-center">
+      <div className="badge-shine mx-auto mt-1 max-w-[240px] rounded-xl text-center">
         <div className="font-mono text-2xl font-black" style={{ color: margin >= 0 ? '#6ee7b7' : '#fca5a5' }}>{margin >= 0 ? '+' : ''}{fmt(animatedMargin)}</div>
         <div className="text-[10px] text-parchment/40">troop margin</div>
       </div>
@@ -336,7 +379,7 @@ export default function MysticSuite() {
                 <div className="mb-2 text-[10px] font-bold uppercase tracking-wider text-parchment/40">Top Compositions By Margin</div>
                 <div className="space-y-2">
                   {top.map((c, i) => (
-                    <FormationRow key={i} active={i === 0} composition={c.composition} sub={c.result.outcome === 'attacker' ? 'wins' : c.result.outcome === 'defender' ? 'loses' : 'draw'} margin={c.margin} max={maxMargin} total={result.totalYourTroops} />
+                    <FormationRow key={i} rank={i} active={i === 0} composition={c.composition} sub={c.result.outcome === 'attacker' ? 'wins' : c.result.outcome === 'defender' ? 'loses' : 'draw'} margin={c.margin} max={maxMargin} total={result.totalYourTroops} />
                   ))}
                 </div>
               </div>

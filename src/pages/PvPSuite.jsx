@@ -487,7 +487,7 @@ export default function PvPSuite() {
                 <div className="mb-2 text-[10px] font-bold uppercase tracking-wider text-parchment/40">Top Compositions By Margin</div>
                 <div className="space-y-2">
                   {sweepTop.map((c, i) => (
-                    <FormationRow key={i} active={i === 0} composition={c.composition} sub={c.result.outcome === 'attacker' ? 'wins' : c.result.outcome === 'defender' ? 'loses' : 'draw'} margin={c.margin} max={sweepMaxMargin} total={sweepResult.totalYourTroops} />
+                    <FormationRow key={i} rank={i} active={i === 0} composition={c.composition} sub={c.result.outcome === 'attacker' ? 'wins' : c.result.outcome === 'defender' ? 'loses' : 'draw'} margin={c.margin} max={sweepMaxMargin} total={sweepResult.totalYourTroops} />
                   ))}
                 </div>
               </div>

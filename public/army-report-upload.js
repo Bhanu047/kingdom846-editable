@@ -139,20 +139,26 @@
   }
 
   // Parses one screenshot's OCR text into BOTH sides at once.
-  // Bonus Details rows show a real per-stat bonus next to a fixed
-  // reference/cap number that repeats identically on EVERY line
-  // ("+222.0%" for all 12 Infantry/Cavalry/Archer stats, verified against
-  // real screenshots) — when OCR can only read the constant, blindly
-  // keeping it makes every stat look identical, which is worse than
-  // leaving the field blank: it presents a value that was never actually
-  // read as if it were real per-stat data. But real bonuses legitimately
-  // repeat too (a flat bonus source can land the same percentage on 3-4
-  // different stats, confirmed against a real screenshot), so a count-based
-  // threshold can't tell the two apart without also deleting genuine data.
-  // The real distinguishing signal is that the constant is the ONLY value
-  // present -- it replaces every real number OCR should have read, whereas
-  // a coincidental repeat always sits alongside other, different values on
-  // the same side.
+  // Bonus Details' second number (after the label) is NOT a real per-troop
+  // opponent stat -- confirmed across four different real screenshots. It
+  // always collapses to exactly ONE value shared by Attack+Defense across
+  // all three troop types, and a second (usually different) value shared
+  // by Lethality+Health across all three types. Two independently-tracked
+  // stats landing on the exact same number, for three independent troop
+  // types at once, isn't a coincidence at that scale -- it's some kind of
+  // category-level cap or tier threshold the game always shows, and it's
+  // dropped here rather than shown as if it were the opponent's real,
+  // independently-varying combat stats.
+  function stripCappedGroup(side, statKeys) {
+    const values = statKeys.flatMap((sk) => TROOPS.map((t) => side[t.key][sk]))
+    if (values.some((v) => v === undefined) || new Set(values).size !== 1) return
+    TROOPS.forEach((t) => statKeys.forEach((sk) => delete side[t.key][sk]))
+  }
+
+  // Safety net for the degenerate case where BOTH groups above happen to
+  // share the same capped value (all 12 stats read identically) -- keeps
+  // catching that even if a screenshot doesn't cleanly split into the two
+  // groups stripCappedGroup expects.
   function stripRepeatedConstant(side) {
     const values = []
     TROOPS.forEach((t) => STATS.forEach((s) => {
@@ -196,6 +202,8 @@
     })
     stripRepeatedConstant(out.mine)
     stripRepeatedConstant(out.opponent)
+    stripCappedGroup(out.opponent, ['attack', 'defense'])
+    stripCappedGroup(out.opponent, ['lethality', 'health'])
     return out
   }
 

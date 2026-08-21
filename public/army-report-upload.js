@@ -8,17 +8,16 @@
   ]
   // Kingshot's battle-overview report always shows both sides on the same
   // report at once — "<mine> Label <theirs>" per line — with the account
-  // holder's own column on the left and a reference/opponent value on the
-  // right. Confirmed against a real screenshot once OCR could finally read
-  // both numbers on the line at once: the varying figure that changes per
-  // stat sits before the label (the report owner's real value), while the
-  // number after the label was a constant repeated across every stat line
-  // (not real per-army data at all — see stripRepeatedConstant). An earlier
-  // version of this file had this backwards, inferred from a screenshot
-  // where only the after-label number was readable at all; that inference
-  // didn't survive contact with a screenshot where both numbers came
-  // through. So one upload fills both "Your Troops" and "Opponent Troops"
-  // in a single pass; there's no separate "opponent's report" to ask for.
+  // holder's own column on the left and the opponent/reference value on
+  // the right. Confirmed against a real screenshot once OCR could finally
+  // read both numbers on the line at once: the varying figure that changes
+  // per stat sits before the label (the report owner's real value), while
+  // the number after the label is what fills "Opponent Troops" — even on
+  // the reports where it repeats across many stats, since a reference tool
+  // the user already relies on (Frakinator) transcribes it exactly as
+  // shown rather than filtering it out. So one upload fills both "Your
+  // Troops" and "Opponent Troops" in a single pass; there's no separate
+  // "opponent's report" to ask for.
   const STATS = [
     { key: 'count', label: 'Troops', aliases: ['troops', 'quantity', 'count'] },
     { key: 'attack', label: 'Attack', aliases: ['attack', 'atk'] },
@@ -139,39 +138,15 @@
   }
 
   // Parses one screenshot's OCR text into BOTH sides at once.
-  // Bonus Details' second number (after the label) is NOT a real per-troop
-  // opponent stat -- confirmed across four different real screenshots. It
-  // always collapses to exactly ONE value shared by Attack+Defense across
-  // all three troop types, and a second (usually different) value shared
-  // by Lethality+Health across all three types. Two independently-tracked
-  // stats landing on the exact same number, for three independent troop
-  // types at once, isn't a coincidence at that scale -- it's some kind of
-  // category-level cap or tier threshold the game always shows, and it's
-  // dropped here rather than shown as if it were the opponent's real,
-  // independently-varying combat stats.
-  function stripCappedGroup(side, statKeys) {
-    const values = statKeys.flatMap((sk) => TROOPS.map((t) => side[t.key][sk]))
-    if (values.some((v) => v === undefined) || new Set(values).size !== 1) return
-    TROOPS.forEach((t) => statKeys.forEach((sk) => delete side[t.key][sk]))
-  }
-
-  // Safety net for the degenerate case where BOTH groups above happen to
-  // share the same capped value (all 12 stats read identically) -- keeps
-  // catching that even if a screenshot doesn't cleanly split into the two
-  // groups stripCappedGroup expects.
-  function stripRepeatedConstant(side) {
-    const values = []
-    TROOPS.forEach((t) => STATS.forEach((s) => {
-      if (s.key === 'count') return
-      const v = side[t.key][s.key]
-      if (v !== undefined) values.push(v)
-    }))
-    if (values.length < 2 || new Set(values).size > 1) return
-    TROOPS.forEach((t) => STATS.forEach((s) => {
-      if (s.key !== 'count') delete side[t.key][s.key]
-    }))
-  }
-
+  // Bonus Details' second number (after the label) reads as a repeated
+  // value across many stats far more often than not -- it's some kind of
+  // category-level cap or tier threshold the game always shows next to the
+  // real per-stat figure, not independently-tracked opponent combat data.
+  // But a reference tool the user already relies on (Frakinator) copies
+  // that number into its own "Opponent stats" fields exactly as shown, no
+  // matter how repetitive it is, and that's the behavior expected here too
+  // -- every number visible in the report gets transcribed as-is, without
+  // this parser second-guessing which ones "look real."
   function parseArmyText(text) {
     const lines = String(text || '').replace(/[‐‑–—]/g, '-').split(/\n+/).map((l) => l.replace(/\s+/g, ' ').trim()).filter(Boolean)
     const out = { mine: {}, opponent: {} }
@@ -200,10 +175,6 @@
       if (out.mine[t.key].count === undefined && bareRowCounts[t.key]?.mine !== undefined) out.mine[t.key].count = bareRowCounts[t.key].mine
       if (out.opponent[t.key].count === undefined && bareRowCounts[t.key]?.theirs !== undefined) out.opponent[t.key].count = bareRowCounts[t.key].theirs
     })
-    stripRepeatedConstant(out.mine)
-    stripRepeatedConstant(out.opponent)
-    stripCappedGroup(out.opponent, ['attack', 'defense'])
-    stripCappedGroup(out.opponent, ['lethality', 'health'])
     return out
   }
 

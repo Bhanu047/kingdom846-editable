@@ -103,6 +103,29 @@
   }
 
   // Parses one screenshot's OCR text into BOTH sides at once.
+  // Bonus Details rows show a real per-stat bonus next to a fixed
+  // reference/cap number that repeats identically on every line
+  // ("+222.0%" for all 12 Infantry/Cavalry/Archer stats, verified against
+  // real screenshots) — when OCR can only read the constant, blindly
+  // keeping it makes every stat look identical, which is worse than
+  // leaving the field blank: it presents a value that was never actually
+  // read as if it were real per-stat data. A value repeated across most of
+  // a side's percentage fields is that constant, not a coincidence.
+  function stripRepeatedConstant(side) {
+    const tally = {}
+    TROOPS.forEach((t) => STATS.forEach((s) => {
+      if (s.key === 'count') return
+      const v = side[t.key][s.key]
+      if (v === undefined) return
+      tally[v] = (tally[v] || 0) + 1
+    }))
+    TROOPS.forEach((t) => STATS.forEach((s) => {
+      if (s.key === 'count') return
+      const v = side[t.key][s.key]
+      if (v !== undefined && tally[v] >= 4) delete side[t.key][s.key]
+    }))
+  }
+
   function parseArmyText(text) {
     const lines = String(text || '').replace(/[‐‑–—]/g, '-').split(/\n+/).map((l) => l.replace(/\s+/g, ' ').trim()).filter(Boolean)
     const out = { mine: {}, opponent: {} }
@@ -124,6 +147,8 @@
       if (out.mine[t.key].count === undefined && counts[t.key]?.mine !== undefined) out.mine[t.key].count = counts[t.key].mine
       if (out.opponent[t.key].count === undefined && counts[t.key]?.theirs !== undefined) out.opponent[t.key].count = counts[t.key].theirs
     })
+    stripRepeatedConstant(out.mine)
+    stripRepeatedConstant(out.opponent)
     return out
   }
 
@@ -186,6 +211,32 @@
       document.head.appendChild(s)
     })
     return window.__k846TesseractPromise
+  }
+
+  // Kingshot's Bonus Details numbers are small, and the "current bonus"
+  // figure is rendered in a low-contrast red that Tesseract frequently
+  // fails to pick up at native screenshot resolution (it reads the
+  // higher-contrast green reference number next to it instead, or nothing
+  // at all). Upscaling before OCR is a standard mitigation for small/thin
+  // text and carries no downside for screenshots that already read fine.
+  function upscaleForOCR(file) {
+    return new Promise((resolve) => {
+      const img = new Image()
+      img.onload = () => {
+        const scale = 2
+        const canvas = document.createElement('canvas')
+        canvas.width = img.naturalWidth * scale
+        canvas.height = img.naturalHeight * scale
+        const ctx = canvas.getContext('2d')
+        ctx.imageSmoothingEnabled = true
+        ctx.imageSmoothingQuality = 'high'
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+        URL.revokeObjectURL(img.src)
+        resolve(canvas)
+      }
+      img.onerror = () => resolve(file)
+      img.src = URL.createObjectURL(file)
+    })
   }
 
   function styles() {
@@ -366,7 +417,8 @@
           status.textContent = `Reading screenshot ${i + 1} of ${entries.length}…`
           try {
             const Tesseract = await loadTesseract()
-            const out = await Tesseract.recognize(entries[i].file, 'eng')
+            const prepped = await upscaleForOCR(entries[i].file)
+            const out = await Tesseract.recognize(prepped, 'eng')
             entries[i].rawText = out?.data?.text || ''
             entries[i].parsed = parseArmyText(entries[i].rawText)
             entries[i].status = 'ok'

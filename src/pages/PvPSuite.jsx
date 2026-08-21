@@ -157,6 +157,7 @@ function RoundChart({ rounds }) {
 // pre-battle matchup since it has full per-side stat data.
 function StatRadar({ yourStats, enemyStats, yourLabel = 'YOUR ARMY', enemyLabel = 'ENEMY ARMY' }) {
   const reveal = useReveal()
+  const gid = useId()
   const AXES = [{ key: 'attack', label: 'ATK' }, { key: 'lethality', label: 'LET' }, { key: 'defense', label: 'DEF' }, { key: 'health', label: 'HP' }, { key: 'troops', label: 'TROOPS' }]
   const R = 72, CX = 140, CY = 116
   const angleFor = (i) => -Math.PI / 2 + i * (2 * Math.PI / AXES.length)
@@ -169,10 +170,18 @@ function StatRadar({ yourStats, enemyStats, yourLabel = 'YOUR ARMY', enemyLabel 
     <div className="rounded-2xl border border-gold/20 bg-[#07101e] p-4 md:p-5">
       <div className="relative mx-auto w-full max-w-md">
         <svg viewBox={`0 0 ${VB_W} ${VB_H}`} className="w-full">
+          <defs>
+            <radialGradient id={`${gid}-y`}><stop offset="0%" stopColor="#a9c2ea" stopOpacity=".5" /><stop offset="100%" stopColor="#7f9ed6" stopOpacity=".12" /></radialGradient>
+            <radialGradient id={`${gid}-e`}><stop offset="0%" stopColor="#eda296" stopOpacity=".45" /><stop offset="100%" stopColor="#c8655a" stopOpacity=".1" /></radialGradient>
+          </defs>
           {[.25, .5, .75, 1].map((s) => <polygon key={s} points={gridPoly(s)} fill="none" stroke="rgba(226,199,125,.12)" />)}
           <g style={{ transformOrigin: `${CX}px ${CY}px`, transform: reveal ? 'scale(1)' : 'scale(0)', transition: 'transform 1s cubic-bezier(.16,1,.3,1)' }}>
-            <polygon points={poly(yourStats)} fill="rgba(127,158,214,.28)" stroke="#7f9ed6" strokeWidth="2" />
-            <polygon points={poly(enemyStats)} fill="rgba(200,101,90,.22)" stroke="#c8655a" strokeWidth="2" />
+            <polygon points={poly(yourStats)} fill={`url(#${gid}-y)`} stroke="#7f9ed6" strokeWidth="2" style={{ filter: 'drop-shadow(0 0 6px #7f9ed680)' }} />
+            <polygon points={poly(enemyStats)} fill={`url(#${gid}-e)`} stroke="#c8655a" strokeWidth="2" style={{ filter: 'drop-shadow(0 0 6px #c8655a80)' }} />
+            {AXES.map((a, i) => {
+              const [yx, yy] = pt(i, yourStats[a.key], maxes[i]), [ex, ey] = pt(i, enemyStats[a.key], maxes[i])
+              return <g key={a.key}><circle cx={yx} cy={yy} r="3" fill="#c7d7f5" style={{ filter: 'drop-shadow(0 0 4px #7f9ed6)' }} /><circle cx={ex} cy={ey} r="3" fill="#f2c4bc" style={{ filter: 'drop-shadow(0 0 4px #c8655a)' }} /></g>
+            })}
           </g>
         </svg>
         {/* Plain HTML labels, not SVG <text> — html2canvas 1.4.1 renders SVG
@@ -205,9 +214,10 @@ function FormationBlocks({ side, casualtyFraction, label, color }) {
           <div key={r.key} className="flex items-center gap-1.5">
             <span className="w-8 shrink-0 text-[8px] font-bold uppercase text-parchment/35">{r.label.slice(0, 3)}</span>
             <div className="flex flex-1 flex-wrap gap-[2px]">
-              {Array.from({ length: r.blockCount }).map((_, i) => (
-                <div key={i} className="count-up h-2.5 w-2.5 rounded-[2px]" style={{ background: r.color, opacity: i < r.blockCount - r.lostBlocks ? 1 : .15, animationDelay: `${Math.min(i, 40) * 12}ms` }} />
-              ))}
+              {Array.from({ length: r.blockCount }).map((_, i) => {
+                const alive = i < r.blockCount - r.lostBlocks
+                return <div key={i} className="count-up h-2.5 w-2.5 rounded-[2px]" style={{ background: `linear-gradient(180deg, rgba(255,255,255,.5), ${r.color})`, opacity: alive ? 1 : .15, boxShadow: alive ? `0 0 3px ${r.color}bb` : 'none', animationDelay: `${Math.min(i, 40) * 12}ms` }} />
+              })}
             </div>
           </div>
         ))}
@@ -246,14 +256,14 @@ function VictoryPodium({ top3 }) {
             <div key={i} className="relative w-28" style={{ height: ROW_H }}>
               <div className="absolute inset-x-0 flex flex-col items-center" style={{ bottom: h + 8, opacity: reveal ? 1 : 0, transition: `bottom .8s cubic-bezier(.16,1,.3,1) ${delay}, opacity .5s ease ${delay}` }}>
                 <div className="text-lg">{MEDALS[i]}</div>
-                <div className="mt-1 flex h-3 w-20 overflow-hidden rounded-full border border-gold/10">
-                  <div style={{ width: `${c.composition.infantry * 100}%`, background: TROOP_COLORS.infantry }} />
-                  <div style={{ width: `${c.composition.cavalry * 100}%`, background: TROOP_COLORS.cavalry }} />
-                  <div style={{ width: `${c.composition.archers * 100}%`, background: TROOP_COLORS.archers }} />
+                <div className="mt-1 flex h-3 w-20 overflow-hidden rounded-full border border-gold/15 shadow-[inset_0_1px_2px_rgba(0,0,0,.5)]">
+                  <div style={{ width: `${c.composition.infantry * 100}%`, background: `linear-gradient(180deg, rgba(255,255,255,.4), ${TROOP_COLORS.infantry})` }} />
+                  <div style={{ width: `${c.composition.cavalry * 100}%`, background: `linear-gradient(180deg, rgba(255,255,255,.4), ${TROOP_COLORS.cavalry})` }} />
+                  <div style={{ width: `${c.composition.archers * 100}%`, background: `linear-gradient(180deg, rgba(255,255,255,.4), ${TROOP_COLORS.archers})` }} />
                 </div>
                 <div className="mt-1 font-mono text-[10px] text-parchment/60">{Math.round(c.composition.infantry * 100)}/{Math.round(c.composition.cavalry * 100)}/{Math.round(c.composition.archers * 100)}</div>
               </div>
-              <div className={`absolute inset-x-0 bottom-0 flex items-end justify-center rounded-t-lg border-x border-t ${i === 0 ? 'border-gold/40 bg-gold/[.08]' : 'border-gold/15 bg-white/[.03]'}`} style={{ height: `${h}px`, transition: `height .8s cubic-bezier(.16,1,.3,1) ${delay}` }}>
+              <div className={`absolute inset-x-0 bottom-0 flex items-end justify-center rounded-t-lg border-x border-t ${i === 0 ? 'border-gold/50 bg-gradient-to-t from-gold/[.2] to-gold/[.05]' : 'border-gold/15 bg-gradient-to-t from-white/[.06] to-white/[.02]'}`} style={{ height: `${h}px`, transition: `height .8s cubic-bezier(.16,1,.3,1) ${delay}`, boxShadow: i === 0 ? '0 0 18px rgba(226,181,48,.3)' : 'none' }}>
                 <div className="pb-2 font-mono text-sm font-black text-gold-bright">{c.margin >= 0 ? '+' : ''}{fmt(c.margin)}</div>
               </div>
             </div>

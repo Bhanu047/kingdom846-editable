@@ -19,11 +19,11 @@ const n = (v, f = 0) => Number.isFinite(Number(v)) ? Number(v) : f
 const fmt = (v) => Number.isFinite(v) ? Math.round(v).toLocaleString() : '—'
 const pct = (v) => `${Math.round(v * 100)}%`
 
-function Field({ label, value, onChange, suffix, step, compact }) {
+function Field({ label, value, onChange, suffix, compact }) {
   return (
     <label className="block">
       <span className={`mb-1 flex justify-between font-bold uppercase tracking-[.1em] text-parchment/40 ${compact ? 'text-[8px]' : 'text-[9px]'}`}><span>{label}</span>{suffix && <span className="text-gold/50">{suffix}</span>}</span>
-      <input type="number" min={0} step={step} value={value} onChange={(e) => onChange(e.target.value)} className={`w-full rounded-lg border border-gold/15 bg-ink/70 font-semibold text-parchment outline-none focus:border-gold/45 ${compact ? 'px-2 py-1.5 text-xs' : 'px-2.5 py-2 text-sm'}`} />
+      <input type="number" min={0} step="any" value={value} onChange={(e) => onChange(e.target.value)} className={`w-full rounded-lg border border-gold/15 bg-ink/70 font-semibold text-parchment outline-none focus:border-gold/45 ${compact ? 'px-2 py-1.5 text-xs' : 'px-2.5 py-2 text-sm'}`} />
     </label>
   )
 }
@@ -276,7 +276,7 @@ function SynergyPanel({ effects, setEffects }) {
           <div key={i} className="rounded-xl border border-gold/10 bg-white/[.025] p-2.5">
             <div className="grid grid-cols-[1fr_60px] gap-1.5">
               <label className="block"><span className="mb-1 block text-[8px] font-bold uppercase tracking-wider text-parchment/40">Group</span><input value={e.group} onChange={(ev) => setEffects((arr) => arr.map((x, k) => k === i ? { ...x, group: ev.target.value.slice(0, 2).toUpperCase() } : x))} className="w-full rounded-lg border border-gold/15 bg-ink/70 px-2 py-1.5 text-xs font-bold text-parchment outline-none" /></label>
-              <label className="block"><span className="mb-1 block text-[8px] font-bold uppercase tracking-wider text-parchment/40">%</span><input type="number" min={0} step={.1} value={e.percent} onChange={(ev) => setEffects((arr) => arr.map((x, k) => k === i ? { ...x, percent: ev.target.value } : x))} className="w-full rounded-lg border border-gold/15 bg-ink/70 px-2 py-1.5 text-xs font-semibold text-parchment outline-none" /></label>
+              <label className="block"><span className="mb-1 block text-[8px] font-bold uppercase tracking-wider text-parchment/40">%</span><input type="number" min={0} step="any" value={e.percent} onChange={(ev) => setEffects((arr) => arr.map((x, k) => k === i ? { ...x, percent: ev.target.value } : x))} className="w-full rounded-lg border border-gold/15 bg-ink/70 px-2 py-1.5 text-xs font-semibold text-parchment outline-none" /></label>
             </div>
           </div>
         ))}
@@ -420,7 +420,7 @@ export default function PvPSuite() {
           <h3 className="mt-1 font-display text-xl font-bold text-parchment">Search Tuning</h3>
           <label className="mt-4 block max-w-xs">
             <span className="mb-1 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[.12em] text-parchment/45">Search Step</span>
-            <input type="number" min={.005} max={.5} step={.005} value={sweepSparsity} onChange={(e) => setSweepSparsity(e.target.value)} className="w-full rounded-xl border border-gold/15 bg-ink/70 px-3 py-2.5 text-sm font-semibold text-parchment outline-none focus:border-gold/45" />
+            <input type="number" min={.005} max={.5} step="any" value={sweepSparsity} onChange={(e) => setSweepSparsity(e.target.value)} className="w-full rounded-xl border border-gold/15 bg-ink/70 px-3 py-2.5 text-sm font-semibold text-parchment outline-none focus:border-gold/45" />
             <span className="mt-1 block text-[10px] leading-relaxed text-parchment/35">Grid step between compositions tested. 0.05 is a good start; use 0.025 for a finer (slower) search.</span>
           </label>
           <div className="mt-4 flex items-center justify-between gap-3">
@@ -431,19 +431,19 @@ export default function PvPSuite() {
           <div className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <label className="block">
               <span className="mb-1 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[.12em] text-parchment/45">Infantry Floor</span>
-              <div className="relative"><input type="number" min={0} max={100} step={1} value={sweepMinInfantry} onChange={(e) => setSweepMinInfantry(e.target.value)} className="w-full rounded-xl border border-gold/15 bg-ink/70 px-3 py-2.5 pr-8 text-sm font-semibold text-parchment outline-none focus:border-gold/45" /><span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-gold/45">%</span></div>
+              <div className="relative"><input type="number" min={0} max={100} step="any" value={sweepMinInfantry} onChange={(e) => setSweepMinInfantry(e.target.value)} className="w-full rounded-xl border border-gold/15 bg-ink/70 px-3 py-2.5 pr-8 text-sm font-semibold text-parchment outline-none focus:border-gold/45" /><span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-gold/45">%</span></div>
             </label>
             <label className="block">
               <span className="mb-1 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[.12em] text-parchment/45">Infantry Ceiling</span>
-              <div className="relative"><input type="number" min={0} max={100} step={1} value={sweepMaxInfantry} onChange={(e) => setSweepMaxInfantry(e.target.value)} className="w-full rounded-xl border border-gold/15 bg-ink/70 px-3 py-2.5 pr-8 text-sm font-semibold text-parchment outline-none focus:border-gold/45" /><span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-gold/45">%</span></div>
+              <div className="relative"><input type="number" min={0} max={100} step="any" value={sweepMaxInfantry} onChange={(e) => setSweepMaxInfantry(e.target.value)} className="w-full rounded-xl border border-gold/15 bg-ink/70 px-3 py-2.5 pr-8 text-sm font-semibold text-parchment outline-none focus:border-gold/45" /><span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-gold/45">%</span></div>
             </label>
             <label className="block">
               <span className="mb-1 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[.12em] text-parchment/45">Cavalry Floor</span>
-              <div className="relative"><input type="number" min={0} max={100} step={1} value={sweepMinCavalry} onChange={(e) => setSweepMinCavalry(e.target.value)} className="w-full rounded-xl border border-gold/15 bg-ink/70 px-3 py-2.5 pr-8 text-sm font-semibold text-parchment outline-none focus:border-gold/45" /><span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-gold/45">%</span></div>
+              <div className="relative"><input type="number" min={0} max={100} step="any" value={sweepMinCavalry} onChange={(e) => setSweepMinCavalry(e.target.value)} className="w-full rounded-xl border border-gold/15 bg-ink/70 px-3 py-2.5 pr-8 text-sm font-semibold text-parchment outline-none focus:border-gold/45" /><span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-gold/45">%</span></div>
             </label>
             <label className="block">
               <span className="mb-1 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[.12em] text-parchment/45">Cavalry Ceiling</span>
-              <div className="relative"><input type="number" min={0} max={100} step={1} value={sweepMaxCavalry} onChange={(e) => setSweepMaxCavalry(e.target.value)} className="w-full rounded-xl border border-gold/15 bg-ink/70 px-3 py-2.5 pr-8 text-sm font-semibold text-parchment outline-none focus:border-gold/45" /><span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-gold/45">%</span></div>
+              <div className="relative"><input type="number" min={0} max={100} step="any" value={sweepMaxCavalry} onChange={(e) => setSweepMaxCavalry(e.target.value)} className="w-full rounded-xl border border-gold/15 bg-ink/70 px-3 py-2.5 pr-8 text-sm font-semibold text-parchment outline-none focus:border-gold/45" /><span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-gold/45">%</span></div>
             </label>
           </div>
           <span className="mt-2 block text-[10px] leading-relaxed text-parchment/35">Bounds narrow the search away from splits that rarely win — Infantry and Cavalry each get a Min/Max range; Archers fill whatever's left. Right now the search only tests Infantry between <b className="text-parchment/55">{sweepMinInfantry || 0}%–{sweepMaxInfantry || 100}%</b> and Cavalry between <b className="text-parchment/55">{sweepMinCavalry || 0}%–{sweepMaxCavalry || 100}%</b> — widen these if you don't see the split you expect.</span>

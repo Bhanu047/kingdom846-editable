@@ -14,11 +14,11 @@ const n = (v, f = 0) => Number.isFinite(Number(v)) ? Number(v) : f
 const fmt = (v) => Number.isFinite(v) ? Math.round(v).toLocaleString() : '—'
 const pct = (v) => `${Math.round(v * 100)}%`
 
-function Field({ label, value, onChange, suffix, step }) {
+function Field({ label, value, onChange, suffix }) {
   return (
     <label className="block">
       <span className="mb-1 flex justify-between text-[9px] font-bold uppercase tracking-[.1em] text-parchment/40"><span>{label}</span>{suffix && <span className="text-gold/50">{suffix}</span>}</span>
-      <input type="number" min={0} step={step} value={value} onChange={(e) => onChange(e.target.value)} className="w-full rounded-lg border border-gold/15 bg-ink/70 px-2.5 py-2 text-sm font-semibold text-parchment outline-none focus:border-gold/45" />
+      <input type="number" min={0} step="any" value={value} onChange={(e) => onChange(e.target.value)} className="w-full rounded-lg border border-gold/15 bg-ink/70 px-2.5 py-2 text-sm font-semibold text-parchment outline-none focus:border-gold/45" />
     </label>
   )
 }
@@ -70,37 +70,45 @@ export function FormationRow({ composition, sub, margin, max, active, total }) {
   )
 }
 
+// A component defined inside another component's render body gets a new
+// function identity on every render, which makes React treat it as a
+// different component type and remount it -- restarting any inner
+// useCountUp animation every single re-render. Since the page header's
+// clock re-renders the whole tree every second, that turned the "Your
+// Best Split" / "Opponent" totals below into numbers that never stopped
+// climbing. Defining it at module scope keeps its identity stable.
+function ArmyCard({ side, label, border, glow, align, reveal }) {
+  const total = Math.max(0, side.infantry) + Math.max(0, side.cavalry) + Math.max(0, side.archers)
+  return (
+    <div className={`flex-1 rounded-2xl border p-4 ${border}`} style={{ boxShadow: `inset 0 0 30px ${glow}` }}>
+      <div className={`text-[9px] font-bold uppercase tracking-wider text-parchment/50 ${align}`}>{label}</div>
+      <div className={`mt-0.5 font-mono text-2xl font-black text-parchment ${align}`}>{fmt(useCountUp(total))}</div>
+      <div className="mt-3 space-y-2">
+        {TROOPS.map((t, i) => (
+          <div key={t.key} className={`flex items-center gap-2 ${align === 'text-right' ? 'flex-row-reverse' : ''}`}>
+            <Icon name={t.icon} size={12} style={{ color: TROOP_COLORS[t.key] }} />
+            <div className="h-2 flex-1 overflow-hidden rounded-full bg-black/30"><div className="h-full rounded-full" style={{ width: reveal ? `${total > 0 ? Math.max(0, side[t.key]) / total * 100 : 0}%` : '0%', background: TROOP_COLORS[t.key], transition: `width 1s cubic-bezier(.16,1,.3,1) ${i * 100}ms`, boxShadow: `0 0 6px ${TROOP_COLORS[t.key]}88` }} /></div>
+            <span className="w-24 shrink-0 font-mono text-[10px] text-parchment/55" style={{ textAlign: align === 'text-right' ? 'left' : 'right' }}>{fmt(side[t.key])} <span className="text-parchment/35">({total > 0 ? Math.round(Math.max(0, side[t.key]) / total * 100) : 0}%)</span></span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 // OPTION B — "VS Army Cards": two side-by-side matchup cards with a crossed-
 // swords divider, each troop type shown as its own labeled progress row.
 export function VsArmyCards({ yourSide, enemySide, yourLabel = 'YOUR FORCE', enemyLabel = 'ENEMY FORCE' }) {
   const reveal = useReveal()
-  const Card = ({ side, label, border, glow, align }) => {
-    const total = Math.max(0, side.infantry) + Math.max(0, side.cavalry) + Math.max(0, side.archers)
-    return (
-      <div className={`flex-1 rounded-2xl border p-4 ${border}`} style={{ boxShadow: `inset 0 0 30px ${glow}` }}>
-        <div className={`text-[9px] font-bold uppercase tracking-wider text-parchment/50 ${align}`}>{label}</div>
-        <div className={`mt-0.5 font-mono text-2xl font-black text-parchment ${align}`}>{fmt(useCountUp(total))}</div>
-        <div className="mt-3 space-y-2">
-          {TROOPS.map((t, i) => (
-            <div key={t.key} className={`flex items-center gap-2 ${align === 'text-right' ? 'flex-row-reverse' : ''}`}>
-              <Icon name={t.icon} size={12} style={{ color: TROOP_COLORS[t.key] }} />
-              <div className="h-2 flex-1 overflow-hidden rounded-full bg-black/30"><div className="h-full rounded-full" style={{ width: reveal ? `${total > 0 ? Math.max(0, side[t.key]) / total * 100 : 0}%` : '0%', background: TROOP_COLORS[t.key], transition: `width 1s cubic-bezier(.16,1,.3,1) ${i * 100}ms`, boxShadow: `0 0 6px ${TROOP_COLORS[t.key]}88` }} /></div>
-              <span className="w-24 shrink-0 font-mono text-[10px] text-parchment/55" style={{ textAlign: align === 'text-right' ? 'left' : 'right' }}>{fmt(side[t.key])} <span className="text-parchment/35">({total > 0 ? Math.round(Math.max(0, side[t.key]) / total * 100) : 0}%)</span></span>
-            </div>
-          ))}
-        </div>
-      </div>
-    )
-  }
   return (
     <div className="rounded-2xl border border-gold/20 bg-[#07101e] p-4 md:p-5">
       <div className="flex items-stretch gap-2 md:gap-3">
-        <Card side={yourSide} label={yourLabel} border="border-[#7f9ed6]/25 bg-[#7f9ed6]/[.045]" glow="rgba(127,158,214,.08)" align="text-left" />
+        <ArmyCard side={yourSide} label={yourLabel} border="border-[#7f9ed6]/25 bg-[#7f9ed6]/[.045]" glow="rgba(127,158,214,.08)" align="text-left" reveal={reveal} />
         <div className="flex shrink-0 flex-col items-center justify-center px-1">
           <Icon name="swords" size={20} className="text-gold-bright" />
           <div className="mt-1 text-[8px] font-black uppercase tracking-wider text-gold/50">VS</div>
         </div>
-        <Card side={enemySide} label={enemyLabel} border="border-[#c8655a]/25 bg-[#c8655a]/[.045]" glow="rgba(200,101,90,.08)" align="text-right" />
+        <ArmyCard side={enemySide} label={enemyLabel} border="border-[#c8655a]/25 bg-[#c8655a]/[.045]" glow="rgba(200,101,90,.08)" align="text-right" reveal={reveal} />
       </div>
     </div>
   )
@@ -246,7 +254,7 @@ export default function MysticSuite() {
           </label>
           <label className="block">
             <span className="mb-1 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[.12em] text-parchment/45">Search Step</span>
-            <input type="number" min={.005} max={.5} step={.005} value={sparsity} onChange={(e) => setSparsity(e.target.value)} className="w-full rounded-xl border border-gold/15 bg-ink/70 px-3 py-2.5 text-sm font-semibold text-parchment outline-none focus:border-gold/45" />
+            <input type="number" min={.005} max={.5} step="any" value={sparsity} onChange={(e) => setSparsity(e.target.value)} className="w-full rounded-xl border border-gold/15 bg-ink/70 px-3 py-2.5 text-sm font-semibold text-parchment outline-none focus:border-gold/45" />
             <span className="mt-1 block text-[10px] leading-relaxed text-parchment/35">Grid step between compositions tested. 0.05 is a good start; use 0.025 for a finer (slower) search.</span>
           </label>
         </div>
@@ -258,19 +266,19 @@ export default function MysticSuite() {
         <div className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <label className="block">
             <span className="mb-1 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[.12em] text-parchment/45">Infantry Floor</span>
-            <div className="relative"><input type="number" min={0} max={100} step={1} value={minInfantry} onChange={(e) => setMinInfantry(e.target.value)} className="w-full rounded-xl border border-gold/15 bg-ink/70 px-3 py-2.5 pr-8 text-sm font-semibold text-parchment outline-none focus:border-gold/45" /><span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-gold/45">%</span></div>
+            <div className="relative"><input type="number" min={0} max={100} step="any" value={minInfantry} onChange={(e) => setMinInfantry(e.target.value)} className="w-full rounded-xl border border-gold/15 bg-ink/70 px-3 py-2.5 pr-8 text-sm font-semibold text-parchment outline-none focus:border-gold/45" /><span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-gold/45">%</span></div>
           </label>
           <label className="block">
             <span className="mb-1 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[.12em] text-parchment/45">Infantry Ceiling</span>
-            <div className="relative"><input type="number" min={0} max={100} step={1} value={maxInfantry} onChange={(e) => setMaxInfantry(e.target.value)} className="w-full rounded-xl border border-gold/15 bg-ink/70 px-3 py-2.5 pr-8 text-sm font-semibold text-parchment outline-none focus:border-gold/45" /><span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-gold/45">%</span></div>
+            <div className="relative"><input type="number" min={0} max={100} step="any" value={maxInfantry} onChange={(e) => setMaxInfantry(e.target.value)} className="w-full rounded-xl border border-gold/15 bg-ink/70 px-3 py-2.5 pr-8 text-sm font-semibold text-parchment outline-none focus:border-gold/45" /><span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-gold/45">%</span></div>
           </label>
           <label className="block">
             <span className="mb-1 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[.12em] text-parchment/45">Cavalry Floor</span>
-            <div className="relative"><input type="number" min={0} max={100} step={1} value={minCavalry} onChange={(e) => setMinCavalry(e.target.value)} className="w-full rounded-xl border border-gold/15 bg-ink/70 px-3 py-2.5 pr-8 text-sm font-semibold text-parchment outline-none focus:border-gold/45" /><span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-gold/45">%</span></div>
+            <div className="relative"><input type="number" min={0} max={100} step="any" value={minCavalry} onChange={(e) => setMinCavalry(e.target.value)} className="w-full rounded-xl border border-gold/15 bg-ink/70 px-3 py-2.5 pr-8 text-sm font-semibold text-parchment outline-none focus:border-gold/45" /><span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-gold/45">%</span></div>
           </label>
           <label className="block">
             <span className="mb-1 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[.12em] text-parchment/45">Cavalry Ceiling</span>
-            <div className="relative"><input type="number" min={0} max={100} step={1} value={maxCavalry} onChange={(e) => setMaxCavalry(e.target.value)} className="w-full rounded-xl border border-gold/15 bg-ink/70 px-3 py-2.5 pr-8 text-sm font-semibold text-parchment outline-none focus:border-gold/45" /><span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-gold/45">%</span></div>
+            <div className="relative"><input type="number" min={0} max={100} step="any" value={maxCavalry} onChange={(e) => setMaxCavalry(e.target.value)} className="w-full rounded-xl border border-gold/15 bg-ink/70 px-3 py-2.5 pr-8 text-sm font-semibold text-parchment outline-none focus:border-gold/45" /><span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-gold/45">%</span></div>
           </label>
         </div>
         <span className="mt-2 block text-[10px] leading-relaxed text-parchment/35">Bounds narrow the search away from splits that rarely win — Infantry and Cavalry each get a Min/Max range; Archers fill whatever's left. Right now the search only tests Infantry between <b className="text-parchment/55">{minInfantry || 0}%–{maxInfantry || 100}%</b> and Cavalry between <b className="text-parchment/55">{minCavalry || 0}%–{maxCavalry || 100}%</b> — widen these if you don't see the split you expect.</span>

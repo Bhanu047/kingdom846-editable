@@ -7,12 +7,18 @@
     { key: 'archers', label: 'Archers', aliases: ['archer', 'archers', 'arc'] },
   ]
   // Kingshot's battle-overview report always shows both sides on the same
-  // report at once — "<theirs> Label <mine>" per line — with the opponent's
-  // column on the left and the account holder's own on the right (confirmed
-  // against real screenshots: the number trailing the label is consistently
-  // the report owner's own value). So one upload fills both "Your Troops"
-  // and "Opponent Troops" in a single pass; there's no separate "opponent's
-  // report" to ask for.
+  // report at once — "<mine> Label <theirs>" per line — with the account
+  // holder's own column on the left and a reference/opponent value on the
+  // right. Confirmed against a real screenshot once OCR could finally read
+  // both numbers on the line at once: the varying figure that changes per
+  // stat sits before the label (the report owner's real value), while the
+  // number after the label was a constant repeated across every stat line
+  // (not real per-army data at all — see stripRepeatedConstant). An earlier
+  // version of this file had this backwards, inferred from a screenshot
+  // where only the after-label number was readable at all; that inference
+  // didn't survive contact with a screenshot where both numbers came
+  // through. So one upload fills both "Your Troops" and "Opponent Troops"
+  // in a single pass; there's no separate "opponent's report" to ask for.
   const STATS = [
     { key: 'count', label: 'Troops', aliases: ['troops', 'quantity', 'count'] },
     { key: 'attack', label: 'Attack', aliases: ['attack', 'atk'] },
@@ -58,10 +64,10 @@
   function numsBeforeAfterLabel(line, aliasGroups) {
     const span = labelSpan(line, aliasGroups)
     if (!span) return { mine: [], theirs: [] }
-    // The number trailing the label is the report owner's own value; the
-    // number leading it is the opponent's — verified against real
-    // screenshots, not assumed.
-    return { mine: numbersOnLine(line.slice(span.end)), theirs: numbersOnLine(line.slice(0, span.start)) }
+    // The number leading the label is the report owner's own (varying)
+    // value; the number trailing it is the reference/opponent figure —
+    // verified against a real screenshot where both numbers were legible.
+    return { mine: numbersOnLine(line.slice(0, span.start)), theirs: numbersOnLine(line.slice(span.end)) }
   }
 
   // The Mail battle-overview report's "Stat Bonuses" section is the only
@@ -77,7 +83,7 @@
       for (let i = 0; i < lines.length; i += 1) {
         const line = lines[i]
         if (!hasAlias(line, troop.aliases) || isStatLine(line) || line.includes('%')) continue
-        // Unlike Stat Bonuses' "<theirs> Label <mine>" layout, Troop Power
+        // Unlike Stat Bonuses' "<mine> Label <theirs>" layout, Troop Power
         // Comparison puts the label first with both counts after it
         // ("Infantry 245,000 198,500") — so two numbers landing on the same
         // side split as [mine, theirs] in order, while a single lone number
@@ -140,8 +146,8 @@
           // farthest -- a stray digit from an unrelated icon further down
           // the line (e.g. "+222.0% 5)") is noise, and the real paired
           // value always sits immediately next to its label.
-          if (mine.length) out.mine[troop.key][stat.key] = mine[0]
-          if (theirs.length) out.opponent[troop.key][stat.key] = theirs[theirs.length - 1]
+          if (mine.length) out.mine[troop.key][stat.key] = mine[mine.length - 1]
+          if (theirs.length) out.opponent[troop.key][stat.key] = theirs[0]
           break
         }
       }

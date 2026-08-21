@@ -1,5 +1,7 @@
 import { useId, useMemo, useState } from 'react'
 import Icon from '../components/Icon'
+import { PlayerNameField } from '../components/ui'
+import { usePlayerName } from '../hooks/usePlayerName'
 import { optimizeMysticComposition } from '../lib/combat/battleLabEngine'
 import { useCountUp, useReveal } from '../lib/chartAnim'
 import CountUp from '../components/CountUp'
@@ -13,6 +15,18 @@ const EMPTY_ARMY = { infantry: { ...EMPTY_LINE }, cavalry: { ...EMPTY_LINE }, ar
 const n = (v, f = 0) => Number.isFinite(Number(v)) ? Number(v) : f
 const fmt = (v) => Number.isFinite(v) ? Math.round(v).toLocaleString() : '—'
 const pct = (v) => `${Math.round(v * 100)}%`
+
+// Swaps the generic "You Win"/"Still Loses" outcome text for a named one
+// once a player enters their name — a report with a name on it can be
+// attributed to whoever ran it, unlike the generic version, which is the
+// whole reason to enter one at all.
+export function outcomeLabel(outcome, playerName, opts = {}) {
+  const { win = 'You Win', lose = 'Still Loses', draw = 'Even Fight' } = opts
+  const name = (playerName || '').trim()
+  if (outcome === 'attacker') return name ? `${name} Win` : win
+  if (outcome === 'defender') return name ? `${name} Lose` : lose
+  return draw
+}
 
 function Field({ label, value, onChange, suffix }) {
   return (
@@ -242,6 +256,7 @@ export default function MysticSuite() {
   const [trial, setTrial] = useState(TRIALS[0])
   const [result, setResult] = useState(null)
   const [runId, setRunId] = useState(0)
+  const [playerName, setPlayerName] = usePlayerName()
 
   const yourTotal = TROOPS.reduce((s, t) => s + Math.max(0, n(yours[t.key].count)), 0)
   const opponentTotal = TROOPS.reduce((s, t) => s + Math.max(0, n(opponent[t.key].count)), 0)
@@ -301,6 +316,9 @@ export default function MysticSuite() {
           <li className="flex gap-2.5"><span className="grid h-5 w-5 shrink-0 place-items-center rounded-full border border-gold/25 bg-gold/[.06] text-[10px] font-bold text-gold-bright">2</span><span>Adjust Sparsity for how fine the search runs, and Min Infantry Fraction to skip splits that are never competitive.</span></li>
           <li className="flex gap-2.5"><span className="grid h-5 w-5 shrink-0 place-items-center rounded-full border border-gold/25 bg-gold/[.06] text-[10px] font-bold text-gold-bright">3</span><span>For Coliseum or Radiant Spire — trials with enemy heroes this model doesn't account for — try lowering the opponent's troop counts proportionally for a rough estimate.</span></li>
         </ol>
+        <div className="mt-4 border-t border-gold/10 pt-4">
+          <PlayerNameField value={playerName} onChange={setPlayerName} />
+        </div>
       </section>
 
       <div className="grid gap-5 lg:grid-cols-2">
@@ -374,7 +392,7 @@ export default function MysticSuite() {
           {result.best ? (
             <div className="mt-4 space-y-4">
               <div className={`stagger-in rounded-2xl border p-5 text-center ${result.best.margin >= 0 ? 'border-emerald-300/25 bg-emerald-300/[.05] text-emerald-200' : 'border-red-400/25 bg-red-400/[.05] text-red-300'}`}>
-                <div className="font-display text-2xl font-bold">{result.best.result.outcome === 'attacker' ? 'You Win' : result.best.result.outcome === 'defender' ? 'Still Loses' : 'Even Fight'}</div>
+                <div className="font-display text-2xl font-bold" data-k846-outcome-label="true">{outcomeLabel(result.best.result.outcome, playerName)}</div>
                 <div className="mt-1 text-xs text-parchment/50">Best split: {pct(result.best.composition.infantry)} Infantry / {pct(result.best.composition.cavalry)} Cavalry / {pct(result.best.composition.archers)} Archers · margin {result.best.margin >= 0 ? '+' : ''}{fmt(result.best.margin)} troops</div>
               </div>
               {(() => {

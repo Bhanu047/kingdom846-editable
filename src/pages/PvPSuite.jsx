@@ -1,8 +1,10 @@
 import { useId, useMemo, useState } from 'react'
 import Icon from '../components/Icon'
+import { PlayerNameField } from '../components/ui'
+import { usePlayerName } from '../hooks/usePlayerName'
 import { calculateHeroSynergy, optimizeMysticComposition, simulateT10Battle } from '../lib/combat/battleLabEngine'
 import { HUNT_JOINER_HEROES, applyJoinerBonuses } from '../lib/combat/huntImpact'
-import { TROOP_COLORS, CompositionChart } from './MysticSuite'
+import { TROOP_COLORS, CompositionChart, outcomeLabel } from './MysticSuite'
 import { smoothPath, useReveal } from '../lib/chartAnim'
 import CountUp from '../components/CountUp'
 
@@ -96,12 +98,12 @@ function effectiveArmy(army, joiners) {
   }))
 }
 
-function OutcomeBanner({ outcome, attackerLeft, defenderLeft, rounds }) {
-  const label = outcome === 'attacker' ? 'Your Army Wins' : outcome === 'defender' ? 'Enemy Army Wins' : 'Mutual Wipe / Draw'
+function OutcomeBanner({ outcome, attackerLeft, defenderLeft, rounds, playerName }) {
+  const label = outcomeLabel(outcome, playerName, { win: 'Your Army Wins', lose: 'Enemy Army Wins', draw: 'Mutual Wipe / Draw' })
   const tone = outcome === 'attacker' ? 'border-emerald-300/25 bg-emerald-300/[.05] text-emerald-200' : outcome === 'defender' ? 'border-red-400/25 bg-red-400/[.05] text-red-300' : 'border-gold/25 bg-gold/[.05] text-gold-bright'
   return (
     <div className={`rounded-2xl border p-5 text-center ${tone}`}>
-      <div className="font-display text-2xl font-bold">{label}</div>
+      <div className="font-display text-2xl font-bold" data-k846-outcome-label="true">{label}</div>
       <div className="mt-1 text-xs text-parchment/50">Resolved in {rounds} round{rounds === 1 ? '' : 's'} · Your army {fmt(attackerLeft)} left · Enemy army {fmt(defenderLeft)} left</div>
     </div>
   )
@@ -314,6 +316,7 @@ export default function PvPSuite() {
   const [result, setResult] = useState(null)
   const [runId, setRunId] = useState(0)
   const [mode, setMode] = useState('direct')
+  const [playerName, setPlayerName] = usePlayerName()
 
   const [sweepSparsity, setSweepSparsity] = useState('0.05')
   const [sweepMinInfantry, setSweepMinInfantry] = useState('0')
@@ -369,6 +372,9 @@ export default function PvPSuite() {
           <button type="button" onClick={() => setMode('direct')} className={`rounded-lg px-4 py-2 text-xs font-bold uppercase ${mode === 'direct' ? 'bg-gold/15 text-gold-bright' : 'text-parchment/45'}`}>Direct Attack</button>
           <button type="button" onClick={() => setMode('sweep')} className={`rounded-lg px-4 py-2 text-xs font-bold uppercase ${mode === 'sweep' ? 'bg-gold/15 text-gold-bright' : 'text-parchment/45'}`}>Composition Optimizer</button>
         </div>
+        <div className="mt-4 border-t border-gold/10 pt-4">
+          <PlayerNameField value={playerName} onChange={setPlayerName} />
+        </div>
       </section>
 
       <div className="grid gap-5 lg:grid-cols-2">
@@ -393,7 +399,7 @@ export default function PvPSuite() {
           <div className="eyebrow">Result</div>
           <h3 className="mt-1 font-display text-2xl font-bold text-parchment">Battle Outcome</h3>
           <div className="mt-4 space-y-4">
-            <div className="stagger-in"><OutcomeBanner outcome={result.outcome} attackerLeft={result.remainingA} defenderLeft={result.remainingD} rounds={result.rounds.length} /></div>
+            <div className="stagger-in"><OutcomeBanner outcome={result.outcome} attackerLeft={result.remainingA} defenderLeft={result.remainingD} rounds={result.rounds.length} playerName={playerName} /></div>
             {(() => {
               const yourStart = effectiveArmy(attacker, attackerJoiners)
               const enemyStart = effectiveArmy(defender, defenderJoiners)
@@ -468,7 +474,7 @@ export default function PvPSuite() {
           {sweepResult.best ? (
             <div className="mt-4 space-y-4">
               <div className={`stagger-in rounded-2xl border p-5 text-center ${sweepResult.best.margin >= 0 ? 'border-emerald-300/25 bg-emerald-300/[.05] text-emerald-200' : 'border-red-400/25 bg-red-400/[.05] text-red-300'}`}>
-                <div className="font-display text-2xl font-bold">{sweepResult.best.result.outcome === 'attacker' ? 'You Win' : sweepResult.best.result.outcome === 'defender' ? 'Still Loses' : 'Even Fight'}</div>
+                <div className="font-display text-2xl font-bold" data-k846-outcome-label="true">{outcomeLabel(sweepResult.best.result.outcome, playerName)}</div>
                 <div className="mt-1 text-xs text-parchment/50">Best split: {pct(sweepResult.best.composition.infantry)} Infantry / {pct(sweepResult.best.composition.cavalry)} Cavalry / {pct(sweepResult.best.composition.archers)} Archers · margin {sweepResult.best.margin >= 0 ? '+' : ''}{fmt(sweepResult.best.margin)} troops</div>
               </div>
               <div data-report-clone="pvp-sweep-visual" className="stagger-in"><VictoryPodium top3={sweepTop.slice(0, 3)} /></div>

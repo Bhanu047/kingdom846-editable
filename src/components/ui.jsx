@@ -31,6 +31,25 @@ export function Pill({ children, tone = 'gold' }) {
   )
 }
 
+export function PlayerNameField({ value, onChange }) {
+  return (
+    <label className="block max-w-xs">
+      <span className="mb-1 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[.12em] text-parchment/45">
+        <Icon name="user" size={11} /> Player Name <span className="normal-case font-normal tracking-normal text-parchment/30">(optional)</span>
+      </span>
+      <input
+        type="text"
+        maxLength={24}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="Not set — stays anonymous"
+        className="w-full rounded-xl border border-gold/15 bg-ink/70 px-3 py-2.5 text-sm font-semibold text-parchment outline-none focus:border-gold/45"
+      />
+      <span className="mt-1 block text-[10px] leading-relaxed text-parchment/35">Shown in your result and the downloaded report — handy when several players share reports. Leave blank to stay anonymous.</span>
+    </label>
+  )
+}
+
 export function ArtImage({ src, alt, className = '', imagePosition }) {
   return (
     <div className={`relative overflow-hidden rounded-lg ${className}`}>

@@ -221,7 +221,10 @@ export function ClashGauge({ yourTotal, enemyTotal, margin }) {
         <div className="absolute bottom-[3%] right-[3%] text-[11px] font-bold tracking-wide text-[#e08c80]">ENEMY</div>
       </div>
       <div className="badge-shine mx-auto mt-1 max-w-[240px] rounded-xl text-center">
-        <div className="font-mono text-2xl font-black" style={{ color: margin >= 0 ? '#6ee7b7' : '#fca5a5' }}>{margin >= 0 ? '+' : ''}{fmt(animatedMargin)}</div>
+        <div className="flex items-baseline justify-center gap-2">
+          <span className="font-mono text-2xl font-black" style={{ color: margin >= 0 ? '#6ee7b7' : '#fca5a5' }}>{margin >= 0 ? '+' : ''}{fmt(animatedMargin)}</span>
+          <span className="font-mono text-sm font-bold" style={{ color: margin >= 0 ? '#6ee7b7' : '#fca5a5', opacity: .7 }}>({margin >= 0 ? '+' : ''}{(yourTotal > 0 ? margin / yourTotal * 100 : 0).toFixed(1)}%)</span>
+        </div>
         <div className="text-[10px] text-parchment/40">troop margin</div>
       </div>
     </div>

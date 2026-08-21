@@ -357,7 +357,7 @@
           const toast = document.createElement('div')
           const warn = noTroopCounts
           toast.textContent = warn
-            ? 'Warning: troop counts were probably not detected. Make sure the report is set to show troop numbers, not percentages, then fill in Troops by hand.'
+            ? 'Warning: Troops counts weren’t detected. Attack/Lethality/Defense/Health come from Stat Bonuses, but Troops only comes from Troop Power Comparison switched to numbers (not the % bars) — upload that section too, or fill in Troops by hand.'
             : `Applied ${appliedMine} values to ${mineHeading}, ${appliedOpp} to ${opponentHeading}.`
           Object.assign(toast.style, { position: 'fixed', left: '50%', bottom: '26px', zIndex: 10070, transform: 'translateX(-50%)', maxWidth: '90vw', padding: '11px 15px', borderRadius: '10px', font: '700 11px Montserrat, sans-serif', color: warn ? '#fde68a' : '#f6e5ad', background: warn ? 'rgba(120,53,15,.95)' : 'rgba(10,24,43,.98)', border: `1px solid ${warn ? 'rgba(251,191,36,.4)' : 'rgba(212,175,55,.34)'}` })
           document.body.appendChild(toast)
@@ -391,7 +391,7 @@
       btn.addEventListener('click', (e) => { e.preventDefault(); open() })
       const caption = document.createElement('div')
       caption.className = 'k846-au-upload-caption'
-      caption.innerHTML = '<b>Make sure the report shows troop numbers, not percentages</b> — tap the switch icon on Troop Power Comparison if it\'s showing bars. PNG, JPG or WEBP, multiple screenshots allowed.'
+      caption.innerHTML = '<b>Upload both sections</b>: Stat Bonuses (for Attack/Lethality/Defense/Health) and Troop Power Comparison switched to numbers, not bars — tap the switch icon top-right (for Troops). PNG, JPG or WEBP, multiple screenshots allowed.'
       const p = section.querySelector('p')
       if (p) { p.insertAdjacentElement('afterend', caption); p.insertAdjacentElement('afterend', btn) } else { section.appendChild(btn); section.appendChild(caption) }
     }

@@ -197,6 +197,38 @@ export const ARCHER_VOLLEY_CHANCE = 0.10
 // 2.02 / 1.91 = 1.06, near parity -- matching both the outcome and the ~40%
 // an established tool gave that fight.
 //
+// [FALSIFIED — 2026-08-22] TWO REAL KNOWLEDGE NEXUS BATTLES SAY THIS IS WRONG,
+// and it is the largest measured error anywhere in this file.
+//
+// Both were fought at T11 with 185,200 troops against a T10 Mad Scholar's
+// 150,000 -- a 23% headcount advantage on top of the tier -- and both were
+// total defeats, the player's entire army lost:
+//
+//   R  46/21/33   their survivors 38,519   edge -25.7
+//   S  50/15/35   their survivors 17,600   edge -11.7
+//
+// The model at 1.175 scores both at about +41. Mean error +59.7 points, which
+// is 2.1x the measured per-battle sd of ~28 -- this is not noise.
+//
+//   T11 mult   R      S      mean error
+//    1.175    41.1   40.8      +59.7   <- shipped
+//    1.150    33.3   33.3      +52.0   <- floor of the documented range
+//    1.100    -7.5   -8.1      +10.9
+//    1.000   -51.1  -51.4      -32.6
+//
+// The documented range does not reach: even its floor leaves +52 points. And
+// 1.10 is the only value that leaves ALL THREE Knowledge Nexus observations
+// plausible at once -- these two defeats and the clear that this constant was
+// introduced to explain (research/kn-consistency.mjs).
+//
+// NOT CHANGED, deliberately. Two magnitudes against ONE opponent cannot
+// separate "the tier multiplier is too big" from "this beast or this room
+// behaves differently", the errors are correlated, and bending a [DOC] constant
+// to fit outcomes is the exact mistake recorded in sec.9 as the 2.7x counter.
+// What settles it is two or three more T11 battles against a DIFFERENT
+// Knowledge Nexus beast. Until then the value stands and the tool says plainly
+// that it is not trusted -- see the T11 warning in MysticSuite.
+//
 // [OPEN] Only the T10/T11 gap is sourced. The lower entries assume the same
 // step compounding downward and are approximations; comparisons between two
 // low tiers are the least trustworthy thing in this file.

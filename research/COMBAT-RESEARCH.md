@@ -1168,3 +1168,89 @@ replication says otherwise.**
 12–18 / 21–27), 1.0 points off the top. The model had nothing to correct here,
 and it went 1–1. That is the expected result of fielding a good split against a
 near-even beast, and it is the behaviour the tool should produce.
+
+---
+
+## 14. Knowledge Nexus at T11: the largest measured error in this file  [OBS]
+
+Two Knowledge Nexus battles arrived, both against **Mad Scholar** (222 flat,
+T10, 60000/45000/45000), fought at **T11** with 185,200 troops against their
+150,000 — a 23% headcount advantage *on top of* the tier. Both were total
+defeats, the entire army lost:
+
+| id | split | counts | their survivors | edge |
+|---|---|---|---|---|
+| R | 46/21/33 | 85,192 / 38,892 / 61,116 | 38,519 | **−25.7** |
+| S | 50/15/35 | 92,600 / 27,780 / 64,820 | 17,600 | **−11.7** |
+
+### The level error
+
+The model scores both at about **+41**. Mean error **+59.7 points** — 2.1× the
+measured per-battle sd of ~28. This is not noise (`research/kn-tier.mjs`):
+
+| T11 mult | R | S | mean error |
+|---|---|---|---|
+| **1.175** (shipped) | 41.1 | 40.8 | **+59.7** |
+| 1.150 (floor of the documented range) | 33.3 | 33.3 | +52.0 |
+| 1.120 | 18.9 | 18.2 | +37.3 |
+| 1.100 | −7.5 | −8.1 | **+10.9** |
+| 1.000 | −51.1 | −51.4 | −32.6 |
+
+**The documented range does not reach.** The source says T11 carries "roughly
+15 to 20 percent more stats"; even the floor of that leaves +52 points of
+error. So this is not a matter of having picked the wrong point in a documented
+band — something about T11, or about this room, is modelled wrong.
+
+### It reaches the user, which is why it cannot just be noted
+
+The tool never shows an absolute score, so a pure level error would be
+harmless. This one is not: the *recommendation* moves with it
+(`research/kn-recommend.mjs`).
+
+| T11 mult | recommends | band |
+|---|---|---|
+| 1.175 | 49/22/29 | 42–59 / 13–30 / 21–39 |
+| 1.150 | 52/20/28 | 45–59 / 13–27 / 21–36 |
+| 1.100 | 59/17/24 | 55–63 / 15–20 / 21–25 |
+
+Ten points of Infantry. And the direction the battles point is the same one the
+lower value points: R (46/21/33) lost by 13.9 more than S (50/15/35), i.e.
+Infantry-heavier did better — which is what 1.10 recommends and 1.175 does not.
+
+That is a **third paired comparison**, and it agrees with the Forest of Life
+and Crystal Cave pairs: 50/15/35 over 46/21/33.
+
+### Consistency: 1.10 is the only value that keeps all three observations alive
+
+`TIER_STAT_MULTIPLIER.T11` exists to explain one thing — a Knowledge Nexus
+stage the player cleared that no model reproduced (§8). Any replacement has to
+keep explaining it. Scored across plausible splits
+(`research/kn-consistency.mjs`), at **1.10** the room ranges from −8.1 to +7.5:
+a clear is plausible and so are two defeats. At **1.175** everything sits near
++41, and the two defeats are 52–66 points away.
+
+### NOT CHANGED — and why that is not timidity
+
+1. **Two magnitudes against one opponent.** The errors are correlated. This
+   cannot separate "the tier multiplier is too big" from "this beast, or this
+   room, behaves differently". Only a T11 fight against a *different* Knowledge
+   Nexus beast can.
+2. **1.175 is [DOC]-sourced, not fitted.** Bending a documented constant to fit
+   outcomes is precisely the mistake recorded in §9 as the 2.7× counter. That it
+   would now be fitted to the player's real battles rather than another tool's
+   output is a better standard of evidence — but not at n=2.
+3. **§13 froze the constants** four hours ago on measured grounds. Unfreezing
+   one on the next report would make the freeze worthless.
+
+### What the tool does instead
+
+The Mystic result panel now shows a warning whenever the player's tier is set
+to T11, stating the size of the error and that any T11 recommendation is
+unverified. A model that is confidently wrong is worse than one that says so.
+
+### What settles it
+
+**Two or three more T11 Knowledge Nexus battles against a different beast**,
+with the Losses figures. If the error persists across opponents it is the tier
+and the constant moves. If it disappears, it was Mad Scholar or the room, and
+the tier stands.

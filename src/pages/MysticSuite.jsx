@@ -565,6 +565,19 @@ export default function MysticSuite() {
                       wrong 5 times in 7, so only the COMPARATIVE figure — which
                       survives the bias because it is a difference of two model
                       scores — is shown. */}
+                  {/* T11 is measured to be badly optimistic and the tool says so
+                      rather than quietly serving a recommendation built on it.
+                      Two Knowledge Nexus battles at T11 -- with a 23% headcount
+                      advantage -- were total defeats that the model scored at
+                      about +41. Mean error +59.7, which is 2.1x the per-battle
+                      noise. The constant is [DOC]-sourced so it has not been
+                      bent to fit two battles against one beast, but a player
+                      running T11 deserves to know before acting on the split. */}
+                  {yourTier === 'T11' && (
+                    <div className="mt-3 rounded-xl border border-amber-300/25 bg-amber-300/[.05] px-3 py-2 text-left text-[10px] leading-relaxed text-amber-100/70">
+                      <b className="text-amber-200/90">T11 is not trusted yet.</b> Two real Knowledge Nexus battles at T11 — both with a 23% headcount advantage — were total defeats that this model scored at about +41. That is a 60-point error, twice the per-battle noise. The T11 bonus is taken from a published 15–20% figure and has not been changed to fit two battles against one beast, but treat any T11 recommendation as unverified until more of them are logged.
+                    </div>
+                  )}
                   {/* If what the player already fields lands inside the band,
                       say so. A "+1.2 points better" line on its own reads as an
                       improvement worth acting on; against a measured 17-point

@@ -4,7 +4,7 @@ import { PlayerNameField } from '../components/ui'
 import { usePlayerName } from '../hooks/usePlayerName'
 import { optimizeTrialSplit, MYSTIC_ZONES, MYSTIC_ZONE_NAMES } from '../lib/combat/mysticTrials'
 import { TIER_STAT_MULTIPLIER, FRONT_ROW_SPILL } from '../lib/combat/kingshotCombat'
-import { recordOutcome, undoLast, logCount, exportJson, summary } from '../lib/combat/outcomeLog'
+import { recordOutcome, attachLosses, undoLast, logCount, exportJson, summary } from '../lib/combat/outcomeLog'
 import { useCountUp, useReveal } from '../lib/chartAnim'
 import CountUp from '../components/CountUp'
 
@@ -307,6 +307,9 @@ export default function MysticSuite() {
   // What actually happened, once the player tells us. Reset per run so a fresh
   // search doesn't inherit the last battle's answer.
   const [logged, setLogged] = useState(null)
+  const [lossMine, setLossMine] = useState('')
+  const [lossTheirs, setLossTheirs] = useState('')
+  const [lossEdge, setLossEdge] = useState(null)
   const [logTotal, setLogTotal] = useState(() => logCount())
 
   const selectTrial = (t) => {
@@ -338,7 +341,7 @@ export default function MysticSuite() {
       enteredCounts: TROOPS.map((t) => n(yours[t.key].count)),
     }))
     setRunId((id) => id + 1)
-    setLogged(null)
+    setLogged(null); setLossMine(''); setLossTheirs(''); setLossEdge(null)
   }
 
   const saveOutcome = (outcome) => {
@@ -351,7 +354,11 @@ export default function MysticSuite() {
     setLogged(outcome)
     setLogTotal(logCount())
   }
-  const undoOutcome = () => { if (undoLast()) { setLogged(null); setLogTotal(logCount()) } }
+  const undoOutcome = () => { if (undoLast()) { setLogged(null); setLossMine(''); setLossTheirs(''); setLossEdge(null); setLogTotal(logCount()) } }
+  const saveLosses = () => {
+    const entry = attachLosses(n(lossMine), n(lossTheirs))
+    if (entry) setLossEdge(entry.edge)
+  }
   const copyLog = () => { try { navigator.clipboard?.writeText(exportJson()) } catch { /* nothing to do */ } }
   const downloadLog = () => {
     try {
@@ -587,12 +594,13 @@ export default function MysticSuite() {
                   block above -- this is private calibration data, not something
                   a shared report should carry.
 
-                  It asks for one bit and nothing else. A Mystic battle report is
-                  POST-battle, so the counts and bonuses already entered ARE the
-                  composition that was fielded; the only thing missing is whether
-                  it cleared. That, over enough battles, is what finally lets the
-                  model be fitted to real outcomes instead of to another
-                  calculator whose own answer moves 18 points on the same fight. */}
+                  A Mystic battle report is POST-battle, so the counts and bonuses
+                  already entered ARE the composition that was fielded. Only the
+                  result is missing: one tap for whether it cleared, and -- worth
+                  far more -- the two Losses figures, which give the MAGNITUDE.
+                  Fourteen real battles showed why the bit alone is not enough:
+                  two splits 2% apart finished 53 points apart. Every constant
+                  fitted so far was fitted to survival edge, not to win/lose. */}
               <div className="stagger-in rounded-2xl border border-gold/12 bg-white/[.02] px-4 py-3">
                 {logged ? (
                   <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5">
@@ -607,6 +615,31 @@ export default function MysticSuite() {
                       <span className="text-parchment/15">|</span>
                       <button type="button" onClick={downloadLog} className="text-gold-bright/60 hover:text-gold-bright">Download</button>
                     </span>
+                    {/* The two Losses figures off the Battle Details screen.
+                        The win/lose bit alone is nearly worthless: two splits 2%
+                        apart finished 53 points apart, so outcomes take dozens
+                        of samples to separate anything. The MAGNITUDE is what
+                        actually moved this model -- every constant fitted so far
+                        was fitted to survival edge, read off screenshots by
+                        hand. Two fields capture it at the source. */}
+                    <div className="flex w-full flex-wrap items-center gap-2 border-t border-gold/10 pt-2.5">
+                      {lossEdge === null ? (
+                        <>
+                          <span className="text-[10px] uppercase tracking-wider text-parchment/40">Losses (optional)</span>
+                          <input type="number" inputMode="numeric" value={lossMine} onChange={(ev) => setLossMine(ev.target.value)} placeholder="yours"
+                            className="w-24 rounded-lg border border-gold/20 bg-black/25 px-2 py-1 font-mono text-[11px] text-parchment/85 outline-none placeholder:text-parchment/25 focus:border-gold/50" />
+                          <input type="number" inputMode="numeric" value={lossTheirs} onChange={(ev) => setLossTheirs(ev.target.value)} placeholder="theirs"
+                            className="w-24 rounded-lg border border-gold/20 bg-black/25 px-2 py-1 font-mono text-[11px] text-parchment/85 outline-none placeholder:text-parchment/25 focus:border-gold/50" />
+                          <button type="button" onClick={saveLosses} disabled={!n(lossMine) && !n(lossTheirs)}
+                            className="rounded-lg border border-gold/30 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-gold-bright/80 hover:border-gold/60 disabled:opacity-30">Add</button>
+                        </>
+                      ) : (
+                        <span className="text-[11px] text-parchment/70">
+                          <span className="text-gold-bright/80">✓ Edge {lossEdge >= 0 ? '+' : ''}{lossEdge}%</span>
+                          <span className="text-parchment/35"> — this battle now carries a magnitude, not just a win/lose bit</span>
+                        </span>
+                      )}
+                    </div>
                   </div>
                 ) : (
                   <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
@@ -617,7 +650,7 @@ export default function MysticSuite() {
                     </span>
                   </div>
                 )}
-                <div className="mt-1.5 text-[10px] leading-relaxed text-parchment/35">Saved on this device only. It records the split you actually fielded, both sides' stats, and what the model predicted — the data needed to calibrate against real results instead of another calculator.</div>
+                <div className="mt-1.5 text-[10px] leading-relaxed text-parchment/35">Saved on this device only. It records the split you actually fielded, both sides' stats, and what the model predicted. Adding the two <b className="text-parchment/50">Losses</b> numbers off the Battle Details screen is what makes a battle usable for calibration — the win/lose bit on its own takes dozens of samples to say anything.</div>
               </div>
 
               {(() => {

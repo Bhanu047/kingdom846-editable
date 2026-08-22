@@ -93,6 +93,39 @@ export function recordOutcome({ zone, outcome, yours, opponent, yourTier, enemyT
   return writeRaw(entries) ? entry : null
 }
 
+/**
+ * Attaches the two Losses figures from the Battle Details screen to the entry
+ * just recorded, and derives the survival edge from them.
+ *
+ * WHY THIS IS WORTH THE TWO EXTRA TAPS. The outcome alone is one bit, and one
+ * bit is nearly worthless here: fourteen real battles showed two splits 2%
+ * apart finishing 53 points apart, and two runs of an identical fight finishing
+ * 43.7 points apart with opposite results. Against noise that size, wins and
+ * losses take dozens of samples to separate anything.
+ *
+ * The MAGNITUDE is what actually moved this model. Every calibration in
+ * research/COMBAT-RESEARCH.md -- the stat-pair weight, the front-row spill --
+ * was fitted to survival edge, not to win/lose. Those numbers had to be read
+ * off screenshots by hand. This captures them at the source.
+ *
+ * Edge is (my survivors / my total) - (their survivors / their total), the same
+ * scale the optimizer scores on, so a logged battle can be compared directly
+ * against what the model predicted for it.
+ */
+export function attachLosses(yourLosses, theirLosses) {
+  const entries = readRaw()
+  const last = entries[entries.length - 1]
+  if (!last) return null
+  const myTotal = TYPES.reduce((sum, t) => sum + num(last.you?.[t]?.count), 0)
+  const theirTotal = TYPES.reduce((sum, t) => sum + num(last.enemy?.[t]?.count), 0)
+  if (myTotal <= 0 || theirTotal <= 0) return null
+  const myLost = Math.min(myTotal, Math.max(0, num(yourLosses)))
+  const theirLost = Math.min(theirTotal, Math.max(0, num(theirLosses)))
+  last.losses = { yours: myLost, theirs: theirLost }
+  last.edge = Math.round((((myTotal - myLost) / myTotal) - ((theirTotal - theirLost) / theirTotal)) * 1000) / 10
+  return writeRaw(entries) ? last : null
+}
+
 /** Removes the most recent entry — for an outcome tapped by mistake. */
 export function undoLast() {
   const entries = readRaw()
@@ -119,5 +152,14 @@ export function summary() {
     byZone[z] = byZone[z] || { cleared: 0, lost: 0 }
     byZone[z][e.outcome === 'cleared' ? 'cleared' : 'lost'] += 1
   }
-  return { total: entries.length, cleared, lost: entries.length - cleared, byZone }
+  const withEdge = entries.filter((e) => Number.isFinite(e.edge))
+  return {
+    total: entries.length,
+    cleared,
+    lost: entries.length - cleared,
+    byZone,
+    // How many carry a magnitude, not just a win/lose bit. These are the ones
+    // a calibration can actually use.
+    withEdge: withEdge.length,
+  }
 }

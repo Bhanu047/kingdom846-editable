@@ -64,6 +64,7 @@ export function optimizePvpComposition({
   defenderSkills = {},
   stepPercent = 5,
   yourTier = DEFAULT_TIER,
+  bounds = null,
 } = {}) {
   const total = Math.max(0, Math.floor(num(totalTroops)))
   if (total <= 0 || armyTotal(enemyArmy) <= 0) {
@@ -71,10 +72,19 @@ export function optimizePvpComposition({
   }
   const step = Math.min(25, Math.max(1, num(stepPercent, 5)))
 
+  const within = (inf, cav, arc) => {
+    if (!bounds) return true
+    const ok = (v, lo, hi) => v >= num(lo, 0) - 1e-9 && v <= num(hi, 100) + 1e-9
+    return ok(inf, bounds.minInfantry, bounds.maxInfantry)
+      && ok(cav, bounds.minCavalry, bounds.maxCavalry)
+      && ok(arc, bounds.minArchers, bounds.maxArchers)
+  }
+
   const candidates = []
   for (let inf = 0; inf <= 100; inf += step) {
     for (let cav = 0; inf + cav <= 100; cav += step) {
       const arc = 100 - inf - cav
+      if (!within(inf, cav, arc)) continue
       const composition = { infantry: inf / 100, cavalry: cav / 100, archers: arc / 100 }
       const army = Object.fromEntries(TROOP_TYPES.map((type) => [type, {
         count: Math.round(total * composition[type]),

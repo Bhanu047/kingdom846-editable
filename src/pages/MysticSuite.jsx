@@ -304,6 +304,7 @@ export default function MysticSuite() {
     setResult(optimizeTrialSplit({
       totalTroops: yourTotal, yourStats, enemyArmy, zone: trial,
       stepPercent: Math.max(1, Math.round(n(sparsity, 0.05) * 100)),
+      bounds: { minInfantry, maxInfantry, minCavalry, maxCavalry, minArchers, maxArchers },
     }))
     setRunId((id) => id + 1)
   }
@@ -450,7 +451,7 @@ export default function MysticSuite() {
                   player actually won as a heavy loss -- so stating one here
                   would be asserting something we've measured to be wrong. */}
               <div className="stagger-in rounded-2xl border border-gold/25 bg-gold/[.05] p-5 text-center text-gold-bright">
-                <div className="text-[10px] font-bold uppercase tracking-[.14em] text-gold-bright/60">{playerName.trim() ? `${playerName.trim()} · Recommended Split` : 'Recommended Split'}</div>
+                <div className="text-[10px] font-bold uppercase tracking-[.14em] text-gold-bright/60">{playerName.trim() ? <><span data-k846-player-name="true">{playerName.trim()}</span> · Recommended Split</> : 'Recommended Split'}</div>
                 <div className="mt-1 font-display text-2xl font-bold" data-k846-outcome-label="true">{pct(result.best.composition.infantry)} / {pct(result.best.composition.cavalry)} / {pct(result.best.composition.archers)}</div>
                 <div className="mt-1 text-xs text-parchment/50">Infantry / Cavalry / Archers · best of {result.candidates.length} splits tested, {result.best.clears ? 'clears this stage' : 'does not clear'} · survival edge {(result.best.survivalEdge * 100).toFixed(1)}%</div>
                 <div className="mt-2 text-[10px] leading-relaxed text-parchment/40">Survival edge is the share of your force left, minus the share of theirs. Compare it against the played opener below.</div>

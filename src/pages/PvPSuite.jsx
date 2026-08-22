@@ -346,6 +346,7 @@ export default function PvPSuite() {
       enemyArmy: withTier(effectiveArmy(defender, defenderJoiners), defenderTier),
       stepPercent: Math.max(1, Math.round(n(sweepSparsity, 0.05) * 100)),
       yourTier: attackerTier,
+      bounds: { minInfantry: sweepMinInfantry, maxInfantry: sweepMaxInfantry, minCavalry: sweepMinCavalry, maxCavalry: sweepMaxCavalry },
     }))
     setSweepRunId((id) => id + 1)
   }

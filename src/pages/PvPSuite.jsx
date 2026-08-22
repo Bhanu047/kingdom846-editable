@@ -4,7 +4,7 @@ import { PlayerNameField } from '../components/ui'
 import { usePlayerName } from '../hooks/usePlayerName'
 import { calculateHeroSynergy, optimizeMysticComposition, simulateT10Battle } from '../lib/combat/battleLabEngine'
 import { HUNT_JOINER_HEROES, applyJoinerBonuses } from '../lib/combat/huntImpact'
-import { TROOP_COLORS, CompositionChart, outcomeLabel } from './MysticSuite'
+import { TROOP_COLORS, CompositionChart, outcomeLabel, outcomeTone } from './MysticSuite'
 import { smoothPath, useReveal } from '../lib/chartAnim'
 import CountUp from '../components/CountUp'
 
@@ -99,7 +99,7 @@ function effectiveArmy(army, joiners) {
 }
 
 function OutcomeBanner({ outcome, attackerLeft, defenderLeft, rounds, playerName }) {
-  const label = outcomeLabel(outcome, playerName, { win: 'Your Army Wins', lose: 'Enemy Army Wins', draw: 'Mutual Wipe / Draw' })
+  const label = outcomeLabel(outcome, playerName, { win: 'Your Army Wins', lose: 'Enemy Army Wins', draw: 'Too Close To Call' })
   const tone = outcome === 'attacker' ? 'border-emerald-300/25 bg-emerald-300/[.05] text-emerald-200' : outcome === 'defender' ? 'border-red-400/25 bg-red-400/[.05] text-red-300' : 'border-gold/25 bg-gold/[.05] text-gold-bright'
   return (
     <div className={`rounded-2xl border p-5 text-center ${tone}`}>
@@ -473,7 +473,7 @@ export default function PvPSuite() {
           <h3 className="mt-1 font-display text-2xl font-bold text-parchment">Best Composition Found</h3>
           {sweepResult.best ? (
             <div className="mt-4 space-y-4">
-              <div className={`stagger-in rounded-2xl border p-5 text-center ${sweepResult.best.margin >= 0 ? 'border-emerald-300/25 bg-emerald-300/[.05] text-emerald-200' : 'border-red-400/25 bg-red-400/[.05] text-red-300'}`}>
+              <div className={`stagger-in rounded-2xl border p-5 text-center ${outcomeTone(sweepResult.best.result.outcome)}`}>
                 <div className="font-display text-2xl font-bold" data-k846-outcome-label="true">{outcomeLabel(sweepResult.best.result.outcome, playerName)}</div>
                 <div className="mt-1 text-xs text-parchment/50">Best split: {pct(sweepResult.best.composition.infantry)} Infantry / {pct(sweepResult.best.composition.cavalry)} Cavalry / {pct(sweepResult.best.composition.archers)} Archers · margin {sweepResult.best.margin >= 0 ? '+' : ''}{fmt(sweepResult.best.margin)} troops</div>
               </div>

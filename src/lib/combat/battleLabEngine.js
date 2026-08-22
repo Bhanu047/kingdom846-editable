@@ -229,7 +229,7 @@ function firstAliveTarget(army) {
   return TYPES.find((type) => (army[type]?.count || 0) > 0) || null
 }
 
-function calculateCasualties(attackerType, attackerLine, targetType, targetLine, armyMin, round) {
+function calculateCasualties(attackerType, attackerLine, targetType, targetLine, round) {
   if (!attackerLine?.count || !targetLine?.count) return 0
   const atkBase = T10_BASE[attackerType]
   const defBase = T10_BASE[targetType]
@@ -238,21 +238,31 @@ function calculateCasualties(attackerType, attackerLine, targetType, targetLine,
     * atkBase.lethality * (1 + attackerLine.lethality / 100) / 100
   const defensePower = defBase.defense * (1 + targetLine.defense / 100)
     * defBase.hp * (1 + targetLine.health / 100) / 100
-  const armyFactor = Math.sqrt(attackerLine.count * Math.max(1, armyMin))
+  // Damage scales with how many troops are actually swinging -- the standard
+  // aimed-fire attrition assumption. This used to be
+  // sqrt(count * min(bothArmyTotals)), which quietly discarded most of any
+  // numerical advantage: it turned a 4x bigger army into only 2x the damage,
+  // while the stat bonuses either side of it kept their full linear weight
+  // (attack x lethality against defense x health, so a bonus gap counts
+  // twice over). Percentages could therefore never lose to troop count. On a
+  // real report -- 185,200 troops at ~178% against 150,000 at 222% -- the old
+  // curve read a 23.5% troop lead as 11% and called an even fight a
+  // -80,092 rout with zero winnable splits out of 231; the player won it.
+  const armyFactor = attackerLine.count
   const typeBonus = counters(attackerType, targetType) ? 1.1 : 1
   const fatigue = 1 + Math.max(0, round - 1) * 0.0001
   const raw = armyFactor * (attackPower / Math.max(0.000001, defensePower)) * typeBonus * fatigue / 100
   return clamp(Math.ceil(raw), 0, targetLine.count)
 }
 
-function attacksFor(snapshotA, snapshotB, armyMin, round) {
+function attacksFor(snapshotA, snapshotB, round) {
   const losses = { infantry: 0, cavalry: 0, archers: 0 }
   TYPES.forEach((attackerType) => {
     const line = snapshotA[attackerType]
     if (!line?.count) return
     const targetType = firstAliveTarget(snapshotB)
     if (!targetType) return
-    losses[targetType] += calculateCasualties(attackerType, line, targetType, snapshotB[targetType], armyMin, round)
+    losses[targetType] += calculateCasualties(attackerType, line, targetType, snapshotB[targetType], round)
   })
   TYPES.forEach((type) => { losses[type] = Math.min(losses[type], snapshotB[type].count) })
   return losses
@@ -270,8 +280,8 @@ export function simulateT10Battle({ attacker, defender, maxRounds = 50 }) {
     if (!totalTroops(a) || !totalTroops(d)) break
     const snapshotA = cloneArmy(a)
     const snapshotD = cloneArmy(d)
-    const defenderLosses = attacksFor(snapshotA, snapshotD, armyMin, round)
-    const attackerLosses = attacksFor(snapshotD, snapshotA, armyMin, round)
+    const defenderLosses = attacksFor(snapshotA, snapshotD, round)
+    const attackerLosses = attacksFor(snapshotD, snapshotA, round)
 
     TYPES.forEach((type) => {
       a[type].count = Math.max(0, a[type].count - attackerLosses[type])
@@ -289,9 +299,16 @@ export function simulateT10Battle({ attacker, defender, maxRounds = 50 }) {
 
   const remainingA = totalTroops(a)
   const remainingD = totalTroops(d)
+  // This sim is deterministic; the real fight is not. Declaring a winner off a
+  // margin thinner than the model's own resolution is how a coin-flip reads as
+  // a defeat -- a 0.7%-of-force gap is not a verdict, and calling it one sends
+  // players away from fights they win. Inside the band, say it's close.
+  // A side actually wiped out is always decisive, however thin the gap.
+  const wipe = remainingA === 0 || remainingD === 0
+  const parityBand = wipe ? 0 : Math.max(startingA, startingD) * 0.02
   let outcome = 'draw'
-  if (remainingA > remainingD) outcome = 'attacker'
-  if (remainingD > remainingA) outcome = 'defender'
+  if (remainingA - remainingD > parityBand) outcome = 'attacker'
+  if (remainingD - remainingA > parityBand) outcome = 'defender'
 
   return {
     outcome,

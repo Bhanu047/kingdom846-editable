@@ -95,7 +95,16 @@
         for (let j = 1; j <= 2 && mine.length + theirs.length < 2; j += 1) {
           const next = lines[i + j] || ''
           if (isStatLine(next) || next.includes('%')) break
-          for (const v of numbersOnLine(next).filter((v) => v >= 10000)) {
+          const nextNums = numbersOnLine(next).filter((v) => v >= 10000)
+          // A row carrying three or more big numbers is the shared Troop Power
+          // Comparison row: all three troop types for both sides sit on it, so
+          // nothing there can be attributed to the single troop label we walked
+          // in from. Scavenging it anyway just grabbed the first two numbers on
+          // the row -- which is how Archers ended up reporting Infantry's count
+          // and the opponent's Archers reporting their Cavalry's. That row is
+          // read positionally by inferTroopCountsFromBareRow instead.
+          if (nextNums.length >= 3) break
+          for (const v of nextNums) {
             if (!mine.length) mine = [v]
             else if (!theirs.length) theirs = [v]
           }
@@ -126,14 +135,27 @@
   // into Bonus Details) -- no dependency on any specific word surviving
   // OCR intact.
   function inferTroopCountsFromBareRow(lines) {
-    for (const line of lines) {
+    for (let i = 0; i < lines.length; i += 1) {
+      const line = lines[i]
       if (isStatLine(line) || line.includes('%')) break
       const nums = numbersOnLine(line).filter((v) => v >= 10000)
-      if (nums.length >= 3) {
-        const out = { infantry: { mine: nums[0] }, cavalry: { mine: nums[1] }, archers: { mine: nums[2] } }
-        if (nums.length >= 6) { out.infantry.theirs = nums[3]; out.cavalry.theirs = nums[4]; out.archers.theirs = nums[5] }
-        return out
+      if (nums.length < 3) continue
+      const out = { infantry: { mine: nums[0] }, cavalry: { mine: nums[1] }, archers: { mine: nums[2] } }
+      let theirs = nums.slice(3, 6)
+      // The two groups of three sit side by side with a wide gap between them
+      // on screen, so OCR emits them as one line only some of the time -- just
+      // as often it breaks at the gap and puts the opponent's three on the next
+      // line. Requiring all six on one line silently dropped the whole opponent
+      // side whenever that happened.
+      for (let j = i + 1; j < lines.length && theirs.length < 3; j += 1) {
+        const next = lines[j]
+        if (isStatLine(next) || next.includes('%')) break
+        const more = numbersOnLine(next).filter((v) => v >= 10000)
+        if (!more.length) continue
+        theirs = theirs.concat(more).slice(0, 3)
       }
+      if (theirs.length >= 3) { out.infantry.theirs = theirs[0]; out.cavalry.theirs = theirs[1]; out.archers.theirs = theirs[2] }
+      return out
     }
     return {}
   }
@@ -168,11 +190,16 @@
     }
     const counts = inferTroopCounts(lines)
     const bareRowCounts = inferTroopCountsFromBareRow(lines)
+    // Positional first, label-matched second. The Troop Power Comparison row
+    // states all six counts in a fixed order (your three, then theirs), so
+    // reading it by position is exact; matching on a troop word only guesses
+    // which nearby number goes with it. Running the guess first let it win on
+    // troops it had wrong and lock out the row that had them right.
     TROOPS.forEach((t) => {
-      if (out.mine[t.key].count === undefined && counts[t.key]?.mine !== undefined) out.mine[t.key].count = counts[t.key].mine
-      if (out.opponent[t.key].count === undefined && counts[t.key]?.theirs !== undefined) out.opponent[t.key].count = counts[t.key].theirs
       if (out.mine[t.key].count === undefined && bareRowCounts[t.key]?.mine !== undefined) out.mine[t.key].count = bareRowCounts[t.key].mine
       if (out.opponent[t.key].count === undefined && bareRowCounts[t.key]?.theirs !== undefined) out.opponent[t.key].count = bareRowCounts[t.key].theirs
+      if (out.mine[t.key].count === undefined && counts[t.key]?.mine !== undefined) out.mine[t.key].count = counts[t.key].mine
+      if (out.opponent[t.key].count === undefined && counts[t.key]?.theirs !== undefined) out.opponent[t.key].count = counts[t.key].theirs
     })
     return out
   }
@@ -345,7 +372,7 @@
           <button data-action="close">×</button>
         </header>
         <div class="au-body">
-          <div class="au-warn"><b>Before you screenshot:</b> set the report to show actual troop numbers, not percentages — tap the switch icon on Troop Power Comparison if it's showing bars/percentages.</div>
+          <div class="au-warn"><b>Check this first:</b> if your Troop Power Comparison panel is showing percentage bars, tap the switch icon in its top-right corner so it shows troop counts instead. Screenshots taken with the bars showing can't give us your troop numbers.</div>
           <input id="au-file" type="file" accept="image/png,image/jpeg,image/webp" multiple hidden>
           <div class="au-drop" data-action="choose" role="button" tabindex="0">
             <strong>Drag & drop screenshots here</strong>
@@ -488,7 +515,7 @@
           const toast = document.createElement('div')
           const warn = noTroopCounts
           toast.textContent = warn
-            ? 'Warning: Troops counts weren’t detected. Attack/Lethality/Defense/Health come from Stat Bonuses, but Troops only comes from Troop Power Comparison switched to numbers (not the % bars) — upload that section too, or fill in Troops by hand.'
+            ? 'No troop counts found. Attack, Lethality, Defense and Health come from Stat Bonuses, but troop counts only come from Troop Power Comparison with the switch set to numbers. Add that screenshot, or type the Troops values in yourself.'
             : `Applied ${appliedMine} values to ${mineHeading}, ${appliedOpp} to ${opponentHeading}.`
           Object.assign(toast.style, { position: 'fixed', left: '50%', bottom: '26px', zIndex: 10070, transform: 'translateX(-50%)', maxWidth: '90vw', padding: '11px 15px', borderRadius: '10px', font: '700 11px Montserrat, sans-serif', color: warn ? '#fde68a' : '#f6e5ad', background: warn ? 'rgba(120,53,15,.95)' : 'rgba(10,24,43,.98)', border: `1px solid ${warn ? 'rgba(251,191,36,.4)' : 'rgba(212,175,55,.34)'}` })
           document.body.appendChild(toast)
@@ -504,7 +531,7 @@
     if (document.getElementById('k846-au-btn-style')) return
     const s = document.createElement('style')
     s.id = 'k846-au-btn-style'
-    s.textContent = `.k846-au-upload-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;width:100%;max-width:360px;margin-top:.8rem;border:1px solid rgba(226,199,125,.35);border-radius:.75rem;padding:.7rem 1rem;background:linear-gradient(180deg,rgba(226,181,48,.2),rgba(173,134,32,.14));color:#f2dfaa;font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:.06em;cursor:pointer}.k846-au-upload-caption{max-width:360px;margin-top:.45rem;font-size:10px;line-height:1.5;color:rgba(241,231,206,.4)}.k846-au-upload-caption b{color:rgba(253,230,138,.75)}.k846-au-upload-img{display:block;width:100%;max-width:360px;margin-top:.6rem;border:1px solid rgba(212,175,55,.22);border-radius:.75rem;overflow:hidden}`
+    s.textContent = `.k846-au-upload-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;width:100%;max-width:360px;margin-top:.8rem;border:1px solid rgba(226,199,125,.35);border-radius:.75rem;padding:.7rem 1rem;background:linear-gradient(180deg,rgba(226,181,48,.2),rgba(173,134,32,.14));color:#f2dfaa;font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:.06em;cursor:pointer}.k846-au-upload-caption{max-width:360px;margin-top:.45rem;font-size:10px;line-height:1.5;color:rgba(241,231,206,.4)}.k846-au-upload-caption b{color:rgba(253,230,138,.75)}.k846-au-upload-lead{max-width:360px;margin-top:.9rem;font-size:11px;line-height:1.6;color:rgba(241,231,206,.6)}.k846-au-upload-lead b{color:rgba(253,230,138,.85)}.k846-au-upload-img{display:block;width:100%;max-width:360px;margin-top:.5rem;border:1px solid rgba(212,175,55,.22);border-radius:.75rem;overflow:hidden}`
     document.head.appendChild(s)
   }
 
@@ -520,16 +547,24 @@
       btn.dataset.k846Au = tool.introHeading
       btn.textContent = 'Upload Battle Report'
       btn.addEventListener('click', (e) => { e.preventDefault(); open() })
-      const caption = document.createElement('div')
-      caption.className = 'k846-au-upload-caption'
-      caption.innerHTML = '<b>Upload both sections</b>: Stat Bonuses (for Attack/Lethality/Defense/Health) and Troop Power Comparison switched to numbers, not bars — tap the switch icon top-right (for Troops). PNG, JPG or WEBP, multiple screenshots allowed.'
+      const lead = document.createElement('div')
+      lead.className = 'k846-au-upload-lead'
+      lead.innerHTML = 'Your report needs to show <b>troop counts, not percentage bars</b>. To switch it over, open Troop Power Comparison and tap the icon circled here:'
       const img = document.createElement('img')
       img.className = 'k846-au-upload-img'
       img.src = '/assets/mystic-trial-troop-toggle.webp'
-      img.alt = 'Troop Power Comparison panel with the switch-to-numbers icon circled top-right'
+      img.alt = 'Troop Power Comparison panel with the switch-to-numbers icon circled in its top-right corner'
       img.loading = 'lazy'
+      const caption = document.createElement('div')
+      caption.className = 'k846-au-upload-caption'
+      caption.innerHTML = 'Send us two screens: <b>Stat Bonuses</b> gives us Attack, Lethality, Defense and Health, and <b>Troop Power Comparison</b> gives us the troop counts. PNG, JPG or WEBP — upload as many screenshots as you need.'
+      // Lead-in, then the picture it refers to, then the button, then the
+      // fine print -- the sentence pointing at the screenshot has to come
+      // before the screenshot for "circled here" to mean anything.
       const p = section.querySelector('p')
-      if (p) { p.insertAdjacentElement('afterend', caption); p.insertAdjacentElement('afterend', btn); caption.insertAdjacentElement('afterend', img) } else { section.appendChild(btn); section.appendChild(caption); section.appendChild(img) }
+      const order = [lead, img, btn, caption]
+      if (p) { let ref = p; for (const node of order) { ref.insertAdjacentElement('afterend', node); ref = node } }
+      else order.forEach((node) => section.appendChild(node))
     }
   }
 

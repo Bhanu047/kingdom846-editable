@@ -20,8 +20,17 @@ const pct = (v) => `${Math.round(v * 100)}%`
 // once a player enters their name — a report with a name on it can be
 // attributed to whoever ran it, unlike the generic version, which is the
 // whole reason to enter one at all.
+// Colour follows the verdict, not the sign of the margin: a too-close-to-call
+// result rendered in loss-red still reads as "you lose" no matter what the
+// words say, which is the impression this whole panel exists to get right.
+export function outcomeTone(outcome) {
+  if (outcome === 'attacker') return 'border-emerald-300/25 bg-emerald-300/[.05] text-emerald-200'
+  if (outcome === 'defender') return 'border-red-400/25 bg-red-400/[.05] text-red-300'
+  return 'border-gold/25 bg-gold/[.05] text-gold-bright'
+}
+
 export function outcomeLabel(outcome, playerName, opts = {}) {
-  const { win = 'You Win', lose = 'Still Loses', draw = 'Even Fight' } = opts
+  const { win = 'You Win', lose = 'Still Loses', draw = 'Too Close To Call' } = opts
   const name = (playerName || '').trim()
   if (outcome === 'attacker') return name ? `${name} Win` : win
   if (outcome === 'defender') return name ? `${name} Lose` : lose
@@ -391,7 +400,7 @@ export default function MysticSuite() {
           <h3 className="mt-1 font-display text-2xl font-bold text-parchment">Best Composition Found</h3>
           {result.best ? (
             <div className="mt-4 space-y-4">
-              <div className={`stagger-in rounded-2xl border p-5 text-center ${result.best.margin >= 0 ? 'border-emerald-300/25 bg-emerald-300/[.05] text-emerald-200' : 'border-red-400/25 bg-red-400/[.05] text-red-300'}`}>
+              <div className={`stagger-in rounded-2xl border p-5 text-center ${outcomeTone(result.best.result.outcome)}`}>
                 <div className="font-display text-2xl font-bold" data-k846-outcome-label="true">{outcomeLabel(result.best.result.outcome, playerName)}</div>
                 <div className="mt-1 text-xs text-parchment/50">Best split: {pct(result.best.composition.infantry)} Infantry / {pct(result.best.composition.cavalry)} Cavalry / {pct(result.best.composition.archers)} Archers · margin {result.best.margin >= 0 ? '+' : ''}{fmt(result.best.margin)} troops</div>
               </div>

@@ -8,6 +8,18 @@ import CountUp from '../components/CountUp'
 
 const TROOPS = [{ key: 'infantry', label: 'Infantry', short: 'INF', icon: 'shield' }, { key: 'cavalry', label: 'Cavalry', short: 'CAV', icon: 'zap' }, { key: 'archers', label: 'Archers', short: 'ARC', icon: 'crosshair' }]
 const TRIALS = ['Coliseum', 'Forest of Life', 'Crystal Cave', 'Knowledge Nexus', 'Molten Fort', 'Radiant Spire']
+// Community-tested opening ratios per room, as INF/CAV/ARC. These come from
+// players actually running the trials, not from this model, and they are worth
+// showing precisely because the search below currently disagrees with them --
+// it keeps returning 0% cavalry, which no real-world source recommends.
+const TRIAL_OPENERS = {
+  'Coliseum': '50/10/40',
+  'Forest of Life': '50/15/35',
+  'Crystal Cave': '60/20/20',
+  'Knowledge Nexus': '50/20/30',
+  'Molten Fort': '60/15/25',
+  'Radiant Spire': '50/15/35',
+}
 const HERO_TRIALS = ['Coliseum', 'Radiant Spire']
 const STATS = [{ key: 'count', label: 'Troops', suffix: '', step: 100 }, { key: 'attack', label: 'Attack', suffix: '%', step: .1 }, { key: 'lethality', label: 'Lethality', suffix: '%', step: .1 }, { key: 'defense', label: 'Defense', suffix: '%', step: .1 }, { key: 'health', label: 'Health', suffix: '%', step: .1 }]
 const EMPTY_LINE = { count: '', attack: '', lethality: '', defense: '', health: '' }
@@ -375,7 +387,7 @@ export default function MysticSuite() {
         </div>
         <span className="mt-2 block text-[10px] leading-relaxed text-parchment/35">Bounds narrow the search away from splits that rarely win — Infantry and Cavalry each get a Min/Max range; Archers fill whatever's left. Right now the search only tests Infantry between <b className="text-parchment/55">{minInfantry || 0}%–{maxInfantry || 100}%</b> and Cavalry between <b className="text-parchment/55">{minCavalry || 0}%–{maxCavalry || 100}%</b> — widen these if you don't see the split you expect.</span>
         <div className="mt-4 rounded-xl border border-amber-300/15 bg-amber-300/[.035] p-3 text-[11px] leading-relaxed text-amber-100/60">
-          This model has no randomness — the same composition always produces the same result, so there's no "number of battles" setting to average over, unlike a Monte Carlo tool.
+          <b className="text-amber-200">Known limitation — trust the opener over the search for now.</b> Players who run <b className="text-amber-200">{trial}</b> report <b className="text-amber-200">{TRIAL_OPENERS[trial]}</b> (INF/CAV/ARC) as a solid opening split. This search currently tends to return far more Archers and no Cavalry than that, so treat its split as a starting point to test against the opener rather than a better answer. It also has no randomness — the same composition always gives the same result, so there's no "number of battles" to average over and no win-percentage, unlike a Monte Carlo tool.
           {hasHeroes && <> <b className="text-amber-200">{trial}</b> involves enemy heroes this model doesn't account for — try lowering the opponent's troop counts (keeping their ratio the same) for a rough estimate, since hero-boosted defenders are effectively fighting above their raw troop count.</>}
         </div>
         <div className="mt-4 flex justify-center gap-3">

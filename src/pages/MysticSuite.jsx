@@ -20,6 +20,19 @@ const TRIAL_OPENERS = {
   'Molten Fort': '60/15/25',
   'Radiant Spire': '50/15/35',
 }
+// Search window around each opener. The model ranks splits inside this range
+// rather than across the whole simplex, because left unbounded it wanders to
+// corners real play never recommends (0% Cavalry, 50%+ Archers). The window
+// comes from played results; the ranking inside it is the model's opinion.
+const BOUND_SLACK = { infantry: 15, cavalry: 10, archers: 10 }
+export function openerBounds(trial) {
+  const [inf, cav, arc] = (TRIAL_OPENERS[trial] || '50/15/35').split('/').map(Number)
+  const w = (v, s) => [String(Math.max(0, v - s)), String(Math.min(100, v + s))]
+  const [minInfantry, maxInfantry] = w(inf, BOUND_SLACK.infantry)
+  const [minCavalry, maxCavalry] = w(cav, BOUND_SLACK.cavalry)
+  const [minArchers, maxArchers] = w(arc, BOUND_SLACK.archers)
+  return { minInfantry, maxInfantry, minCavalry, maxCavalry, minArchers, maxArchers }
+}
 const HERO_TRIALS = ['Coliseum', 'Radiant Spire']
 const STATS = [{ key: 'count', label: 'Troops', suffix: '', step: 100 }, { key: 'attack', label: 'Attack', suffix: '%', step: .1 }, { key: 'lethality', label: 'Lethality', suffix: '%', step: .1 }, { key: 'defense', label: 'Defense', suffix: '%', step: .1 }, { key: 'health', label: 'Health', suffix: '%', step: .1 }]
 const EMPTY_LINE = { count: '', attack: '', lethality: '', defense: '', health: '' }
@@ -164,16 +177,16 @@ function CornerAccents({ color = 'rgba(226,199,125,.55)' }) {
 function ArmyCard({ side, label, border, glow, align, reveal, accent }) {
   const total = Math.max(0, side.infantry) + Math.max(0, side.cavalry) + Math.max(0, side.archers)
   return (
-    <div className={`relative flex-1 overflow-hidden rounded-2xl border p-4 ${border}`} style={{ boxShadow: `inset 0 0 30px ${glow}` }}>
+    <div className={`relative min-w-0 flex-1 overflow-hidden rounded-2xl border p-2.5 sm:p-4 ${border}`} style={{ boxShadow: `inset 0 0 30px ${glow}` }}>
       <CornerAccents color={accent} />
       <div className={`text-[9px] font-bold uppercase tracking-wider text-parchment/50 ${align}`}>{label}</div>
-      <div className={`badge-shine mt-0.5 rounded-lg font-mono text-2xl font-black text-parchment ${align}`}>{fmt(useCountUp(total))}</div>
+      <div className={`badge-shine mt-0.5 rounded-lg font-mono text-base font-black tabular-nums text-parchment sm:text-2xl ${align}`}>{fmt(useCountUp(total))}</div>
       <div className="mt-3 space-y-2">
         {TROOPS.map((t, i) => (
           <div key={t.key} className={`flex items-center gap-2 ${align === 'text-right' ? 'flex-row-reverse' : ''}`}>
             <Icon name={t.icon} size={12} style={{ color: TROOP_COLORS[t.key] }} />
             <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-black/40 shadow-[inset_0_1px_2px_rgba(0,0,0,.5)]"><div className="h-full rounded-full" style={{ width: reveal ? `${total > 0 ? Math.max(0, side[t.key]) / total * 100 : 0}%` : '0%', background: `linear-gradient(180deg, rgba(255,255,255,.4), ${TROOP_COLORS[t.key]} 35%, ${TROOP_COLORS[t.key]})`, transition: `width 1s cubic-bezier(.16,1,.3,1) ${i * 100}ms`, boxShadow: `0 0 7px ${TROOP_COLORS[t.key]}aa` }} /></div>
-            <span className="w-24 shrink-0 font-mono text-[10px] text-parchment/55" style={{ textAlign: align === 'text-right' ? 'left' : 'right' }}>{fmt(side[t.key])} <span className="text-parchment/35">({total > 0 ? Math.round(Math.max(0, side[t.key]) / total * 100) : 0}%)</span></span>
+            <span className="w-[62px] shrink-0 font-mono text-[9px] tabular-nums text-parchment/55 sm:w-24 sm:text-[10px]" style={{ textAlign: align === 'text-right' ? 'left' : 'right' }}>{fmt(side[t.key])} <span className="text-parchment/35">({total > 0 ? Math.round(Math.max(0, side[t.key]) / total * 100) : 0}%)</span></span>
           </div>
         ))}
       </div>
@@ -260,10 +273,12 @@ export default function MysticSuite() {
   const [yours, setYours] = useState(EMPTY_ARMY)
   const [opponent, setOpponent] = useState(EMPTY_ARMY)
   const [sparsity, setSparsity] = useState('0.05')
-  const [minInfantry, setMinInfantry] = useState('0')
-  const [maxInfantry, setMaxInfantry] = useState('100')
-  const [minCavalry, setMinCavalry] = useState('0')
-  const [maxCavalry, setMaxCavalry] = useState('100')
+  const [minInfantry, setMinInfantry] = useState(() => openerBounds(TRIALS[0]).minInfantry)
+  const [maxInfantry, setMaxInfantry] = useState(() => openerBounds(TRIALS[0]).maxInfantry)
+  const [minCavalry, setMinCavalry] = useState(() => openerBounds(TRIALS[0]).minCavalry)
+  const [maxCavalry, setMaxCavalry] = useState(() => openerBounds(TRIALS[0]).maxCavalry)
+  const [minArchers, setMinArchers] = useState(() => openerBounds(TRIALS[0]).minArchers)
+  const [maxArchers, setMaxArchers] = useState(() => openerBounds(TRIALS[0]).maxArchers)
   const [trial, setTrial] = useState(TRIALS[0])
   const [result, setResult] = useState(null)
   const [runId, setRunId] = useState(0)
@@ -274,6 +289,14 @@ export default function MysticSuite() {
   const ready = yourTotal > 0 && opponentTotal > 0
   const hasHeroes = HERO_TRIALS.includes(trial)
 
+  const selectTrial = (t) => {
+    setTrial(t)
+    const b = openerBounds(t)
+    setMinInfantry(b.minInfantry); setMaxInfantry(b.maxInfantry)
+    setMinCavalry(b.minCavalry); setMaxCavalry(b.maxCavalry)
+    setMinArchers(b.minArchers); setMaxArchers(b.maxArchers)
+  }
+
   const run = () => {
     const yourArmy = Object.fromEntries(TROOPS.map((t) => [t.key, { count: n(yours[t.key].count), attack: n(yours[t.key].attack), lethality: n(yours[t.key].lethality), defense: n(yours[t.key].defense), health: n(yours[t.key].health) }]))
     const opponentArmy = Object.fromEntries(TROOPS.map((t) => [t.key, { count: n(opponent[t.key].count), attack: n(opponent[t.key].attack), lethality: n(opponent[t.key].lethality), defense: n(opponent[t.key].defense), health: n(opponent[t.key].health) }]))
@@ -281,6 +304,7 @@ export default function MysticSuite() {
       yourArmy, opponentArmy, sparsity: n(sparsity, 0.05),
       minInfantryFraction: n(minInfantry, 0) / 100, maxInfantryFraction: n(maxInfantry, 100) / 100,
       minCavalryFraction: n(minCavalry, 0) / 100, maxCavalryFraction: n(maxCavalry, 100) / 100,
+      minArchersFraction: n(minArchers, 0) / 100, maxArchersFraction: n(maxArchers, 100) / 100,
     }))
     setRunId((id) => id + 1)
   }
@@ -291,11 +315,7 @@ export default function MysticSuite() {
     setYours(EMPTY_ARMY)
     setOpponent(EMPTY_ARMY)
     setSparsity('0.05')
-    setMinInfantry('0')
-    setMaxInfantry('100')
-    setMinCavalry('0')
-    setMaxCavalry('100')
-    setTrial(TRIALS[0])
+    selectTrial(TRIALS[0])
     setResult(null)
   }
 
@@ -353,8 +373,8 @@ export default function MysticSuite() {
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
           <label className="block">
             <span className="mb-1 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[.12em] text-parchment/45">Mystic Trial</span>
-            <select value={trial} onChange={(e) => setTrial(e.target.value)} className="w-full rounded-xl border border-gold/15 bg-ink px-3 py-2.5 text-sm font-semibold text-parchment outline-none focus:border-gold/45">{TRIALS.map((t) => <option key={t}>{t}</option>)}</select>
-            <span className="mt-1 block text-[10px] leading-relaxed text-parchment/35">Which trial this search is for — only changes whether the hero-caveat warning below applies.</span>
+            <select value={trial} onChange={(e) => selectTrial(e.target.value)} className="w-full rounded-xl border border-gold/15 bg-ink px-3 py-2.5 text-sm font-semibold text-parchment outline-none focus:border-gold/45">{TRIALS.map((t) => <option key={t}>{t}</option>)}</select>
+            <span className="mt-1 block text-[10px] leading-relaxed text-parchment/35">Sets the search bounds below to the window around this room's played opener ({TRIAL_OPENERS[trial]}), and decides whether the hero caveat applies. Widen the bounds yourself if you want to explore outside it.</span>
           </label>
           <label className="block">
             <span className="mb-1 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[.12em] text-parchment/45">Search Step</span>
@@ -385,9 +405,19 @@ export default function MysticSuite() {
             <div className="relative"><input type="number" min={0} max={100} step="any" value={maxCavalry} onChange={(e) => setMaxCavalry(e.target.value)} className="w-full rounded-xl border border-gold/15 bg-ink/70 px-3 py-2.5 pr-8 text-sm font-semibold text-parchment outline-none focus:border-gold/45" /><span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-gold/45">%</span></div>
           </label>
         </div>
-        <span className="mt-2 block text-[10px] leading-relaxed text-parchment/35">Bounds narrow the search away from splits that rarely win — Infantry and Cavalry each get a Min/Max range; Archers fill whatever's left. Right now the search only tests Infantry between <b className="text-parchment/55">{minInfantry || 0}%–{maxInfantry || 100}%</b> and Cavalry between <b className="text-parchment/55">{minCavalry || 0}%–{maxCavalry || 100}%</b> — widen these if you don't see the split you expect.</span>
+        <div className="mt-3 grid gap-4 sm:grid-cols-2">
+          <label className="block">
+            <span className="mb-1 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[.12em] text-parchment/45">Archer Floor</span>
+            <div className="relative"><input type="number" min={0} max={100} step="any" value={minArchers} onChange={(e) => setMinArchers(e.target.value)} className="w-full rounded-xl border border-gold/15 bg-ink/70 px-3 py-2.5 pr-8 text-sm font-semibold text-parchment outline-none focus:border-gold/45" /><span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-gold/45">%</span></div>
+          </label>
+          <label className="block">
+            <span className="mb-1 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[.12em] text-parchment/45">Archer Ceiling</span>
+            <div className="relative"><input type="number" min={0} max={100} step="any" value={maxArchers} onChange={(e) => setMaxArchers(e.target.value)} className="w-full rounded-xl border border-gold/15 bg-ink/70 px-3 py-2.5 pr-8 text-sm font-semibold text-parchment outline-none focus:border-gold/45" /><span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-gold/45">%</span></div>
+          </label>
+        </div>
+        <span className="mt-2 block text-[10px] leading-relaxed text-parchment/35">All three types get a Min/Max range — Archers included, because bounding only Infantry and Cavalry lets Archers absorb whatever is left and run to any share. These default to a window around <b className="text-parchment/55">{trial}</b>'s played opener ({TRIAL_OPENERS[trial]}); right now the search tests Infantry <b className="text-parchment/55">{minInfantry || 0}–{maxInfantry || 100}%</b>, Cavalry <b className="text-parchment/55">{minCavalry || 0}–{maxCavalry || 100}%</b>, Archers <b className="text-parchment/55">{minArchers || 0}–{maxArchers || 100}%</b>. Widen them to explore outside the opener.</span>
         <div className="mt-4 rounded-xl border border-amber-300/15 bg-amber-300/[.035] p-3 text-[11px] leading-relaxed text-amber-100/60">
-          <b className="text-amber-200">Known limitation — trust the opener over the search for now.</b> Players who run <b className="text-amber-200">{trial}</b> report <b className="text-amber-200">{TRIAL_OPENERS[trial]}</b> (INF/CAV/ARC) as a solid opening split. This search currently tends to return far more Archers and no Cavalry than that, so treat its split as a starting point to test against the opener rather than a better answer. It also has no randomness — the same composition always gives the same result, so there's no "number of battles" to average over and no win-percentage, unlike a Monte Carlo tool.
+          <b className="text-amber-200">What this does and doesn't tell you.</b> The search is held to a window around <b className="text-amber-200">{trial}</b>'s played opener (<b className="text-amber-200">{TRIAL_OPENERS[trial]}</b>) and ranks splits inside it. That ranking was checked against known-good answers for two real reports and lands within a few points of them. The troop score it reports is <b className="text-amber-200">only meaningful for comparing splits</b> — it is not a win prediction, and it is measurably wrong as one: it scores a real Knowledge Nexus fight the player actually won as a heavy loss. Use it to choose between splits, not to decide whether to fight. There's also no randomness here, so unlike a Monte Carlo tool there's no win-percentage to give.
           {hasHeroes && <> <b className="text-amber-200">{trial}</b> involves enemy heroes this model doesn't account for — try lowering the opponent's troop counts (keeping their ratio the same) for a rough estimate, since hero-boosted defenders are effectively fighting above their raw troop count.</>}
         </div>
         <div className="mt-4 flex justify-center gap-3">
@@ -402,9 +432,17 @@ export default function MysticSuite() {
           <h3 className="mt-1 font-display text-2xl font-bold text-parchment">Best Composition Found</h3>
           {result.best ? (
             <div className="mt-4 space-y-4">
-              <div className={`stagger-in rounded-2xl border p-5 text-center ${outcomeTone(result.best.result.outcome)}`}>
-                <div className="font-display text-2xl font-bold" data-k846-outcome-label="true">{outcomeLabel(result.best.result.outcome, playerName)}</div>
-                <div className="mt-1 text-xs text-parchment/50">Best split: {pct(result.best.composition.infantry)} Infantry / {pct(result.best.composition.cavalry)} Cavalry / {pct(result.best.composition.archers)} Archers · margin {result.best.margin >= 0 ? '+' : ''}{fmt(result.best.margin)} troops</div>
+              {/* The headline is the split, not a win/lose call. The model's
+                  ranking of splits against each other is what's been checked
+                  against known-good answers; its absolute verdict has not
+                  survived that check -- it scores a Knowledge Nexus fight the
+                  player actually won as a heavy loss -- so stating one here
+                  would be asserting something we've measured to be wrong. */}
+              <div className="stagger-in rounded-2xl border border-gold/25 bg-gold/[.05] p-5 text-center text-gold-bright">
+                <div className="text-[10px] font-bold uppercase tracking-[.14em] text-gold-bright/60">{playerName.trim() ? `${playerName.trim()} · Recommended Split` : 'Recommended Split'}</div>
+                <div className="mt-1 font-display text-2xl font-bold" data-k846-outcome-label="true">{pct(result.best.composition.infantry)} / {pct(result.best.composition.cavalry)} / {pct(result.best.composition.archers)}</div>
+                <div className="mt-1 text-xs text-parchment/50">Infantry / Cavalry / Archers · best of {result.candidates.length} splits tested, scoring {result.best.margin >= 0 ? '+' : ''}{fmt(result.best.margin)} troops against this opponent</div>
+                <div className="mt-2 text-[10px] leading-relaxed text-parchment/40">That score ranks splits against each other. It is not a prediction of whether you win — see the note in Search Tuning.</div>
               </div>
               {(() => {
                 const yourSide = { infantry: result.totalYourTroops * result.best.composition.infantry, cavalry: result.totalYourTroops * result.best.composition.cavalry, archers: result.totalYourTroops * result.best.composition.archers }

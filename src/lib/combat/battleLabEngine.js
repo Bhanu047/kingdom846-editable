@@ -68,6 +68,10 @@ function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value))
 }
 
+// Infantry > Cavalry > Archers > Infantry. See calculateCasualties for why
+// this has to be well above 1.0 rather than a token bonus.
+const COUNTER_MULT = 2.7
+
 function counters(attacker, defender) {
   return (
     (attacker === 'infantry' && defender === 'cavalry') ||
@@ -249,7 +253,22 @@ function calculateCasualties(attackerType, attackerLine, targetType, targetLine,
   // curve read a 23.5% troop lead as 11% and called an even fight a
   // -80,092 rout with zero winnable splits out of 231; the player won it.
   const armyFactor = attackerLine.count
-  const typeBonus = counters(attackerType, targetType) ? 1.1 : 1
+  // The counter triangle has to be strong enough to actually exist. Damage
+  // here is attacker.attack / target.hp, and the T10 base values are balanced
+  // so attack x hp is identical (668,352) for all three types -- which means
+  // Archers, holding the highest attack, out-damage Cavalry against every
+  // target. At the old 1.1x bonus that included Archers vs Archers (5.33)
+  // beating Cavalry vs Archers (4.40), Cavalry's own counter matchup: one
+  // corner of the triangle was strictly dominated, so no search could ever
+  // return Cavalry and every optimum came back 0% Cavalry. Breaking even
+  // needs at least 1.33x. Fitting against the two reports we have known-good
+  // answers for lands near 2.5x, and the counter cuts both ways -- being
+  // countered costs you the same factor it gains the counterer. 2.7 is where
+  // the error against those two known-good answers bottoms out once the
+  // search is held to the played-opener window; it is fitted to two points,
+  // so treat it as approximate rather than the game's real number.
+  const typeBonus = counters(attackerType, targetType) ? COUNTER_MULT
+    : counters(targetType, attackerType) ? 1 / COUNTER_MULT : 1
   const fatigue = 1 + Math.max(0, round - 1) * 0.0001
   const raw = armyFactor * (attackPower / Math.max(0.000001, defensePower)) * typeBonus * fatigue / 100
   return clamp(Math.ceil(raw), 0, targetLine.count)
@@ -338,7 +357,7 @@ export function simulateT10Battle({ attacker, defender, maxRounds = 50 }) {
 // and the bounds skip compositions outside a plausible range up front
 // (mirrors frakinator's stated reason: those splits are rarely competitive,
 // so skipping them saves search time).
-export function optimizeMysticComposition({ yourArmy, opponentArmy, sparsity = 0.05, minInfantryFraction = 0, maxInfantryFraction = 1, minCavalryFraction = 0, maxCavalryFraction = 1, maxRounds = 50 } = {}) {
+export function optimizeMysticComposition({ yourArmy, opponentArmy, sparsity = 0.05, minInfantryFraction = 0, maxInfantryFraction = 1, minCavalryFraction = 0, maxCavalryFraction = 1, minArchersFraction = 0, maxArchersFraction = 1, maxRounds = 50 } = {}) {
   const yours = cloneArmy(yourArmy)
   const opponent = cloneArmy(opponentArmy)
   const totalYourTroops = totalTroops(yours)
@@ -347,6 +366,12 @@ export function optimizeMysticComposition({ yourArmy, opponentArmy, sparsity = 0
   const maxInf = clamp(n(maxInfantryFraction, 1), minInf, 1)
   const minCav = clamp(n(minCavalryFraction, 0), 0, 1)
   const maxCav = clamp(n(maxCavalryFraction, 1), minCav, 1)
+  // Archers take whatever Infantry and Cavalry leave, so bounding only those
+  // two still lets Archers run to any share -- both sitting at the bottom of
+  // their windows hands Archers the rest. Bounding the remainder too is what
+  // actually keeps the search inside the intended window.
+  const minArc = clamp(n(minArchersFraction, 0), 0, 1)
+  const maxArc = clamp(n(maxArchersFraction, 1), minArc, 1)
   if (totalYourTroops <= 0) return { candidates: [], best: null, totalYourTroops: 0 }
 
   const candidates = []
@@ -354,6 +379,7 @@ export function optimizeMysticComposition({ yourArmy, opponentArmy, sparsity = 0
     const infClamped = Math.min(maxInf, inf)
     for (let cav = minCav; cav + infClamped <= 1 + 1e-9 && cav <= maxCav + 1e-9; cav += step) {
       const arc = Math.max(0, 1 - infClamped - cav)
+      if (arc < minArc - 1e-9 || arc > maxArc + 1e-9) continue
       const composition = { infantry: infClamped, cavalry: cav, archers: arc }
       const army = {}
       TYPES.forEach((type) => {

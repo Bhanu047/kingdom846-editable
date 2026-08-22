@@ -8,8 +8,20 @@
       #k846-hunt-impact-import .hi-dialog{
         display:flex!important;
         flex-direction:column!important;
+        /* vh measures the LAYOUT viewport. On a phone that is taller than what
+           you can actually see -- the URL bar and toolbar are drawn over the
+           bottom of it -- so forcing the dialog to 92vh pushed the footer, and
+           the Apply button with it, under the browser chrome. Rotating to
+           landscape shrank it enough to come back, which is exactly what this
+           looked like from the outside. Each line below overrides the one above
+           it in browsers that understand it: dvh tracks the visible box, and
+           --k846-modal-max is measured from visualViewport by the modal itself. */
         height:min(92vh,920px)!important;
+        height:min(92dvh,920px)!important;
+        height:min(var(--k846-modal-max,92dvh),920px)!important;
         max-height:92vh!important;
+        max-height:92dvh!important;
+        max-height:var(--k846-modal-max,92dvh)!important;
         overflow:hidden!important;
       }
       #k846-hunt-impact-import header{
@@ -44,7 +56,7 @@
         #k846-hunt-impact-import footer{padding:14px 22px!important}
       }
       @media (max-height: 760px){
-        #k846-hunt-impact-import .hi-dialog{height:96vh!important;max-height:96vh!important}
+        #k846-hunt-impact-import .hi-dialog{height:96vh!important;height:96dvh!important;height:var(--k846-modal-max,96dvh)!important;max-height:96vh!important;max-height:96dvh!important;max-height:var(--k846-modal-max,96dvh)!important}
         #k846-hunt-impact-import header{padding:12px 16px!important}
         #k846-hunt-impact-import .k846-hi-mode-tabs button{padding:10px 8px!important}
         #k846-hunt-impact-import .body{padding-top:12px!important;padding-bottom:14px!important}

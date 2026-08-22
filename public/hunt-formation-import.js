@@ -74,31 +74,47 @@
   function styles() {
     if (document.getElementById('hf-style')) return
     const s = document.createElement('style'); s.id = 'hf-style'; s.textContent = `
-      #${MODAL_ID}{position:fixed;inset:0;z-index:10050;display:grid;place-items:center;padding:12px;font-family:Montserrat,system-ui}
+      #${MODAL_ID}{position:fixed;inset:0;z-index:10050;height:100vh;height:100dvh;height:var(--k846-vvh,100dvh);display:grid;place-items:center;place-items:safe center;overflow-y:auto;padding:12px;padding-bottom:calc(12px + env(safe-area-inset-bottom));font-family:Montserrat,system-ui}
       #${MODAL_ID} [hidden]{display:none!important}
       #${MODAL_ID} .hf-backdrop{position:absolute;inset:0;background:rgba(2,8,20,.86);backdrop-filter:blur(6px)}
-      #${MODAL_ID} .hf-dialog{position:relative;width:min(680px,100%);max-height:92vh;overflow:hidden;border:1px solid rgba(212,175,55,.28);border-radius:22px;background:#08172a;color:#f1e7ce;box-shadow:0 25px 90px rgba(0,0,0,.6)}
+      #${MODAL_ID} .hf-dialog{position:relative;display:flex;flex-direction:column;width:min(680px,100%);max-height:92vh;max-height:92dvh;max-height:var(--k846-modal-max,92dvh);overflow:hidden;border:1px solid rgba(212,175,55,.28);border-radius:22px;background:#08172a;color:#f1e7ce;box-shadow:0 25px 90px rgba(0,0,0,.6)}
       #${MODAL_ID} .hf-head{display:flex;justify-content:space-between;gap:12px;padding:20px;border-bottom:1px solid rgba(212,175,55,.14)}
       #${MODAL_ID} .hf-eye{font-size:9px;letter-spacing:.16em;color:#d4af37;font-weight:800} #${MODAL_ID} h2{margin:4px 0;font-family:Cinzel,serif;color:#f6e5ad} #${MODAL_ID} p{margin:0;font-size:11px;color:rgba(241,231,206,.5)}
       #${MODAL_ID} .hf-head button{border:0;background:transparent;color:#f1e7ce;font-size:28px}
-      #${MODAL_ID} .hf-body{padding:18px;max-height:66vh;overflow:auto}
+      #${MODAL_ID} .hf-body{padding:18px;flex:1 1 auto;min-height:0;overflow:auto}
       #${MODAL_ID} .hf-drop{display:grid;place-items:center;align-content:center;gap:8px;min-height:160px;border:1.5px dashed rgba(212,175,55,.46);border-radius:16px;background:rgba(212,175,55,.04);cursor:pointer;text-align:center;transition:.18s ease} #${MODAL_ID} .hf-drop span{font-size:10px;color:rgba(241,231,206,.4)}
       #${MODAL_ID} .hf-drop.hf-drag{border-color:#f0d17a;background:rgba(212,175,55,.12);box-shadow:inset 0 0 28px rgba(212,175,55,.08)}
       #${MODAL_ID} .hf-preview{display:flex;gap:12px;align-items:center;border:1px solid rgba(212,175,55,.14);border-radius:14px;padding:10px} #${MODAL_ID} .hf-preview img{width:86px;height:64px;object-fit:cover;border-radius:9px} #${MODAL_ID} .hf-preview div{display:flex;flex-direction:column;gap:4px;min-width:0} #${MODAL_ID} .hf-preview span{font-size:10px;color:rgba(241,231,206,.4)} #${MODAL_ID} .hf-replace{border:0;background:transparent;color:#d4af37;text-align:left;padding:0;font-size:10px;font-weight:700}
       #${MODAL_ID} .hf-read{width:100%;margin-top:10px;border:1px solid rgba(232,199,102,.4);border-radius:11px;padding:11px;background:linear-gradient(#d4af37,#ad8620);font-weight:900;color:#071224} #${MODAL_ID} .hf-read:disabled,#${MODAL_ID} .hf-apply:disabled{opacity:.4}
       #${MODAL_ID} .hf-status{margin-top:9px;font-size:10px;color:rgba(241,231,206,.5)} #${MODAL_ID} .hf-title{margin:16px 0 8px;font-family:Cinzel,serif;color:#ead393;font-weight:800}
       #${MODAL_ID} .hf-card{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;padding:12px;border:1px solid rgba(212,175,55,.12);border-radius:13px} #${MODAL_ID} .hf-card>b{grid-column:1/-1;font-family:Cinzel,serif} #${MODAL_ID} label{font-size:9px;text-transform:uppercase;color:rgba(241,231,206,.5)} #${MODAL_ID} input{box-sizing:border-box;width:100%;margin-top:4px;border:1px solid rgba(212,175,55,.18);border-radius:9px;background:#06111f;color:#f1e7ce;padding:9px}
-      #${MODAL_ID} footer{display:flex;justify-content:flex-end;gap:8px;padding:14px 18px;border-top:1px solid rgba(212,175,55,.12)} #${MODAL_ID} footer button{border-radius:10px;padding:10px 14px;font-weight:800} #${MODAL_ID} .hf-cancel{background:transparent;border:1px solid rgba(212,175,55,.18);color:#f1e7ce} #${MODAL_ID} .hf-apply{border:1px solid rgba(232,199,102,.4);background:linear-gradient(#d4af37,#ad8620);color:#071224}
-      @media(max-width:640px){#${MODAL_ID}{align-items:end;padding:6px}#${MODAL_ID} .hf-dialog{border-radius:20px 20px 8px 8px}#${MODAL_ID} .hf-body{max-height:68vh}}
+      #${MODAL_ID} footer{flex:0 0 auto;display:flex;justify-content:flex-end;gap:8px;padding:14px 18px;border-top:1px solid rgba(212,175,55,.12)} #${MODAL_ID} footer button{border-radius:10px;padding:10px 14px;font-weight:800} #${MODAL_ID} .hf-cancel{background:transparent;border:1px solid rgba(212,175,55,.18);color:#f1e7ce} #${MODAL_ID} .hf-apply{border:1px solid rgba(232,199,102,.4);background:linear-gradient(#d4af37,#ad8620);color:#071224}
+      @media(max-width:640px){#${MODAL_ID}{align-items:end;padding:6px}#${MODAL_ID} .hf-dialog{border-radius:20px 20px 8px 8px}#${MODAL_ID} .hf-body{max-height:none}}
     `; document.head.appendChild(s)
+  }
+
+  // The modal is capped in dvh, which is correct everywhere that supports it.
+  // Older mobile browsers fall back to vh, and vh measures the LAYOUT viewport --
+  // taller than what a phone actually shows, because the URL bar and toolbar sit
+  // over the bottom of it. That is what put the Apply button out of reach in
+  // portrait while a tilt to landscape brought it back. visualViewport reports
+  // the genuinely visible box, so measure it and drive the cap from that.
+  function fitToVisibleViewport(root) {
+    const vv = window.visualViewport
+    const apply = () => { const h = (vv && vv.height) || window.innerHeight; if (h > 0) root.style.setProperty('--k846-vvh', (h) + 'px');root.style.setProperty('--k846-modal-max', (h * 0.94) + 'px') }
+    apply()
+    if (!vv) return () => {}
+    vv.addEventListener('resize', apply); vv.addEventListener('scroll', apply)
+    return () => { vv.removeEventListener('resize', apply); vv.removeEventListener('scroll', apply) }
   }
 
   function open() {
     document.getElementById(MODAL_ID)?.remove(); styles()
     const root = document.createElement('div'); root.id = MODAL_ID; root.innerHTML = template(); document.body.appendChild(root); document.body.style.overflow = 'hidden'
+    const unfitViewport = fitToVisibleViewport(root)
     const file = root.querySelector('#hf-file'), drop = root.querySelector('.hf-drop'), preview = root.querySelector('.hf-preview'), read = root.querySelector('.hf-read'), apply = root.querySelector('.hf-apply'), values = root.querySelector('.hf-values'), status = root.querySelector('.hf-status')
     let selected = null, url = ''
-    const close = () => { if (url) URL.revokeObjectURL(url); root.remove(); document.body.style.overflow = '' }
+    const close = () => { unfitViewport(); if (url) URL.revokeObjectURL(url); root.remove(); document.body.style.overflow = '' }
     const choose = (f) => {
       if (!f) return
       if (!/^image\/(png|jpeg|webp)$/i.test(f.type || '')) { status.textContent = 'Choose a PNG, JPG or WEBP screenshot.'; return }

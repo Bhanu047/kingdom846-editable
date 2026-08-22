@@ -310,10 +310,10 @@
     const s = document.createElement('style')
     s.id = 'k846-au-style'
     s.textContent = `
-      #${MODAL_ID}{position:fixed;inset:0;z-index:10060;display:grid;place-items:center;padding:12px;font-family:Montserrat,system-ui}
+      #${MODAL_ID}{position:fixed;inset:0;z-index:10060;height:100vh;height:100dvh;height:var(--k846-vvh,100dvh);display:grid;place-items:center;place-items:safe center;overflow-y:auto;padding:12px;padding-bottom:calc(12px + env(safe-area-inset-bottom));font-family:Montserrat,system-ui}
       #${MODAL_ID} [hidden]{display:none!important}
       #${MODAL_ID} .au-backdrop{position:absolute;inset:0;background:rgba(2,8,20,.86);backdrop-filter:blur(6px)}
-      #${MODAL_ID} .au-dialog{position:relative;width:min(760px,100%);max-height:92vh;overflow:hidden;border:1px solid rgba(212,175,55,.28);border-radius:22px;background:#08172a;color:#f1e7ce;box-shadow:0 25px 90px rgba(0,0,0,.6);display:flex;flex-direction:column}
+      #${MODAL_ID} .au-dialog{position:relative;width:min(760px,100%);max-height:92vh;max-height:92dvh;max-height:var(--k846-modal-max,92dvh);overflow:hidden;border:1px solid rgba(212,175,55,.28);border-radius:22px;background:#08172a;color:#f1e7ce;box-shadow:0 25px 90px rgba(0,0,0,.6);display:flex;flex-direction:column}
       #${MODAL_ID} .au-head{display:flex;justify-content:space-between;gap:12px;padding:20px;border-bottom:1px solid rgba(212,175,55,.14)}
       #${MODAL_ID} .au-eye{font-size:9px;letter-spacing:.16em;color:#d4af37;font-weight:800}
       #${MODAL_ID} h2{margin:4px 0;font-family:Cinzel,serif;color:#f6e5ad}
@@ -403,6 +403,21 @@
     let mineHeading = tool.sides.mine
     let opponentHeading = tool.sides.opponent
 
+  // The modal is capped in dvh, which is correct everywhere that supports it.
+  // Older mobile browsers fall back to vh, and vh measures the LAYOUT viewport --
+  // taller than what a phone actually shows, because the URL bar and toolbar sit
+  // over the bottom of it. That is what put the Apply button out of reach in
+  // portrait while a tilt to landscape brought it back. visualViewport reports
+  // the genuinely visible box, so measure it and drive the cap from that.
+  function fitToVisibleViewport(root) {
+    const vv = window.visualViewport
+    const apply = () => { const h = (vv && vv.height) || window.innerHeight; if (h > 0) root.style.setProperty('--k846-vvh', (h) + 'px');root.style.setProperty('--k846-modal-max', (h * 0.94) + 'px') }
+    apply()
+    if (!vv) return () => {}
+    vv.addEventListener('resize', apply); vv.addEventListener('scroll', apply)
+    return () => { vv.removeEventListener('resize', apply); vv.removeEventListener('scroll', apply) }
+  }
+
     document.getElementById(MODAL_ID)?.remove()
     styles()
     const root = document.createElement('div')
@@ -410,13 +425,14 @@
     root.innerHTML = template(mineHeading, opponentHeading)
     document.body.appendChild(root)
     document.body.style.overflow = 'hidden'
+    const unfitViewport = fitToVisibleViewport(root)
 
     const fileInput = root.querySelector('#au-file'), drop = root.querySelector('.au-drop'), filesList = root.querySelector('.au-files'), addBtn = root.querySelector('.au-add'), readBtn = root.querySelector('.au-read'), applyBtn = root.querySelector('.au-apply'), values = root.querySelector('.au-values'), status = root.querySelector('.au-status')
     const entries = []
     let swapped = false
     let lastParsed = null
 
-    const close = () => { entries.forEach((e) => e.url && URL.revokeObjectURL(e.url)); root.remove(); document.body.style.overflow = '' }
+    const close = () => { unfitViewport(); entries.forEach((e) => e.url && URL.revokeObjectURL(e.url)); root.remove(); document.body.style.overflow = '' }
 
     function renderFiles() {
       filesList.innerHTML = entries.map((e, i) => `<div class="au-file"><img src="${e.url}"><span>${e.file.name}</span><b class="${e.status === 'ok' ? 'ok' : 'pending'}">${e.status === 'ok' ? 'read' : 'pending'}</b><button type="button" data-remove="${i}">×</button></div>`).join('')

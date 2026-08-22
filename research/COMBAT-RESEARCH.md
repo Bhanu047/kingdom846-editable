@@ -150,16 +150,35 @@ These are different systems and must not share a model.
 | Opponent | Fixed NPC per stage | Another player |
 | You control | Only the split of a fixed total | Composition, heroes, joiners, march size |
 
-Per-zone stat sources (already encoded in `MYSTIC_TRIALS` in the engine):
+### Per-room stat pools  [DOC] — verified, one error corrected
 
-| Zone | Stats that count | Played opener |
-|---|---|---|
-| Coliseum | heroes, hero gear, widgets | 50/10/40 |
-| Forest of Life | pets, pet skills | 50/15/35 |
-| Crystal Cave | governor charms | 60/20/20 |
-| Knowledge Nexus | academy, war academy | 50/20/30 |
-| Molten Fort | governor gear | 60/15/25 |
-| Radiant Spire | everything | 50/15/35 |
+Each room tests **one account system in isolation**. This is the defining rule
+of the event, not a footnote.
+
+| Room | Opens | Stats that count | Heroes? | Opener |
+|---|---|---|---|---|
+| Coliseum | — | Heroes, Hero Gear, **Hero Exclusive Gear** | **yes** | 50/10/40 |
+| Forest of Life | Wed & Thu | Pets, Pet Skills | **no** | 50/15/35 |
+| Crystal Cave | Wed & Thu | Governor Charms | **no** | 60/20/20 |
+| Knowledge Nexus | Fri & Sat | Academy Tech, War Academy Tech | **no** | 50/20/30 |
+| Molten Fort | Fri & Sat | Governor Gear | **no** | 60/15/25 |
+| Radiant Spire | — | Everything: heroes, hero gear and exclusive gear, pets, pet skills, charms, governor gear, both academies, Skins, Oasis Island, VIP — and **your own soldiers** | **yes** | 50/15/35 |
+
+- **Correction:** Coliseum was recorded as "heroes, hero gear, **widgets**".
+  The third source is **Hero Exclusive Gear**. Fixed.
+- **[DOC]** "Forest of Life, Crystal Cave, Knowledge Nexus, and Molten Fort do
+  not let you select heroes." Four of the six rooms have **no heroes on either
+  side** — so there is no hero skill modifier to apply, and no enemy hero to
+  compensate for. `heroesApply` is that game rule, not a modelling shortcut.
+- Radiant Spire is the only room fought with your own soldiers, so troop tier
+  and army size matter there and nowhere else.
+
+**This was known in the engine and invisible in the product.** `MYSTIC_ZONES`
+carried `sources` and `heroesApply` correctly, but the page never showed either:
+`hasHeroes` was computed and never rendered, the instructions told every player
+to compensate for enemy heroes in all six rooms, and the only place the stat
+pool was ever named was inside the "unwinnable" panel — so removing that panel
+removed the last mention of it. The room rule is now shown on selection.
 
 This is why the same player's two reports show ~180% bonuses in Knowledge
 Nexus and ~897% in Molten Fort. Both are correct; they are different stat

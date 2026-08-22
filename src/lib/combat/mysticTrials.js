@@ -28,13 +28,29 @@ import { TROOP_TYPES, runBattle, armyTotal, DEFAULT_TIER, NEAR_OPTIMAL_TOLERANCE
 // figures for that zone, so what the player transcribes is the right input
 // and needs no further filtering here -- `sources` is for explaining the
 // result, not for computing it.
+// Each room tests ONE account system in isolation, and that is the single most
+// important thing about the event: the same player reports ~180% bonuses in
+// Knowledge Nexus and ~897% in Molten Fort, and both are correct, because the
+// rooms count entirely different stat pools.
+//
+// `heroesApply` is not a modelling convenience -- it is the game rule. [DOC]
+// "Forest of Life, Crystal Cave, Knowledge Nexus, and Molten Fort do not let
+// you select heroes." Only Coliseum and Radiant Spire do. In the other four
+// there is no hero skill modifier to apply and no enemy hero to compensate for,
+// so the bonuses printed on the report are the whole story.
 export const MYSTIC_ZONES = {
-  'Coliseum': { sources: ['Heroes', 'Hero Gear', 'Widgets'], opener: [50, 10, 40], heroesApply: true, ownTroops: false },
-  'Forest of Life': { sources: ['Pets', 'Pet Skills'], opener: [50, 15, 35], heroesApply: false, ownTroops: false },
-  'Crystal Cave': { sources: ['Governor Charms'], opener: [60, 20, 20], heroesApply: false, ownTroops: false },
-  'Knowledge Nexus': { sources: ['Academy', 'War Academy'], opener: [50, 20, 30], heroesApply: false, ownTroops: false },
-  'Molten Fort': { sources: ['Governor Gear'], opener: [60, 15, 25], heroesApply: false, ownTroops: false },
-  'Radiant Spire': { sources: ['All progression'], opener: [50, 15, 35], heroesApply: true, ownTroops: true },
+  // [DOC] "in Coliseum, only Hero, Hero Gear, and Hero Exclusive Gear stats
+  // take effect". This previously listed "Widgets", which was wrong.
+  'Coliseum': { sources: ['Heroes', 'Hero Gear', 'Hero Exclusive Gear'], opener: [50, 10, 40], heroesApply: true, ownTroops: false, days: '' },
+  'Forest of Life': { sources: ['Pets', 'Pet Skills'], opener: [50, 15, 35], heroesApply: false, ownTroops: false, days: 'Wed & Thu' },
+  'Crystal Cave': { sources: ['Governor Charms'], opener: [60, 20, 20], heroesApply: false, ownTroops: false, days: 'Wed & Thu' },
+  'Knowledge Nexus': { sources: ['Academy Tech', 'War Academy Tech'], opener: [50, 20, 30], heroesApply: false, ownTroops: false, days: 'Fri & Sat' },
+  'Molten Fort': { sources: ['Governor Gear'], opener: [60, 15, 25], heroesApply: false, ownTroops: false, days: 'Fri & Sat' },
+  // [DOC] Everything counts here -- heroes, hero gear and exclusive gear, pets
+  // and pet skills, charms, governor gear, both academies, skins, Oasis Island
+  // and VIP -- and it is the one room fought with your OWN soldiers, so troop
+  // tier and army size matter too.
+  'Radiant Spire': { sources: ['Heroes', 'Hero Gear', 'Hero Exclusive Gear', 'Pets', 'Pet Skills', 'Governor Charms', 'Governor Gear', 'Academy Tech', 'War Academy Tech', 'Skins', 'Oasis Island', 'VIP'], opener: [50, 15, 35], heroesApply: true, ownTroops: true, days: '', everything: true },
 }
 
 export const MYSTIC_ZONE_NAMES = Object.keys(MYSTIC_ZONES)

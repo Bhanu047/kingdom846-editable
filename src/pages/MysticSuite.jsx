@@ -31,7 +31,10 @@ export function openerBounds(trial) {
   const [minArchers, maxArchers] = w(arc, BOUND_SLACK.archers)
   return { minInfantry, maxInfantry, minCavalry, maxCavalry, minArchers, maxArchers }
 }
-const HERO_TRIALS = ['Coliseum', 'Radiant Spire']
+// Was a second, hand-maintained copy of which rooms have heroes. The engine
+// already knows (MYSTIC_ZONES[zone].heroesApply), and a duplicate list is how
+// the two drift apart.
+const zoneRule = (trial) => MYSTIC_ZONES[trial] || MYSTIC_ZONES['Knowledge Nexus']
 const STATS = [{ key: 'count', label: 'Troops', suffix: '', step: 100 }, { key: 'attack', label: 'Attack', suffix: '%', step: .1 }, { key: 'lethality', label: 'Lethality', suffix: '%', step: .1 }, { key: 'defense', label: 'Defense', suffix: '%', step: .1 }, { key: 'health', label: 'Health', suffix: '%', step: .1 }]
 const EMPTY_LINE = { count: '', attack: '', lethality: '', defense: '', health: '' }
 const EMPTY_ARMY = { infantry: { ...EMPTY_LINE }, cavalry: { ...EMPTY_LINE }, archers: { ...EMPTY_LINE } }
@@ -298,7 +301,8 @@ export default function MysticSuite() {
   const yourTotal = TROOPS.reduce((s, t) => s + Math.max(0, n(yours[t.key].count)), 0)
   const opponentTotal = TROOPS.reduce((s, t) => s + Math.max(0, n(opponent[t.key].count)), 0)
   const ready = yourTotal > 0 && opponentTotal > 0
-  const hasHeroes = HERO_TRIALS.includes(trial)
+  const rule = zoneRule(trial)
+  const hasHeroes = rule.heroesApply
 
   const selectTrial = (t) => {
     setTrial(t)
@@ -376,7 +380,9 @@ export default function MysticSuite() {
         <ol className="mt-4 space-y-2.5 border-t border-gold/10 pt-4 text-xs leading-relaxed text-parchment/60">
           <li className="flex gap-2.5"><span className="grid h-5 w-5 shrink-0 place-items-center rounded-full border border-gold/25 bg-gold/[.06] text-[10px] font-bold text-gold-bright">1</span><span>Fill in both armies below exactly as a Mystic Trial battle report shows them — or upload the report screenshots and let the reader fill them in for you.</span></li>
           <li className="flex gap-2.5"><span className="grid h-5 w-5 shrink-0 place-items-center rounded-full border border-gold/25 bg-gold/[.06] text-[10px] font-bold text-gold-bright">2</span><span>Adjust Sparsity for how fine the search runs, and Min Infantry Fraction to skip splits that are never competitive.</span></li>
-          <li className="flex gap-2.5"><span className="grid h-5 w-5 shrink-0 place-items-center rounded-full border border-gold/25 bg-gold/[.06] text-[10px] font-bold text-gold-bright">3</span><span>For Coliseum or Radiant Spire — trials with enemy heroes this model doesn't account for — try lowering the opponent's troop counts proportionally for a rough estimate.</span></li>
+          <li className="flex gap-2.5"><span className="grid h-5 w-5 shrink-0 place-items-center rounded-full border border-gold/25 bg-gold/[.06] text-[10px] font-bold text-gold-bright">3</span><span>{hasHeroes
+            ? <><b className="text-parchment/70">{trial}</b> is one of the two rooms that lets you bring heroes, and the enemy has them too — this model doesn't account for hero skills, so lower the opponent's troop counts a little for a rough estimate.</>
+            : <><b className="text-parchment/70">{trial}</b> doesn't let either side pick heroes, so there's nothing to compensate for — the bonuses on your report are the whole fight.</>}</span></li>
         </ol>
         <div className="mt-4 border-t border-gold/10 pt-4">
           <PlayerNameField value={playerName} onChange={setPlayerName} />
@@ -405,7 +411,21 @@ export default function MysticSuite() {
           <label className="block">
             <span className="mb-1 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[.12em] text-parchment/45">Mystic Trial</span>
             <select value={trial} onChange={(e) => selectTrial(e.target.value)} className="w-full rounded-xl border border-gold/15 bg-ink px-3 py-2.5 text-sm font-semibold text-parchment outline-none focus:border-gold/45">{TRIALS.map((t) => <option key={t}>{t}</option>)}</select>
-            <span className="mt-1 block text-[10px] leading-relaxed text-parchment/35">Sets the search bounds below to the window around this room's played opener ({TRIAL_OPENERS[trial]}), and decides whether the hero caveat applies. Widen the bounds yourself if you want to explore outside it.</span>
+            {/* The room is not just a label on the search. Each one scores a
+                DIFFERENT stat pool, which is why the same account reports ~180%
+                bonuses in Knowledge Nexus and ~897% in Molten Fort — and why
+                four of the six have no heroes on either side at all. That rule
+                decides what you should be levelling, so it belongs here rather
+                than buried in a caveat. */}
+            <div className="mt-2 rounded-xl border border-gold/15 bg-gold/[.04] p-3">
+              <div className="text-[9px] font-bold uppercase tracking-[.12em] text-gold-bright/70">{trial} · what counts here{rule.days ? <span className="ml-1.5 font-normal normal-case tracking-normal text-parchment/35">opens {rule.days}</span> : null}</div>
+              <div className="mt-1 text-[11px] leading-relaxed text-parchment/65">{rule.everything
+                ? <>This room is the one that counts <b className="text-gold-bright/90">everything</b> — {rule.sources.join(', ')}. </>
+                : <>Only <b className="text-gold-bright/90">{rule.sources.join(', ')}</b> take{rule.sources.length === 1 ? 's' : ''} effect in this room — every other bonus on your account is switched off. </>}{hasHeroes
+                ? <>This is one of the two rooms where <b className="text-parchment/85">heroes do apply</b>{rule.ownTroops ? <>, and the only one fought with <b className="text-parchment/85">your own soldiers</b>, so troop tier and army size matter too</> : null}.</>
+                : <><b className="text-parchment/85">Heroes don't count here</b> — this room doesn't let either side pick them, so hero skills change nothing and there's no enemy hero to allow for.</>}</div>
+              <div className="mt-1.5 text-[10px] leading-relaxed text-parchment/35">Selecting the room also sets the search bounds to a window around its played opener ({TRIAL_OPENERS[trial]}). Widen them below to explore outside it.</div>
+            </div>
           </label>
           <label className="block">
             <span className="mb-1 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[.12em] text-parchment/45">Your Troop Tier</span>

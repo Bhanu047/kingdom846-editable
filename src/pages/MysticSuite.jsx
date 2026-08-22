@@ -550,12 +550,19 @@ export default function MysticSuite() {
                       real battles at this split came out 63.8 points apart, and
                       two of them were the SAME fight 43.7 points apart -- one
                       won, one lost. An error bar off by 100x is worse than none. */}
+                  {/* The raw signed score used to lead here. It is measurably
+                      misleading: across seven real Forest of Life battles the
+                      model returned a NEGATIVE score every time and the player
+                      won five of them. A minus sign reads as "you lose" and was
+                      wrong 5 times in 7, so only the COMPARATIVE figure — which
+                      survives the bias because it is a difference of two model
+                      scores — is shown. */}
                   <div className="mt-2 text-[10px] leading-relaxed text-parchment/40">
-                    Score {(result.best.survivalEdge * 100).toFixed(1)}%{result.baseline ? <>, {(result.best.survivalEdge - result.baseline.survivalEdge) >= 0 ? '+' : ''}{((result.best.survivalEdge - result.baseline.survivalEdge) * 100).toFixed(1)} vs the opener</> : null} · ranks splits, cannot predict one battle
+                    {result.baseline ? <><b className="text-parchment/70">{(result.best.survivalEdge - result.baseline.survivalEdge) >= 0 ? '+' : ''}{((result.best.survivalEdge - result.baseline.survivalEdge) * 100).toFixed(1)} points better than the played opener</b> · </> : null}ranks splits, does not predict the outcome
                   </div>
                   <details className="group mt-1">
                     <summary className="cursor-pointer list-none text-[10px] uppercase tracking-wider text-gold-bright/45 hover:text-gold-bright/80">Why <span className="inline-block transition-transform group-open:rotate-90">›</span></summary>
-                    <div className="mt-1.5 text-left text-[10px] leading-relaxed text-parchment/45">Best of {result.candidates.length} splits tested{result.band && result.band.count > 1 ? <>, {result.band.count} of them within a point of each other — the exact headline number isn't worth chasing</> : null}. <b className="text-amber-200/80">A single Mystic battle is close to a coin flip and no model can call it.</b> Measured on five real Forest of Life fights sent in by a player, all at the same split: outcomes ran from −28.5% to +35.3%, three wins and two losses. Two of those five were the <i>same</i> fight — same opponent, same stats, same split — and finished 43.7 points apart, one a victory and one a defeat. So use the score to choose between compositions over many attempts, never to predict the next one.</div>
+                    <div className="mt-1.5 text-left text-[10px] leading-relaxed text-parchment/45">Best of {result.candidates.length} splits tested{result.band && result.band.count > 1 ? <>, {result.band.count} of them within a point of each other — the exact headline number isn't worth chasing</> : null}. <b className="text-amber-200/80">A single Mystic battle is close to a coin flip and no model can call it.</b> Measured on seven real Forest of Life fights, all at the same split: outcomes ran from −28.5% to +40.0%, five wins and two losses. Two of those seven were the <i>same</i> fight — same beast, same stats, same split — and finished 43.7 points apart, one a victory and one a defeat. The model scored all seven as losses, so its absolute number is not shown; the difference between two splits is, because a shared bias cancels in a difference. Use it to choose a composition over many attempts, never to predict the next battle.</div>
                   </details>
                 </div>
               </div>

@@ -84,6 +84,33 @@ That points at the counter triangle being worth much more than the documented
 +10% per matchup, or at composition entering somewhere the current formula does
 not have it at all.
 
+### Four fixes tested against the seven outcomes — all rejected
+
+| hypothesis | result |
+|---|---|
+| **count exponent** `count^E`, swept 0.5–1.0 | slope stays 0.26× reality at every value. No effect. |
+| **counter triangle** 1.10 → 2.00 | makes it *worse*: the counter is symmetric, both sides get it. |
+| **formula shape** — drop L, drop H, sqrt, additive | `A·L/D` and `A/(D·H)` flip to **7/7 wins** (reality 5/7). Overshoots as badly as the current shape undershoots. |
+| **diminishing returns on defence** `(D·H)^k`, k 1.00→0.88 | moves the mean by 1.9 points. Nowhere near 33. |
+
+Kill ratios say why nothing small works: in battle G the player lost 98,126 to
+kill 161,800 — a ratio of **1.65**. Our stat maths makes the beast ~10% stronger
+per troop. Closing that needs a **1.8× swing**, not a coefficient nudge.
+
+**And no deterministic model can match anyway.** Reality returns 5 wins and 2
+losses across inputs that differ by under 2%; D and E are byte-identical and
+split. A deterministic engine returns 0/7 or 7/7 and nothing between. Matching
+the observed mix requires a probabilistic model, which is what the established
+tool has been doing all along.
+
+### What DID change, and why that is the honest fix
+
+The raw signed score no longer leads the result. Across seven real battles the
+model returned a **negative score every time and the player won five**. A minus
+sign reads as "you lose"; it was wrong 5 times in 7. Only the **comparative**
+figure is shown now — the gap to the played opener — because a shared bias
+cancels in a difference, and the ranking is the part that has survived checking.
+
 ### What is NOT being changed yet, and why
 
 Three points, **all at the same split**. A single composition cannot separate

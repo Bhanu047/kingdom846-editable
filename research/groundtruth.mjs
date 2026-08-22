@@ -26,13 +26,17 @@ const BATTLES = [
     result: 'VICTORY', myLoss: 138697, theirLoss: 162000, theirTotal: 162000 },
   { id: 'E', beast: 'One-Eyed',  them: { a: 398.0, L: 564.8 }, counts: [64800, 48600, 48600],
     result: 'DEFEAT',  myLoss: 163500, theirLoss: 115785, theirTotal: 162000 },
+  { id: 'F', beast: 'Enraged',   them: { a: 396.0, L: 561.0 }, counts: [64760, 48570, 48570],
+    result: 'VICTORY', myLoss: 122245, theirLoss: 161900, theirTotal: 161900 },
+  { id: 'G', beast: 'Ferocious', them: { a: 393.0, L: 557.1 }, counts: [64720, 48540, 48540],
+    result: 'VICTORY', myLoss:  98126, theirLoss: 161800, theirTotal: 161800 },
 ]
 
 const army = () => Object.fromEntries(T.map((t, k) => [t, { count: MY_COUNTS[k], ...MINE[t] }]))
 const foe = (b) => Object.fromEntries(T.map((t, k) => [t, {
   count: b.counts[k], attack: b.them.a, defense: b.them.a, lethality: b.them.L, health: b.them.L, tier: 'T10' }]))
 
-console.log('THREE REAL OUTCOMES — same split 50/15/35 every time\n')
+console.log('SEVEN REAL OUTCOMES — same split 50/15/35 every time\n')
 console.log('  id  enemy atk  RESULT    my survivors      their survivors   ACTUAL edge')
 for (const b of BATTLES) {
   const mySurv = MY_TOTAL - b.myLoss, theirSurv = b.theirTotal - b.theirLoss
@@ -41,7 +45,7 @@ for (const b of BATTLES) {
   console.log(`  ${b.id}   ${String(b.them.a).padStart(6)}${b.them.inferred ? '*' : ' '}   ${b.result.padEnd(8)}  ${String(mySurv.toLocaleString()).padStart(7)} (${(mySurv/MY_TOTAL*100).toFixed(1)}%)   ${String(theirSurv.toLocaleString()).padStart(7)} (${(theirSurv/b.theirTotal*100).toFixed(1)}%)   ${(edge*100).toFixed(1).padStart(6)}%`)
 }
 
-console.log('\nWHAT OUR MODEL SAYS ABOUT THE SAME THREE FIGHTS\n')
+console.log('\nWHAT OUR MODEL SAYS ABOUT THE SAME SEVEN FIGHTS\n')
 console.log('  id  predicted edge   predicted outcome   ACTUAL edge   ACTUAL     error')
 let errs = []
 for (const b of BATTLES) {
@@ -56,7 +60,7 @@ console.log(`\n  mean error: ${(errs.reduce((a,x)=>a+x,0)/errs.length*100).toFix
 
 console.log('\nHOW MUCH DOES REALITY ACTUALLY VARY?\n')
 const acts = BATTLES.map(b => b.actualEdge*100)
-console.log(`  same split, three near-identical fights: ${acts.map(a=>a.toFixed(1)+'%').join('  ')}`)
+console.log(`  same split, seven fights: ${acts.map(a=>a.toFixed(1)+'%').join('  ')}`)
 console.log(`  real spread: ${(Math.max(...acts)-Math.min(...acts)).toFixed(1)} points, and it crosses zero (one loss, two wins)`)
 const d = simulateOutcomes(army(), foe(BATTLES[1]), { trials: 300 })
 console.log(`  our simulated spread on the same fight: +/-${(d.stdDev*100).toFixed(1)} points, ${(d.winRate*100).toFixed(0)}% wins`)

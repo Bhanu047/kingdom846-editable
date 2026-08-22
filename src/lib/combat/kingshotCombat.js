@@ -71,6 +71,35 @@ export const AMBUSH_SHARE = 0.20
 // See research/noise-floor.mjs and COMBAT-RESEARCH.md sec.13.
 // ---------------------------------------------------------------------------
 
+// [OBS — the model's clearest known blind spot] CAVALRY IS WORSE THAN THIS
+// FILE MODELS IT, and no value of the constant below fixes that.
+//
+// Every controlled comparison in the data set -- two or more splits against the
+// SAME beast, so the opponent cancels -- where the Cavalry share differed:
+//
+//   Forest of Life  Starving     15 cav (+24.0) beat 21 cav (-20.8)
+//   Crystal Cave    Appraiser    15 cav (+33.3) beat 21 cav (-38.4)
+//   Knowledge Nexus Mad Scholar  15 cav ( +9.7) beat 21 cav (-25.7)
+//   Knowledge Nexus Craftsman    15 cav ( +8.3) beat 20 cav (-17.7)
+//
+// Four for four, across three rooms and four opponents, by 26 to 72 points.
+// The one comparison that breaks the pattern (52/15/33 losing to 50/15/35 in
+// Crystal Cave) holds Cavalry EQUAL, so it says nothing about Cavalry.
+//
+// Our model registers those same four gaps as 0.1, 0.9, 0.6 and 1.9 points --
+// two orders of magnitude too small, and in one case with the sign reversed.
+// FRONT_ROW_SPILL is the only knob that moves Cavalry's value, and sweeping it
+// end to end over all eight pairwise comparisons (research/spill-pairs.mjs)
+// gives 6/8 at 0.20, 7/8 at 0.15, 6/8 at 0.10 and below, and the mean model gap
+// never exceeds 4.6 points against reality's 14-72. A one-comparison
+// improvement is not evidence, so NOTHING WAS CHANGED -- see the freeze in
+// COMBAT-RESEARCH sec.13, which this respects.
+//
+// This is structural, not a constant to turn: front-row targeting with a damage
+// term that ignores the defender's headcount makes a protected back row too
+// cheap. Recorded here so the gap is known rather than quietly absorbed, and
+// surfaced to the player in MysticSuite.
+
 // How much of a volley reaches PAST the front row.
 //
 // [DOC] says Infantry "absorbs MOST incoming damage" and Archers are "IDEALLY
@@ -241,10 +270,21 @@ export const ARCHER_VOLLEY_CHANCE = 0.10
 // narrow -- nothing else in the data set is T11 -- but a T11 PvP fight would be
 // affected by a value fitted entirely inside one Mystic room.
 //
-// REVERSAL CONDITION: two or three T11 Knowledge Nexus battles against a
-// DIFFERENT beast. If the model tracks them at 1.10, this stands. If it is now
-// too pessimistic against a different opponent, the error belonged to Mad
-// Scholar and 1.175 comes back.
+// REVERSAL CONDITION MET, AND 1.10 PASSED. Two battles arrived against a
+// DIFFERENT Knowledge Nexus beast -- Untouchable Craftsman, 220 flat -- which
+// played no part in fitting this value:
+//
+//   U  45/20/35   DEFEAT   reality -17.7   model  -4.8
+//   V  50/15/35   VICTORY  reality  +8.3   model  +5.0
+//
+// Mean error on the held-out opponent +4.8, against +5.6 on the opponent it was
+// fitted to. The two are indistinguishable, which is what confirms the
+// correction belonged to the TIER and not to Mad Scholar. Across all five T11
+// battles MAE is 8.6 at 1.10 versus 48.8 at 1.175, and the win/lose sign is
+// right 5 times out of 5.
+//
+// Still only one ROOM, because Knowledge Nexus is the only T11 fight available.
+// A T11 PvP report would be the next real test.
 //
 // Residual, recorded rather than smoothed over: at 1.10 the model still misses
 // 46/21/33 by 17.7 points, and its spread across the three splits is 13.4

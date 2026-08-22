@@ -1345,3 +1345,85 @@ structural limit, not a constant to turn.
 The T11 warning added in §14 was rewritten rather than removed: it now says the
 published figure was wrong, what the three battles actually did, that the value
 is 10%, and that one beast cannot settle it.
+
+---
+
+## 15. The reversal test passes, and the model's clearest blind spot  [OBS]
+
+### T11 = 1.10 confirmed out of sample
+
+§14a set `TIER_STAT_MULTIPLIER.T11` to 1.10 on three battles against **one**
+beast, and named the condition that would overturn it: T11 Knowledge Nexus
+battles against a *different* beast. Two arrived — **Untouchable Craftsman**,
+220 flat, which played no part in the fit:
+
+| id | split | result | reality | model @1.10 | error |
+|---|---|---|---|---|---|
+| U | 45/20/35 | DEFEAT | −17.7 | −4.8 | +12.9 |
+| V | 50/15/35 | **VICTORY** | +8.3 | +5.0 | −3.3 |
+
+**Mean error on the held-out opponent +4.8, against +5.6 on the opponent it was
+fitted to.** The two are indistinguishable. That is what confirms the correction
+belonged to the *tier* and not to Mad Scholar.
+
+Across all five T11 battles: **MAE 8.6 at 1.10 versus 48.8 at 1.175**, and the
+win/lose sign right **5 of 5**. The value stands.
+
+Caveat kept: still only one *room*, because Knowledge Nexus is the only T11
+fight available. A T11 PvP report is the next real test. And an MAE of 8.6 sits
+under the ~22.6 floor implied by §13's sd estimate — either that sd (95% CI 15
+to 178) is too high, or Knowledge Nexus is quieter than Forest of Life. Five
+points cannot say which.
+
+### Cavalry: four for four, and the model cannot see it
+
+Every controlled comparison where the **Cavalry share differed**:
+
+| room | beast | lower cav | higher cav |
+|---|---|---|---|
+| Forest of Life | Starving | 15 → **+24.0** | 21 → −20.8 |
+| Crystal Cave | Appraiser | 15 → **+33.3** | 21 → −38.4 |
+| Knowledge Nexus | Mad Scholar | 15 → **+9.7** | 21 → −25.7 |
+| Knowledge Nexus | Craftsman | 15 → **+8.3** | 20 → −17.7 |
+
+**Four for four, across three rooms and four opponents, by 26 to 72 points.**
+The one comparison that breaks the "more Infantry" heuristic (52/15/33 losing
+to 50/15/35 in Crystal Cave) holds Cavalry *equal* — so it says nothing about
+Cavalry, and the Cavalry signal is cleaner than the Infantry one ever was.
+
+**Our model registers those same four gaps as 0.1, 0.9, 0.6 and 1.9 points** —
+two orders of magnitude too small, and in the Mad Scholar case with the sign
+reversed.
+
+### Nothing was changed, and this time that is the disciplined answer
+
+`FRONT_ROW_SPILL` is the only knob that moves Cavalry's value. Swept over all
+eight pairwise comparisons (`research/spill-pairs.mjs`):
+
+| spill | pairwise right | mean model gap |
+|---|---|---|
+| 0.00 | 6/8 | 4.6 |
+| 0.15 | **7/8** | 4.3 |
+| **0.20** (shipped) | 6/8 | 3.9 |
+| 0.30 | 3/8 | 2.5 |
+| 0.35 | 1/8 | 2.2 |
+
+0.15 wins by **one comparison out of eight**. That is a coin flip, not evidence,
+and the mean model gap never exceeds 4.6 points against reality's 14–72 — so no
+spill value comes close to expressing what the battles show. §13's freeze holds
+here, and unlike §14a there is no case for overriding it: that override was a
+50-point, ~3σ error where the tool recommended the loser; this is a one-flip
+improvement inside noise.
+
+### So it is stated instead of modelled
+
+This is **structural**, not a constant to turn: front-row targeting with a
+damage term that ignores the defender's headcount makes a protected back row
+too cheap. The optimizer cannot express "Cavalry is worse than this", so the
+Mystic panel now says it directly whenever the player's Cavalry share is above
+18% — that the logged battles are 4 of 4 against high Cavalry, that the model
+does not reproduce it, and to treat ~15% Cavalry as better than the number
+shown.
+
+A model that knows where it is blind and says so beats one that quietly folds
+the blindness into a fitted constant.

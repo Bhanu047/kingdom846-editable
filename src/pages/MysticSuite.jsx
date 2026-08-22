@@ -573,7 +573,20 @@ export default function MysticSuite() {
                       player is told rather than left to assume it is settled. */}
                   {yourTier === 'T11' && (
                     <div className="mt-3 rounded-xl border border-amber-300/25 bg-amber-300/[.05] px-3 py-2 text-left text-[10px] leading-relaxed text-amber-100/70">
-                      <b className="text-amber-200/90">T11 is provisional.</b> The published figure for T11 is 15–20% more stats. Three real Knowledge Nexus battles say that is far too strong — at the published value this model scored all three at about +41 when they actually ran −25.7, −11.7 and +9.7, and it recommended almost exactly the split that lost worst. The bonus is now set to 10%, which puts all three inside the noise. But all three are against the <i>same</i> beast, so it cannot yet tell a wrong tier from a room that simply behaves differently. Treat T11 answers as the best available, not as settled.
+                      <b className="text-amber-200/90">T11 is set from your battles, not the published figure.</b> The published number is 15–20% more stats; five real Knowledge Nexus battles say that is far too strong — at the published value this model was wrong by 33 to 68 points on every one of them, and it recommended almost exactly the split that lost worst. The bonus is set to 10% here. That was fitted on one beast and then <i>held up against a second one it had never seen</i>: mean error +4.8 on the new opponent versus +5.6 on the old, and the win/lose call right 5 times out of 5. Still only one room, since Knowledge Nexus is the only T11 fight available.
+                    </div>
+                  )}
+                  {/* The model's clearest known blind spot, stated to the player
+                      because it is measured and the model cannot express it.
+                      Four controlled comparisons across three rooms and four
+                      opponents: the lower-Cavalry split won every time, by 26 to
+                      72 points. Our model registers those same gaps as 0.1-1.9
+                      points. Sweeping the only constant that moves Cavalry's
+                      value gains one comparison out of eight -- not evidence --
+                      so nothing was changed and this says so instead. */}
+                  {n(yours.cavalry.count) / Math.max(1, result.totalTroops) > 0.18 && (
+                    <div className="mt-3 rounded-xl border border-sky-300/20 bg-sky-300/[.04] px-3 py-2 text-left text-[10px] leading-relaxed text-sky-100/70">
+                      <b className="text-sky-200/90">Your logged battles disagree with this model about Cavalry.</b> In every controlled test so far — four of four, across three rooms and four different beasts — the split with <i>less</i> Cavalry won, by 26 to 72 points. This model registers those same gaps as under 2 points, and no setting of the one constant that controls Cavalry closes it. Treat around 15% Cavalry as better than the number here suggests.
                     </div>
                   )}
                   {/* If what the player already fields lands inside the band,

@@ -8,6 +8,73 @@ Written after the previous model was found to be built on invented constants.
 The failure mode to avoid: fitting our numbers to another calculator's output
 and calling it validation.
 
+## GROUND TRUTH — three real Forest of Life outcomes  [OBS]
+
+**The first calibration data that is not another calculator's opinion.** Three
+battles, all fought with the same split (50/15/35), against near-identical
+opponents. Transcribed from Battle Details.
+
+| | enemy atk | result | my survivors | their survivors | actual edge |
+|---|---|---|---|---|---|
+| A | 400.0 | **DEFEAT** | 0 (0.0%) | 5,381 (3.3%) | **−3.3%** |
+| B | 398.0 | **VICTORY** | 57,707 (35.3%) | 0 | **+35.3%** |
+| C | 395.0 | **VICTORY** | 20,674 (12.6%) | 0 | **+12.6%** |
+
+### 1. The model is ~35 points too pessimistic
+
+| | predicted | predicted outcome | actual | actual outcome | error |
+|---|---|---|---|---|---|
+| A | −23.3% | LOSS | −3.3% | DEFEAT | −20.0 |
+| B | −20.7% | LOSS | +35.3% | **VICTORY** | −56.0 |
+| C | −16.5% | LOSS | +12.6% | **VICTORY** | −29.1 |
+
+**It called all three losses. Two were wins.** Mean error **−35.0 points**. No
+amount of agreement with another optimizer would ever have surfaced this — both
+tools were being scored against each other, not against reality.
+
+### 2. Real variance is ~100x what we simulate
+
+Same split, three near-identical fights: **−3.3%, +35.3%, +12.6%**. A **38.6
+point** spread that crosses zero — one defeat, two victories. Our Monte Carlo on
+the same fight returns **±0.2 points, 0% wins**.
+
+Rolling Ambusher and Volley per round captures essentially none of the real
+randomness. This is why an established tool reports probabilities and we report
+a number, and the probabilities were the honest format all along.
+
+### 3. Where the bias comes from: composition is worth far more than +10%
+
+Kill ratios straight from the reports:
+
+| | I killed | they killed | my kill ratio |
+|---|---|---|---|
+| A | 156,919 | 163,500 | 0.960 |
+| B | 162,200 | 105,793 | 1.533 |
+| C | 162,100 | 142,826 | 1.135 |
+| | | **mean** | **1.209** |
+
+The stat maths says the enemy is **~10% stronger per troop** with equal numbers.
+Reality says **I kill 21% more than they do**. Roughly **33%** is unaccounted
+for, and both sides are T10 — the only structural difference in the fight is
+**composition: mine 50/15/35 against theirs 40/30/30**.
+
+That points at the counter triangle being worth much more than the documented
++10% per matchup, or at composition entering somewhere the current formula does
+not have it at all.
+
+### What is NOT being changed yet, and why
+
+Three points, **all at the same split**. A single composition cannot separate
+"the counter is stronger" from "the stat combination is wrong" from "army size
+matters more than stats" — every candidate fits three samples at one point.
+Recalibrating here would repeat the exact error this whole file documents.
+
+**Needed: battles at DIFFERENT splits.** Vary the composition and the candidate
+explanations separate immediately, because they predict different things about
+how the kill ratio moves as the mix changes.
+
+---
+
 ## Evidence grades
 
 - **[DOC]** — stated in published Kingshot mechanics guides, corroborated by

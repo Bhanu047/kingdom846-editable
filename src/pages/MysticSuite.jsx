@@ -501,7 +501,20 @@ export default function MysticSuite() {
                 <div className="text-[10px] font-bold uppercase tracking-[.14em] text-gold-bright/60">{playerName.trim() ? <><span data-k846-player-name="true">{playerName.trim()}</span> · Recommended Split</> : 'Recommended Split'}</div>
                 <div className="mt-1 font-display text-2xl font-bold" data-k846-outcome-label="true">{pct(result.best.composition.infantry)} / {pct(result.best.composition.cavalry)} / {pct(result.best.composition.archers)}</div>
                 <div className="mt-1 text-xs text-parchment/50">Infantry / Cavalry / Archers · best of {result.candidates.length} splits tested · score {(result.best.survivalEdge * 100).toFixed(1)}%{result.baseline ? <>, {(result.best.survivalEdge - result.baseline.survivalEdge) >= 0 ? '+' : ''}{((result.best.survivalEdge - result.baseline.survivalEdge) * 100).toFixed(1)} vs the opener</> : null}</div>
-                <div className="mt-2 text-[10px] leading-relaxed text-parchment/40">The score compares splits against each other. It is not a prediction of whether you win — see below.</div>
+                <div className="mt-2 text-[10px] leading-relaxed text-parchment/40">A comparative score, not a win prediction.</div>
+              </div>
+
+              {/* Echo the entered counts. The result used to show only the
+                  RECOMMENDED per-type numbers and a total, so if a count was
+                  mistyped or mis-parsed from a screenshot there was nothing on
+                  screen to check it against — a 163,500 army was once optimised
+                  as 203,775 and came back "winning" off the back of it. */}
+              <div className="stagger-in rounded-2xl border border-gold/10 bg-white/[.02] px-4 py-3">
+                <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+                  <span className="text-[9px] uppercase tracking-wider text-parchment/35">Read from your entry</span>
+                  <span className="font-mono text-[11px] text-parchment/70">{TROOPS.map((t) => fmt(n(yours[t.key].count))).join('  /  ')}<span className="text-parchment/35"> = </span>{fmt(result.totalTroops)}</span>
+                </div>
+                <div className="mt-1 text-[10px] leading-relaxed text-parchment/40">Infantry / Cavalry / Archers, as entered. If that doesn't match your report, fix it above and re-run — every number below is built on it.</div>
               </div>
 
               {/* Both blocks below travel into the downloaded report, so a
@@ -519,7 +532,7 @@ export default function MysticSuite() {
                 <div className="stagger-in rounded-2xl border border-gold/12 bg-white/[.02] p-4">
                   <div className="text-[9px] uppercase tracking-wider text-parchment/35">Anything in this range is as good</div>
                   <div className="mt-1 font-mono text-lg font-bold text-parchment">{result.band.infantry[0]}–{result.band.infantry[1]} / {result.band.cavalry[0]}–{result.band.cavalry[1]} / {result.band.archers[0]}–{result.band.archers[1]}</div>
-                  <div className="mt-1 text-[10px] leading-relaxed text-parchment/45">{result.band.count} of the {result.candidates.length} splits tested score within {(result.band.tolerance * 100).toFixed(0)} point of the best — a difference smaller than the uncertainty in the model's own constants. Field whatever in that range suits the troops you have; the exact headline number is not worth chasing.</div>
+                  <div className="mt-1 text-[10px] leading-relaxed text-parchment/45">{result.band.count} of {result.candidates.length} splits score within {(result.band.tolerance * 100).toFixed(0)} point of the best. Field whatever in that range fits the troops you have.</div>
                 </div>
               )}
 
@@ -537,8 +550,11 @@ export default function MysticSuite() {
                 <div className="stagger-in rounded-2xl border border-gold/12 bg-white/[.02] p-4">
                   <div className="text-[9px] uppercase tracking-wider text-parchment/35">How much to read into the score</div>
                   <div className="mt-1.5 font-mono text-sm text-parchment/80">{(result.distribution.meanEdge * 100).toFixed(1)}% ± {(result.distribution.stdDev * 100).toFixed(1)} across {result.distribution.trials} simulated runs</div>
-                  <div className="mt-1.5 text-[11px] leading-relaxed text-parchment/50">Kingshot resolves a battle over many rounds, and which abilities fire in a given round is a roll — so the same split does not give the same result twice. That range is this split re-fought {result.distribution.trials} times with Cavalry's Ambusher and the Archer double-shot rolled each round instead of averaged.</div>
-                  <div className="mt-2.5 text-[11px] leading-relaxed text-amber-100/60"><b className="text-amber-200">This score ranks splits. It does not call the winner.</b> Checked against real reports, the ordering holds up — on a Forest of Life report this tool's pick and an established optimizer's pick scored within 0.1 points of each other. The absolute win/lose call does not hold up: it scored a Knowledge Nexus stage the player <i>actually cleared</i> as a heavy loss. Use the split, and take the number as "this beats that", not as a forecast.</div>
+                  <div className="mt-1.5 text-[11px] leading-relaxed text-parchment/50"><b className="text-amber-200/90">Ranks splits — doesn't call the winner.</b> Use it as "this beats that".</div>
+                  <details className="group mt-1.5">
+                    <summary className="cursor-pointer list-none text-[10px] uppercase tracking-wider text-gold-bright/50 hover:text-gold-bright/80">Why <span className="inline-block transition-transform group-open:rotate-90">›</span></summary>
+                    <div className="mt-1.5 text-[10px] leading-relaxed text-parchment/45">A battle runs over many rounds and which abilities fire in a round is a roll, so the same split doesn't repeat exactly — that spread is {result.distribution.trials} re-fights with Ambusher and the Archer double-shot rolled per round. Against real reports the <i>ordering</i> holds up: on a Forest of Life report our pick and an established optimizer's landed within 0.1 points. The absolute win/lose call doesn't — it scored a Knowledge Nexus stage the player actually cleared as a heavy loss, so it isn't published.</div>
+                  </details>
                 </div>
               )}
               </div>

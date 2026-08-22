@@ -521,8 +521,11 @@ export default function PvPSuite() {
                 <div className="stagger-in rounded-2xl border border-gold/12 bg-white/[.02] p-4">
                   <div className="text-[9px] uppercase tracking-wider text-parchment/35">How much to read into the score</div>
                   <div className="mt-1.5 font-mono text-sm text-parchment/80">{(sweepResult.distribution.meanEdge * 100).toFixed(1)}% ± {(sweepResult.distribution.stdDev * 100).toFixed(1)} across {sweepResult.distribution.trials} simulated runs</div>
-                  <div className="mt-1.5 text-[11px] leading-relaxed text-parchment/50">A battle resolves over many rounds and which abilities fire in a round is a roll, so the same split does not give the same result twice. That is this split re-fought {sweepResult.distribution.trials} times with Ambusher and the Archer double-shot rolled per round rather than averaged — and in PvP, hero skills add roll variance on top that this does not model, so treat it as a floor on the spread.</div>
-                  <div className="mt-2.5 text-[11px] leading-relaxed text-amber-100/60"><b className="text-amber-200">This score ranks splits; it does not call the winner.</b> Use it to choose between compositions, not as a forecast — and in PvP the losses are real, so when it is close, send less.</div>
+                  <div className="mt-1.5 text-[11px] leading-relaxed text-parchment/50"><b className="text-amber-200/90">Ranks splits — doesn't call the winner.</b> PvP losses are real, so when it's close, send less.</div>
+                  <details className="group mt-1.5">
+                    <summary className="cursor-pointer list-none text-[10px] uppercase tracking-wider text-gold-bright/50 hover:text-gold-bright/80">Why <span className="inline-block transition-transform group-open:rotate-90">›</span></summary>
+                    <div className="mt-1.5 text-[10px] leading-relaxed text-parchment/45">Which abilities fire in a round is a roll, so the same split doesn't repeat exactly — that spread is {sweepResult.distribution.trials} re-fights with Ambusher and the Archer double-shot rolled per round. Hero skills add variance on top that this doesn't model, so treat it as a floor. The ordering of splits checks out against real reports; the absolute win/lose call doesn't, so it isn't published.</div>
+                  </details>
                 </div>
               )}
               </div>

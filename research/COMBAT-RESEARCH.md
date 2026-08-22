@@ -317,6 +317,38 @@ Before/after on the newest report (163,500 vs 161,500, they are 8% stronger per
 troop): **65/15/20 → 54/19/27**, against Frakinator's 52/15/33 and the opener
 50/15/35.
 
+### Six reports: our mean matches, their variance does not  [OBS]
+
+Six Forest of Life reports, same player, same week, near-identical inputs.
+Optimum on a full 5,151-split grid each time:
+
+| | infantry | cavalry | archers |
+|---|---|---|---|
+| ours | 53.5 **±1.0** | 20.0 **±0.8** | 26.5 **±0.5** |
+| Frakinator | 51.7 **±4.5** | 18.0 **±3.0** | 30.0 **±6.7** |
+
+Their Archer share across those six near-identical fights: **21, 33, 33, 21, 39,
+33**. Ours: 26, 26, 27, 27, 27, 26. Reports #4 and #6 have *identical* player
+counts and enemy stats within 3 points, and they returned 52/15/33 and 46/15/39.
+That is Monte Carlo scatter in the reference, and it means **per-report exact
+agreement is not achievable** — there is no fixed number to hit.
+
+So `FRONT_ROW_SPILL` was re-calibrated against the **mean** of the references
+rather than individual samples, which is the correct target for a noisy signal:
+
+| spill | our mean | vs Frakinator mean | vs opener | combined |
+|---|---|---|---|---|
+| 0.30 | 53.5 / 20.0 / 26.5 | 7.3 | 17.0 | 24.3 |
+| **0.35** | **51.2 / 21.0 / 27.8** | **5.7** | **14.3** | **20.0** |
+| 0.40 | 48.8 / 22.0 / 29.2 | 7.7 | 14.0 | 21.7 |
+
+0.35 lands our mean within ~1 point of the reference on Infantry and ~2 on
+Archers. Knowledge Nexus still resolves as the win it actually was (+38.4%), and
+**Molten Fort now reproduces the reference answer 52/21/27 exactly**.
+
+Residual on cavalry: we run ~3 points high and that has not moved with spill.
+Left open rather than fitted away.
+
 ### Validation after the spill fix: the two models now track each other  [OBS]
 
 Four Forest of Life reports from the same player, same week, near-identical

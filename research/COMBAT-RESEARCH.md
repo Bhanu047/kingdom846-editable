@@ -317,6 +317,38 @@ Before/after on the newest report (163,500 vs 161,500, they are 8% stronger per
 troop): **65/15/20 → 54/19/27**, against Frakinator's 52/15/33 and the opener
 50/15/35.
 
+### Calibration data collection  [in progress]
+
+`src/lib/combat/outcomeLog.js` + a control under the Mystic result.
+
+The problem it exists to solve: every constant in the engine is either published
+mechanics or — in the single case of `FRONT_ROW_SPILL` — fitted to two proxy
+references. Neither is ground truth, and the reference optimizer's own answer
+scatters up to 18 points on the same fight, so it cannot be matched more closely
+in any meaningful sense. Against **one** known real outcome and **one** fitted
+parameter, there is nothing here that deserves the word calibration.
+
+Collection is nearly free: a Mystic battle report is **post-battle**, so the
+counts and bonuses already entered *are* the composition that was fielded. The
+only missing bit is whether it cleared. One tap.
+
+Each entry stores:
+
+| field | why |
+|---|---|
+| `played` | the split actually fielded, derived from the entered counts |
+| `you` / `enemy` | full per-type counts and stats, both sides |
+| `zone`, `at` | which room, when |
+| `outcome` | cleared / lost — the label being fitted to |
+| `predicted` | the model's split, its score, **and the `spill` in force** |
+
+`predicted.spill` matters: it makes each row attributable to a model version, so
+a later fit can score the prediction rather than only re-deriving from scratch.
+
+localStorage only, exported on demand. Target: 10–15 battles with a mix of
+outcomes, ideally some close ones, since the decision boundary is what a
+pass/fail label locates.
+
 ### Seven reports: our mean is inside their scatter on every axis  [OBS]
 
 | | infantry | cavalry | archers |

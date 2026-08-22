@@ -317,6 +317,36 @@ Before/after on the newest report (163,500 vs 161,500, they are 8% stronger per
 troop): **65/15/20 → 54/19/27**, against Frakinator's 52/15/33 and the opener
 50/15/35.
 
+### Seven reports: our mean is inside their scatter on every axis  [OBS]
+
+| | infantry | cavalry | archers |
+|---|---|---|---|
+| ours | 51.3 **±0.5** | 21.0 **±0.0** | 27.7 **±0.5** |
+| Frakinator | 50.9 **±4.6** | 19.3 **±4.2** | 29.6 **±6.3** |
+| **gap in means** | **+0.4** | **+1.7** | **−1.9** |
+
+Their run-to-run range over seven near-identical fights: infantry **46–57**,
+cavalry **15–27**, archers **21–39**. Every axis swings 11–18 points on the same
+fight. The ~3-point cavalry residual noted at six reports closed to 1.7 when
+their cavalry answer jumped 15 → 27 on report #7 — it was their scatter, not our
+bias.
+
+**Our stability is correct, not stuck.** Cavalry comes out at exactly 21.0 in all
+seven, which looks suspicious until you notice the enemy is **40/30/30 in every
+one of them**. Varying the enemy mix, our answer does move:
+
+| enemy mix | our answer |
+|---|---|
+| 40/30/30 | 52/21/27 |
+| 60/20/20 | 48/25/27 |
+| 20/60/20 | 43/25/32 |
+| 20/20/60 | 50/23/27 |
+
+The best counter-mix is set by the enemy's *mix*; the strength ratio decides
+whether you win, not what to field. Against a fixed 40/30/30 the answer *should*
+barely move — so the reference swinging 18 points on archers is noise, and this
+is the ceiling of what calibrating against it can achieve.
+
 ### Six reports: our mean matches, their variance does not  [OBS]
 
 Six Forest of Life reports, same player, same week, near-identical inputs.

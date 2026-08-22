@@ -1427,3 +1427,103 @@ shown.
 
 A model that knows where it is blind and says so beats one that quietly folds
 the blindness into a fitted constant.
+
+---
+
+## 16. Whiteout Survival: the predecessor's data, and what it says about Cavalry  [DOC/OBS]
+
+Kingshot and Whiteout Survival are both Century Games, Whiteout came first, and
+the combat core is shared. Checked rather than assumed — every mechanic this
+file models has a named counterpart there, with the same numbers:
+
+| mechanic | Kingshot (this file) | Whiteout Survival |
+|---|---|---|
+| counter triangle | Infantry → Cavalry → Archers | Infantry → Lancer → Marksman |
+| counter size | +10% | **+10% attack bonus** |
+| mid-line ability | Cavalry Ambusher, 20% to hit Archers | **Ambusher, 20% to strike Marksmen behind Infantry** (T7+) |
+| back-line ability | Archer Volley, 10% double shot | **Volley, 10% chance to attack twice** |
+| front-line ability | Ranged Strike, +10% vs Infantry | **Range Strike, +10% vs Infantry** |
+| line order | Infantry front, Cavalry mid, Archers back | **Infantry front, Lancers midline, Marksmen back** |
+
+**Every constant matches.** §4's mechanics were sourced correctly; nothing there
+needs revising. That is worth knowing in itself — it means the errors this file
+has been chasing are in the *shape* of the model, not its documented inputs.
+
+### The Labyrinth is Mystic Trials
+
+Same design: PvE, per-stage, scored on **Expedition stats** rather than raw
+combat power, a permanent ladder that pays out on the deepest stage cleared.
+The enemy's default composition there is **33/33/33** (Kingshot's Mystic
+opponents run 40/30/30), with one stage at 53/27/20. General WoS ratio guidance
+is 50/20/30.
+
+### The finding that matters: 3% Lancers
+
+**The Labyrinth community's answer is to run about 3% Lancers — and the stated
+reason is to let the Lancer *hero's* skill trigger, not for the troops' combat
+value.** Not "some lancers are good". Three percent, as a hero-enabler.
+
+That is an **independent corroboration of §15's 4-for-4 result**, from a
+different game, a different community, and years more data than Kingshot has.
+Two lines of evidence that never touched each other now say the same thing:
+this model overvalues the mid-line troop badly.
+
+And it goes further than §15 could. My battles only span 15–21% Cavalry, so
+15% is the lowest thing ever tested. The predecessor says the floor is far
+lower.
+
+### [DERIVED — not sourced] Why Kingshot should go lower still
+
+Two facts, one already in this file:
+
+1. In WoS Labyrinth, the *only* stated reason to carry Lancers at all is
+   triggering the Lancer hero.
+2. §2 of this file: Kingshot's Mystic Trials **does not count heroes** in
+   Forest of Life, Crystal Cave, Knowledge Nexus or Molten Fort.
+
+So in four of six rooms, the one reason the predecessor's players carry 3%
+Lancers **does not exist**. This is inference, not a sourced claim, and is
+flagged as such — but it is a sharp, cheap prediction to test.
+
+A second [DERIVED] note on mechanism, against a 40/30/30 enemy fronted by
+Infantry: my Archers counter that front row (+10%, and ×1.10 Volley on top), my
+Infantry are neutral against it, and my Cavalry get **no** counter bonus against
+it — their +10% only applies on the 20% Ambush against the enemy's back row.
+Expected counter multipliers: Archers ~1.21, Cavalry ~1.02, Infantry 1.00.
+Cavalry is structurally the worst troop to point at an Infantry wall. The model
+has this sign right and the magnitude far too small.
+
+### The model disagrees sharply, and its opinion here is weak
+
+`research/low-cavalry.mjs`, scored against each room's model-best split:
+
+| split | Knowledge Nexus | Crystal Cave |
+|---|---|---|
+| model best | 0.0 | 0.0 |
+| 65/10/25 | −11.3 | **−3.0** |
+| 70/5/25 | −30.2 | −12.9 |
+| 72/3/25 | −34.9 | −16.3 |
+
+The model hates 3% Cavalry. But this is the exact axis where it has been
+measured wrong: it reads real 26–72 point Cavalry gaps as under 2 points, and
+once with the sign reversed. **Its objection here carries much less weight than
+one real battle would.**
+
+### The experiment, and where it is cheapest
+
+**Crystal Cave, ~65/10/25.** The model's objection there is only −3.0 points,
+smaller than the noise on a single fight, and the room is hero-free so the
+predecessor's one reason for Lancers does not apply. If it wins, escalate
+toward 70/5/25. If low Cavalry underperforms across two or three battles, the
+predecessor's Labyrinth consensus does not transfer and this section is wrong.
+
+### Sourcing limitation, stated plainly
+
+This session's network policy blocked direct page fetches (`whiteoutdata.com`,
+`whiteoutsurvival.wiki`, `wostools.net`, `onechilledgamer.com` all refused), so
+everything above comes from **search-result summaries, not primary pages**.
+The mechanic-by-mechanic table was corroborated across several independent
+guides, which is why it is marked [DOC]; the 3% figure appeared in one
+Labyrinth guide and should be treated as [OBS] until a second source confirms
+it. Per-tier troop stat tables — which would have settled §14a's T11 question
+from first principles rather than by fitting — could not be reached at all.

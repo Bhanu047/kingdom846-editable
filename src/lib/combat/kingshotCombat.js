@@ -197,43 +197,66 @@ export const ARCHER_VOLLEY_CHANCE = 0.10
 // 2.02 / 1.91 = 1.06, near parity -- matching both the outcome and the ~40%
 // an established tool gave that fight.
 //
-// [FALSIFIED — 2026-08-22] TWO REAL KNOWLEDGE NEXUS BATTLES SAY THIS IS WRONG,
-// and it is the largest measured error anywhere in this file.
+// [FITTED — 2026-08-22] T11 was 1.175, taken from a published "15 to 20 percent
+// more stats than T10". THREE real Knowledge Nexus battles say that is far too
+// strong, and this value is now fitted to them instead. That is a demotion from
+// [DOC] to [OBS] and it is deliberate.
 //
-// Both were fought at T11 with 185,200 troops against a T10 Mad Scholar's
-// 150,000 -- a 23% headcount advantage on top of the tier -- and both were
-// total defeats, the player's entire army lost:
+// All three were fought at T11 with 185,200 troops against a T10 Mad Scholar's
+// 150,000 -- a 23% headcount advantage on top of the tier. Same beast, same own
+// stats, three different splits, MONOTONE in Infantry share and crossing zero:
 //
-//   R  46/21/33   their survivors 38,519   edge -25.7
-//   S  50/15/35   their survivors 17,600   edge -11.7
+//   R  46/21/33   DEFEAT, whole army lost   edge -25.7
+//   S  50/15/35   DEFEAT, whole army lost   edge -11.7
+//   T  57/15/28   VICTORY, 17,912 left      edge  +9.7
 //
-// The model at 1.175 scores both at about +41. Mean error +59.7 points, which
-// is 2.1x the measured per-battle sd of ~28 -- this is not noise.
+//   T11 mult      R       S       T     mean error
+//    1.175      41.1    40.8    40.6      +50.1   <- the published midpoint
+//    1.150      33.3    33.3    33.4      +42.6   <- floor of the published range
+//    1.120      18.9    18.2    21.2      +28.7
+//    1.100      -7.5    -8.1     4.6       +5.6   <- fitted
+//    1.000     -51.1   -51.4   -50.1      -41.6
 //
-//   T11 mult   R      S      mean error
-//    1.175    41.1   40.8      +59.7   <- shipped
-//    1.150    33.3   33.3      +52.0   <- floor of the documented range
-//    1.100    -7.5   -8.1      +10.9
-//    1.000   -51.1  -51.4      -32.6
+// At 1.175 the model is wrong by 33 to 68 points on EVERY one. The published
+// range does not reach: even its floor leaves +42.6. At 1.10 all three land
+// inside one standard deviation of the measured per-battle noise (~28), and the
+// clear this constant was originally introduced to explain stays plausible
+// (research/kn-consistency.mjs).
 //
-// The documented range does not reach: even its floor leaves +52 points. And
-// 1.10 is the only value that leaves ALL THREE Knowledge Nexus observations
-// plausible at once -- these two defeats and the clear that this constant was
-// introduced to explain (research/kn-consistency.mjs).
+// THIS OVERRIDES THE CONSTANTS FREEZE DECLARED IN COMBAT-RESEARCH sec.13, and
+// saying so plainly is better than pretending the two are consistent. That
+// freeze was about fitting parameters in Forest of Life and Crystal Cave, where
+// the model already scores BELOW the floor a perfect model faces and any
+// further tuning is noise-chasing. This is the opposite regime: a 50-point
+// error, ~3 sigma, on a value never fitted to anything.
 //
-// NOT CHANGED, deliberately. Two magnitudes against ONE opponent cannot
-// separate "the tier multiplier is too big" from "this beast or this room
-// behaves differently", the errors are correlated, and bending a [DOC] constant
-// to fit outcomes is the exact mistake recorded in sec.9 as the 2.7x counter.
-// What settles it is two or three more T11 battles against a DIFFERENT
-// Knowledge Nexus beast. Until then the value stands and the tool says plainly
-// that it is not trusted -- see the T11 warning in MysticSuite.
+// The deciding factor was not the error size. It was that at 1.175 the
+// optimizer recommends ~49/22/29 for this fight -- within a point or two of the
+// 46/21/33 that LOST by 25.7 -- while the 57/15/28 that WON by 9.7 scores below
+// it. The tool was recommending the loser. At 1.10 it recommends 59/17/24.
 //
-// [OPEN] Only the T10/T11 gap is sourced. The lower entries assume the same
-// step compounding downward and are approximations; comparisons between two
-// low tiers are the least trustworthy thing in this file.
+// WHAT IS STILL UNRESOLVED, and it is not small: all three battles are against
+// ONE beast, so this cannot separate "the T11 multiplier is too big" from
+// "Mad Scholar, or Knowledge Nexus, behaves differently". The blast radius is
+// narrow -- nothing else in the data set is T11 -- but a T11 PvP fight would be
+// affected by a value fitted entirely inside one Mystic room.
+//
+// REVERSAL CONDITION: two or three T11 Knowledge Nexus battles against a
+// DIFFERENT beast. If the model tracks them at 1.10, this stands. If it is now
+// too pessimistic against a different opponent, the error belonged to Mad
+// Scholar and 1.175 comes back.
+//
+// Residual, recorded rather than smoothed over: at 1.10 the model still misses
+// 46/21/33 by 17.7 points, and its spread across the three splits is 13.4
+// against reality's 35.4. The level is fixed; the ranking inside this room is
+// still weak.
+//
+// [OPEN] The lower entries assume the same step compounding downward and are
+// approximations; comparisons between two low tiers are the least trustworthy
+// thing in this file. They have NOT been rescaled to match the new T11 -- no
+// data touches them either way.
 export const TIER_STAT_MULTIPLIER = {
-  'T11': 1.175,
+  'T11': 1.10,
   'T10': 1.0,
   'T7-T9': 0.851,
   'T1-T6': 0.724,

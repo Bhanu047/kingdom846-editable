@@ -565,17 +565,15 @@ export default function MysticSuite() {
                       wrong 5 times in 7, so only the COMPARATIVE figure — which
                       survives the bias because it is a difference of two model
                       scores — is shown. */}
-                  {/* T11 is measured to be badly optimistic and the tool says so
-                      rather than quietly serving a recommendation built on it.
-                      Two Knowledge Nexus battles at T11 -- with a 23% headcount
-                      advantage -- were total defeats that the model scored at
-                      about +41. Mean error +59.7, which is 2.1x the per-battle
-                      noise. The constant is [DOC]-sourced so it has not been
-                      bent to fit two battles against one beast, but a player
-                      running T11 deserves to know before acting on the split. */}
+                  {/* The T11 bonus no longer comes from the published 15-20%
+                      figure -- three real Knowledge Nexus battles put it near
+                      10%, and at the published value the optimizer recommended
+                      almost exactly the split that lost worst. All three are
+                      against ONE beast, so the number is provisional and the
+                      player is told rather than left to assume it is settled. */}
                   {yourTier === 'T11' && (
                     <div className="mt-3 rounded-xl border border-amber-300/25 bg-amber-300/[.05] px-3 py-2 text-left text-[10px] leading-relaxed text-amber-100/70">
-                      <b className="text-amber-200/90">T11 is not trusted yet.</b> Two real Knowledge Nexus battles at T11 — both with a 23% headcount advantage — were total defeats that this model scored at about +41. That is a 60-point error, twice the per-battle noise. The T11 bonus is taken from a published 15–20% figure and has not been changed to fit two battles against one beast, but treat any T11 recommendation as unverified until more of them are logged.
+                      <b className="text-amber-200/90">T11 is provisional.</b> The published figure for T11 is 15–20% more stats. Three real Knowledge Nexus battles say that is far too strong — at the published value this model scored all three at about +41 when they actually ran −25.7, −11.7 and +9.7, and it recommended almost exactly the split that lost worst. The bonus is now set to 10%, which puts all three inside the noise. But all three are against the <i>same</i> beast, so it cannot yet tell a wrong tier from a room that simply behaves differently. Treat T11 answers as the best available, not as settled.
                     </div>
                   )}
                   {/* If what the player already fields lands inside the band,

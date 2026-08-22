@@ -1229,7 +1229,9 @@ keep explaining it. Scored across plausible splits
 a clear is plausible and so are two defeats. At **1.175** everything sits near
 +41, and the two defeats are 52–66 points away.
 
-### NOT CHANGED — and why that is not timidity
+### SUPERSEDED BELOW — a third battle arrived and the value did change. §14a records why.
+
+### Why it was held at first
 
 1. **Two magnitudes against one opponent.** The errors are correlated. This
    cannot separate "the tier multiplier is too big" from "this beast, or this
@@ -1254,3 +1256,92 @@ unverified. A model that is confidently wrong is worse than one that says so.
 with the Losses figures. If the error persists across opponents it is the tier
 and the constant moves. If it disappears, it was Mad Scholar or the room, and
 the tier stands.
+
+---
+
+## 14a. Battle T resolves it: T11 moves 1.175 → 1.10  [OBS]
+
+A third Knowledge Nexus battle arrived against the same Mad Scholar, at a third
+split — and it **won**. Three points against one controlled opponent, monotone
+in Infantry share and crossing zero:
+
+| id | split | counts | result | edge |
+|---|---|---|---|---|
+| R | 46/21/33 | 85,192 / 38,892 / 61,116 | DEFEAT, army lost | **−25.7** |
+| S | 50/15/35 | 92,600 / 27,780 / 64,820 | DEFEAT, army lost | **−11.7** |
+| T | 57/15/28 | 105,564 / 27,780 / 51,856 | **VICTORY**, 17,912 left | **+9.7** |
+
+More Infantry, better result, three for three, spanning 35.4 points.
+
+### The level, with a win in the set
+
+§14 held because every magnitude was a defeat, so "the model is too optimistic"
+could not be told from "this beast is just hard". Battle T removes that: the
+set now contains a win, and 1.175 is still wrong on all three
+(`research/kn-tier.mjs`):
+
+| T11 mult | R | S | T | mean error |
+|---|---|---|---|---|
+| **1.175** (published midpoint) | 41.1 | 40.8 | 40.6 | **+50.1** |
+| 1.150 (published floor) | 33.3 | 33.3 | 33.4 | +42.6 |
+| 1.120 | 18.9 | 18.2 | 21.2 | +28.7 |
+| **1.100** | −7.5 | −8.1 | 4.6 | **+5.6** |
+| 1.000 | −51.1 | −51.4 | −50.1 | −41.6 |
+
+Wrong by 33 to 68 points on every battle at the shipped value. Inside one
+standard deviation of the measured noise (~28) on all three at 1.10.
+
+### The deciding factor was not the error size
+
+It was this: at 1.175 the optimizer recommends **49/22/29** for that fight —
+within a point or two of the 46/21/33 that lost by 25.7 — and scores the
+57/15/28 that *won* below it. **The tool was recommending the loser.** At 1.10
+it recommends 59/17/24, band 55–63 / 15–20 / 21–25, and the winning split
+nearly sits inside it.
+
+An error that only moved the level would have been worth recording and leaving.
+One that inverts the advice is not.
+
+### This overrides §13's freeze, and that is said plainly
+
+§13 froze the constants one commit earlier. This unfreezes one. Pretending the
+two are consistent would be worse than admitting the override:
+
+- §13's freeze is about **Forest of Life and Crystal Cave**, where the model
+  already scores *below* the floor a perfect model faces (MAE 18.0 vs 22.6).
+  Tuning there is provably noise-chasing.
+- This is the **opposite regime**: a 50-point error at ~3σ, on a value that was
+  never fitted to anything, in a room the freeze's data does not touch.
+
+The freeze stands for `STAT_PAIR_WEIGHT` and `FRONT_ROW_SPILL`. Neither moved,
+and both were re-checked: the T10 rooms are unaffected because tier = 1.0 there
+(MAE still 18.0, sign 11/16).
+
+### What is still unresolved, and it is not small
+
+**All three battles are against one beast.** This cannot separate "the T11
+multiplier is too big" from "Mad Scholar, or Knowledge Nexus, behaves
+differently". The blast radius is narrow — nothing else in the data set is T11
+— but a T11 PvP fight would now be scored by a value fitted entirely inside one
+Mystic room.
+
+**Reversal condition:** two or three T11 Knowledge Nexus battles against a
+*different* beast. If the model tracks them at 1.10 this stands. If it turns
+pessimistic against a new opponent, the error belonged to Mad Scholar and 1.175
+comes back.
+
+### Residual, recorded rather than smoothed over
+
+At 1.10 the model still misses 46/21/33 by 17.7 points, and its spread across
+the three splits is 13.4 against reality's 35.4. **The level is fixed; the
+ranking inside this room is still weak.** No knob reproduces the monotone order
+with a correct level — `research/kn-order.mjs` sweeps spill × tier and every
+combination that orders all three correctly carries a +40 to +52 level error,
+while every combination with a good level fit orders two of three. That is a
+structural limit, not a constant to turn.
+
+### The UI
+
+The T11 warning added in §14 was rewritten rather than removed: it now says the
+published figure was wrong, what the three battles actually did, that the value
+is 10%, and that one beast cannot settle it.

@@ -37,4 +37,4 @@ console.log(`\n  vs your split      ${(scoreOf(b.split) - scoreOf(played) >= 0 ?
 if (r.baseline) console.log(`  vs played opener   ${(b.survivalEdge - r.baseline.survivalEdge >= 0 ? '+' : '')}${((b.survivalEdge - r.baseline.survivalEdge) * 100).toFixed(1)} pts`)
 console.log('\n  top splits:')
 for (const c of r.candidates.slice(0, 5)) console.log(`    ${c.split.join('/').padEnd(10)} ${((c.survivalEdge - b.survivalEdge) * 100).toFixed(1).padStart(6)}`)
-console.log('\n  (comparative only — thirteen real battles say the absolute number does not predict an outcome)')
+console.log('\n  (comparative only — fourteen real battles say the absolute number does not predict an outcome)')

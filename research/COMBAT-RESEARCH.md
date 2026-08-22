@@ -1024,3 +1024,70 @@ different split was clearly better.
   longer contradicted" — **superseded**. It is contradicted, by paired data
   that did not exist then. Holding at n=1 and n=2 unpaired was still correct;
   paired samples are worth far more than unpaired ones, which is the lesson.
+
+---
+
+## 12. Battle O: a third split against one beast, and the ceiling it exposes  [OBS]
+
+A fourteenth battle arrived — Crystal Cave, **Cesares Appraiser 77/690**,
+60000/45000/45000, the same opponent as battles M and N. That makes **three
+compositions against one controlled opponent**, the strongest comparison in
+this file:
+
+| split | counts | result | edge |
+|---|---|---|---|
+| 50/15/35 | 75000 / 22500 / 52500 | **VICTORY** | **+33.3** |
+| 52/15/33 | 78000 / 22500 / 49500 | DEFEAT | −20.1 |
+| 46/21/33 | 69000 / 31500 / 49500 | DEFEAT | −38.4 |
+
+### The spill change survives, on more evidence than it was made with
+
+`research/triple-cc.mjs`, model order vs reality's order:
+
+| spill | 50/15/35 | 52/15/33 | 46/21/33 | model order | pairwise right |
+|---|---|---|---|---|---|
+| 0.20 | −19.2 | −18.2 | −20.1 | 52 > 50 > 46 | **2/3** |
+| 0.30 | −19.1 | −18.1 | −18.9 | 52 > 46 > 50 | 1/3 |
+| 0.35 | −19.9 | −19.4 | −18.5 | 46 > 52 > 50 | **0/3** |
+
+Reality: 50/15/35 > 52/15/33 > 46/21/33. At the new spill the model gets two of
+three pairwise orderings; at the old one it gets **the entire order backwards**.
+§11's change was made on two pairs and is now supported by a third point that
+was not available when it was made. MAE across all fourteen battles is flat in
+spill (18.0–18.2), and `STAT_PAIR_WEIGHT = 1.09` is still the joint optimum and
+still the only W that ranks both original pairs correctly. Nothing changes.
+
+### The number that matters more than any of that
+
+**52/15/33 and 50/15/35 differ by 3,000 Infantry and 3,000 Archers — 2% of a
+150,000 army. They finished 53.4 points apart, one a clear win and one a clear
+loss.**
+
+No composition model can produce a 53-point swing from a 2% change in
+composition, and none should try. The model's spread across all three splits is
+**1.8 points**; reality's spread is **71.7**. A factor of forty.
+
+This is the same finding as D vs E in Forest of Life (identical fight, 43.7
+points apart, one won and one lost) but harder to argue with, because these are
+three different compositions rather than a repeat. Both say the same thing: at
+Mystic Trials scale, **per-battle randomness dominates composition**, and the
+outcome of any single stage against a beast this close is near a coin flip
+regardless of the split fielded.
+
+### What follows for the tool
+
+1. The optimizer's job is to rank compositions **over many attempts**. That is
+   what §11's calibration improved and what battle O further supports.
+2. The tool must not imply that a specific split will win a specific battle,
+   and must not imply that a 1–2 point model gap is worth acting on. Both are
+   now measured falsehoods, not merely unproven claims.
+3. The near-optimal **band**, not the headline split, is the honest output. The
+   UI states the 2%/53-point result directly, because it is the clearest
+   evidence in this file for why.
+
+### Open, and not to be guessed
+
+Why 50/15/35 beat 52/15/33 is **not** established by this data. Reality's
+ordering could be real signal, or one draw of a coin. Three battles, one each,
+cannot separate those, and this file will not pretend otherwise. What *is*
+established is that spill 0.35 ranked all three backwards and 0.20 does not.

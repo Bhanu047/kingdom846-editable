@@ -1,3 +1,8 @@
+// NOTE: this file covers Forest of Life only (battles A-J). Crystal Cave
+// battles K-N, and the combined 13-battle table used to fit FRONT_ROW_SPILL and
+// STAT_PAIR_WEIGHT, live in research/spill-mae.mjs and research/fit-weight2.mjs.
+// See COMBAT-RESEARCH.md sec.11 for what those two rooms together established.
+//
 // THE FIRST REAL CALIBRATION DATA. Three Forest of Life battles with known
 // outcomes, all fought with the SAME split (50/15/35, the played opener),
 // against near-identical opponents. Transcribed from Battle Details screens.

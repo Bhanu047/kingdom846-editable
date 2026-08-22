@@ -105,6 +105,7 @@ export function optimizeTrialSplit({
   stepPercent = 5,
   bounds = null,
   yourTier = DEFAULT_TIER,
+  enteredCounts = null,
 } = {}) {
   const total = Math.max(0, Math.floor(num(totalTroops)))
   if (total <= 0 || armyTotal(enemyArmy) <= 0) {
@@ -180,6 +181,42 @@ export function optimizeTrialSplit({
     archers: spanOf(2),
   }
 
+  // The split the player ACTUALLY fielded, scored on the same scale.
+  //
+  // Without this the panel could only say "+1.2 points better than the opener",
+  // which reads as an improvement worth acting on. It usually is not: the
+  // measured spread between two identical fights is ~17 points, so a 1.2-point
+  // gap is inside the noise by a factor of fourteen. Knowing whether what you
+  // are already fielding sits INSIDE the near-optimal band is the useful
+  // answer, and it is often yes.
+  const inBand = (sp) => near.length > 0
+    && sp[0] >= band.infantry[0] && sp[0] <= band.infantry[1]
+    && sp[1] >= band.cavalry[0] && sp[1] <= band.cavalry[1]
+    && sp[2] >= band.archers[0] && sp[2] <= band.archers[1]
+
+  let entered = null
+  if (enteredCounts) {
+    const c = TROOP_TYPES.map((t, i) => Math.max(0, num(Array.isArray(enteredCounts) ? enteredCounts[i] : enteredCounts[t])))
+    const sum = c.reduce((a, b) => a + b, 0)
+    if (sum > 0) {
+      // Round to whole percentage points and force them to total 100, so the
+      // band test compares like with like against the grid the optimizer walked.
+      const raw = c.map((v) => (v / sum) * 100)
+      const sp = raw.map((v) => Math.round(v))
+      const drift = 100 - sp.reduce((a, b) => a + b, 0)
+      if (drift !== 0) {
+        const i = raw.indexOf(Math.max(...raw))
+        sp[i] += drift
+      }
+      const ev = evaluate(sp[0], sp[1], sp[2])
+      entered = {
+        ...ev,
+        inBand: inBand(sp),
+        gapToBest: best ? best.survivalEdge - ev.survivalEdge : 0,
+      }
+    }
+  }
+
   // The spread on the recommended split, with the abilities rolled per round
   // rather than averaged. This is the honest error bar on the score -- NOT a
   // win probability. See the note below on why we do not publish one.
@@ -200,5 +237,5 @@ export function optimizeTrialSplit({
   // where an established Monte Carlo tool gives ~50%. A model that is confidently
   // wrong is worse than one that stays quiet, so this returns a comparative score
   // and the callers say plainly that it does not predict the outcome.
-  return { candidates, best, baseline, band, anyClears, distribution, totalTroops: total, zone, step }
+  return { candidates, best, baseline, band, entered, anyClears, distribution, totalTroops: total, zone, step }
 }

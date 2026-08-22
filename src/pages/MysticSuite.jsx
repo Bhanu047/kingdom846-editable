@@ -335,6 +335,7 @@ export default function MysticSuite() {
       totalTroops: yourTotal, yourStats, enemyArmy, zone: trial,
       stepPercent: Math.max(1, Math.round(n(sparsity, 0.05) * 100)),
       bounds: { minInfantry, maxInfantry, minCavalry, maxCavalry, minArchers, maxArchers },
+      enteredCounts: TROOPS.map((t) => n(yours[t.key].count)),
     }))
     setRunId((id) => id + 1)
     setLogged(null)
@@ -557,12 +558,28 @@ export default function MysticSuite() {
                       wrong 5 times in 7, so only the COMPARATIVE figure — which
                       survives the bias because it is a difference of two model
                       scores — is shown. */}
+                  {/* If what the player already fields lands inside the band,
+                      say so. A "+1.2 points better" line on its own reads as an
+                      improvement worth acting on; against a measured 17-point
+                      spread between identical fights it is nothing. */}
+                  {result.entered && (
+                    <div className="mt-2 text-[11px] leading-relaxed">
+                      {result.entered.inBand ? (
+                        <span className="text-emerald-300/80">Your {result.entered.split.join(' / ')} is already inside that band — no change needed.</span>
+                      ) : (
+                        <span className="text-parchment/60">Your {result.entered.split.join(' / ')} scores {(result.entered.gapToBest * 100).toFixed(1)} points below this{Math.abs(result.entered.gapToBest * 100) < 5 ? <span className="text-parchment/40"> — smaller than the noise between two identical fights, so treat it as a nudge, not a fix</span> : null}.</span>
+                      )}
+                    </div>
+                  )}
+                  {/* Suppressed when the player already fielded the opener --
+                      the line above then says the same thing in better words,
+                      and two versions of one number is the "extra stuff". */}
                   <div className="mt-2 text-[10px] leading-relaxed text-parchment/40">
-                    {result.baseline ? <><b className="text-parchment/70">{(result.best.survivalEdge - result.baseline.survivalEdge) >= 0 ? '+' : ''}{((result.best.survivalEdge - result.baseline.survivalEdge) * 100).toFixed(1)} points better than the played opener</b> · </> : null}ranks splits, does not predict the outcome
+                    {result.baseline && !(result.entered && result.entered.split.join('/') === result.baseline.split.join('/')) ? <><b className="text-parchment/70">{(result.best.survivalEdge - result.baseline.survivalEdge) >= 0 ? '+' : ''}{((result.best.survivalEdge - result.baseline.survivalEdge) * 100).toFixed(1)} points better than the played opener</b> · </> : null}ranks splits, does not predict the outcome
                   </div>
                   <details className="group mt-1">
                     <summary className="cursor-pointer list-none text-[10px] uppercase tracking-wider text-gold-bright/45 hover:text-gold-bright/80">Why <span className="inline-block transition-transform group-open:rotate-90">›</span></summary>
-                    <div className="mt-1.5 text-left text-[10px] leading-relaxed text-parchment/45">Best of {result.candidates.length} splits tested{result.band && result.band.count > 1 ? <>, {result.band.count} of them within a point of each other — the exact headline number isn't worth chasing</> : null}. <b className="text-amber-200/80">A single Mystic battle is close to a coin flip and no model can call it.</b> Measured on seven real Forest of Life fights, all at the same split: outcomes ran from −28.5% to +40.0%, five wins and two losses. Two of those seven were the <i>same</i> fight — same beast, same stats, same split — and finished 43.7 points apart, one a victory and one a defeat. The model scored all seven as losses, so its absolute number is not shown; the difference between two splits is, because a shared bias cancels in a difference. Use it to choose a composition over many attempts, never to predict the next battle.</div>
+                    <div className="mt-1.5 text-left text-[10px] leading-relaxed text-parchment/45">Best of {result.candidates.length} splits tested{result.band && result.band.count > 1 ? <>, {result.band.count} of them within a point of each other — the exact headline number isn't worth chasing</> : null}. <b className="text-amber-200/80">A single Mystic battle is close to a coin flip and no model can call it.</b> Measured on thirteen real battles across Forest of Life and Crystal Cave: at one unchanged split, outcomes ran from −41.6% to +40.0%. Two of them were the <i>same</i> fight — same beast, same stats, same split — and finished 43.7 points apart, one a victory and one a defeat. That 17-point noise floor is why no absolute win/lose number is shown here, and why gaps of a point or two between splits are not worth chasing. What those battles <i>did</i> settle is the ordering: two paired fights, same beast at two different splits, corrected this model's front-row damage share. Use it to choose a composition over many attempts, never to predict the next battle.</div>
                   </details>
                 </div>
               </div>

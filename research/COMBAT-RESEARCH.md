@@ -887,8 +887,13 @@ Recorded so they are not re-tried:
 6. **TrueGold (TG0–TG8)** boosts T10 troops and is a separate axis from tier;
    the UI collects it but no model uses it.
 7. **Lower-tier multipliers** (T1–T6, T7–T9) are extrapolated, not sourced.
-8. **Why we stay heavier on Infantry than players field.** Now narrowed, not
-   resolved. It is **not** the constants (§9 sweeps them all) and **not** the
+8. ~~Why we stay heavier on Infantry than players field.~~ — **inverted, and
+   the premise was wrong.** Paired real outcomes (§11) say the player's own
+   Infantry-heavy split wins more often than the Cavalry-heavier answer we had
+   been chasing. The gap being closed was a gap against a proxy tool, not
+   against the game. Retained below for the method:
+
+   Now narrowed, not resolved. It is **not** the constants (§9 sweeps them all) and **not** the
    sqrt exponent or the ranking objective (both rejected below). It is the
    combination of front-row targeting with a damage term that ignores the
    defender's headcount, which makes a protected back row free. Settling it
@@ -897,3 +902,125 @@ Recorded so they are not re-tried:
    would not by itself close a gap this size, since the two documented random
    elements (Ambush 20%, Volley 10%) are per-troop and average out almost
    exactly at army scale.
+
+---
+
+## 11. `FRONT_ROW_SPILL` re-fitted on real outcomes: 0.35 → 0.20  [OBS]
+
+### The paired data that forced it
+
+Four Crystal Cave battles arrived, and two of them form a **second paired
+comparison** — the same beast fought at two different splits, which controls
+the opponent and cancels most of the per-battle noise. There are now two such
+pairs, in two different rooms:
+
+| room | beast | 50/15/35 | 46/21/33 |
+|---|---|---|---|
+| Forest of Life | Starving 391/553.3 | **WON +24.0** | LOST −20.8 |
+| Crystal Cave | Cesares Appraiser 77/690 | **WON +33.3** | LOST −38.4 |
+
+Reality ranked 50/15/35 above 46/21/33 both times, by 44.8 and 71.7 points.
+At `FRONT_ROW_SPILL = 0.35` our model ranked it the **other way** both times.
+
+### The level fit cannot see this parameter at all
+
+Before changing anything, the obvious check: does the size of the wins pin
+spill down? Thirteen battles with recorded losses (nine Forest of Life, four
+Crystal Cave), `research/spill-mae.mjs`:
+
+| spill | MAE all | MAE FoL | MAE CC | bias | sign right |
+|---|---|---|---|---|---|
+| 0.00 | 19.3 | 17.6 | 23.1 | +3.9 | 9/13 |
+| 0.10 | 19.4 | 17.8 | 23.0 | +3.7 | 9/13 |
+| 0.20 | 19.3 | 17.5 | 23.2 | +3.4 | 9/13 |
+| 0.30 | 19.2 | 17.3 | 23.5 | +2.6 | 9/13 |
+| 0.35 | 19.3 | 17.4 | 23.8 | +1.5 | 9/13 |
+
+**Flat.** Sweeping the parameter end to end moves MAE by 0.2 points and moves
+sign accuracy not at all. So `FRONT_ROW_SPILL` is **not identifiable from the
+level data**, and the original calibration table — which read a clean optimum
+at 0.35 out of six proxy reports — was reading structure out of noise.
+
+### What does discriminate it
+
+Only the paired data. `research/fit-spill2.mjs`, scoring 50/15/35 minus
+46/21/33 (positive = ranked the way reality ranked them):
+
+| spill | FoL pair | CC pair | ranks correctly |
+|---|---|---|---|
+| 0.00 | +0.4 | +1.5 | 2/2 |
+| 0.10 | +0.2 | +1.6 | 2/2 |
+| 0.20 | +0.1 | +0.8 | **2/2** |
+| 0.25 | −0.1 | +0.4 | 1/2 |
+| 0.30 | −0.5 | −0.2 | 0/2 |
+| 0.35 | −1.7 | −1.4 | 0/2 |
+
+**0.20** is the top of the range that gets both right with clearance from the
+sign flip. Changed.
+
+### `STAT_PAIR_WEIGHT` re-checked jointly, and it holds
+
+Spill and the stat-pair weight are coupled — both change which troop takes
+damage — so W was re-fitted at the new spill rather than assumed to carry over
+(`research/fit-weight2.mjs`):
+
+| W | MAE all | MAE FoL | bias | pairs right |
+|---|---|---|---|---|
+| 1.06 | 20.1 | 18.7 | −4.1 | 1/2 |
+| **1.09** | **19.3** | **17.5** | +3.4 | **2/2** |
+| 1.12 | 20.7 | 19.6 | +8.3 | 1/2 |
+
+1.09 is still both the MAE minimum and the only value that ranks both pairs
+correctly. The two parameters are not fighting each other. `STAT_PAIR_WEIGHT`
+stays at 1.09, unchanged.
+
+### An out-of-sample check nobody arranged
+
+The original spill fit used six reports across **three** zones: Knowledge
+Nexus, Molten Fort, Forest of Life. Crystal Cave was not in it. Crystal Cave's
+documented community opener is **60/20/20** — far more Infantry-heavy than
+Forest of Life's 50/15/35.
+
+At the new spill the optimizer returns **61/16/23** for Crystal Cave. At the
+old 0.35 it returned ~55/19/26. The move is toward a documented opener that
+played no part in the fit.
+
+### Two caveats, stated because this constant is weakly identified
+
+1. **n = 2 pairs.** A sign test on two agreements gives p = 0.25. This is not
+   proof. It is the best evidence available, and it replaces a basis that was
+   a third-party tool's average answer — a proxy, not ground truth.
+2. **Our own separation on those pairs is 0.1–1.5 points**, against real gaps
+   of 44.8 and 71.7 and a measured noise floor of ~17. The model does not
+   genuinely *see* the difference between these two splits; it is picking a
+   side of a coin. What changed is which side, and the side now agrees with
+   the player's record: 50/15/35 is **7W–4L**, 46/21/33 is **1W–2L**.
+
+### The flatness is now surfaced, not hidden
+
+`research/spill-flat.mjs` measures how sharp the optimum is. At spill 0.20, on
+Forest of Life, **28 of 1326 splits score within one point** of the winner,
+spanning 48–58 / 14–24 / 22–34. Both candidate splits sit inside that band.
+
+That band is what the UI reports. The engine's quote for the player's own
+Forest of Life fight is now:
+
+```
+RECOMMENDED   53 / 19 / 28
+also fine     47–59 / 13–25 / 22–34   (105 of 5151 within a point)
+you fielded   50 / 15 / 35
+vs your split      +1.2 pts
+```
+
+Which is the honest answer: *what you are already playing is fine, and this is
+a marginal tweak inside the noise* — not the previous implication that a
+different split was clearly better.
+
+### What this supersedes
+
+- §9's spill calibration table (fitted to reference-tool means) — **superseded**.
+  It is retained above as a record of the method, not as live justification.
+- The §"UPDATE — battle J" conclusion that "`FRONT_ROW_SPILL = 0.35` is no
+  longer contradicted" — **superseded**. It is contradicted, by paired data
+  that did not exist then. Holding at n=1 and n=2 unpaired was still correct;
+  paired samples are worth far more than unpaired ones, which is the lesson.

@@ -67,35 +67,63 @@ export const AMBUSH_SHARE = 0.20
 // 35% and an established optimizer says 21-33% across four runs. We were the
 // outlier against both.
 //
-// **This is the one fitted number in this file, and it is fitted to references
-// rather than invented.** Swept 0 to 0.45 against five of the player's real
-// reports across three zones, scored against TWO independent targets at once:
+// **This is the one fitted number in this file.** It was first fitted to the
+// MEAN answer of two reference optimizers over six reports, which put it at
+// 0.35. Real battles have since overruled that. Re-fitted to the player's own
+// outcomes, it is 0.20 -- and the demotion of Frakinator from target to proxy
+// is the whole reason.
 //
-// Calibrated against the MEAN of the references over six real reports, not
-// against any single one. That distinction matters: across six near-identical
-// Forest of Life fights the reference optimizer's own answer scatters by
-// +/-6.7 points on Archers (21, 33, 33, 21, 39, 33). Fitting to individual
-// samples of a signal that noisy just chases its noise; fitting to its mean is
-// the statistically correct target.
+// THE LEVEL FIT CANNOT SEE THIS PARAMETER AT ALL. Across thirteen real battles
+// with recorded losses (nine Forest of Life, four Crystal Cave), sweeping spill
+// end to end barely moves the error (research/spill-mae.mjs):
 //
-//   spill   our mean split      vs Frakinator mean   vs opener   combined
-//   0.25    56.2 / 19.0 / 24.8         10.7             20.3        31.0
-//   0.30     53.5 / 20.0 / 26.5         7.3             17.0        24.3
-//   0.35 <-- 51.2 / 21.0 / 27.8         5.7             14.3        20.0
-//   0.40     48.8 / 22.0 / 29.2         7.7             14.0        21.7
-//   0.45     46.0 / 23.0 / 31.0        11.7             16.0        27.7
+//   spill   MAE all   MAE FoL   MAE CC    sign right
+//   0.00      19.3      17.6      23.1       9/13
+//   0.20      19.3      17.5      23.2       9/13
+//   0.35      19.3      17.4      23.8       9/13
 //
-// Reference means over those six reports: Frakinator 51.7 / 18.0 / 30.0,
-// community opener 50 / 15 / 35. At 0.35 our mean lands within ~1 point on
-// Infantry and ~2 on Archers, sits inside what "absorbs most" allows, keeps
-// Knowledge Nexus -- the only fight with a known real outcome -- resolving as
-// the win it actually was, and reproduces Molten Fort's reference answer
-// (52/21/27) exactly.
+// Flat. So this constant is NOT identifiable from how big the wins were, and
+// any claim to have fitted it that way -- including the table above -- is
+// reading structure out of noise.
 //
-// It is NOT the 2.7x counter mistake repeated: that bent a DOCUMENTED constant
-// to fit one tool's output. This is an undocumented structural quantity, bounded
-// by its source, calibrated against two independent references over six reports.
-export const FRONT_ROW_SPILL = 0.35
+// WHAT DOES DISCRIMINATE IT is the paired data: two fights in two different
+// rooms where the SAME beast was fought at two different splits, so the
+// opponent is controlled and the noise largely cancels.
+//
+//   room            beast                 50/15/35     46/21/33
+//   Forest of Life  Starving 391/553.3     WON +24.0   LOST -20.8
+//   Crystal Cave    Appraiser  77/690      WON +33.3   LOST -38.4
+//
+// Reality ranked 50/15/35 above 46/21/33 both times, by 44.8 and 71.7 points.
+// Our score for the first minus the second, per spill (research/fit-spill2.mjs)
+// -- positive means we ranked them the way reality did:
+//
+//   spill    FoL     CC    ranks correctly
+//   0.00     0.4    1.5         2/2
+//   0.10     0.2    1.6         2/2
+//   0.20     0.1    0.8         2/2
+//   0.25    -0.1    0.4         1/2
+//   0.30    -0.5   -0.2         0/2
+//   0.35    -1.7   -1.4         0/2   <-- the old value, wrong on both
+//
+// 0.20 is the top of the range that gets both right while staying clear of the
+// sign flip. It is chosen on the only evidence that discriminates it.
+//
+// TWO HONEST CAVEATS, because this is a weakly-identified constant:
+//
+// 1. n = 2 pairs. A sign test on two agreements gives p = 0.25. That is not
+//    proof; it is the best evidence available, and it beats the previous
+//    basis, which was a third-party tool's average answer.
+// 2. Our own separation on those pairs is 0.1 to 1.5 points, against real gaps
+//    of 44.8 and 71.7 and a measured noise floor of ~17. The model does not
+//    genuinely SEE the difference between these two splits -- it is picking a
+//    side of a coin. What changed is which side, and the side now matches the
+//    player's record (50/15/35 is 7W-4L, 46/21/33 is 1W-2L).
+//
+// The flatness is real and is reported to the user rather than hidden: at 0.20,
+// 28 of 1326 splits score within one point of the winner, spanning 48-58 /
+// 14-24 / 22-34 (research/spill-flat.mjs). That band is what the UI shows.
+export const FRONT_ROW_SPILL = 0.20
 
 // How the Attack/Defense pair is weighted against the Lethality/Health pair.
 //

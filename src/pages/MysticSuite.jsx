@@ -84,88 +84,85 @@ export const TROOP_COLORS = { infantry: '#d9b94e', cavalry: '#7f9ed6', archers: 
 
 const MEDALS = ['🥇', '🥈', '🥉']
 
-// A ranked composition list rendered as an actual diverging bar chart
-// (a "tornado chart") rather than a styled list of rows -- each candidate
-// split gets one horizontal bar growing from a shared zero line, right for
-// a winning margin and left for a losing one, so the whole ranked set reads
-// as one chart with a real sense of scale instead of a stack of separate
-// cards. Margin shows as a percentage of your total troops committed, not
-// a raw troop count -- a bare number like "-2,271" doesn't mean anything
-// without knowing your army size, but "-2.3%" reads the same regardless.
+// Ranked candidate splits.
+//
+// This was a diverging bar chart of each split's score, which failed badly on
+// the data it actually gets: a good search returns candidates that are all
+// close together (43.1% down to 42.3% is typical), so every bar rendered
+// near-full-width and identical. The 0.8 points that decide the ranking were
+// invisible while the bar screamed for attention, and the composition swatch
+// -- the part a player actually acts on -- was squeezed into 36px.
+//
+// So the bar now encodes the COMPOSITION, which genuinely differs row to row
+// and is what you go and do in-game. The score moves to its own column with
+// its gap from the best, where a 0.1 difference is legible as text instead of
+// being lost in a pixel of bar length.
 export function CompositionChart({ items, total }) {
   const reveal = useReveal()
   if (!items.length) return null
-  const pcts = items.map((c) => total > 0 ? (c.margin / total) * 100 : 0)
-  const maxV = Math.max(0, ...pcts), minV = Math.min(0, ...pcts)
-  const span = Math.max(0.001, maxV - minV)
-  const at = (v) => (v - minV) / span * 100
-  const zero = at(0)
-  const ticks = [minV, minV + span / 2, maxV]
+  const scores = items.map((c) => (total > 0 ? (c.margin / total) * 100 : 0))
+  const bestScore = Math.max(...scores)
+  const legend = [['infantry', 'INF'], ['cavalry', 'CAV'], ['archers', 'ARC']]
+
   return (
     <div className="rounded-2xl border border-gold/15 bg-[#07101e] p-3 sm:p-4">
-      <div className="space-y-1">
+      <div className="mb-2 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          {legend.map(([key, label]) => (
+            <span key={key} className="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-wider text-parchment/45">
+              <span className="h-2 w-2 rounded-sm" style={{ background: TROOP_COLORS[key] }} />{label}
+            </span>
+          ))}
+        </div>
+        <span className="text-[9px] uppercase tracking-wider text-parchment/30">vs best</span>
+      </div>
+
+      <div className="space-y-1.5">
         {items.map((c, i) => {
-          const v = pcts[i], win = v >= 0, end = at(v)
-          const left = Math.min(zero, end), width = Math.max(0.4, Math.abs(end - zero))
+          const score = scores[i]
+          const delta = score - bestScore
+          const parts = [
+            { key: 'infantry', v: c.composition.infantry * 100 },
+            { key: 'cavalry', v: c.composition.cavalry * 100 },
+            { key: 'archers', v: c.composition.archers * 100 },
+          ]
           return (
             <div key={i} className="flex items-center gap-2">
-              <div className="flex w-[92px] shrink-0 items-center gap-1.5 sm:w-[124px]">
-                <span className={`grid h-5 w-5 shrink-0 place-items-center rounded-full text-[10px] font-black ${i < 3 ? '' : 'border border-gold/20 bg-black/30 text-parchment/40'}`}>{i < 3 ? MEDALS[i] : <span className="text-[8px]">#{i + 1}</span>}</span>
-                <div className="hidden h-3 w-9 shrink-0 overflow-hidden rounded-full border border-gold/15 sm:flex">
-                  <div style={{ width: `${c.composition.infantry * 100}%`, background: TROOP_COLORS.infantry }} />
-                  <div style={{ width: `${c.composition.cavalry * 100}%`, background: TROOP_COLORS.cavalry }} />
-                  <div style={{ width: `${c.composition.archers * 100}%`, background: TROOP_COLORS.archers }} />
+              <span className={`grid h-5 w-5 shrink-0 place-items-center rounded-full text-[10px] font-black ${i < 3 ? '' : 'border border-gold/20 bg-black/30 text-parchment/40'}`}>
+                {i < 3 ? MEDALS[i] : <span className="text-[8px]">#{i + 1}</span>}
+              </span>
+
+              {/* The bar IS the composition: segment widths are the split. */}
+              <div className="flex h-7 min-w-0 flex-1 overflow-hidden rounded-md border border-gold/10">
+                {parts.map((p) => (
+                  <div
+                    key={p.key}
+                    className="flex items-center justify-center overflow-hidden transition-[width] duration-700"
+                    style={{
+                      width: reveal ? `${p.v}%` : '0%',
+                      background: TROOP_COLORS[p.key],
+                      transitionDelay: `${i * 60}ms`,
+                    }}
+                  >
+                    {p.v >= 9 && <span className="font-mono text-[10px] font-bold tabular-nums text-black/70">{Math.round(p.v)}</span>}
+                  </div>
+                ))}
+              </div>
+
+              <div className="w-[62px] shrink-0 text-right sm:w-[76px]">
+                <div className="font-mono text-[11px] font-bold tabular-nums text-parchment/85">{score.toFixed(1)}%</div>
+                <div className={`font-mono text-[9px] tabular-nums ${delta >= -0.001 ? 'text-emerald-300/80' : 'text-parchment/35'}`}>
+                  {delta >= -0.001 ? 'best' : delta.toFixed(1)}
                 </div>
-                <span className="whitespace-nowrap font-mono text-[10px] font-semibold tabular-nums text-parchment/75">{Math.round(c.composition.infantry * 100)}/{Math.round(c.composition.cavalry * 100)}/{Math.round(c.composition.archers * 100)}</span>
               </div>
-              <div className="relative h-5 flex-1">
-                <span className="absolute inset-y-0 w-px bg-gold/25" style={{ left: `${zero}%` }} />
-                <span
-                  className="absolute inset-y-[3px] rounded-full"
-                  style={{
-                    left: `${left}%`, width: `${width}%`,
-                    background: win ? 'linear-gradient(90deg,rgba(52,211,153,.55),#6ee7b7)' : 'linear-gradient(270deg,rgba(248,113,113,.55),#fca5a5)',
-                    transformOrigin: win ? 'left' : 'right',
-                    transform: reveal ? 'scaleX(1)' : 'scaleX(0)',
-                    transition: `transform .9s cubic-bezier(.16,1,.3,1) ${i * 70}ms`,
-                  }}
-                />
-              </div>
-              <span className={`w-[46px] shrink-0 whitespace-nowrap text-right font-mono text-[10px] font-bold tabular-nums sm:w-[54px] sm:text-[11px] ${win ? 'text-emerald-300' : 'text-red-300'}`}>{v >= 0 ? '+' : ''}{v.toFixed(1)}%</span>
             </div>
           )
         })}
-      </div>
-      <div className="mt-2 flex text-[9px] text-parchment/30">
-        <span className="w-[92px] shrink-0 sm:w-[124px]" />
-        <span className="flex flex-1 justify-between">{ticks.map((t, i) => <span key={i}>{t >= 0 ? '+' : ''}{t.toFixed(0)}%</span>)}</span>
-        <span className="w-[46px] shrink-0 sm:w-[54px]" />
       </div>
     </div>
   )
 }
 
-// Four small L-shaped corner brackets, like a targeting reticle or an
-// official-document frame -- reads as "this panel matters" rather than a
-// plain box. Parent must be position:relative.
-function CornerAccents({ color = 'rgba(226,199,125,.55)' }) {
-  return (
-    <>
-      <span className="pointer-events-none absolute left-2 top-2 h-3 w-3 border-l-2 border-t-2" style={{ borderColor: color }} />
-      <span className="pointer-events-none absolute right-2 top-2 h-3 w-3 border-r-2 border-t-2" style={{ borderColor: color }} />
-      <span className="pointer-events-none absolute bottom-2 left-2 h-3 w-3 border-b-2 border-l-2" style={{ borderColor: color }} />
-      <span className="pointer-events-none absolute bottom-2 right-2 h-3 w-3 border-b-2 border-r-2" style={{ borderColor: color }} />
-    </>
-  )
-}
-
-// A component defined inside another component's render body gets a new
-// function identity on every render, which makes React treat it as a
-// different component type and remount it -- restarting any inner
-// useCountUp animation every single re-render. Since the page header's
-// clock re-renders the whole tree every second, that turned the "Your
-// Best Split" / "Opponent" totals below into numbers that never stopped
-// climbing. Defining it at module scope keeps its identity stable.
 function ArmyCard({ side, label, border, glow, align, reveal, accent }) {
   const total = Math.max(0, side.infantry) + Math.max(0, side.cavalry) + Math.max(0, side.archers)
   return (
@@ -183,6 +180,20 @@ function ArmyCard({ side, label, border, glow, align, reveal, accent }) {
         ))}
       </div>
     </div>
+  )
+}
+
+// Four small L-shaped corner brackets, like a targeting reticle or an
+// official-document frame -- reads as "this panel matters" rather than a
+// plain box. Parent must be position:relative.
+function CornerAccents({ color = 'rgba(226,199,125,.55)' }) {
+  return (
+    <>
+      <span className="pointer-events-none absolute left-2 top-2 h-3 w-3 border-l-2 border-t-2" style={{ borderColor: color }} />
+      <span className="pointer-events-none absolute right-2 top-2 h-3 w-3 border-r-2 border-t-2" style={{ borderColor: color }} />
+      <span className="pointer-events-none absolute bottom-2 left-2 h-3 w-3 border-b-2 border-l-2" style={{ borderColor: color }} />
+      <span className="pointer-events-none absolute bottom-2 right-2 h-3 w-3 border-b-2 border-r-2" style={{ borderColor: color }} />
+    </>
   )
 }
 
@@ -486,8 +497,8 @@ export default function MysticSuite() {
                 <div className="stagger-in rounded-2xl border border-gold/10 bg-white/[.025] p-4"><div className="text-[9px] uppercase tracking-wider text-parchment/35">Archers</div><div className="mt-1 font-mono text-xl font-bold text-parchment"><CountUp value={result.totalTroops * result.best.composition.archers} format={fmt} /></div></div>
                 <div className="stagger-in rounded-2xl border border-gold/10 bg-white/[.025] p-4"><div className="text-[9px] uppercase tracking-wider text-parchment/35">Compositions Tested</div><div className="mt-1 font-mono text-xl font-bold text-parchment"><CountUp value={result.candidates.length} /></div></div>
               </div>
-              <div>
-                <div className="mb-2 text-[10px] font-bold uppercase tracking-wider text-parchment/40">Top Compositions By Margin</div>
+              <div data-report-clone="ranked-splits">
+                <div className="mb-2 text-[10px] font-bold uppercase tracking-wider text-parchment/40">Top Splits Ranked</div>
                 <CompositionChart items={top} total={result.totalTroops} />
               </div>
             </div>

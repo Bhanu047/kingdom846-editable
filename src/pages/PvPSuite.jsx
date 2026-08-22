@@ -508,8 +508,8 @@ export default function PvPSuite() {
                 <div className="stagger-in rounded-2xl border border-gold/10 bg-white/[.025] p-4"><div className="text-[9px] uppercase tracking-wider text-parchment/35">Archers</div><div className="mt-1 font-mono text-xl font-bold text-parchment"><CountUp value={sweepResult.totalTroops * sweepResult.best.composition.archers} format={fmt} /></div></div>
                 <div className="stagger-in rounded-2xl border border-gold/10 bg-white/[.025] p-4"><div className="text-[9px] uppercase tracking-wider text-parchment/35">Compositions Tested</div><div className="mt-1 font-mono text-xl font-bold text-parchment"><CountUp value={sweepResult.candidates.length} /></div></div>
               </div>
-              <div>
-                <div className="mb-2 text-[10px] font-bold uppercase tracking-wider text-parchment/40">Top Compositions By Margin</div>
+              <div data-report-clone="ranked-splits">
+                <div className="mb-2 text-[10px] font-bold uppercase tracking-wider text-parchment/40">Top Splits Ranked</div>
                 <CompositionChart items={sweepTop} total={sweepResult.totalTroops} />
               </div>
             </div>

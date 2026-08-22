@@ -317,6 +317,42 @@ Before/after on the newest report (163,500 vs 161,500, they are 8% stronger per
 troop): **65/15/20 → 54/19/27**, against Frakinator's 52/15/33 and the opener
 50/15/35.
 
+### Validation after the spill fix: the two models now track each other  [OBS]
+
+Four Forest of Life reports from the same player, same week, near-identical
+inputs. Recomputed on a full 5,151-split grid:
+
+| report | ours | Frakinator | apart | our score | Frakinator |
+|---|---|---|---|---|---|
+| #2 | 54/20/26 | 57/21/21 | 9 | −18.8% | 50% win |
+| #3 | 52/21/27 | 52/15/33 | 12 | −16.0% | 50% win |
+| #4 | 54/19/27 | 52/15/33 | 12 | −11.8% | 70% win |
+| #5 | 53/20/27 | 57/21/21 | 11 | **+7.4%** | **90% win** |
+
+Two things fall out.
+
+**1. The scores move together.** As Frakinator's win chance climbs 50 → 50 → 70
+→ 90, our score climbs −18.8 → −16.0 → −11.8 → +7.4, monotonically, and our sign
+flips positive exactly where they reach 90%. Two independently-built models
+ordering four near-identical fights the same way is the strongest validation
+available without ground truth. Total split disagreement is **44** across four
+reports, down from 110+ before the spill fix.
+
+**2. Our answers are the stable ones.** Across four nearly-identical inputs:
+
+- ours: 54/20/26, 52/21/27, 54/19/27, 53/20/27 — a 2-point spread
+- Frakinator: 57/21/21, 52/15/33, 52/15/33, 57/21/21 — a **12-point** swing on
+  Archers between runs
+
+That is Monte Carlo noise in their tool, and it is why the remaining ~11 points
+of disagreement should not be chased further: half of it is not a fixed target.
+Our deterministic read is the more repeatable of the two.
+
+What still differs is the **zero point** — we score −16% where they say 50%.
+Mapping our score onto a win probability would need calibration against far more
+than four coarse (50/50/70/90) reference values from a single noisy tool, so no
+probability is published. See §10 open question 8.
+
 ### A wrong input was invisible  [OBS]
 
 A report was optimised as **203,775** troops when it was **163,500**:

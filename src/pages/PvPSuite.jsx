@@ -520,11 +520,10 @@ export default function PvPSuite() {
               {sweepResult.distribution && (
                 <div className="stagger-in rounded-2xl border border-gold/12 bg-white/[.02] p-4">
                   <div className="text-[9px] uppercase tracking-wider text-parchment/35">How much to read into the score</div>
-                  <div className="mt-1.5 font-mono text-sm text-parchment/80">{(sweepResult.distribution.meanEdge * 100).toFixed(1)}% ± {(sweepResult.distribution.stdDev * 100).toFixed(1)} across {sweepResult.distribution.trials} simulated runs</div>
-                  <div className="mt-1.5 text-[11px] leading-relaxed text-parchment/50"><b className="text-amber-200/90">Ranks splits — doesn't call the winner.</b> PvP losses are real, so when it's close, send less.</div>
+                  <div className="mt-1.5 text-[11px] leading-relaxed text-parchment/50"><b className="text-amber-200/90">Ranks splits — cannot call one battle.</b> PvP losses are real, so when it's close, send less.</div>
                   <details className="group mt-1.5">
                     <summary className="cursor-pointer list-none text-[10px] uppercase tracking-wider text-gold-bright/50 hover:text-gold-bright/80">Why <span className="inline-block transition-transform group-open:rotate-90">›</span></summary>
-                    <div className="mt-1.5 text-[10px] leading-relaxed text-parchment/45">Which abilities fire in a round is a roll, so the same split doesn't repeat exactly — that spread is {sweepResult.distribution.trials} re-fights with Ambusher and the Archer double-shot rolled per round. Hero skills add variance on top that this doesn't model, so treat it as a floor. The ordering of splits checks out against real reports; the absolute win/lose call doesn't, so it isn't published.</div>
+                    <div className="mt-1.5 text-[10px] leading-relaxed text-parchment/45">Measured on real battles, the same fight run twice can land 43 points apart — one a win, one a loss. So this ranks compositions over many attempts and cannot predict a single engagement. The ordering of splits checks out; the absolute win/lose call does not, so it isn't published.</div>
                   </details>
                 </div>
               )}

@@ -202,11 +202,18 @@ export function killsDealt({ attackerCount, attackerStats, defenderStats, attack
  * figures -- a recommendation that changes every time you press the button is
  * worse than useless.
  *
- * What it is NOT: a model of every random element in the real game. It rolls the
- * two abilities we have sourced trigger chances for. Hero skills are the other
- * documented source of roll variance and Mystic Trials has no heroes outside
- * Coliseum and Radiant Spire, so for Trials this is most of it; for PvP it is a
- * floor on the true spread, not the whole of it.
+ * MEASURED INADEQUATE -- do not present this spread to a player. Five real
+ * Forest of Life battles at the same split came out at -28.5%, -3.3%, +12.6%,
+ * +15.2% and +35.3%: a 63.8-point range with a standard deviation of 21.3
+ * points. Two of them (D and E in research/groundtruth.mjs) were the SAME fight
+ * -- same beast, same stats, same counts, same split -- and landed 43.7 points
+ * apart, one a victory and one a defeat.
+ *
+ * This function returns about +/-0.2 points on that fight. It under-states real
+ * variance by roughly 100x, because rolling Ambusher and Volley per round is
+ * evidently not where the randomness lives. It is kept for future work, but
+ * nothing in the UI quotes it any more: a +/-1.0 next to a number whose real
+ * spread is +/-21 is worse than no error bar at all.
  */
 export function simulateOutcomes(attackerArmy, defenderArmy, { trials = 400, attackerSkillMod = 1, defenderSkillMod = 1, maxTurns = 4000 } = {}) {
   const fingerprint = TROOP_TYPES.reduce((acc, t) => acc

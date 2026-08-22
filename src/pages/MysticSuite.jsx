@@ -546,12 +546,16 @@ export default function MysticSuite() {
                   <div className="mt-3 border-t border-gold/12 pt-2.5 font-mono text-[11px] text-parchment/55">
                     <span className="text-parchment/35">you entered </span>{TROOPS.map((t) => fmt(n(yours[t.key].count))).join(' / ')}<span className="text-parchment/35"> = </span>{fmt(result.totalTroops)}
                   </div>
+                  {/* The simulated +/- that used to sit here said +/-1.0. Five
+                      real battles at this split came out 63.8 points apart, and
+                      two of them were the SAME fight 43.7 points apart -- one
+                      won, one lost. An error bar off by 100x is worse than none. */}
                   <div className="mt-2 text-[10px] leading-relaxed text-parchment/40">
-                    Score {(result.best.survivalEdge * 100).toFixed(1)}%{result.distribution ? <> (±{(result.distribution.stdDev * 100).toFixed(1)} over {result.distribution.trials} runs)</> : null}{result.baseline ? <>, {(result.best.survivalEdge - result.baseline.survivalEdge) >= 0 ? '+' : ''}{((result.best.survivalEdge - result.baseline.survivalEdge) * 100).toFixed(1)} vs the opener</> : null} · ranks splits, not a win prediction
+                    Score {(result.best.survivalEdge * 100).toFixed(1)}%{result.baseline ? <>, {(result.best.survivalEdge - result.baseline.survivalEdge) >= 0 ? '+' : ''}{((result.best.survivalEdge - result.baseline.survivalEdge) * 100).toFixed(1)} vs the opener</> : null} · ranks splits, cannot predict one battle
                   </div>
                   <details className="group mt-1">
                     <summary className="cursor-pointer list-none text-[10px] uppercase tracking-wider text-gold-bright/45 hover:text-gold-bright/80">Why <span className="inline-block transition-transform group-open:rotate-90">›</span></summary>
-                    <div className="mt-1.5 text-left text-[10px] leading-relaxed text-parchment/45">Best of {result.candidates.length} splits tested{result.band && result.band.count > 1 ? <>, {result.band.count} of them within a point of each other — the exact headline number isn't worth chasing</> : null}. Which abilities fire in a round is a roll, so the same split doesn't repeat exactly; the ± is {result.distribution ? result.distribution.trials : 300} re-fights with Ambusher and the Archer double-shot rolled per round. Against real reports the <i>ordering</i> holds up; the absolute win/lose call doesn't — it scored a Knowledge Nexus stage the player actually cleared as a heavy loss — so it isn't published.</div>
+                    <div className="mt-1.5 text-left text-[10px] leading-relaxed text-parchment/45">Best of {result.candidates.length} splits tested{result.band && result.band.count > 1 ? <>, {result.band.count} of them within a point of each other — the exact headline number isn't worth chasing</> : null}. <b className="text-amber-200/80">A single Mystic battle is close to a coin flip and no model can call it.</b> Measured on five real Forest of Life fights sent in by a player, all at the same split: outcomes ran from −28.5% to +35.3%, three wins and two losses. Two of those five were the <i>same</i> fight — same opponent, same stats, same split — and finished 43.7 points apart, one a victory and one a defeat. So use the score to choose between compositions over many attempts, never to predict the next one.</div>
                   </details>
                 </div>
               </div>

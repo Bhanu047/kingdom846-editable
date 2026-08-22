@@ -20,6 +20,12 @@ const BATTLES = [
   // from the ratio that holds exactly in every other report (Leth = Atk x 1.4167).
   { id: 'C', beast: 'Frenzied',  them: { a: 395.0, L: 559.6, inferred: true }, counts: [64840, 48630, 48630],
     result: 'VICTORY', myLoss: 142826, theirLoss: 162100, theirTotal: 162100 },
+  // D and E are the SAME FIGHT. Same beast, same stats, same counts, same
+  // split -- and opposite outcomes. Nothing distinguishes them as inputs.
+  { id: 'D', beast: 'One-Eyed',  them: { a: 398.0, L: 564.8 }, counts: [64800, 48600, 48600],
+    result: 'VICTORY', myLoss: 138697, theirLoss: 162000, theirTotal: 162000 },
+  { id: 'E', beast: 'One-Eyed',  them: { a: 398.0, L: 564.8 }, counts: [64800, 48600, 48600],
+    result: 'DEFEAT',  myLoss: 163500, theirLoss: 115785, theirTotal: 162000 },
 ]
 
 const army = () => Object.fromEntries(T.map((t, k) => [t, { count: MY_COUNTS[k], ...MINE[t] }]))

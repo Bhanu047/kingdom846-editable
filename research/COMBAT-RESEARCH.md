@@ -8,17 +8,33 @@ Written after the previous model was found to be built on invented constants.
 The failure mode to avoid: fitting our numbers to another calculator's output
 and calling it validation.
 
-## GROUND TRUTH — three real Forest of Life outcomes  [OBS]
+## GROUND TRUTH — five real Forest of Life outcomes  [OBS]
 
 **The first calibration data that is not another calculator's opinion.** Three
 battles, all fought with the same split (50/15/35), against near-identical
 opponents. Transcribed from Battle Details.
 
-| | enemy atk | result | my survivors | their survivors | actual edge |
-|---|---|---|---|---|---|
-| A | 400.0 | **DEFEAT** | 0 (0.0%) | 5,381 (3.3%) | **−3.3%** |
-| B | 398.0 | **VICTORY** | 57,707 (35.3%) | 0 | **+35.3%** |
-| C | 395.0 | **VICTORY** | 20,674 (12.6%) | 0 | **+12.6%** |
+| | beast | enemy atk | result | my survivors | their survivors | actual edge |
+|---|---|---|---|---|---|---|
+| A | Ferocious | 400.0 | **DEFEAT** | 0 | 5,381 (3.3%) | **−3.3%** |
+| B | Starving | 398.0 | **VICTORY** | 57,707 (35.3%) | 0 | **+35.3%** |
+| C | Frenzied | 395.0 | **VICTORY** | 20,674 (12.6%) | 0 | **+12.6%** |
+| D | One-Eyed | 398.0 | **VICTORY** | 24,803 (15.2%) | 0 | **+15.2%** |
+| E | One-Eyed | 398.0 | **DEFEAT** | 0 | 46,215 (28.5%) | **−28.5%** |
+
+### 0. D and E are the SAME FIGHT with opposite outcomes
+
+Same beast, same stats (398.0 / 564.8), same counts (64,800 / 48,600 / 48,600),
+same split. **+15.2% victory and −28.5% defeat — 43.7 points apart.**
+
+Nothing distinguishes them as inputs. **No deterministic model can predict a
+single Mystic battle**, and that is not a limitation of this engine — it is a
+property of the game. Any tool that returns a confident verdict for one fight is
+wrong by construction, ours included, which is why the verdict is gone.
+
+Across all five, same split: **3 wins, 2 losses — a 60% win rate.** The
+established optimizer said ~50% on these fights. **It was right and we were not.**
+Its scatter was never sloppiness; it was sampling a genuinely wild process.
 
 ### 1. The model is ~35 points too pessimistic
 
@@ -27,16 +43,22 @@ opponents. Transcribed from Battle Details.
 | A | −23.3% | LOSS | −3.3% | DEFEAT | −20.0 |
 | B | −20.7% | LOSS | +35.3% | **VICTORY** | −56.0 |
 | C | −16.5% | LOSS | +12.6% | **VICTORY** | −29.1 |
+| D | −20.9% | LOSS | +15.2% | **VICTORY** | −36.1 |
+| E | −20.9% | LOSS | −28.5% | DEFEAT | +7.6 |
 
-**It called all three losses. Two were wins.** Mean error **−35.0 points**. No
+**It called all five losses. Three were wins.** Mean error **−26.7 points**. No
 amount of agreement with another optimizer would ever have surfaced this — both
 tools were being scored against each other, not against reality.
 
 ### 2. Real variance is ~100x what we simulate
 
-Same split, three near-identical fights: **−3.3%, +35.3%, +12.6%**. A **38.6
-point** spread that crosses zero — one defeat, two victories. Our Monte Carlo on
-the same fight returns **±0.2 points, 0% wins**.
+Same split, five fights: **−28.5%, −3.3%, +12.6%, +15.2%, +35.3%**. A **63.8
+point** range, standard deviation **21.3 points**, crossing zero three times.
+Our Monte Carlo on the same fight returns **±0.2 points, 0% wins** — it
+under-states real variance by roughly **100×**.
+
+The `±1.0` the result panel used to print next to the score has been removed.
+An error bar wrong by two orders of magnitude is worse than none.
 
 Rolling Ambusher and Volley per round captures essentially none of the real
 randomness. This is why an established tool reports probabilities and we report

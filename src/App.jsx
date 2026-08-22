@@ -1,4 +1,5 @@
 import { useState, useMemo, lazy, Suspense, useEffect } from 'react'
+import { trackPage } from './lib/analytics'
 import Sidebar from './components/Sidebar'
 import Icon from './components/Icon'
 import ErrorBoundary from './components/ErrorBoundary'
@@ -89,6 +90,10 @@ function Shell() {
   useEffect(() => {
     if (loginOpen && !Login) import('./components/Login').then((m) => setLogin(() => m.default))
   }, [loginOpen, Login])
+
+  // One page view per navigation. Deliberately keyed on `page` rather than the
+  // hash, so a re-render or a query-string tweak does not double-count.
+  useEffect(() => { trackPage(page) }, [page])
 
   const navigate = (p) => {
     navigateTo(p)

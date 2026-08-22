@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { trackTool } from '../lib/analytics'
 import Icon from '../components/Icon'
 
 const TABS = [
@@ -91,6 +92,10 @@ function Thanks() {
 }
 
 export default function CodexSuite() {
+  // One 'opened' event per mount. The result here is recomputed on every
+  // keystroke, so counting results would count typing, not usage.
+  useEffect(() => { trackTool('codex') }, [])
+
   const [tab, setTab] = useState('theory')
   return (
     <div className="space-y-5">

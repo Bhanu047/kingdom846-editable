@@ -1,4 +1,5 @@
-import { useId, useMemo, useState } from 'react'
+import { useEffect, useId, useMemo, useState } from 'react'
+import { trackTool } from '../lib/analytics'
 import Icon from '../components/Icon'
 import { PlayerNameField } from '../components/ui'
 import { usePlayerName } from '../hooks/usePlayerName'
@@ -283,6 +284,10 @@ export function ClashGauge({ yourTotal, enemyTotal, margin }) {
 }
 
 export default function MysticSuite() {
+  // One 'opened' event per mount. The result here is recomputed on every
+  // keystroke, so counting results would count typing, not usage.
+  useEffect(() => { trackTool('mystic') }, [])
+
   const [yours, setYours] = useState(EMPTY_ARMY)
   const [opponent, setOpponent] = useState(EMPTY_ARMY)
   const [sparsity, setSparsity] = useState('0.05')
@@ -340,6 +345,8 @@ export default function MysticSuite() {
       bounds: { minInfantry, maxInfantry, minCavalry, maxCavalry, minArchers, maxArchers },
       enteredCounts: TROOPS.map((t) => n(yours[t.key].count)),
     }))
+    // The zone is the useful dimension here: which rooms people actually plan for.
+    trackTool('mystic-run', trial)
     setRunId((id) => id + 1)
     setLogged(null); setLossMine(''); setLossTheirs(''); setLossEdge(null)
   }

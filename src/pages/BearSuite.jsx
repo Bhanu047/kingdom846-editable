@@ -1,4 +1,5 @@
 import { useEffect, useId, useMemo, useState } from 'react'
+import { trackTool } from '../lib/analytics'
 import Icon from '../components/Icon'
 import { PlayerNameField } from '../components/ui'
 import { usePlayerName } from '../hooks/usePlayerName'
@@ -143,6 +144,10 @@ function KpiCard({label,numeric,format,value,accent,delay}){
 }
 
 export default function BearSuite(){
+  // One 'opened' event per mount. The result here is recomputed on every
+  // keystroke, so counting results would count typing, not usage.
+  useEffect(() => { trackTool('bear') }, [])
+
  const[tab,setTab]=useState('ratio'),[uploadTarget,setUploadTarget]=useState('ratio'),[formationStats,setFormationStats]=useState(EMPTY_STATS),[formationHeroes,setFormationHeroes]=useState(EMPTY_HEROES),[formationTier,setFormationTier]=useState('T10'),[formationTg,setFormationTg]=useState(0),[impactStats,setImpactStats]=useState(EMPTY_STATS),[impactHeroes,setImpactHeroes]=useState(EMPTY_HEROES),[impactTier,setImpactTier]=useState('T10'),[tg,setTg]=useState(0),[capacity,setCapacity]=useState(''),[participants,setParticipants]=useState(''),[troopCounts,setTroopCounts]=useState(EMPTY_COUNTS),[joiners,setJoiners]=useState(EMPTY_JOINERS),[copied,setCopied]=useState(false)
  const[formationCalculated,setFormationCalculated]=useState(false),[damageCalculated,setDamageCalculated]=useState(false)
  const[playerName,setPlayerName]=usePlayerName()

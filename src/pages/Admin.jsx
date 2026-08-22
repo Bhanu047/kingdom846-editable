@@ -6,7 +6,7 @@ import { buildSchedule, AVATAR_OPTIONS } from '../data/kingdom'
 import { apiJson } from '../lib/api'
 import { RoyalSectionHeader } from '../components/VisualElements'
 
-const SECTIONS = ['Alliances', 'Players', 'Events']
+const SECTIONS = ['Alliances', 'Players', 'Events', 'Analytics']
 
 function Field({ label, value, onChange, textarea }) {
   return (
@@ -189,6 +189,8 @@ export default function Admin() {
               </div>
             )}
 
+            {section === 'Analytics' && <Analytics />}
+
             {section === 'Events' && (
               <div className="space-y-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
@@ -236,6 +238,164 @@ export default function Admin() {
           </>
         )}
       </div>
+    </div>
+  )
+}
+
+// --- Analytics ---
+//
+// Reads /api/admin/analytics. Everything shown is an aggregate except the
+// member list, which only covers people who chose to log in. There is no
+// per-visitor profile to show because the server does not keep one: the
+// visitor pseudonym is re-derived daily, so "unique visitors" is answerable
+// and "what did this person do last week" deliberately is not.
+function Analytics() {
+  const [days, setDays] = useState(30)
+  const [data, setData] = useState(null)
+  const [error, setError] = useState(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    let cancelled = false
+    setLoading(true)
+    apiJson(`/api/admin/analytics?days=${days}`)
+      .then((d) => { if (!cancelled) { setData(d); setError(null) } })
+      .catch((e) => { if (!cancelled) setError(e.message) })
+      .finally(() => { if (!cancelled) setLoading(false) })
+    return () => { cancelled = true }
+  }, [days])
+
+  if (loading && !data) return <p className="text-sm text-parchment/50">Loading analytics…</p>
+  if (error) return <p className="text-sm text-red-300/80">{error}</p>
+  if (!data) return null
+
+  const ago = (ts) => {
+    const m = Math.round((Date.now() - ts) / 60000)
+    if (m < 1) return 'just now'
+    if (m < 60) return `${m}m ago`
+    const h = Math.round(m / 60)
+    return h < 24 ? `${h}h ago` : `${Math.round(h / 24)}d ago`
+  }
+  const peak = Math.max(1, ...data.series.map((d) => d.visitors || 0))
+
+  return (
+    <div className="space-y-5">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <RoyalSectionHeader title="Traffic" subtitle="Self-hosted · no third-party trackers" />
+        <div className="flex gap-1.5">
+          {[7, 30, 90].map((d) => (
+            <button key={d} onClick={() => setDays(d)}
+              className={`rounded-md px-2.5 py-1 text-[11px] font-semibold transition ${days === d ? 'bg-gold/15 text-gold' : 'text-parchment/50 hover:bg-white/5'}`}>
+              {d}d
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+        {[['Today', data.today], ['Last 7 days', data.week], ['Last 30 days', data.month]].map(([label, w]) => (
+          <div key={label} className="rounded-xl border border-gold/12 bg-white/[.02] p-3">
+            <div className="text-[10px] uppercase tracking-wider text-parchment/40">{label}</div>
+            <div className="mt-0.5 font-display text-2xl text-gold-bright">{w.visitors.toLocaleString()}</div>
+            <div className="text-[10px] text-parchment/45">visitors · {w.pageviews.toLocaleString()} views</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Bars rather than a chart library: one dependency-free row per day. */}
+      <div className="rounded-xl border border-gold/12 bg-white/[.02] p-3">
+        <div className="mb-2 text-[10px] uppercase tracking-wider text-parchment/40">Visitors per day</div>
+        {data.series.length === 0 ? (
+          <p className="text-[11px] text-parchment/40">No traffic recorded yet.</p>
+        ) : (
+          <div className="flex h-24 items-end gap-[2px]">
+            {data.series.map((d) => (
+              <div key={d.day} className="group relative flex-1 rounded-t bg-gold/30 transition hover:bg-gold/60"
+                style={{ height: `${Math.max(3, (d.visitors / peak) * 100)}%` }}
+                title={`${d.day}: ${d.visitors} visitors, ${d.pageviews} views`} />
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="grid gap-3 md:grid-cols-2">
+        <RankList title="Top pages" rows={data.pages} unit="views" valueKey="hits" />
+        <RankList title="Battle Lab tools" rows={data.tools} unit="opens" valueKey="hits" />
+        <RankList title="Actions" rows={data.actions} unit="times" valueKey="hits" />
+        <RankList title="Traffic sources" rows={data.referrers} unit="visitors" valueKey="visitors" empty="All direct — no external referrers." />
+        <RankList title="Devices" rows={data.devices} unit="visitors" valueKey="visitors" />
+        <RankList title="Browsers" rows={data.browsers} unit="visitors" valueKey="visitors" />
+      </div>
+
+      <RoyalSectionHeader title="Members" subtitle="Only people who logged in" />
+      <div className="rounded-xl border border-gold/12 bg-white/[.02] p-3">
+        {data.members.length === 0 ? (
+          <p className="text-[11px] text-parchment/40">No member activity in this window.</p>
+        ) : (
+          <div className="space-y-1.5">
+            {data.members.map((m) => (
+              <div key={m.id} className="flex items-center justify-between gap-3 text-[12px]">
+                <span className="truncate text-parchment/80">
+                  {m.alliance_tag ? <span className="text-gold-bright/60">{m.alliance_tag} </span> : null}
+                  {m.display_name || m.username}
+                  <span className="text-parchment/30"> · {m.role}</span>
+                </span>
+                <span className="shrink-0 font-mono text-[11px] text-parchment/45">
+                  {m.pageviews} views · {ago(m.last_seen)}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <details className="rounded-xl border border-gold/12 bg-white/[.02] p-3">
+        <summary className="cursor-pointer list-none text-[10px] uppercase tracking-wider text-gold-bright/50 hover:text-gold-bright/80">
+          Recent member activity <span className="text-parchment/30">({data.recent.length})</span>
+        </summary>
+        <div className="mt-2 space-y-1">
+          {data.recent.map((r, i) => (
+            <div key={i} className="flex items-center justify-between gap-3 text-[11px]">
+              <span className="truncate text-parchment/65">
+                {r.display_name || r.username}
+                <span className="text-parchment/30"> — {r.kind} </span>
+                <span className="font-mono text-parchment/55">{r.name}{r.detail ? ` (${r.detail})` : ''}</span>
+              </span>
+              <span className="shrink-0 font-mono text-parchment/35">{ago(r.ts)}</span>
+            </div>
+          ))}
+        </div>
+      </details>
+
+      <p className="text-[10px] leading-relaxed text-parchment/35">
+        Visitors are counted with a pseudonym the server re-derives from the request each day, so the same
+        person is a different value tomorrow — daily counts work, cross-day profiling is not possible.
+        Raw IPs are never stored. Visitors who send Do Not Track or Global Privacy Control are not recorded
+        at all. Event rows are pruned after {data.retentionDays} days, with daily totals kept.
+      </p>
+    </div>
+  )
+}
+
+function RankList({ title, rows, unit, valueKey, empty }) {
+  const max = Math.max(1, ...rows.map((r) => r[valueKey] || 0))
+  return (
+    <div className="rounded-xl border border-gold/12 bg-white/[.02] p-3">
+      <div className="mb-2 text-[10px] uppercase tracking-wider text-parchment/40">{title}</div>
+      {rows.length === 0 ? (
+        <p className="text-[11px] text-parchment/35">{empty || 'Nothing recorded yet.'}</p>
+      ) : (
+        <div className="space-y-1">
+          {rows.map((r) => (
+            <div key={r.name} className="relative flex items-center justify-between gap-3 rounded px-1.5 py-1 text-[12px]">
+              {/* The bar is a background fill so long names still truncate cleanly. */}
+              <div className="absolute inset-y-0 left-0 rounded bg-gold/[.08]" style={{ width: `${(r[valueKey] / max) * 100}%` }} />
+              <span className="relative truncate text-parchment/75">{r.name}</span>
+              <span className="relative shrink-0 font-mono text-[11px] text-parchment/45">{r[valueKey].toLocaleString()} {unit}</span>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

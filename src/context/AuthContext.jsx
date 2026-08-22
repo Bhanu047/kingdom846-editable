@@ -1,4 +1,4 @@
-import { createContext, useContext, useCallback, useState } from 'react'
+import { createContext, useContext, useCallback, useEffect, useState } from 'react'
 import { apiJson, apiFetch, setAuthToken, getAuthToken } from '../lib/api'
 
 const AuthContext = createContext(null)
@@ -7,12 +7,15 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(false)
 
-  // Restore session on mount if token exists in sessionStorage
-  useCallback(() => {
-    const token = getAuthToken()
-    if (token) {
-      apiJson('/api/me').then((u) => setUser(u)).catch(() => setAuthToken(null)).finally(() => {})
-    }
+  // Restore the session on mount when sessionStorage still holds a token.
+  // This was a useCallback, which only *creates* a function -- it never ran, so
+  // a refresh silently dropped an admin back to logged-out with a valid token
+  // still sitting in storage.
+  useEffect(() => {
+    if (!getAuthToken()) return
+    apiJson('/api/me')
+      .then((u) => setUser(u))
+      .catch(() => setAuthToken(null))
   }, [])
 
   const signIn = useCallback(async (username, password, mode) => {

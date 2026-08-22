@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { trackTool } from '../lib/analytics'
 import Icon from '../components/Icon'
 import { TROOP_LABELS, optimizeFormation } from '../lib/combat/battleLabEngine'
 import { useReveal } from '../lib/chartAnim'
@@ -60,6 +61,10 @@ function FormationCards({ troops }) {
 }
 
 export default function FormationSuite() {
+  // One 'opened' event per mount. The result here is recomputed on every
+  // keystroke, so counting results would count typing, not usage.
+  useEffect(() => { trackTool('formation') }, [])
+
   const [capacity, setCapacity] = useState(750000)
   const [stats, setStats] = useState({
     infantry: { attack: 0, lethality: 0, defense: 0, health: 0 },

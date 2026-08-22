@@ -97,6 +97,46 @@ db.exec(`
     synced_at TEXT DEFAULT (datetime('now'))
   );
 `)
+// --- Analytics ---
+//
+// Self-hosted, no third-party tracker, and deliberately NOT able to follow a
+// person across days. `visitor` is an HMAC of (IP + user agent + today's date)
+// keyed on SESSION_SECRET, so it counts unique visitors WITHIN a day and
+// becomes a different value tomorrow. Raw IPs are never written to disk.
+//
+// user_id is filled in only when the request carries a valid auth token, which
+// is what makes the member-activity view possible without profiling everyone.
+db.exec(`
+  CREATE TABLE IF NOT EXISTS analytics_events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    ts INTEGER NOT NULL,
+    day TEXT NOT NULL,
+    visitor TEXT NOT NULL,
+    user_id INTEGER,
+    kind TEXT NOT NULL,
+    name TEXT NOT NULL,
+    detail TEXT,
+    referrer TEXT,
+    device TEXT,
+    browser TEXT
+  );
+  CREATE INDEX IF NOT EXISTS idx_ae_day ON analytics_events(day);
+  CREATE INDEX IF NOT EXISTS idx_ae_kind_name ON analytics_events(kind, name);
+  CREATE INDEX IF NOT EXISTS idx_ae_user ON analytics_events(user_id);
+  CREATE INDEX IF NOT EXISTS idx_ae_ts ON analytics_events(ts);
+
+  -- Rollups survive the retention prune, so long-range trends stay available
+  -- without keeping event-level rows around forever.
+  CREATE TABLE IF NOT EXISTS analytics_daily (
+    day TEXT NOT NULL,
+    kind TEXT NOT NULL,
+    name TEXT NOT NULL,
+    hits INTEGER NOT NULL,
+    visitors INTEGER NOT NULL,
+    PRIMARY KEY (day, kind, name)
+  );
+`)
+
 // Seed default king
 if (!db.prepare('SELECT id FROM king_status WHERE id = ?').get(1)) {
   db.prepare('INSERT INTO king_status (id, king_type, name, alliance_tag, alliance_name) VALUES (1,?,?,?,?)').run('King', 'Oliver', '[SAS]', 'SaintsAndSinners')
@@ -190,8 +230,127 @@ function clearRateLimit(ip) {
   loginAttempts.delete(ip)
 }
 
+// --- Analytics helpers ---
+const clientIp = (req) =>
+  req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket.remoteAddress || 'unknown'
+
+const utcDay = (t = Date.now()) => new Date(t).toISOString().slice(0, 10)
+
+// Daily-rotating pseudonym. Including the day in the HMAC input is the whole
+// privacy design: the same person is a different `visitor` tomorrow, so the
+// table can answer "how many people today" but not "what has this person done
+// over the last month".
+function visitorId(req, day = utcDay()) {
+  const raw = `${clientIp(req)}|${req.headers['user-agent'] || ''}|${day}`
+  return crypto.createHmac('sha256', SECRET).update(raw).digest('base64url').slice(0, 22)
+}
+
+function parseAgent(ua = '') {
+  const s = String(ua)
+  const device = /iPad|Tablet/i.test(s) ? 'tablet'
+    : /Mobi|Android|iPhone|iPod/i.test(s) ? 'mobile' : 'desktop'
+  const browser = /Edg\//.test(s) ? 'Edge'
+    : /OPR\/|Opera/.test(s) ? 'Opera'
+    : /Chrome\//.test(s) ? 'Chrome'
+    : /Firefox\//.test(s) ? 'Firefox'
+    : /Safari\//.test(s) ? 'Safari' : 'Other'
+  return { device, browser }
+}
+
+// Referrers are only useful as a host. Keeping full URLs would store query
+// strings we have no reason to hold.
+function refHost(referrer) {
+  if (!referrer) return null
+  try {
+    const h = new URL(String(referrer)).hostname.replace(/^www\./, '')
+    return h || null
+  } catch { return null }
+}
+
+// Server-side events. More trustworthy than the browser beacon -- an ad
+// blocker cannot drop these, and the server already knows who the actor is.
+function logEvent(req, kind, name, { detail = null, userId = null } = {}) {
+  try {
+    const day = utcDay()
+    const { device, browser } = parseAgent(req.headers['user-agent'])
+    insertEvent.run(Date.now(), day, visitorId(req, day), userId, kind, name,
+      detail == null ? null : String(detail).slice(0, 200), null, device, browser)
+  } catch { /* analytics must never break a real request */ }
+}
+
+const KINDS = new Set(['page', 'tool', 'action'])
+const clip = (v, n) => (v == null ? null : String(v).slice(0, n))
+
+const insertEvent = db.prepare(`INSERT INTO analytics_events
+  (ts, day, visitor, user_id, kind, name, detail, referrer, device, browser)
+  VALUES (?,?,?,?,?,?,?,?,?,?)`)
+
+// Per-visitor write cap, so a single client cannot flood the table.
+const trackCounts = new Map()
+const TRACK_WINDOW = 60 * 1000
+const TRACK_MAX = 120
+function trackAllowed(key) {
+  const now = Date.now()
+  const e = trackCounts.get(key)
+  if (!e || now > e.resetAt) { trackCounts.set(key, { count: 1, resetAt: now + TRACK_WINDOW }); return true }
+  e.count++
+  return e.count <= TRACK_MAX
+}
+// The map is per-minute state, not a store; drop expired keys so it cannot grow.
+setInterval(() => {
+  const now = Date.now()
+  for (const [k, v] of trackCounts) if (now > v.resetAt) trackCounts.delete(k)
+}, 5 * 60 * 1000).unref?.()
+
+// Roll yesterday-and-older detail into analytics_daily, then drop events past
+// the retention window. Counts stay; the rows that could identify a session go.
+const RETENTION_DAYS = 90
+function rollupAndPrune() {
+  const cutoff = utcDay(Date.now() - RETENTION_DAYS * 86400000)
+  const today = utcDay()
+  db.exec('BEGIN')
+  try {
+    db.prepare(`INSERT OR REPLACE INTO analytics_daily (day, kind, name, hits, visitors)
+      SELECT day, kind, name, COUNT(*), COUNT(DISTINCT visitor)
+      FROM analytics_events WHERE day < ? GROUP BY day, kind, name`).run(today)
+    db.prepare('DELETE FROM analytics_events WHERE day < ?').run(cutoff)
+    db.exec('COMMIT')
+  } catch (e) { db.exec('ROLLBACK') }
+}
+rollupAndPrune()
+setInterval(rollupAndPrune, 6 * 60 * 60 * 1000).unref?.()
+
 // --- Routes ---
 app.get('/api/health', (_req, res) => res.json({ ok: true, ts: Date.now() }))
+
+// Public collector. Never returns data, never sets a cookie, and accepts a
+// beacon body (sendBeacon posts text/plain, so the JSON parser may not have
+// run). Fails silently: analytics must never break a page.
+app.post('/api/track', express.text({ type: 'text/plain', limit: '8kb' }), (req, res) => {
+  try {
+    let body = req.body
+    if (typeof body === 'string') { try { body = JSON.parse(body) } catch { body = null } }
+    if (!body || typeof body !== 'object') return res.status(204).end()
+
+    const kind = String(body.kind || '')
+    const name = clip(body.name, 120)
+    if (!KINDS.has(kind) || !name) return res.status(204).end()
+
+    const day = utcDay()
+    const visitor = visitorId(req, day)
+    if (!trackAllowed(visitor)) return res.status(204).end()
+
+    // Attribute to a member only when the token actually verifies.
+    const h = req.headers.authorization || ''
+    const uid = verifyToken(h.startsWith('Bearer ') ? h.slice(7) : null)
+    const userId = uid && db.prepare('SELECT id FROM users WHERE id = ?').get(uid) ? uid : null
+
+    const { device, browser } = parseAgent(req.headers['user-agent'])
+    insertEvent.run(Date.now(), day, visitor, userId, kind, name,
+      clip(body.detail, 200), refHost(body.referrer), device, browser)
+  } catch { /* never surface analytics failures to the page */ }
+  res.status(204).end()
+})
 
 app.post('/api/login', (req, res) => {
   const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.socket.remoteAddress || 'unknown'
@@ -206,6 +365,7 @@ app.post('/api/login', (req, res) => {
   if (mode === 'admin' && user.role !== 'admin') return res.status(403).json({ error: 'This login is for the Sparta master account only.' })
   if (mode === 'leader' && user.role !== 'leader') return res.status(403).json({ error: 'Leader login only. Sparta uses Royal Access.' })
   clearRateLimit(ip)
+  logEvent(req, 'action', 'login', { detail: user.role, userId: user.id })
   res.json({ token: makeToken(user.id), user: { id: user.id, username: user.username, role: user.role, alliance_slug: user.alliance_slug, display_name: user.display_name, alliance_tag: user.alliance_tag, must_change_password: !!user.must_change_password } })
 }),
 
@@ -249,6 +409,7 @@ app.post('/api/transfers', (req, res) => {
   if (!result) return res.status(409).json({ error: 'No free slots in the next 14 days. Please contact leadership on Discord.', taken: true })
   if (result.conflict) return res.status(409).json({ error: `That time (${result.slot} UTC on ${result.date}) is already reserved. Please pick another slot or choose "Any available time".`, taken: true, slot: result.slot, date: result.date })
   const info = db.prepare('INSERT INTO transfers (name, game_id, discord, alliance, note, preferred_date, preferred_slot, assigned_slot) VALUES (?,?,?,?,?,?,?,?)').run(name, game_id, discord, alliance || null, note || null, result.date, result.slot, result.slot)
+  logEvent(req, 'action', 'transfer-request', { detail: alliance || null })
   res.json({ ok: true, id: info.lastInsertRowid, assigned_date: result.date, assigned_slot: result.slot })
 })
 // Public: which 30-min slots are already taken on a given date (so the form can show availability)
@@ -304,6 +465,7 @@ app.post('/api/applications', (req, res) => {
   if (!type || !player_id || !nickname) return res.status(400).json({ error: 'Type, Player ID, and Nickname are required' })
   const info = db.prepare('INSERT INTO applications (type, player_id, nickname, request_kind, day, payload) VALUES (?,?,?,?,?,?)')
     .run(type, player_id, nickname, request_kind || null, day || null, JSON.stringify(payload || {}))
+  logEvent(req, 'action', 'application', { detail: type })
   res.json({ ok: true, id: info.lastInsertRowid })
 })
 app.get('/api/applications', auth, leadershipOnly, (_req, res) =>
@@ -369,6 +531,63 @@ app.post('/api/me/set-password', auth, (req, res) => {
   if (newPw.length < 6) return res.status(400).json({ error: 'Password must be at least 6 characters' })
   db.prepare('UPDATE users SET password_hash=?, must_change_password=0 WHERE id=?').run(hash(newPw), user.id)
   res.json({ ok: true })
+})
+
+// Admin read side. Everything here is an aggregate except the member-activity
+// list, which is limited to people who chose to log in.
+app.get('/api/admin/analytics', auth, adminOnly, (req, res) => {
+  const days = Math.min(90, Math.max(1, Number(req.query.days) || 30))
+  const since = utcDay(Date.now() - (days - 1) * 86400000)
+  const q = (sql, ...a) => db.prepare(sql).all(...a)
+
+  const window = (n) => {
+    const from = utcDay(Date.now() - (n - 1) * 86400000)
+    const r = db.prepare(`SELECT COUNT(DISTINCT visitor) v, COUNT(*) h
+      FROM analytics_events WHERE day >= ?`).get(from)
+    const p = db.prepare(`SELECT COUNT(*) h FROM analytics_events WHERE day >= ? AND kind = 'page'`).get(from)
+    return { visitors: r?.v || 0, events: r?.h || 0, pageviews: p?.h || 0 }
+  }
+
+  res.json({
+    generatedAt: Date.now(),
+    days,
+    retentionDays: RETENTION_DAYS,
+    today: window(1),
+    week: window(7),
+    month: window(30),
+    // One row per day so the dashboard can draw a trend without post-processing.
+    series: q(`SELECT day,
+        COUNT(DISTINCT visitor) visitors,
+        SUM(CASE WHEN kind = 'page' THEN 1 ELSE 0 END) pageviews
+      FROM analytics_events WHERE day >= ? GROUP BY day ORDER BY day`, since),
+    pages: q(`SELECT name, COUNT(*) hits, COUNT(DISTINCT visitor) visitors
+      FROM analytics_events WHERE day >= ? AND kind = 'page'
+      GROUP BY name ORDER BY hits DESC LIMIT 25`, since),
+    tools: q(`SELECT name, COUNT(*) hits, COUNT(DISTINCT visitor) visitors
+      FROM analytics_events WHERE day >= ? AND kind = 'tool'
+      GROUP BY name ORDER BY hits DESC LIMIT 25`, since),
+    actions: q(`SELECT name, COUNT(*) hits, COUNT(DISTINCT visitor) visitors
+      FROM analytics_events WHERE day >= ? AND kind = 'action'
+      GROUP BY name ORDER BY hits DESC LIMIT 25`, since),
+    referrers: q(`SELECT referrer name, COUNT(DISTINCT visitor) visitors
+      FROM analytics_events WHERE day >= ? AND referrer IS NOT NULL
+      GROUP BY referrer ORDER BY visitors DESC LIMIT 15`, since),
+    devices: q(`SELECT device name, COUNT(DISTINCT visitor) visitors
+      FROM analytics_events WHERE day >= ? AND device IS NOT NULL
+      GROUP BY device ORDER BY visitors DESC`, since),
+    browsers: q(`SELECT browser name, COUNT(DISTINCT visitor) visitors
+      FROM analytics_events WHERE day >= ? AND browser IS NOT NULL
+      GROUP BY browser ORDER BY visitors DESC`, since),
+    // Members: who is actually using the site, and how recently.
+    members: q(`SELECT u.id, u.display_name, u.username, u.alliance_tag, u.role,
+        COUNT(*) events, MAX(e.ts) last_seen,
+        SUM(CASE WHEN e.kind = 'page' THEN 1 ELSE 0 END) pageviews
+      FROM analytics_events e JOIN users u ON u.id = e.user_id
+      WHERE e.day >= ? GROUP BY u.id ORDER BY last_seen DESC`, since),
+    recent: q(`SELECT e.ts, e.kind, e.name, e.detail, u.display_name, u.username, u.alliance_tag
+      FROM analytics_events e JOIN users u ON u.id = e.user_id
+      WHERE e.day >= ? ORDER BY e.ts DESC LIMIT 60`, since),
+  })
 })
 
 app.get('/api/admin/leaders', auth, adminOnly, (_req, res) => {

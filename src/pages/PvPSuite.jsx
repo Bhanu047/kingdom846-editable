@@ -1,4 +1,5 @@
-import { useId, useMemo, useState } from 'react'
+import { useEffect, useId, useMemo, useState } from 'react'
+import { trackTool } from '../lib/analytics'
 import Icon from '../components/Icon'
 import { PlayerNameField } from '../components/ui'
 import { usePlayerName } from '../hooks/usePlayerName'
@@ -305,6 +306,10 @@ function SynergyPanel({ effects, setEffects }) {
 }
 
 export default function PvPSuite() {
+  // One 'opened' event per mount. The result here is recomputed on every
+  // keystroke, so counting results would count typing, not usage.
+  useEffect(() => { trackTool('pvp') }, [])
+
   const [attacker, setAttacker] = useState(EMPTY_ARMY)
   const [attackerHeroes, setAttackerHeroes] = useState(EMPTY_HEROES)
   const [attackerJoiners, setAttackerJoiners] = useState(EMPTY_JOINERS)
@@ -336,6 +341,7 @@ export default function PvPSuite() {
       defender: withTier(effectiveArmy(defender, defenderJoiners), defenderTier),
     }))
     setRunId((id) => id + 1)
+    trackTool('pvp-run')
   }
 
   const runSweep = () => {

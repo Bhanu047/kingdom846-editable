@@ -197,6 +197,7 @@ export function runBattle(attackerArmy, defenderArmy, { attackerSkillMod = 1, de
   const startingAttacker = armyTotal(attacker)
   const startingDefender = armyTotal(defender)
 
+  const rounds = []
   let turns = 0
   let stalled = false
   for (; turns < maxTurns; turns += 1) {
@@ -212,6 +213,13 @@ export function runBattle(attackerArmy, defenderArmy, { attackerSkillMod = 1, de
       defender[type].count = Math.max(0, defender[type].count - d)
       attacker[type].count = Math.max(0, attacker[type].count - a)
     }
+    rounds.push({
+      round: turns + 1,
+      attackerLosses: { ...attackerLosses },
+      defenderLosses: { ...defenderLosses },
+      attackerRemaining: armyTotal(attacker),
+      defenderRemaining: armyTotal(defender),
+    })
     if (!killedSomething) { stalled = true; break }
   }
 
@@ -227,6 +235,9 @@ export function runBattle(attackerArmy, defenderArmy, { attackerSkillMod = 1, de
     stalemate: !attackerWins && !defenderWins,
     stalled,
     turns,
+    // Round-by-round history, so a caller can chart the attrition rather than
+    // only see the endpoint.
+    rounds,
     attacker,
     defender,
     startingAttacker,

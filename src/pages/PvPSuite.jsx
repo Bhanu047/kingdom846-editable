@@ -2,7 +2,10 @@ import { useId, useMemo, useState } from 'react'
 import Icon from '../components/Icon'
 import { PlayerNameField } from '../components/ui'
 import { usePlayerName } from '../hooks/usePlayerName'
-import { calculateHeroSynergy, optimizeMysticComposition, simulateT10Battle } from '../lib/combat/battleLabEngine'
+import { calculateHeroSynergy } from '../lib/combat/battleLabEngine'
+// PvP has its own model now. It used to call the Mystic Trials optimizer,
+// which is a different game system entirely -- see COMBAT-RESEARCH.md §6.
+import { simulatePvpBattle, optimizePvpComposition } from '../lib/combat/pvpBattle'
 import { HUNT_JOINER_HEROES, applyJoinerBonuses } from '../lib/combat/huntImpact'
 import { TROOP_COLORS, CompositionChart, outcomeLabel, outcomeTone } from './MysticSuite'
 import { smoothPath, useReveal } from '../lib/chartAnim'
@@ -328,20 +331,21 @@ export default function PvPSuite() {
 
   const ready = totalCount(attacker) > 0 && totalCount(defender) > 0
   const runBattle = () => {
-    setResult(simulateT10Battle({
-      attacker: effectiveArmy(attacker, attackerJoiners),
-      defender: effectiveArmy(defender, defenderJoiners),
+    setResult(simulatePvpBattle({
+      attacker: withTier(effectiveArmy(attacker, attackerJoiners), attackerTier),
+      defender: withTier(effectiveArmy(defender, defenderJoiners), defenderTier),
     }))
     setRunId((id) => id + 1)
   }
 
   const runSweep = () => {
-    setSweepResult(optimizeMysticComposition({
-      yourArmy: effectiveArmy(attacker, attackerJoiners),
-      opponentArmy: effectiveArmy(defender, defenderJoiners),
-      sparsity: n(sweepSparsity, 0.05),
-      minInfantryFraction: n(sweepMinInfantry, 0) / 100, maxInfantryFraction: n(sweepMaxInfantry, 100) / 100,
-      minCavalryFraction: n(sweepMinCavalry, 0) / 100, maxCavalryFraction: n(sweepMaxCavalry, 100) / 100,
+    const mine = withTier(effectiveArmy(attacker, attackerJoiners), attackerTier)
+    setSweepResult(optimizePvpComposition({
+      totalTroops: totalCount(attacker),
+      yourStats: mine,
+      enemyArmy: withTier(effectiveArmy(defender, defenderJoiners), defenderTier),
+      stepPercent: Math.max(1, Math.round(n(sweepSparsity, 0.05) * 100)),
+      yourTier: attackerTier,
     }))
     setSweepRunId((id) => id + 1)
   }
@@ -349,6 +353,10 @@ export default function PvPSuite() {
   // Same auto-narrowing idea used in Mystic Trials: a fast wide-open pass
   // first, then the fraction bounds narrow to a window around whatever that
   // pass found.
+  // Tier is a real combat input, not a label: it lands on all four stats, so
+  // it squares into both offence and defence.
+  const withTier = (army, tier) => Object.fromEntries(TROOPS.map((t) => [t.key, { ...army[t.key], tier }]))
+
   const suggestSweepBounds = () => {
     if (!ready) return
     const coarse = optimizeMysticComposition({ yourArmy: effectiveArmy(attacker, attackerJoiners), opponentArmy: effectiveArmy(defender, defenderJoiners), sparsity: 0.1 })
@@ -360,7 +368,8 @@ export default function PvPSuite() {
     setSweepMaxCavalry(String(Math.round(Math.min(1, coarse.best.composition.cavalry + window) * 100)))
   }
 
-  const sweepTop = useMemo(() => sweepResult?.candidates?.slice(0, 8) || [], [sweepResult])
+  const sweepTop = useMemo(() => (sweepResult?.candidates || []).slice(0, 8)
+    .map((c) => ({ ...c, margin: c.survivalEdge * (sweepResult?.totalTroops || 0) })), [sweepResult])
 
   return (
     <div className="space-y-5">
@@ -399,17 +408,17 @@ export default function PvPSuite() {
           <div className="eyebrow">Result</div>
           <h3 className="mt-1 font-display text-2xl font-bold text-parchment">Battle Outcome</h3>
           <div className="mt-4 space-y-4">
-            <div className="stagger-in"><OutcomeBanner outcome={result.outcome} attackerLeft={result.remainingA} defenderLeft={result.remainingD} rounds={result.rounds.length} playerName={playerName} /></div>
+            <div className="stagger-in"><OutcomeBanner outcome={result.outcome} attackerLeft={result.remainingAttacker} defenderLeft={result.remainingDefender} rounds={result.turns} playerName={playerName} /></div>
             {(() => {
               const yourStart = effectiveArmy(attacker, attackerJoiners)
               const enemyStart = effectiveArmy(defender, defenderJoiners)
               const weighted = (army, key) => { const total = TROOPS.reduce((s, t) => s + army[t.key].count, 0); return total > 0 ? TROOPS.reduce((s, t) => s + army[t.key].count * army[t.key][key], 0) / total : 0 }
-              const yourStats = { attack: weighted(yourStart, 'attack'), lethality: weighted(yourStart, 'lethality'), defense: weighted(yourStart, 'defense'), health: weighted(yourStart, 'health'), troops: result.startingA }
-              const enemyStats = { attack: weighted(enemyStart, 'attack'), lethality: weighted(enemyStart, 'lethality'), defense: weighted(enemyStart, 'defense'), health: weighted(enemyStart, 'health'), troops: result.startingD }
+              const yourStats = { attack: weighted(yourStart, 'attack'), lethality: weighted(yourStart, 'lethality'), defense: weighted(yourStart, 'defense'), health: weighted(yourStart, 'health'), troops: result.startingAttacker }
+              const enemyStats = { attack: weighted(enemyStart, 'attack'), lethality: weighted(enemyStart, 'lethality'), defense: weighted(enemyStart, 'defense'), health: weighted(enemyStart, 'health'), troops: result.startingDefender }
               const yourSide = { infantry: yourStart.infantry.count, cavalry: yourStart.cavalry.count, archers: yourStart.archers.count }
               const enemySide = { infantry: enemyStart.infantry.count, cavalry: enemyStart.cavalry.count, archers: enemyStart.archers.count }
-              const yourCasualtyFraction = result.startingA > 0 ? result.attackerLosses / result.startingA : 0
-              const enemyCasualtyFraction = result.startingD > 0 ? result.defenderLosses / result.startingD : 0
+              const yourCasualtyFraction = result.startingAttacker > 0 ? result.attackerLosses / result.startingAttacker : 0
+              const enemyCasualtyFraction = result.startingDefender > 0 ? result.defenderLosses / result.startingDefender : 0
               return (
                 <div data-report-clone="pvp-direct-visual" className="stagger-in space-y-4">
                   <StatRadar yourStats={yourStats} enemyStats={enemyStats} />
@@ -420,8 +429,8 @@ export default function PvPSuite() {
             <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
               <div className="stagger-in rounded-2xl border border-gold/10 bg-white/[.025] p-4"><div className="text-[9px] uppercase tracking-wider text-parchment/35">Your Losses</div><div className="mt-1 font-mono text-xl font-bold text-parchment"><CountUp value={result.attackerLosses} format={fmt} /></div></div>
               <div className="stagger-in rounded-2xl border border-gold/10 bg-white/[.025] p-4"><div className="text-[9px] uppercase tracking-wider text-parchment/35">Enemy Losses</div><div className="mt-1 font-mono text-xl font-bold text-parchment"><CountUp value={result.defenderLosses} format={fmt} /></div></div>
-              <div className="stagger-in rounded-2xl border border-gold/10 bg-white/[.025] p-4"><div className="text-[9px] uppercase tracking-wider text-parchment/35">Your Starting</div><div className="mt-1 font-mono text-xl font-bold text-parchment"><CountUp value={result.startingA} format={fmt} /></div></div>
-              <div className="stagger-in rounded-2xl border border-gold/10 bg-white/[.025] p-4"><div className="text-[9px] uppercase tracking-wider text-parchment/35">Enemy Starting</div><div className="mt-1 font-mono text-xl font-bold text-parchment"><CountUp value={result.startingD} format={fmt} /></div></div>
+              <div className="stagger-in rounded-2xl border border-gold/10 bg-white/[.025] p-4"><div className="text-[9px] uppercase tracking-wider text-parchment/35">Your Starting</div><div className="mt-1 font-mono text-xl font-bold text-parchment"><CountUp value={result.startingAttacker} format={fmt} /></div></div>
+              <div className="stagger-in rounded-2xl border border-gold/10 bg-white/[.025] p-4"><div className="text-[9px] uppercase tracking-wider text-parchment/35">Enemy Starting</div><div className="mt-1 font-mono text-xl font-bold text-parchment"><CountUp value={result.startingDefender} format={fmt} /></div></div>
             </div>
             <RoundChart rounds={result.rounds} />
             <div className="rounded-xl border border-amber-300/15 bg-amber-300/[.035] p-3 text-[11px] leading-relaxed text-amber-100/60">Experimental T10 field-battle model — a projection based on Attack/Lethality vs Defense/Health (Joiners and Widget already folded in) and the Infantry→Cavalry→Archer→Infantry counter cycle, not a guarantee of any real fight's outcome.</div>
@@ -473,34 +482,34 @@ export default function PvPSuite() {
           <h3 className="mt-1 font-display text-2xl font-bold text-parchment">Best Composition Found</h3>
           {sweepResult.best ? (
             <div className="mt-4 space-y-4">
-              <div className={`stagger-in rounded-2xl border p-5 text-center ${outcomeTone(sweepResult.best.result.outcome)}`}>
-                <div className="font-display text-2xl font-bold" data-k846-outcome-label="true">{outcomeLabel(sweepResult.best.result.outcome, playerName)}</div>
-                <div className="mt-1 text-xs text-parchment/50">Best split: {pct(sweepResult.best.composition.infantry)} Infantry / {pct(sweepResult.best.composition.cavalry)} Cavalry / {pct(sweepResult.best.composition.archers)} Archers · margin {sweepResult.best.margin >= 0 ? '+' : ''}{fmt(sweepResult.best.margin)} troops</div>
+              <div className={`stagger-in rounded-2xl border p-5 text-center ${outcomeTone(sweepResult.best.wins ? 'attacker' : 'defender')}`}>
+                <div className="font-display text-2xl font-bold" data-k846-outcome-label="true">{outcomeLabel(sweepResult.best.wins ? 'attacker' : 'defender', playerName)}</div>
+                <div className="mt-1 text-xs text-parchment/50">Best split: {pct(sweepResult.best.composition.infantry)} Infantry / {pct(sweepResult.best.composition.cavalry)} Cavalry / {pct(sweepResult.best.composition.archers)} Archers · {sweepResult.best.wins ? 'wins' : 'loses'}, costing you {(sweepResult.best.lossRate * 100).toFixed(0)}% of your army</div>
               </div>
               <div data-report-clone="pvp-sweep-visual" className="stagger-in"><VictoryPodium top3={sweepTop.slice(0, 3)} /></div>
-              {sweepResult.classical && (
+              {sweepResult.bestByLosses && (
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="stagger-in rounded-2xl border border-gold/10 bg-white/[.02] p-4">
-                    <div className="text-[9px] uppercase tracking-wider text-parchment/35">Classical 50/25/25 (the default guess)</div>
-                    <div className={`mt-1 font-mono text-lg font-bold ${sweepResult.classical.margin >= 0 ? 'text-emerald-300' : 'text-red-300'}`}>{sweepResult.classical.margin >= 0 ? '+' : ''}<CountUp value={sweepResult.classical.margin} format={fmt} /></div>
-                    <div className="mt-0.5 text-[10px] text-parchment/40">{sweepResult.classical.result.outcome === 'attacker' ? 'wins' : sweepResult.classical.result.outcome === 'defender' ? 'loses' : 'draw'}</div>
-                  </div>
                   <div className="stagger-in rounded-2xl border border-gold/20 bg-gold/[.04] p-4">
-                    <div className="text-[9px] uppercase tracking-wider text-parchment/35">Optimal split found above</div>
-                    <div className={`mt-1 font-mono text-lg font-bold ${sweepResult.best.margin >= 0 ? 'text-emerald-300' : 'text-red-300'}`}>{sweepResult.best.margin >= 0 ? '+' : ''}<CountUp value={sweepResult.best.margin} format={fmt} /></div>
-                    <div className="mt-0.5 text-[10px] text-gold-bright/70">{sweepResult.best.margin - sweepResult.classical.margin >= 0 ? '+' : ''}{fmt(sweepResult.best.margin - sweepResult.classical.margin)} troops vs. classical</div>
+                    <div className="text-[9px] uppercase tracking-wider text-parchment/35">Widest margin</div>
+                    <div className="mt-1 font-mono text-lg font-bold text-parchment">{sweepResult.best.split.join('/')}</div>
+                    <div className="mt-0.5 text-[10px] text-parchment/40">costs {(sweepResult.best.lossRate * 100).toFixed(0)}% of your army</div>
+                  </div>
+                  <div className="stagger-in rounded-2xl border border-emerald-300/20 bg-emerald-300/[.04] p-4">
+                    <div className="text-[9px] uppercase tracking-wider text-parchment/35">Cheapest win</div>
+                    <div className="mt-1 font-mono text-lg font-bold text-parchment">{sweepResult.bestByLosses.split.join('/')}</div>
+                    <div className="mt-0.5 text-[10px] text-emerald-300/70">costs {(sweepResult.bestByLosses.lossRate * 100).toFixed(0)}% — troops are gone for real here</div>
                   </div>
                 </div>
               )}
               <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-                <div className="stagger-in rounded-2xl border border-gold/10 bg-white/[.025] p-4"><div className="text-[9px] uppercase tracking-wider text-parchment/35">Infantry</div><div className="mt-1 font-mono text-xl font-bold text-parchment"><CountUp value={sweepResult.totalYourTroops * sweepResult.best.composition.infantry} format={fmt} /></div></div>
-                <div className="stagger-in rounded-2xl border border-gold/10 bg-white/[.025] p-4"><div className="text-[9px] uppercase tracking-wider text-parchment/35">Cavalry</div><div className="mt-1 font-mono text-xl font-bold text-parchment"><CountUp value={sweepResult.totalYourTroops * sweepResult.best.composition.cavalry} format={fmt} /></div></div>
-                <div className="stagger-in rounded-2xl border border-gold/10 bg-white/[.025] p-4"><div className="text-[9px] uppercase tracking-wider text-parchment/35">Archers</div><div className="mt-1 font-mono text-xl font-bold text-parchment"><CountUp value={sweepResult.totalYourTroops * sweepResult.best.composition.archers} format={fmt} /></div></div>
+                <div className="stagger-in rounded-2xl border border-gold/10 bg-white/[.025] p-4"><div className="text-[9px] uppercase tracking-wider text-parchment/35">Infantry</div><div className="mt-1 font-mono text-xl font-bold text-parchment"><CountUp value={sweepResult.totalTroops * sweepResult.best.composition.infantry} format={fmt} /></div></div>
+                <div className="stagger-in rounded-2xl border border-gold/10 bg-white/[.025] p-4"><div className="text-[9px] uppercase tracking-wider text-parchment/35">Cavalry</div><div className="mt-1 font-mono text-xl font-bold text-parchment"><CountUp value={sweepResult.totalTroops * sweepResult.best.composition.cavalry} format={fmt} /></div></div>
+                <div className="stagger-in rounded-2xl border border-gold/10 bg-white/[.025] p-4"><div className="text-[9px] uppercase tracking-wider text-parchment/35">Archers</div><div className="mt-1 font-mono text-xl font-bold text-parchment"><CountUp value={sweepResult.totalTroops * sweepResult.best.composition.archers} format={fmt} /></div></div>
                 <div className="stagger-in rounded-2xl border border-gold/10 bg-white/[.025] p-4"><div className="text-[9px] uppercase tracking-wider text-parchment/35">Compositions Tested</div><div className="mt-1 font-mono text-xl font-bold text-parchment"><CountUp value={sweepResult.candidates.length} /></div></div>
               </div>
               <div>
                 <div className="mb-2 text-[10px] font-bold uppercase tracking-wider text-parchment/40">Top Compositions By Margin</div>
-                <CompositionChart items={sweepTop} total={sweepResult.totalYourTroops} />
+                <CompositionChart items={sweepTop} total={sweepResult.totalTroops} />
               </div>
             </div>
           ) : (

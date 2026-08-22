@@ -2,24 +2,16 @@ import { useId, useMemo, useState } from 'react'
 import Icon from '../components/Icon'
 import { PlayerNameField } from '../components/ui'
 import { usePlayerName } from '../hooks/usePlayerName'
-import { optimizeMysticComposition } from '../lib/combat/battleLabEngine'
+import { optimizeTrialSplit, MYSTIC_ZONES, MYSTIC_ZONE_NAMES } from '../lib/combat/mysticTrials'
+import { TIER_STAT_MULTIPLIER } from '../lib/combat/kingshotCombat'
 import { useCountUp, useReveal } from '../lib/chartAnim'
 import CountUp from '../components/CountUp'
 
 const TROOPS = [{ key: 'infantry', label: 'Infantry', short: 'INF', icon: 'shield' }, { key: 'cavalry', label: 'Cavalry', short: 'CAV', icon: 'zap' }, { key: 'archers', label: 'Archers', short: 'ARC', icon: 'crosshair' }]
-const TRIALS = ['Coliseum', 'Forest of Life', 'Crystal Cave', 'Knowledge Nexus', 'Molten Fort', 'Radiant Spire']
-// Community-tested opening ratios per room, as INF/CAV/ARC. These come from
-// players actually running the trials, not from this model, and they are worth
-// showing precisely because the search below currently disagrees with them --
-// it keeps returning 0% cavalry, which no real-world source recommends.
-const TRIAL_OPENERS = {
-  'Coliseum': '50/10/40',
-  'Forest of Life': '50/15/35',
-  'Crystal Cave': '60/20/20',
-  'Knowledge Nexus': '50/20/30',
-  'Molten Fort': '60/15/25',
-  'Radiant Spire': '50/15/35',
-}
+const TRIALS = MYSTIC_ZONE_NAMES
+const TIERS = Object.keys(TIER_STAT_MULTIPLIER)
+// Openers live in mysticTrials.js beside the zone's stat sources.
+const TRIAL_OPENERS = Object.fromEntries(MYSTIC_ZONE_NAMES.map((z) => [z, MYSTIC_ZONES[z].opener.join('/')]))
 // Search window around each opener. The model ranks splits inside this range
 // rather than across the whole simplex, because left unbounded it wanders to
 // corners real play never recommends (0% Cavalry, 50%+ Archers). The window
@@ -282,6 +274,8 @@ export default function MysticSuite() {
   const [trial, setTrial] = useState(TRIALS[0])
   const [result, setResult] = useState(null)
   const [runId, setRunId] = useState(0)
+  const [yourTier, setYourTier] = useState('T10')
+  const [enemyTier, setEnemyTier] = useState('T10')
   const [playerName, setPlayerName] = usePlayerName()
 
   const yourTotal = TROOPS.reduce((s, t) => s + Math.max(0, n(yours[t.key].count)), 0)
@@ -298,18 +292,27 @@ export default function MysticSuite() {
   }
 
   const run = () => {
-    const yourArmy = Object.fromEntries(TROOPS.map((t) => [t.key, { count: n(yours[t.key].count), attack: n(yours[t.key].attack), lethality: n(yours[t.key].lethality), defense: n(yours[t.key].defense), health: n(yours[t.key].health) }]))
-    const opponentArmy = Object.fromEntries(TROOPS.map((t) => [t.key, { count: n(opponent[t.key].count), attack: n(opponent[t.key].attack), lethality: n(opponent[t.key].lethality), defense: n(opponent[t.key].defense), health: n(opponent[t.key].health) }]))
-    setResult(optimizeMysticComposition({
-      yourArmy, opponentArmy, sparsity: n(sparsity, 0.05),
-      minInfantryFraction: n(minInfantry, 0) / 100, maxInfantryFraction: n(maxInfantry, 100) / 100,
-      minCavalryFraction: n(minCavalry, 0) / 100, maxCavalryFraction: n(maxCavalry, 100) / 100,
-      minArchersFraction: n(minArchers, 0) / 100, maxArchersFraction: n(maxArchers, 100) / 100,
+    const yourStats = Object.fromEntries(TROOPS.map((t) => [t.key, {
+      attack: n(yours[t.key].attack), lethality: n(yours[t.key].lethality),
+      defense: n(yours[t.key].defense), health: n(yours[t.key].health), tier: yourTier,
+    }]))
+    const enemyArmy = Object.fromEntries(TROOPS.map((t) => [t.key, {
+      count: n(opponent[t.key].count), attack: n(opponent[t.key].attack), lethality: n(opponent[t.key].lethality),
+      defense: n(opponent[t.key].defense), health: n(opponent[t.key].health), tier: enemyTier,
+    }]))
+    // Step is a percentage-point grid here, not a 0-1 sparsity.
+    setResult(optimizeTrialSplit({
+      totalTroops: yourTotal, yourStats, enemyArmy, zone: trial,
+      stepPercent: Math.max(1, Math.round(n(sparsity, 0.05) * 100)),
     }))
     setRunId((id) => id + 1)
   }
 
-  const top = useMemo(() => result?.candidates?.slice(0, 8) || [], [result])
+  // The shared chart plots `margin` in troops; the Trials model scores in
+  // survival share, so convert once here rather than teaching the chart two
+  // scoring schemes.
+  const top = useMemo(() => (result?.candidates || []).slice(0, 8)
+    .map((c) => ({ ...c, margin: c.survivalEdge * (result?.totalTroops || 0) })), [result])
 
   const reset = () => {
     setYours(EMPTY_ARMY)
@@ -377,6 +380,16 @@ export default function MysticSuite() {
             <span className="mt-1 block text-[10px] leading-relaxed text-parchment/35">Sets the search bounds below to the window around this room's played opener ({TRIAL_OPENERS[trial]}), and decides whether the hero caveat applies. Widen the bounds yourself if you want to explore outside it.</span>
           </label>
           <label className="block">
+            <span className="mb-1 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[.12em] text-parchment/45">Your Troop Tier</span>
+            <select value={yourTier} onChange={(e) => setYourTier(e.target.value)} className="w-full rounded-xl border border-gold/15 bg-ink px-3 py-2.5 text-sm font-semibold text-parchment outline-none focus:border-gold/45">{TIERS.map((t) => <option key={t}>{t}</option>)}</select>
+            <span className="mt-1 block text-[10px] leading-relaxed text-parchment/35">The "Lv." under your portraits in the battle report. This matters more than it looks: a tier lands on all four stats, so it squares into both attack and defence — T11 against T10 is roughly a 1.9x swing, not 17%.</span>
+          </label>
+          <label className="block">
+            <span className="mb-1 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[.12em] text-parchment/45">Stage Troop Tier</span>
+            <select value={enemyTier} onChange={(e) => setEnemyTier(e.target.value)} className="w-full rounded-xl border border-gold/15 bg-ink px-3 py-2.5 text-sm font-semibold text-parchment outline-none focus:border-gold/45">{TIERS.map((t) => <option key={t}>{t}</option>)}</select>
+            <span className="mt-1 block text-[10px] leading-relaxed text-parchment/35">The "Lv." under the enemy icons — most zones hand out T10.</span>
+          </label>
+          <label className="block">
             <span className="mb-1 flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[.12em] text-parchment/45">Search Step</span>
             <input type="number" min={.005} max={.5} step="any" value={sparsity} onChange={(e) => setSparsity(e.target.value)} className="w-full rounded-xl border border-gold/15 bg-ink/70 px-3 py-2.5 text-sm font-semibold text-parchment outline-none focus:border-gold/45" />
             <span className="mt-1 block text-[10px] leading-relaxed text-parchment/35">Grid step between compositions tested. 0.05 is a good start; use 0.025 for a finer (slower) search.</span>
@@ -417,9 +430,7 @@ export default function MysticSuite() {
         </div>
         <span className="mt-2 block text-[10px] leading-relaxed text-parchment/35">All three types get a Min/Max range — Archers included, because bounding only Infantry and Cavalry lets Archers absorb whatever is left and run to any share. These default to a window around <b className="text-parchment/55">{trial}</b>'s played opener ({TRIAL_OPENERS[trial]}); right now the search tests Infantry <b className="text-parchment/55">{minInfantry || 0}–{maxInfantry || 100}%</b>, Cavalry <b className="text-parchment/55">{minCavalry || 0}–{maxCavalry || 100}%</b>, Archers <b className="text-parchment/55">{minArchers || 0}–{maxArchers || 100}%</b>. Widen them to explore outside the opener.</span>
         <div className="mt-4 rounded-xl border border-amber-300/15 bg-amber-300/[.035] p-3 text-[11px] leading-relaxed text-amber-100/60">
-          <b className="text-amber-200">Start from the opener, not from us.</b> For <b className="text-amber-200">{trial}</b> players report <b className="text-amber-200">{TRIAL_OPENERS[trial]}</b> (INF/CAV/ARC), and the search below is held to a window around it. Inside that window our ranking still lands roughly 15–25 points away from what established tools recommend, because this simulator is missing real mechanics — Cavalry's chance to bypass your front line, the Archer double-shot, Infantry's bonus against Cavalry — and its per-troop base values were never taken from the game. That is also why it leans away from Cavalry on its own. Treat the opener as the trustworthy number and our split as something to test against it. The troop score compares splits with each other; it is not a win prediction, and there's no randomness here, so unlike a Monte Carlo tool there's no win-percentage to give.
-          {hasHeroes && <> <b className="text-amber-200">{trial}</b> involves enemy heroes this model doesn't account for — try lowering the opponent's troop counts (keeping their ratio the same) for a rough estimate, since hero-boosted defenders are effectively fighting above their raw troop count.</>}
-        </div>
+          <b className="text-amber-200">How much to trust this.</b> The model is rebuilt on documented Kingshot mechanics — the real +10% counter triangle, Cavalry's chance to bypass the front line, the Archer double-shot, and troop tier — with nothing fitted to make the numbers agree. Checked against a real <b className="text-amber-200">Knowledge Nexus</b> report it lands within a few points of established tools and correctly calls the stage as cleared. On an even matchup with no tier gap it still leans a little heavy on Infantry and light on Archers, so where it disagrees with <b className="text-amber-200">{trial}</b>'s played opener ({TRIAL_OPENERS[trial]}) the opener is the safer bet. Both are scored side by side below. There's no randomness here, so unlike a Monte Carlo tool there's no win-percentage to give. </div>
         <div className="mt-4 flex justify-center gap-3">
           <button onClick={run} disabled={!ready} className="btn-primary btn-royal px-8 disabled:opacity-40"><Icon name="sparkles" size={15} /> Run Optimizer</button>
           <button onClick={reset} className="inline-flex items-center gap-1.5 rounded-xl border border-gold/20 bg-white/[.02] px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-parchment/60 hover:border-gold/35 hover:text-parchment"><Icon name="refresh" size={14} /> Reset</button>
@@ -441,42 +452,42 @@ export default function MysticSuite() {
               <div className="stagger-in rounded-2xl border border-gold/25 bg-gold/[.05] p-5 text-center text-gold-bright">
                 <div className="text-[10px] font-bold uppercase tracking-[.14em] text-gold-bright/60">{playerName.trim() ? `${playerName.trim()} · Recommended Split` : 'Recommended Split'}</div>
                 <div className="mt-1 font-display text-2xl font-bold" data-k846-outcome-label="true">{pct(result.best.composition.infantry)} / {pct(result.best.composition.cavalry)} / {pct(result.best.composition.archers)}</div>
-                <div className="mt-1 text-xs text-parchment/50">Infantry / Cavalry / Archers · best of {result.candidates.length} splits tested, scoring {result.best.margin >= 0 ? '+' : ''}{fmt(result.best.margin)} troops against this opponent</div>
-                <div className="mt-2 text-[10px] leading-relaxed text-parchment/40">That score ranks splits against each other. It is not a prediction of whether you win — see the note in Search Tuning.</div>
+                <div className="mt-1 text-xs text-parchment/50">Infantry / Cavalry / Archers · best of {result.candidates.length} splits tested, {result.best.clears ? 'clears this stage' : 'does not clear'} · survival edge {(result.best.survivalEdge * 100).toFixed(1)}%</div>
+                <div className="mt-2 text-[10px] leading-relaxed text-parchment/40">Survival edge is the share of your force left, minus the share of theirs. Compare it against the played opener below.</div>
               </div>
               {(() => {
-                const yourSide = { infantry: result.totalYourTroops * result.best.composition.infantry, cavalry: result.totalYourTroops * result.best.composition.cavalry, archers: result.totalYourTroops * result.best.composition.archers }
+                const yourSide = { infantry: result.totalTroops * result.best.composition.infantry, cavalry: result.totalTroops * result.best.composition.cavalry, archers: result.totalTroops * result.best.composition.archers }
                 const enemySide = { infantry: n(opponent.infantry.count), cavalry: n(opponent.cavalry.count), archers: n(opponent.archers.count) }
                 return (
                   <div data-report-clone="mystic-visual" className="stagger-in space-y-4">
-                    <ClashGauge yourTotal={yourSide.infantry + yourSide.cavalry + yourSide.archers} enemyTotal={enemySide.infantry + enemySide.cavalry + enemySide.archers} margin={result.best.margin} />
+                    <ClashGauge yourTotal={yourSide.infantry + yourSide.cavalry + yourSide.archers} enemyTotal={enemySide.infantry + enemySide.cavalry + enemySide.archers} margin={result.best.survivalEdge * result.totalTroops} />
                     <VsArmyCards yourSide={yourSide} enemySide={enemySide} yourLabel="Your Best Split" enemyLabel="Opponent" />
                   </div>
                 )
               })()}
-              {result.classical && (
+              {result.baseline && (
                 <div className="grid grid-cols-2 gap-3">
                   <div className="stagger-in rounded-2xl border border-gold/10 bg-white/[.02] p-4">
-                    <div className="text-[9px] uppercase tracking-wider text-parchment/35">Classical 50/25/25 (the default guess)</div>
-                    <div className={`mt-1 font-mono text-lg font-bold ${result.classical.margin >= 0 ? 'text-emerald-300' : 'text-red-300'}`}>{result.classical.margin >= 0 ? '+' : ''}<CountUp value={result.classical.margin} format={fmt} /></div>
-                    <div className="mt-0.5 text-[10px] text-parchment/40">{result.classical.result.outcome === 'attacker' ? 'wins' : result.classical.result.outcome === 'defender' ? 'loses' : 'draw'}</div>
+                    <div className="text-[9px] uppercase tracking-wider text-parchment/35">{trial} played opener ({TRIAL_OPENERS[trial]})</div>
+                    <div className={`mt-1 font-mono text-lg font-bold ${result.baseline.survivalEdge >= 0 ? 'text-emerald-300' : 'text-red-300'}`}>{(result.baseline.survivalEdge * 100).toFixed(1)}%</div>
+                    <div className="mt-0.5 text-[10px] text-parchment/40">{result.baseline.clears ? 'clears' : 'does not clear'} · what players actually run</div>
                   </div>
                   <div className="stagger-in rounded-2xl border border-gold/20 bg-gold/[.04] p-4">
-                    <div className="text-[9px] uppercase tracking-wider text-parchment/35">Optimal split found above</div>
-                    <div className={`mt-1 font-mono text-lg font-bold ${result.best.margin >= 0 ? 'text-emerald-300' : 'text-red-300'}`}>{result.best.margin >= 0 ? '+' : ''}<CountUp value={result.best.margin} format={fmt} /></div>
-                    <div className="mt-0.5 text-[10px] text-gold-bright/70">{result.best.margin - result.classical.margin >= 0 ? '+' : ''}{fmt(result.best.margin - result.classical.margin)} troops vs. classical</div>
+                    <div className="text-[9px] uppercase tracking-wider text-parchment/35">Our search</div>
+                    <div className={`mt-1 font-mono text-lg font-bold ${result.best.survivalEdge >= 0 ? 'text-emerald-300' : 'text-red-300'}`}>{(result.best.survivalEdge * 100).toFixed(1)}%</div>
+                    <div className="mt-0.5 text-[10px] text-gold-bright/70">{(result.best.survivalEdge - result.baseline.survivalEdge) >= 0 ? '+' : ''}{((result.best.survivalEdge - result.baseline.survivalEdge) * 100).toFixed(1)} pts vs the opener</div>
                   </div>
                 </div>
               )}
               <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-                <div className="stagger-in rounded-2xl border border-gold/10 bg-white/[.025] p-4"><div className="text-[9px] uppercase tracking-wider text-parchment/35">Infantry</div><div className="mt-1 font-mono text-xl font-bold text-parchment"><CountUp value={result.totalYourTroops * result.best.composition.infantry} format={fmt} /></div></div>
-                <div className="stagger-in rounded-2xl border border-gold/10 bg-white/[.025] p-4"><div className="text-[9px] uppercase tracking-wider text-parchment/35">Cavalry</div><div className="mt-1 font-mono text-xl font-bold text-parchment"><CountUp value={result.totalYourTroops * result.best.composition.cavalry} format={fmt} /></div></div>
-                <div className="stagger-in rounded-2xl border border-gold/10 bg-white/[.025] p-4"><div className="text-[9px] uppercase tracking-wider text-parchment/35">Archers</div><div className="mt-1 font-mono text-xl font-bold text-parchment"><CountUp value={result.totalYourTroops * result.best.composition.archers} format={fmt} /></div></div>
+                <div className="stagger-in rounded-2xl border border-gold/10 bg-white/[.025] p-4"><div className="text-[9px] uppercase tracking-wider text-parchment/35">Infantry</div><div className="mt-1 font-mono text-xl font-bold text-parchment"><CountUp value={result.totalTroops * result.best.composition.infantry} format={fmt} /></div></div>
+                <div className="stagger-in rounded-2xl border border-gold/10 bg-white/[.025] p-4"><div className="text-[9px] uppercase tracking-wider text-parchment/35">Cavalry</div><div className="mt-1 font-mono text-xl font-bold text-parchment"><CountUp value={result.totalTroops * result.best.composition.cavalry} format={fmt} /></div></div>
+                <div className="stagger-in rounded-2xl border border-gold/10 bg-white/[.025] p-4"><div className="text-[9px] uppercase tracking-wider text-parchment/35">Archers</div><div className="mt-1 font-mono text-xl font-bold text-parchment"><CountUp value={result.totalTroops * result.best.composition.archers} format={fmt} /></div></div>
                 <div className="stagger-in rounded-2xl border border-gold/10 bg-white/[.025] p-4"><div className="text-[9px] uppercase tracking-wider text-parchment/35">Compositions Tested</div><div className="mt-1 font-mono text-xl font-bold text-parchment"><CountUp value={result.candidates.length} /></div></div>
               </div>
               <div>
                 <div className="mb-2 text-[10px] font-bold uppercase tracking-wider text-parchment/40">Top Compositions By Margin</div>
-                <CompositionChart items={top} total={result.totalYourTroops} />
+                <CompositionChart items={top} total={result.totalTroops} />
               </div>
             </div>
           ) : (

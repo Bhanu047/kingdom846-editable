@@ -6,8 +6,36 @@ export const TROOP_LABELS = {
   archers: { label: 'Archers', short: 'ARC' },
 }
 
-// Expedition-style T10 base values used only by the experimental battle simulator.
-// Battle Lab keeps them isolated so additional tiers can be added without changing UI code.
+// KNOWN GAPS between this simulator and Kingshot's actual combat, from
+// published mechanics guides. Recorded because the optimizer's persistent
+// "0% Cavalry" answer is a symptom of these, not of the counter bonus being
+// too small -- raising that bonus to force Cavalry in was fitting around the
+// gaps instead of closing them, and contradicted the real +10% figure.
+//
+//  1. Cavalry "Ambusher": ~20% chance to bypass Infantry and strike Archers
+//     directly. Not modelled. This is likely most of Cavalry's real value --
+//     here every attack is walled by the enemy's front line, so Cavalry never
+//     reaches the target it counters and looks worthless.
+//  2. Archers: ~10% chance to fire twice in a round. Not modelled.
+//  3. Infantry "Master Brawler": bonus damage and mitigation vs Cavalry.
+//     Not modelled.
+//  4. Defense is documented as having real diminishing returns at high
+//     values. Here it divides linearly, so the 900%+ Defense on late-game
+//     reports is worth far more than it should be.
+//  5. The per-type base values below are the load-bearing input to every
+//     result and are NOT sourced game data -- see the note on T10_BASE.
+//
+// Until 1-4 are closed against real values, treat the composition ranking as
+// indicative and the win/lose verdict as unreliable.
+
+// UNVERIFIED. These are constructed numbers, not extracted game data: attack
+// runs 472 / 1416 / 1888 (exactly 1x, 3x, 4x) and hp 1416 / 472 / 354
+// (exactly 4x, 4/3x, 1x), so attack x hp is identical for all three types --
+// a hand-built balance, not a measurement. Lethality and Defense are a flat
+// 10 for every type, which contradicts the documented profile that Infantry
+// carry the highest base Health AND Defense while Cavalry and Archers do not.
+// Every number this simulator produces rests on these, so they are the first
+// thing to replace with real per-tier values.
 const T10_BASE = {
   infantry: { attack: 472, hp: 1416, lethality: 10, defense: 10 },
   cavalry: { attack: 1416, hp: 472, lethality: 10, defense: 10 },
@@ -70,7 +98,7 @@ function clamp(value, min, max) {
 
 // Infantry > Cavalry > Archers > Infantry. See calculateCasualties for why
 // this has to be well above 1.0 rather than a token bonus.
-const COUNTER_MULT = 2.7
+const COUNTER_MULT = 1.1
 
 function counters(attacker, defender) {
   return (
@@ -253,22 +281,15 @@ function calculateCasualties(attackerType, attackerLine, targetType, targetLine,
   // curve read a 23.5% troop lead as 11% and called an even fight a
   // -80,092 rout with zero winnable splits out of 231; the player won it.
   const armyFactor = attackerLine.count
-  // The counter triangle has to be strong enough to actually exist. Damage
-  // here is attacker.attack / target.hp, and the T10 base values are balanced
-  // so attack x hp is identical (668,352) for all three types -- which means
-  // Archers, holding the highest attack, out-damage Cavalry against every
-  // target. At the old 1.1x bonus that included Archers vs Archers (5.33)
-  // beating Cavalry vs Archers (4.40), Cavalry's own counter matchup: one
-  // corner of the triangle was strictly dominated, so no search could ever
-  // return Cavalry and every optimum came back 0% Cavalry. Breaking even
-  // needs at least 1.33x. Fitting against the two reports we have known-good
-  // answers for lands near 2.5x, and the counter cuts both ways -- being
-  // countered costs you the same factor it gains the counterer. 2.7 is where
-  // the error against those two known-good answers bottoms out once the
-  // search is held to the played-opener window; it is fitted to two points,
-  // so treat it as approximate rather than the game's real number.
-  const typeBonus = counters(attackerType, targetType) ? COUNTER_MULT
-    : counters(targetType, attackerType) ? 1 / COUNTER_MULT : 1
+  // +10% when you counter, which is the documented in-game figure (Archers'
+  // Ranged Strike is +10% into Infantry, Cavalry's Charge +10% into Archers).
+  // It was briefly raised to 2.7x here, fitted so the optimizer would stop
+  // returning 0% Cavalry -- that was fitting our numbers to another
+  // calculator's output against the actual game rule, and it made the one
+  // real outcome we can check (a Knowledge Nexus fight the player won) score
+  // as a 30% rout. The 0% Cavalry result is a genuine symptom and is left
+  // visible rather than tuned away: see MODEL_GAPS for what is missing.
+  const typeBonus = counters(attackerType, targetType) ? COUNTER_MULT : 1
   const fatigue = 1 + Math.max(0, round - 1) * 0.0001
   const raw = armyFactor * (attackPower / Math.max(0.000001, defensePower)) * typeBonus * fatigue / 100
   return clamp(Math.ceil(raw), 0, targetLine.count)

@@ -29,7 +29,7 @@ const floor = sd * Math.sqrt(2 / Math.PI)
 console.log(`  best MAE any model can reach = sd * sqrt(2/pi) = ${floor.toFixed(1)} points`)
 console.log(`  our MAE over 14 battles                        = 18.1 points`)
 console.log(`\n  => we are ${(floor - 18.1).toFixed(1)} points BELOW the floor, which is not skill.`)
-console.log('     Two constants were fitted on fourteen points; that is the sign of')
+console.log('     Two constants were fitted on sixteen points; that is the sign of')
 console.log('     fitting noise, and it means no further constant should be fitted.')
 
 // Honesty about how little 2 pairs pins down. chi-square CI on sd with k df.

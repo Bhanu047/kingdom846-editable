@@ -352,21 +352,32 @@ export default function PvPSuite() {
   }
 
   // Same auto-narrowing idea used in Mystic Trials: a fast wide-open pass
-  // first, then the fraction bounds narrow to a window around whatever that
-  // pass found.
+  // first, then the bounds narrow to a window around whatever that pass found.
+  //
+  // Like Mystic's, this used to run the coarse pass through the old engine
+  // (optimizeMysticComposition, built on fabricated per-type base stats) while
+  // the real sweep used the rebuilt one -- so the discredited model still chose
+  // where the good model was allowed to look. Both passes now use the same
+  // optimizer.
   // Tier is a real combat input, not a label: it lands on all four stats, so
   // it squares into both offence and defence.
   const withTier = (army, tier) => Object.fromEntries(TROOPS.map((t) => [t.key, { ...army[t.key], tier }]))
 
   const suggestSweepBounds = () => {
     if (!ready) return
-    const coarse = optimizeMysticComposition({ yourArmy: effectiveArmy(attacker, attackerJoiners), opponentArmy: effectiveArmy(defender, defenderJoiners), sparsity: 0.1 })
+    const coarse = optimizePvpComposition({
+      totalTroops: totalCount(attacker),
+      yourStats: withTier(effectiveArmy(attacker, attackerJoiners), attackerTier),
+      enemyArmy: withTier(effectiveArmy(defender, defenderJoiners), defenderTier),
+      stepPercent: 10,
+      yourTier: attackerTier,
+    })
     if (!coarse.best) return
-    const window = 0.2
-    setSweepMinInfantry(String(Math.round(Math.max(0, coarse.best.composition.infantry - window) * 100)))
-    setSweepMaxInfantry(String(Math.round(Math.min(1, coarse.best.composition.infantry + window) * 100)))
-    setSweepMinCavalry(String(Math.round(Math.max(0, coarse.best.composition.cavalry - window) * 100)))
-    setSweepMaxCavalry(String(Math.round(Math.min(1, coarse.best.composition.cavalry + window) * 100)))
+    const window = 20
+    const clamp = (v) => String(Math.min(100, Math.max(0, Math.round(v))))
+    const [inf, cav] = coarse.best.split
+    setSweepMinInfantry(clamp(inf - window)); setSweepMaxInfantry(clamp(inf + window))
+    setSweepMinCavalry(clamp(cav - window)); setSweepMaxCavalry(clamp(cav + window))
   }
 
   const sweepTop = useMemo(() => (sweepResult?.candidates || []).slice(0, 8)
@@ -488,6 +499,30 @@ export default function PvPSuite() {
                 <div className="mt-1 text-xs text-parchment/50">Best split: {pct(sweepResult.best.composition.infantry)} Infantry / {pct(sweepResult.best.composition.cavalry)} Cavalry / {pct(sweepResult.best.composition.archers)} Archers · {sweepResult.best.wins ? 'wins' : 'loses'}, costing you {(sweepResult.best.lossRate * 100).toFixed(0)}% of your army</div>
               </div>
               <div data-report-clone="pvp-sweep-visual" className="stagger-in"><VictoryPodium top3={sweepTop.slice(0, 3)} /></div>
+              <div data-report-clone="verdict" className="space-y-4">
+              {/* Same flat objective as Mystic Trials: quoting one split to
+                  the percent implies a precision the model doesn't have. */}
+              {/* Suppressed when the band covers the entire search: on a fight that
+                  wipes you under every split, everything ties, and "anything in
+                  this range" adds nothing the verdict below doesn't already say. */}
+              {sweepResult.band && sweepResult.band.count > 1 && sweepResult.band.count < sweepResult.candidates.length && (
+                <div className="stagger-in rounded-2xl border border-gold/12 bg-white/[.02] p-4">
+                  <div className="text-[9px] uppercase tracking-wider text-parchment/35">Anything in this range is as good</div>
+                  <div className="mt-1 font-mono text-lg font-bold text-parchment">{sweepResult.band.infantry[0]}–{sweepResult.band.infantry[1]} / {sweepResult.band.cavalry[0]}–{sweepResult.band.cavalry[1]} / {sweepResult.band.archers[0]}–{sweepResult.band.archers[1]}</div>
+                  <div className="mt-1 text-[10px] leading-relaxed text-parchment/45">{sweepResult.band.count} of the {sweepResult.candidates.length} splits tested land within {(sweepResult.band.tolerance * 100).toFixed(0)} point of the best — closer together than the model's own constants are certain. Field whatever in that range matches the troops you actually have.</div>
+                </div>
+              )}
+
+              {/* And say it plainly when no split wins, instead of printing a
+                  "best split" over a fight that loses every way you cut it. */}
+              {!sweepResult.anyWins && (
+                <div className="stagger-in rounded-2xl border border-red-300/25 bg-red-300/[.05] p-4">
+                  <div className="text-[10px] font-bold uppercase tracking-[.14em] text-red-200/80">No split wins this fight</div>
+                  <div className="mt-1.5 text-xs leading-relaxed text-parchment/60">All {sweepResult.candidates.length} compositions tested lose, so the split above is the <b className="text-red-200/90">least-bad way to lose</b> — not a way to win. In PvP those losses are real and permanent, so the useful move is to skip this target, bring more troops, or add joiners — not to re-cut the same army.</div>
+                </div>
+              )}
+              </div>
+
               {sweepResult.bestByLosses && (
                 <div className="grid grid-cols-2 gap-3">
                   <div className="stagger-in rounded-2xl border border-gold/20 bg-gold/[.04] p-4">

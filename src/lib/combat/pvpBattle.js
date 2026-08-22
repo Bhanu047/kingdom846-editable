@@ -11,7 +11,7 @@
 //   - Both compositions are given. The optimizer answers a narrower question:
 //     given a total you are willing to commit, how should it be split.
 
-import { TROOP_TYPES, runBattle, armyTotal, DEFAULT_TIER } from './kingshotCombat.js'
+import { TROOP_TYPES, runBattle, armyTotal, DEFAULT_TIER, NEAR_OPTIMAL_TOLERANCE } from './kingshotCombat.js'
 
 const num = (v, f = 0) => (Number.isFinite(Number(v)) ? Number(v) : f)
 
@@ -113,5 +113,31 @@ export function optimizePvpComposition({
     ? winners.reduce((cheapest, c) => (c.lossRate < cheapest.lossRate ? c : cheapest), winners[0])
     : null
 
-  return { candidates, best: candidates[0] || null, bestByLosses, totalTroops: total, step }
+  // Same flat-objective problem as Mystic Trials: a lot of splits score within
+  // noise of the winner, so a single one quoted to the percent overstates what
+  // the model actually knows. Hand back the whole near-optimal band.
+  const best = candidates[0] || null
+  const near = best
+    ? candidates.filter((c) => c.survivalEdge >= best.survivalEdge - NEAR_OPTIMAL_TOLERANCE
+        && Number(c.wins) === Number(best.wins))
+    : []
+  const spanOf = (i) => (near.length
+    ? [Math.min(...near.map((c) => c.split[i])), Math.max(...near.map((c) => c.split[i]))]
+    : [0, 0])
+
+  return {
+    candidates,
+    best,
+    bestByLosses,
+    anyWins: winners.length > 0,
+    band: {
+      count: near.length,
+      tolerance: NEAR_OPTIMAL_TOLERANCE,
+      infantry: spanOf(0),
+      cavalry: spanOf(1),
+      archers: spanOf(2),
+    },
+    totalTroops: total,
+    step,
+  }
 }

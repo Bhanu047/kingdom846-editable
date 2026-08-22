@@ -12,6 +12,7 @@ const TRIALS = MYSTIC_ZONE_NAMES
 const TIERS = Object.keys(TIER_STAT_MULTIPLIER)
 // Openers live in mysticTrials.js beside the zone's stat sources.
 const TRIAL_OPENERS = Object.fromEntries(MYSTIC_ZONE_NAMES.map((z) => [z, MYSTIC_ZONES[z].opener.join('/')]))
+const TRIAL_SOURCES = Object.fromEntries(MYSTIC_ZONE_NAMES.map((z) => [z, MYSTIC_ZONES[z].sources]))
 // Search window around each opener. The model ranks splits inside this range
 // rather than across the whole simplex, because left unbounded it wanders to
 // corners real play never recommends (0% Cavalry, 50%+ Archers). The window
@@ -302,15 +303,19 @@ export default function MysticSuite() {
     setMinArchers(b.minArchers); setMaxArchers(b.maxArchers)
   }
 
-  const run = () => {
-    const yourStats = Object.fromEntries(TROOPS.map((t) => [t.key, {
+  const buildSides = () => ({
+    yourStats: Object.fromEntries(TROOPS.map((t) => [t.key, {
       attack: n(yours[t.key].attack), lethality: n(yours[t.key].lethality),
       defense: n(yours[t.key].defense), health: n(yours[t.key].health), tier: yourTier,
-    }]))
-    const enemyArmy = Object.fromEntries(TROOPS.map((t) => [t.key, {
+    }])),
+    enemyArmy: Object.fromEntries(TROOPS.map((t) => [t.key, {
       count: n(opponent[t.key].count), attack: n(opponent[t.key].attack), lethality: n(opponent[t.key].lethality),
       defense: n(opponent[t.key].defense), health: n(opponent[t.key].health), tier: enemyTier,
-    }]))
+    }])),
+  })
+
+  const run = () => {
+    const { yourStats, enemyArmy } = buildSides()
     // Step is a percentage-point grid here, not a 0-1 sparsity.
     setResult(optimizeTrialSplit({
       totalTroops: yourTotal, yourStats, enemyArmy, zone: trial,
@@ -334,21 +339,27 @@ export default function MysticSuite() {
     setResult(null)
   }
 
-  // Runs a fast, wide-open search first, then narrows the fraction bounds
-  // to a window around whatever that pass found — the same idea as
-  // frakinator auto-narrowing its own bounds before the real search, without
-  // guessing at its exact heuristic (which isn't public).
+  // Runs a fast, wide-open search first, then narrows the bounds to a window
+  // around whatever that pass found, so the fine search spends its grid where
+  // the answer actually is.
+  //
+  // This used to call optimizeMysticComposition from the OLD engine -- the one
+  // built on fabricated per-type base stats that this whole module replaced.
+  // So the coarse pass that decides where to look was still being made by the
+  // discredited model, and the rebuilt search only ever ran inside bounds it
+  // chose. It now uses the same optimizer as the real run, and bounds Archers
+  // too rather than leaving them free to absorb the remainder.
   const suggestBounds = () => {
     if (!ready) return
-    const yourArmy = Object.fromEntries(TROOPS.map((t) => [t.key, { count: n(yours[t.key].count), attack: n(yours[t.key].attack), lethality: n(yours[t.key].lethality), defense: n(yours[t.key].defense), health: n(yours[t.key].health) }]))
-    const opponentArmy = Object.fromEntries(TROOPS.map((t) => [t.key, { count: n(opponent[t.key].count), attack: n(opponent[t.key].attack), lethality: n(opponent[t.key].lethality), defense: n(opponent[t.key].defense), health: n(opponent[t.key].health) }]))
-    const coarse = optimizeMysticComposition({ yourArmy, opponentArmy, sparsity: 0.1 })
+    const { yourStats, enemyArmy } = buildSides()
+    const coarse = optimizeTrialSplit({ totalTroops: yourTotal, yourStats, enemyArmy, zone: trial, stepPercent: 10 })
     if (!coarse.best) return
-    const window = 0.2
-    setMinInfantry(String(Math.round(Math.max(0, coarse.best.composition.infantry - window) * 100)))
-    setMaxInfantry(String(Math.round(Math.min(1, coarse.best.composition.infantry + window) * 100)))
-    setMinCavalry(String(Math.round(Math.max(0, coarse.best.composition.cavalry - window) * 100)))
-    setMaxCavalry(String(Math.round(Math.min(1, coarse.best.composition.cavalry + window) * 100)))
+    const window = 20
+    const clamp = (v) => String(Math.min(100, Math.max(0, Math.round(v))))
+    const [inf, cav, arc] = coarse.best.split
+    setMinInfantry(clamp(inf - window)); setMaxInfantry(clamp(inf + window))
+    setMinCavalry(clamp(cav - window)); setMaxCavalry(clamp(cav + window))
+    setMinArchers(clamp(arc - window)); setMaxArchers(clamp(arc + window))
   }
 
   return (
@@ -442,7 +453,7 @@ export default function MysticSuite() {
         </div>
         <span className="mt-2 block text-[10px] leading-relaxed text-parchment/35">All three types get a Min/Max range — Archers included, because bounding only Infantry and Cavalry lets Archers absorb whatever is left and run to any share. These default to a window around <b className="text-parchment/55">{trial}</b>'s played opener ({TRIAL_OPENERS[trial]}); right now the search tests Infantry <b className="text-parchment/55">{minInfantry || 0}–{maxInfantry || 100}%</b>, Cavalry <b className="text-parchment/55">{minCavalry || 0}–{maxCavalry || 100}%</b>, Archers <b className="text-parchment/55">{minArchers || 0}–{maxArchers || 100}%</b>. Widen them to explore outside the opener.</span>
         <div className="mt-4 rounded-xl border border-amber-300/15 bg-amber-300/[.035] p-3 text-[11px] leading-relaxed text-amber-100/60">
-          <b className="text-amber-200">How much to trust this.</b> The model is rebuilt on documented Kingshot mechanics — the real +10% counter triangle, Cavalry's chance to bypass the front line, the Archer double-shot, and troop tier — with nothing fitted to make the numbers agree. Checked against a real <b className="text-amber-200">Knowledge Nexus</b> report it lands within a few points of established tools and correctly calls the stage as cleared. On an even matchup with no tier gap it still leans a little heavy on Infantry and light on Archers, so where it disagrees with <b className="text-amber-200">{trial}</b>'s played opener ({TRIAL_OPENERS[trial]}) the opener is the safer bet. Both are scored side by side below. There's no randomness here, so unlike a Monte Carlo tool there's no win-percentage to give. </div>
+          <b className="text-amber-200">How much to trust this.</b> Every mechanic here traces to a published source: the +10% counter triangle (which <i>is</i> the troops' Master Brawler / Charge / Ranged Strike abilities), Cavalry's 20% chance to slip past the front line, the Archer double-shot, the front-row targeting order, and troop tier. Nothing is fitted to make our numbers agree with anyone else's. Checked against a real <b className="text-amber-200">Knowledge Nexus</b> report it calls the stage as cleared — which is what happened — and its near-optimal range covers both the played opener and the answer an established tool gives. On an even matchup with no tier gap it still leans somewhat heavy on Infantry and light on Archers against what players actually field, so where it disagrees with <b className="text-amber-200">{trial}</b>'s opener ({TRIAL_OPENERS[trial]}) by more than the range below, the opener is the safer bet. Both are scored side by side. There's no randomness in this model, so unlike a Monte Carlo tool there's no win-percentage to give — you get a clears / does-not-clear call instead. </div>
         <div className="mt-4 flex justify-center gap-3">
           <button onClick={run} disabled={!ready} className="btn-primary btn-royal px-8 disabled:opacity-40"><Icon name="sparkles" size={15} /> Run Optimizer</button>
           <button onClick={reset} className="inline-flex items-center gap-1.5 rounded-xl border border-gold/20 bg-white/[.02] px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-parchment/60 hover:border-gold/35 hover:text-parchment"><Icon name="refresh" size={14} /> Reset</button>
@@ -466,6 +477,49 @@ export default function MysticSuite() {
                 <div className="mt-1 font-display text-2xl font-bold" data-k846-outcome-label="true">{pct(result.best.composition.infantry)} / {pct(result.best.composition.cavalry)} / {pct(result.best.composition.archers)}</div>
                 <div className="mt-1 text-xs text-parchment/50">Infantry / Cavalry / Archers · best of {result.candidates.length} splits tested, {result.best.clears ? 'clears this stage' : 'does not clear'} · survival edge {(result.best.survivalEdge * 100).toFixed(1)}%</div>
                 <div className="mt-2 text-[10px] leading-relaxed text-parchment/40">Survival edge is the share of your force left, minus the share of theirs. Compare it against the played opener below.</div>
+              </div>
+
+              {/* Both blocks below travel into the downloaded report: a report
+                  that shows a recommended split without saying the stage is
+                  unwinnable is the same mistake, just shareable. */}
+              <div data-report-clone="verdict" className="space-y-4">
+              {/* The single split above is the centre of a range, not a
+                  prescription. The objective is flat -- dozens of splits score
+                  within a point of the winner -- so quoting one to the percent
+                  and stopping there is false precision. It is also why our
+                  answer and another calculator's can look ten points apart on
+                  Infantry while being worth ~2 points of survival to you. */}
+              {/* Suppressed when the band covers the entire search: on a fight that
+                  wipes you under every split, everything ties, and "anything in
+                  this range" adds nothing the verdict below doesn't already say. */}
+              {result.band && result.band.count > 1 && result.band.count < result.candidates.length && (
+                <div className="stagger-in rounded-2xl border border-gold/12 bg-white/[.02] p-4">
+                  <div className="text-[9px] uppercase tracking-wider text-parchment/35">Anything in this range is as good</div>
+                  <div className="mt-1 font-mono text-lg font-bold text-parchment">{result.band.infantry[0]}–{result.band.infantry[1]} / {result.band.cavalry[0]}–{result.band.cavalry[1]} / {result.band.archers[0]}–{result.band.archers[1]}</div>
+                  <div className="mt-1 text-[10px] leading-relaxed text-parchment/45">{result.band.count} of the {result.candidates.length} splits tested score within {(result.band.tolerance * 100).toFixed(0)} point of the best — a difference smaller than the uncertainty in the model's own constants. Field whatever in that range suits the troops you have; the exact headline number is not worth chasing.</div>
+                </div>
+              )}
+
+              {/* And the thing we never said before: whether the stage can be
+                  cleared at all. Printing "Recommended Split" over a fight that
+                  loses under every one of 5,000 compositions reads as a plan.
+                  It isn't one, and presenting it as one is what made a lost
+                  battle come back looking fine. */}
+              {(() => {
+                const clearing = result.candidates.filter((c) => c.clears).length
+                const zoneSources = (TRIAL_SOURCES[trial] || []).join(', ')
+                return result.verdict === 'unwinnable' ? (
+                  <div className="stagger-in rounded-2xl border border-red-300/25 bg-red-300/[.05] p-4">
+                    <div className="text-[10px] font-bold uppercase tracking-[.14em] text-red-200/80">No split clears this stage</div>
+                    <div className="mt-1.5 text-xs leading-relaxed text-parchment/60">Every one of the {result.candidates.length} compositions tested loses this fight, so the split above is the <b className="text-red-200/90">least-bad way to lose</b> — not a way through. Rearranging troops will not close this gap{zoneSources ? <> — {trial} is scored off <b className="text-parchment/80">{zoneSources}</b>, and that is what has to come up</> : null}. Come back when those bonuses are higher.</div>
+                  </div>
+                ) : (
+                  <div className="stagger-in rounded-2xl border border-emerald-300/25 bg-emerald-300/[.05] p-4">
+                    <div className="text-[10px] font-bold uppercase tracking-[.14em] text-emerald-200/80">This stage clears</div>
+                    <div className="mt-1.5 text-xs leading-relaxed text-parchment/60">{clearing} of the {result.candidates.length} splits tested clear it. The one above is the cheapest of them — it wipes the stage while keeping the most of your force.</div>
+                  </div>
+                )
+              })()}
               </div>
               {(() => {
                 const yourSide = { infantry: result.totalTroops * result.best.composition.infantry, cavalry: result.totalTroops * result.best.composition.cavalry, archers: result.totalTroops * result.best.composition.archers }

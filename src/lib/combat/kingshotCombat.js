@@ -28,9 +28,19 @@ export const TROOP_LABELS = {
 // real reason Cavalry was vanishing is AMBUSH_SHARE below.
 export const COUNTER_BONUS = 1.10
 
-// [IMPL] Infantry takes 10% less damage from Cavalry ("Master Brawler").
-// Divides incoming damage.
-export const INFANTRY_VS_CAVALRY_MITIGATION = 1.10
+// The counter triangle IS the troops' named abilities -- there is no separate
+// defensive term, and we used to apply one. [DOC]
+//
+//   Infantry "Master Brawler"  +10% damage against Cavalry
+//   Cavalry  "Charge"          +10% damage against Archers
+//   Archers  "Ranged Strike"   +10% damage against Infantry
+//
+// All three are attack-side, and all three are COUNTER_BONUS above. This file
+// previously also divided incoming Cavalry damage by 1.10 and credited that to
+// Master Brawler as well, so Infantry collected its counter advantage twice --
+// once going out, once coming in. Nothing documents a mitigation term, and the
+// double-count inflated exactly the troop our recommendations already leaned on
+// too hard. Removed.
 
 // [IMPL] Cavalry "Ambusher": ~20% chance to bypass the enemy Infantry front
 // line and strike Archers directly. Modelled as a damage split rather than a
@@ -69,6 +79,14 @@ export const TIER_STAT_MULTIPLIER = {
   'T1-T6': 0.724,
 }
 export const DEFAULT_TIER = 'T10'
+
+// Two compositions whose survival edge differs by less than this are not
+// meaningfully different: the gap is smaller than the uncertainty in this
+// file's own [IMPL] constants. Both optimizers use it to report a near-optimal
+// BAND instead of a single split, because the objective is flat -- dozens of
+// splits routinely score within a point of the winner, and quoting one of them
+// to the percent claims a precision the model does not have.
+export const NEAR_OPTIMAL_TOLERANCE = 0.01
 
 export function tierMultiplier(tier) {
   const m = TIER_STAT_MULTIPLIER[tier]
@@ -121,10 +139,8 @@ export function killsDealt({ attackerCount, attackerStats, defenderStats, attack
     ? (attackerType === 'archers' ? ARCHER_VOLLEY_MULTIPLIER : 1)
     : specialMultiplier
   const counterBonus = counters(attackerType, defenderType) ? COUNTER_BONUS : 1
-  const mitigation = (defenderType === 'infantry' && attackerType === 'cavalry')
-    ? INFANTRY_VS_CAVALRY_MITIGATION : 1
 
-  return Math.sqrt(count) * (offence / defence) * num(skillMod, 1) * counterBonus * special / mitigation
+  return Math.sqrt(count) * (offence / defence) * num(skillMod, 1) * counterBonus * special
 }
 
 // [IMPL] Row-based combat: every line attacks the enemy's front row, in the

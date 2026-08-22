@@ -20,7 +20,7 @@
 // commit an army, you are dividing a fixed one. So this module optimizes a
 // split and never asks the player about heroes or march size.
 
-import { TROOP_TYPES, runBattle, armyTotal, DEFAULT_TIER } from './kingshotCombat.js'
+import { TROOP_TYPES, runBattle, armyTotal, DEFAULT_TIER, NEAR_OPTIMAL_TOLERANCE } from './kingshotCombat.js'
 
 // [DOC] Each zone draws on a different pool of your bonuses, which is why the
 // same account reports ~180% in Knowledge Nexus and ~897% in Molten Fort.
@@ -127,7 +127,11 @@ export function optimizeTrialSplit({
       candidates.push(evaluate(inf, cav, arc))
     }
   }
-  candidates.sort((a, b) => b.survivalEdge - a.survivalEdge)
+  // Clearing the stage comes first, survival edge only breaks ties among
+  // splits that do. A Trial advances on a clear, so a stalemate that keeps 80%
+  // of your force is worth less than a clear that keeps 5%, and ranking on
+  // edge alone would have put them the other way round.
+  candidates.sort((a, b) => (Number(b.clears) - Number(a.clears)) || (b.survivalEdge - a.survivalEdge))
 
   // The zone's played opener, scored on the same scale, so the player can see
   // how our answer compares against the split the community actually runs
@@ -135,5 +139,36 @@ export function optimizeTrialSplit({
   const opener = (MYSTIC_ZONES[zone] || {}).opener || BASELINE_SPLIT
   const baseline = evaluate(opener[0], opener[1], opener[2])
 
-  return { candidates, best: candidates[0] || null, baseline, totalTroops: total, zone, step }
+  const best = candidates[0] || null
+  const anyClears = candidates.some((c) => c.clears)
+
+  // How much does the winning split actually beat the rest by? Usually very
+  // little: the objective is flat, and dozens of splits sit inside a point of
+  // each other. Reporting one of them to the percent, with no margin attached,
+  // is false precision -- it is why our answer and another calculator's can
+  // differ by ten points on Infantry while being worth ~2 points of survival
+  // to the player. So hand the caller the whole near-optimal band and let the
+  // UI show a range instead of a fake exact answer.
+  const near = best
+    ? candidates.filter((c) => c.survivalEdge >= best.survivalEdge - NEAR_OPTIMAL_TOLERANCE
+        && Number(c.clears) === Number(best.clears))
+    : []
+  const spanOf = (i) => (near.length
+    ? [Math.min(...near.map((c) => c.split[i])), Math.max(...near.map((c) => c.split[i]))]
+    : [0, 0])
+  const band = {
+    count: near.length,
+    tolerance: NEAR_OPTIMAL_TOLERANCE,
+    infantry: spanOf(0),
+    cavalry: spanOf(1),
+    archers: spanOf(2),
+  }
+
+  // What the player most needs to know, and what we never used to say: on a
+  // stage you cannot clear with ANY split, the recommendation is the least-bad
+  // way to lose, not a plan. Presenting it as a plan is how a losing fight came
+  // back looking fine.
+  const verdict = !best ? 'none' : anyClears ? 'clears' : 'unwinnable'
+
+  return { candidates, best, baseline, band, anyClears, verdict, totalTroops: total, zone, step }
 }

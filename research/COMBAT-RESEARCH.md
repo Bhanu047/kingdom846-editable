@@ -61,8 +61,29 @@ The engine briefly ran this at 2.7×, fitted so the optimizer would stop
 returning 0% Cavalry. That was wrong twice over: it contradicted the
 documented figure, and it made the one checkable real outcome far worse.
 
-**Defensive side** [IMPL]: Infantry takes **10% less** damage from Cavalry
-(divides damage). This is the "Master Brawler" effect.
+**The triangle IS the troops' named abilities.** [DOC] Each type's "ability"
+turns out to be its counter bonus under a different name:
+
+| Type | Ability | Documented effect |
+|---|---|---|
+| Infantry | Master Brawler | +10% damage **against Cavalry** |
+| Cavalry | Charge | +10% damage **against Archers** |
+| Archers | Ranged Strike | +10% damage **against Infantry** |
+
+All three are attack-side, and all three are the same +10% already applied as
+`COUNTER_BONUS`.
+
+**There is no defensive term, and we had one.** The engine also divided
+incoming Cavalry damage by 1.10 and credited it to Master Brawler
+(`INFANTRY_VS_CAVALRY_MITIGATION`) — so Infantry collected its counter
+advantage **twice**, once going out and once coming in, while Cavalry and
+Archers collected theirs once. Nothing documents a mitigation term. Removed.
+
+One prose guide does say countering means you "deal increased damage and take
+reduced damage from that type", which would make the counter reciprocal
+(×1.10 out, ÷1.10 in). That reading was tested and rejected: three specific
+ability descriptions outrank one line of prose, and the prose most likely
+describes the same +10% from the defender's point of view.
 
 ## 3. Troop abilities  [DOC for existence, IMPL for exact numbers]
 
@@ -78,11 +99,31 @@ it is worthless — which is exactly what ours kept concluding. Modelling
 Ambush makes Cavalry appear at a sane share with no coefficient fitting at
 all (measured: 12–14%).
 
-## 4. Battle structure  [IMPL]
+## 4. Battle structure  [DOC] — upgraded from [IMPL]
 
-Row-based. Every line attacks the enemy's **front row**, in the order
-Infantry → Cavalry → Archers. The battle ends when one side has no rows left.
-Cavalry's Ambush is the only thing that reaches past the front row.
+Row-based, and now corroborated by published mechanics rather than inferred
+from one implementation:
+
+- "Infantry stands in front and absorbs most incoming damage."
+- "Archers occupy the Backline, ideally never touched."
+- "Cavalry occupy the Middle line by default; become the new frontline as soon
+  as infantry collapse."
+- "Attacks normally target the frontline first; Cavalry can sometimes strike
+  enemy Archers directly."
+
+So the row order Infantry → Cavalry → Archers is right, and Cavalry's Ambush is
+the only thing that reaches past the front row. **Ambusher is 20% of Cavalry
+per round** — "one roll per round per cavalry-attacking fighter" — so the
+`AMBUSH_SHARE = 0.20` split is the correct expected value, not a guess.
+
+This was worth checking, because a second independent optimizer
+(`github.com/Mridanc2/mystic-trial`) models targeting completely differently:
+each line hits a *preferred* type (Infantry→Infantry, Cavalry→Archers,
+Archers→Infantry) with no front row at all, plus a 1.20/0.85 two-sided
+triangle. Swapping our targeting for theirs moved our answers materially
+closer to a third tool's — and would have been wrong. The sources above
+settle it in favour of what we already had. **The agreement metric was
+pointing the wrong way; the sources were not.**
 
 ## 5. Hero / joiner skills  [IMPL]
 
@@ -166,26 +207,72 @@ compounding downward and are approximations.
 
 ## 9. Validation status
 
-Grid-searched at 1% resolution (5,151 splits) against the player's two real
+Grid-searched at 1% resolution (5,151 splits) against the player's three real
 reports, with nothing fitted — every constant is sourced above.
 
-| | our optimum | clears? | Frakinator | off by | played opener | Cavalry |
-|---|---|---|---|---|---|---|
-| Knowledge Nexus (T11 vs T10) | **54/19/27** | **yes** ✅ | 57/15/27 | **7** | 50/20/30 | 19% |
-| Molten Fort (T10 vs T10) | 69/12/19 | no | 52/21/27 | 34 | 60/15/25 | 12% |
+| | our optimum | clears? | Frakinator | off by | opener |
+|---|---|---|---|---|---|
+| Knowledge Nexus (T11 vs T10) | **58/18/24** | **yes** ✅ | 57/15/27 | **7** | 50/20/30 |
+| Molten Fort (T10 vs T10) | 67/13/20 | no | 52/21/27 | 30 | 60/15/25 |
+| Forest of Life (T10 vs T10) | 65/17/18 | no | 46/21/33 | 38 | 50/15/35 |
 
-**Knowledge Nexus is a genuine three-way agreement** — our answer, Frakinator's,
-and the community opener all cluster at roughly 50-57 / 15-20 / 27-30, and the
-model correctly says the stage clears, which is what happened.
+Removing the double-counted mitigation moved total disagreement with
+Frakinator from 83 → 75 and left the Knowledge Nexus call intact (still a
+clear, still 7 off). It is a correction on evidence, not a tuning win.
 
-**Molten Fort still leans too heavily on Infantry** (69 vs a real-world 52-60)
-and too light on Archers (19 vs 25-27). Note it sits *between* the opener (60)
-and Frakinator (52) on Infantry, so it is not absurd — but the bias is real and
-shows up in the even matchup where no tier edge masks it. Suspected cause
-unchanged: damage scales as sqrt(count) while a troop's worth as a shield
-scales linearly, so the front line always looks better than it is. Whether the
-real game's damage is truly sqrt(count) is [IMPL], not [DOC] — it is the single
-least-verified load-bearing choice remaining.
+### What the disagreement is actually worth
+
+The remaining gap looked much worse than it is. Scoring our split, Frakinator's
+split and the community opener on the same scale:
+
+| | ours | Frakinator | opener | spread |
+|---|---|---|---|---|
+| Knowledge Nexus | 39.6% | 37.7% | 38.8% | **1.9 pts** |
+| Molten Fort | −25.2% | −27.8% | −26.1% | **2.5 pts** |
+| Forest of Life | −18.6% | −23.0% | −22.6% | **4.4 pts** |
+
+**The objective is flat.** On Knowledge Nexus 203 of 5,151 splits score within
+one point of the winner, and the near-optimal band (46–64 / 10–26 / 18–35)
+contains *both* Frakinator's answer and the played opener. Quoting one split to
+the percent claims a precision the model does not have — which is why a small
+change in assumptions swings the headline ten points on Infantry while barely
+moving the player's actual outcome. Both optimizers now return the whole band,
+and the UI shows a range.
+
+### The bigger defect was not the number
+
+On Molten Fort and Forest of Life **no split clears the stage** — all 5,151
+lose. We were printing "Recommended Split" over them anyway, with no indication
+the fight was lost under every composition. That is what made a losing report
+come back looking like a plan. Both tools now state the verdict outright and
+name what has to come up instead (the zone's stat sources), and that verdict
+travels into the downloaded report.
+
+The other optimizer independently reached the same conclusion about this class
+of fight — its UI strings include *"All ratios statistically tied — battle is
+unwinnable"* and *"The recommended ratio is just the least-bad option, not a
+winning strategy."*
+
+### Hypotheses tested and rejected
+
+Recorded so they are not re-tried:
+
+1. **The √count exponent.** Swept E over 0.5–1.0 against all three reports.
+   Best was E=0.6 (total error 75 vs 83 at E=0.5) — 8 points of 83 — and the
+   model degenerates to corner solutions above E=0.7. Not the cause.
+2. **The ranking objective.** Swapped survival edge for "destroy the enemy"
+   and for lexicographic win-then-cheapest. Identical results on Molten Fort
+   and Forest of Life, and much worse on Knowledge Nexus. The identical
+   results turned out to be a degeneracy, not a clue: on those two stages every
+   split loses the entire army, so survival edge *is* −(enemy remaining) and
+   the two objectives are the same function.
+3. **Preferred-target instead of front-row targeting** (§4). Improved
+   agreement, contradicted by the sources. Rejected.
+4. **Raising Cavalry's reach past the front line.** Sweeping it to ~0.6 cut
+   total disagreement from 83 to 45 — the single largest improvement found
+   anywhere. Rejected: Ambusher is documented at 20% per round (§4), and
+   fitting an open parameter to three points of another tool's output is
+   exactly the mistake that produced the 2.7× counter.
 
 ---
 
@@ -195,11 +282,28 @@ least-verified load-bearing choice remaining.
    (§8).
 2. ~~What is the "Lv." under each portrait~~ — **resolved**: troop tier,
    confirmed by the player.
-3. **Is damage really sqrt(count)?** [IMPL] only, and it drives the whole
-   composition answer — it is why Archers come out low.
-4. **Is a Mystic stage won by wiping the enemy, or by surviving / scoring?**
-   Guides describe clearing stages but never state the victory test.
-5. **Exact Ambush and Volley probabilities** — 20% and 10% are [IMPL].
-6. **TrueGold (TG0-TG8)** boosts T10 troops and is a separate axis from tier;
+3. **Is damage really sqrt(count)?** Still [IMPL] — but now from **two**
+   independent implementations that agree on the whole shape: √troops,
+   Attack × Lethality on top, the **defender's** Defense × Health underneath.
+   Swept in §9 and 0.5 is close to best. This is as settled as it gets without
+   game data.
+4. ~~Is a Mystic stage won by wiping the enemy, or by score?~~ — **partly
+   resolved**: guides describe stage *progression* scoring ("get as far as you
+   can"), and "an attempt is only spent when you lose", so an individual stage
+   is pass/fail and the score is how deep you got. Wipe-based resolution per
+   stage is the right model. What still isn't confirmed is whether a stage can
+   end on a round limit rather than a wipe.
+5. ~~Exact Ambush probability~~ — **resolved**: 20% of Cavalry per round, one
+   roll per round (§4). Archers' Volley (10% chance to fire twice, so ×1.10
+   expected) is corroborated but still [IMPL] on the exact figure.
+6. **TrueGold (TG0–TG8)** boosts T10 troops and is a separate axis from tier;
    the UI collects it but no model uses it.
-7. **Lower-tier multipliers** (T1-T6, T7-T9) are extrapolated, not sourced.
+7. **Lower-tier multipliers** (T1–T6, T7–T9) are extrapolated, not sourced.
+8. **Why we stay heavier on Infantry than players field.** On even matchups we
+   land ~10 points high on Infantry and ~8 low on Archers against both
+   Frakinator and the openers, consistently. Everything cheap has been tried
+   (§9). The likeliest remaining cause is that real combat is stochastic —
+   established tools rank by Monte Carlo **win probability**, and when you are
+   behind, the split that maximises the chance of an upset is not the one that
+   maximises expected survival. Our model is deterministic and cannot express
+   that. Fixing it properly means a randomised engine, not another constant.

@@ -40,6 +40,12 @@ const BATTLES = [
   { id: 'I', beast: 'Starving',  them: { a: 391.0, L: 553.3 }, counts: [64680, 48510, 48510],
     split: [46, 21, 33],
     result: 'DEFEAT',  myLoss: 163500, theirLoss: 127998, theirTotal: 161700 },
+  // J: second fight at 46/21/33, and a WIN. Loss counts not captured, so the
+  // magnitude is unknown -- only the outcome. Frakinator called this one 100%
+  // and was right; our model also scored it positive (8.9%).
+  { id: 'J', beast: '?',         them: { a: 388.0, L: 550.5 }, counts: [64640, 48480, 48480],
+    split: [46, 21, 33], outcomeOnly: true,
+    result: 'VICTORY', myLoss: null, theirLoss: null, theirTotal: 161600 },
 ]
 
 const army = (b) => { const c = b ? countsFor(b) : MY_COUNTS; return Object.fromEntries(T.map((t, k) => [t, { count: c[k], ...MINE[t] }])) }

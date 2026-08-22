@@ -8,7 +8,7 @@ Written after the previous model was found to be built on invented constants.
 The failure mode to avoid: fitting our numbers to another calculator's output
 and calling it validation.
 
-## GROUND TRUTH — nine real Forest of Life outcomes  [OBS]
+## GROUND TRUTH — ten real Forest of Life outcomes  [OBS]
 
 **The first calibration data that is not another calculator's opinion.** Three
 battles, all fought with the same split (50/15/35), against near-identical
@@ -142,8 +142,23 @@ recommendation *toward* more Cavalry and fewer Infantry — exactly the directio
 46/21/33 sits in. **Not reverting on n=1.** Flipping the model on a single
 sample is the same error this file exists to record.
 
-**To settle it: about 6 more fights at 46/21/33** (or any non-opener split).
-At σ=22 and a 36-point gap, ~7 per split gives 80% power. We have 8 and 1.
+**UPDATE — battle J, a second fight at 46/21/33: WON.** The split is now 1–1
+and the 1.5σ hint has evaporated. It was one sample against a per-battle σ of
+22, which is exactly why it was not acted on. Holding the model unchanged was
+the right call, and would still have been right had it gone the other way.
+
+| split | n | wins |
+|---|---|---|
+| 50/15/35 | 8 | 6 (75%) |
+| 46/21/33 | 2 | 1 (50%) |
+
+Still nowhere near separable — 2 samples against σ=22. But the direction of
+concern is gone, and `FRONT_ROW_SPILL = 0.35` is no longer contradicted.
+
+**Also on record: the reference tool called battle J at 100% and was right**,
+while this file's author hedged. One win does not validate a 100% claim — D and
+E were identical fights that split — but the confident call was the useful one
+that day and the hedge was not.
 
 ### What is NOT being changed yet, and why
 

@@ -97,6 +97,41 @@ export const AMBUSH_SHARE = 0.20
 // by its source, calibrated against two independent references over six reports.
 export const FRONT_ROW_SPILL = 0.35
 
+// How the Attack/Defense pair is weighted against the Lethality/Health pair.
+//
+// The engine multiplied them equally: offence = (1+A)(1+L). A published guide
+// says exactly that -- "Attack and Lethality multiply together to set your kill
+// output, they matter equally" -- and it is wrong, or at least not what the
+// battles show.
+//
+// TEN REAL BATTLES ACROSS TWO ROOMS SAID SO, and the two rooms are what made it
+// visible. Neither could have shown it alone:
+//
+//   Crystal Cave    me   A/D  85   L/H 640    both sides the SAME shape
+//                   them A/D  78   L/H 701    -> model error +1.9 pts, near exact
+//
+//   Forest of Life  me   A/D 577   L/H 388    MIRRORED shapes
+//                   them A/D 391   L/H 553    -> model error -32.8 pts
+//
+// When both sides share a stat shape, any error in how A, L, D and H combine
+// CANCELS. Mirror the shapes and it is exposed -- in the direction that says the
+// player's high Attack/Defense is worth more than equal weighting credits.
+//
+// So the pair exponents are split, holding the total at 2 so overall scale is
+// unchanged:  offence = (1+A)^a (1+L)^(2-a),  defence = (1+D)^a (1+H)^(2-a).
+//
+//   a       Forest of Life error   Crystal Cave error   per-battle MAE
+//   1.00           -32.8                  +1.9               29.9
+//   1.09 <--        -0.4                  +5.2               13.2
+//   1.15           +10.8                  +7.7               18.5
+//
+// One parameter, two independent room-level constraints, fitted to REAL OUTCOMES
+// rather than to another calculator. That is the distinction from the 2.7x
+// counter: this contradicts a guide's prose, and the guide's prose is not
+// evidence. Ten battles are. Expect it to move as more rooms arrive -- Crystal
+// Cave contributes only two of the ten.
+export const STAT_PAIR_WEIGHT = 1.09
+
 // [DOC] Archers "Volley": 10% chance to fire twice, so the expected multiplier
 // is 0.9 x 1 + 0.1 x 2. Same per-round trigger as Ambusher above.
 export const ARCHER_VOLLEY_MULTIPLIER = 1.10
@@ -180,8 +215,13 @@ export function killsDealt({ attackerCount, attackerStats, defenderStats, attack
   const attackerTier = tierMultiplier(attackerStats?.tier)
   const defenderTier = tierMultiplier(defenderStats?.tier)
 
-  const offence = (100 + num(attackerStats?.attack)) / 100 * (100 + num(attackerStats?.lethality)) / 100 * attackerTier * attackerTier
-  const defence = (100 + num(defenderStats?.defense)) / 100 * (100 + num(defenderStats?.health)) / 100 * defenderTier * defenderTier
+  // Tier scales every stat, so it still enters squared on each side however the
+  // pair exponents are split -- t^a * t^(2-a) = t^2.
+  const w = STAT_PAIR_WEIGHT
+  const offence = Math.pow((100 + num(attackerStats?.attack)) / 100, w)
+    * Math.pow((100 + num(attackerStats?.lethality)) / 100, 2 - w) * attackerTier * attackerTier
+  const defence = Math.pow((100 + num(defenderStats?.defense)) / 100, w)
+    * Math.pow((100 + num(defenderStats?.health)) / 100, 2 - w) * defenderTier * defenderTier
   if (defence <= 0) return 0
 
   const special = specialMultiplier == null

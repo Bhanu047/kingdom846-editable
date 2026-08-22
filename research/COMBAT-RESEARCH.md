@@ -8,7 +8,79 @@ Written after the previous model was found to be built on invented constants.
 The failure mode to avoid: fitting our numbers to another calculator's output
 and calling it validation.
 
-## GROUND TRUTH — ten real Forest of Life outcomes  [OBS]
+## THE FIX: two rooms exposed what one could not  [OBS]
+
+Two **Crystal Cave** battles arrived, and they broke the problem open.
+
+| room | our error | why |
+|---|---|---|
+| Crystal Cave | **+1.9 pts** — near exact | both sides the **same** stat shape |
+| Forest of Life | **−32.8 pts** — badly wrong | the two shapes are **mirrored** |
+
+```
+Crystal Cave     me   A/D  85   L/H 640      same shape both sides
+                 them A/D  78   L/H 701
+
+Forest of Life   me   A/D 577   L/H 388      MIRRORED
+                 them A/D 391   L/H 553
+```
+
+When both sides share a stat shape, any error in how A, L, D and H combine
+**cancels**. Mirror the shapes and it is exposed. Neither room could have shown
+this alone — which is why eight Forest of Life battles produced four failed
+hypotheses and two Crystal Cave battles produced the answer.
+
+### `STAT_PAIR_WEIGHT = 1.09`
+
+The engine multiplied the pairs equally: `offence = (1+A)(1+L)`. A guide says
+exactly that — *"Attack and Lethality multiply together … they matter equally"* —
+and ten real battles say otherwise. Split the exponents, holding the total at 2:
+
+```
+offence = (1+A)^a · (1+L)^(2-a)      defence = (1+D)^a · (1+H)^(2-a)
+```
+
+| a | Forest of Life | Crystal Cave | per-battle MAE |
+|---|---|---|---|
+| 1.00 (was) | −32.8 | +1.9 | 29.9 |
+| **1.09** | **−0.4** | **+5.2** | **13.2** |
+| 1.15 | +10.8 | +7.7 | 18.5 |
+
+Validated on all ten battles plus Knowledge Nexus:
+
+- Forest of Life MAE **34.7 → 13.9**
+- Crystal Cave MAE 11.1 → 11.1 (unchanged, already good)
+- Knowledge Nexus still resolves as the win it really was (+39.0%)
+
+**One parameter, two independent room-level constraints, fitted to real
+outcomes.** That is the distinction from the 2.7× counter: this contradicts a
+guide's prose, and prose is not evidence — ten battles are.
+
+### The independent check nobody planned
+
+Calibrated purely on the player's own results, with Frakinator's output playing
+no part, the Forest of Life recommendation moved:
+
+```
+before   51 / 20 / 29
+after    46 / 22 / 32
+```
+
+The player fielded **46/21/33**. Frakinator recommends **46/21/33**. Our answer
+is now **0.1 points** from both. Seven reports of trying to imitate that tool
+failed; ten real battles reproduced it from first principles.
+
+### Honest caveat on the fit
+
+Per-battle MAE is 13.9, but the theoretical floor from the noise alone is ~17.2
+(0.798 × σ 21.6). **We are below the floor, which means mild overfitting on
+eight Forest of Life points.** The mechanism is real and the direction is
+certain; the error figure is optimistic. Expect ~17 on new fights, and expect
+`a` to move as more rooms arrive — Crystal Cave contributes only 2 of the 10.
+
+---
+
+## GROUND TRUTH — twelve real outcomes across two rooms  [OBS]
 
 **The first calibration data that is not another calculator's opinion.** Three
 battles, all fought with the same split (50/15/35), against near-identical

@@ -44,6 +44,7 @@ const LeaderPortal = lazy(() => import('./pages/LeaderPortal'))
 const WarRoom = lazy(() => import('./pages/WarRoom'))
 const BattleLab = lazy(() => import('./pages/BattleLabHub'))
 const Settings = lazy(() => import('./pages/Settings'))
+const Privacy = lazy(() => import('./pages/Privacy'))
 
 const titles = {
   dashboard: 'Home', about: 'About Kingdom', kingdom: 'Kingdom', alliances: 'Alliances', events: 'Events', timeline: 'Timeline', news: 'News', guides: 'Guides', rankings: 'Rankings', transfer: 'Transfer', 'battle-lab': 'Battle Lab',
@@ -124,6 +125,7 @@ function Shell() {
       switch (page) {
         case 'dashboard': return <Dashboard onNavigate={navigate} />
         case 'about': return <About />
+        case 'privacy': return <Privacy />
         case 'alliances': return <Alliances />
         case 'events': return <Events />
         case 'timeline': return <Timeline />
@@ -193,7 +195,7 @@ function Shell() {
               <div className="flex flex-col items-center gap-2 text-center">
                 <div className="flex items-center gap-3"><span className="text-gold-bright float-anim"><Icon name="crown" size={20} /></span><span className="font-serif text-lg tracking-wider gradient-gold font-bold">Kingdom 846</span><span className="text-gold-bright float-anim" style={{ animationDelay: '2s' }}><Icon name="crown" size={20} /></span></div>
                 <p className="text-[12px] text-gold/50 italic font-serif">Where legends are forged in fire and crowned in gold</p>
-                <div className="mt-2 flex items-center gap-2 text-[11px] text-parchment/50"><span>Crafted by</span><span className="text-gold/70 font-semibold">Spartan</span><span className="text-gold/30">◆</span><span>Forged for the realm</span><span className="text-gold/30">◆</span><a href="https://discord.gg/rcxJCh97A" target="_blank" rel="noreferrer" className="text-gold/60 hover:text-gold-bright transition">Discord</a></div>
+                <div className="mt-2 flex items-center gap-2 text-[11px] text-parchment/50"><span>Crafted by</span><span className="text-gold/70 font-semibold">Spartan</span><span className="text-gold/30">◆</span><span>Forged for the realm</span><span className="text-gold/30">◆</span><a href="https://discord.gg/rcxJCh97A" target="_blank" rel="noreferrer" className="text-gold/60 hover:text-gold-bright transition">Discord</a><span className="text-gold/30">◆</span><a href="#/privacy" className="text-gold/60 hover:text-gold-bright transition">Privacy</a></div>
               </div>
             </footer>
           </div>

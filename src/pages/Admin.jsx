@@ -3,7 +3,7 @@ import { useSiteData } from '../context/SiteDataContext'
 import { useAuth } from '../context/AuthContext'
 import Icon from '../components/Icon'
 import { buildSchedule, AVATAR_OPTIONS } from '../data/kingdom'
-import { apiJson } from '../lib/api'
+import { apiJson, apiFetch } from '../lib/api'
 import { RoyalSectionHeader } from '../components/VisualElements'
 
 const SECTIONS = ['Alliances', 'Players', 'Events', 'Analytics']
@@ -269,6 +269,20 @@ function Analytics() {
   if (error) return <p className="text-sm text-red-300/80">{error}</p>
   if (!data) return null
 
+  // The CSV route needs the auth header, so it cannot be a plain link.
+  const exportCsv = async () => {
+    try {
+      const res = await apiFetch(`/api/admin/analytics/export?days=${days}`)
+      if (!res.ok) throw new Error(`Export failed (${res.status})`)
+      const url = URL.createObjectURL(await res.blob())
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `kingdom846-analytics-${new Date().toISOString().slice(0, 10)}.csv`
+      document.body.appendChild(a); a.click(); a.remove()
+      URL.revokeObjectURL(url)
+    } catch (e) { setError(e.message) }
+  }
+
   const ago = (ts) => {
     const m = Math.round((Date.now() - ts) / 60000)
     if (m < 1) return 'just now'
@@ -282,7 +296,17 @@ function Analytics() {
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <RoyalSectionHeader title="Traffic" subtitle="Self-hosted · no third-party trackers" />
-        <div className="flex gap-1.5">
+        <div className="flex items-center gap-1.5">
+          {data.live > 0 && (
+            <span className="mr-1 inline-flex items-center gap-1.5 rounded-md bg-emerald-400/10 px-2 py-1 text-[11px] font-semibold text-emerald-300">
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
+              {data.live} now
+            </span>
+          )}
+          <button onClick={exportCsv}
+            className="mr-1 rounded-md px-2.5 py-1 text-[11px] font-semibold text-parchment/50 transition hover:bg-white/5 hover:text-gold-bright">
+            CSV
+          </button>
           {[7, 30, 90].map((d) => (
             <button key={d} onClick={() => setDays(d)}
               className={`rounded-md px-2.5 py-1 text-[11px] font-semibold transition ${days === d ? 'bg-gold/15 text-gold' : 'text-parchment/50 hover:bg-white/5'}`}>
@@ -298,6 +322,24 @@ function Analytics() {
             <div className="text-[10px] uppercase tracking-wider text-parchment/40">{label}</div>
             <div className="mt-0.5 font-display text-2xl text-gold-bright">{w.visitors.toLocaleString()}</div>
             <div className="text-[10px] text-parchment/45">visitors · {w.pageviews.toLocaleString()} views</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Visit-level quality. Counts alone cannot tell you whether people stayed. */}
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        {[
+          ['Visits', data.engagement.visits.toLocaleString(), 'sessions, 30-min gap'],
+          ['Bounce rate', `${data.engagement.bounceRate}%`, 'left after one page'],
+          ['Pages / visit', data.engagement.pagesPerVisit, 'average'],
+          ['Typical visit', data.engagement.medianSeconds >= 60
+            ? `${Math.round(data.engagement.medianSeconds / 60)}m`
+            : `${data.engagement.medianSeconds}s`, 'median, multi-page visits'],
+        ].map(([label, value, note]) => (
+          <div key={label} className="rounded-xl border border-gold/12 bg-white/[.02] p-3">
+            <div className="text-[10px] uppercase tracking-wider text-parchment/40">{label}</div>
+            <div className="mt-0.5 font-display text-xl text-parchment/90">{value}</div>
+            <div className="text-[9px] text-parchment/35">{note}</div>
           </div>
         ))}
       </div>
@@ -322,7 +364,10 @@ function Analytics() {
         <RankList title="Top pages" rows={data.pages} unit="views" valueKey="hits" />
         <RankList title="Battle Lab tools" rows={data.tools} unit="opens" valueKey="hits" />
         <RankList title="Actions" rows={data.actions} unit="times" valueKey="hits" />
+        <RankList title="Entry pages" rows={data.entries} unit="visits" valueKey="hits" />
         <RankList title="Traffic sources" rows={data.referrers} unit="visitors" valueKey="visitors" empty="All direct — no external referrers." />
+        <RankList title="Campaign links" rows={data.campaigns} unit="visitors" valueKey="visitors" empty="Add ?utm_source=discord to a shared link to track it here." />
+        <RankList title="Countries" rows={data.countries} unit="visitors" valueKey="visitors" empty="Your host is not sending a country header." />
         <RankList title="Devices" rows={data.devices} unit="visitors" valueKey="visitors" />
         <RankList title="Browsers" rows={data.browsers} unit="visitors" valueKey="visitors" />
       </div>

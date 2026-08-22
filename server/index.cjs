@@ -137,6 +137,11 @@ db.exec(`
   );
 `)
 
+// Columns added after the table shipped; the live database already exists.
+const aeCols = db.prepare('PRAGMA table_info(analytics_events)').all()
+if (!aeCols.some((c) => c.name === 'country')) db.exec('ALTER TABLE analytics_events ADD COLUMN country TEXT')
+if (!aeCols.some((c) => c.name === 'campaign')) db.exec('ALTER TABLE analytics_events ADD COLUMN campaign TEXT')
+
 // Seed default king
 if (!db.prepare('SELECT id FROM king_status WHERE id = ?').get(1)) {
   db.prepare('INSERT INTO king_status (id, king_type, name, alliance_tag, alliance_name) VALUES (1,?,?,?,?)').run('King', 'Oliver', '[SAS]', 'SaintsAndSinners')
@@ -245,6 +250,24 @@ function visitorId(req, day = utcDay()) {
   return crypto.createHmac('sha256', SECRET).update(raw).digest('base64url').slice(0, 22)
 }
 
+// Crawlers, uptime pingers and link-preview bots are the majority of raw hits on
+// a small site. Counting them makes every number a lie, so they are dropped at
+// the door rather than stored and filtered later.
+const BOT_RE = /bot|crawler|spider|crawling|slurp|bingpreview|facebookexternalhit|whatsapp|telegram|discordbot|preview|monitor|uptime|pingdom|curl|wget|python-requests|axios|headless|lighthouse|gtmetrix|semrush|ahrefs|mj12|dotbot|petalbot|yandex|baidu|duckduck|applebot|phantomjs|selenium|puppeteer/i
+const isBot = (ua = '') => !ua || BOT_RE.test(String(ua))
+
+// Country, when the host in front of us provides it. Render and Cloudflare both
+// set one of these; if none is present the column simply stays null rather than
+// this guessing from an IP we have deliberately chosen not to keep.
+function countryOf(req) {
+  const h = req.headers
+  const c = h['cf-ipcountry'] || h['x-vercel-ip-country'] || h['x-country-code']
+    || h['x-geo-country'] || h['fastly-client-country'] || null
+  if (!c) return null
+  const v = String(c).trim().toUpperCase()
+  return /^[A-Z]{2}$/.test(v) && v !== 'XX' ? v : null
+}
+
 function parseAgent(ua = '') {
   const s = String(ua)
   const device = /iPad|Tablet/i.test(s) ? 'tablet'
@@ -273,8 +296,10 @@ function logEvent(req, kind, name, { detail = null, userId = null } = {}) {
   try {
     const day = utcDay()
     const { device, browser } = parseAgent(req.headers['user-agent'])
+    if (isBot(req.headers['user-agent'])) return
     insertEvent.run(Date.now(), day, visitorId(req, day), userId, kind, name,
-      detail == null ? null : String(detail).slice(0, 200), null, device, browser)
+      detail == null ? null : String(detail).slice(0, 200), null, device, browser,
+      countryOf(req), null)
   } catch { /* analytics must never break a real request */ }
 }
 
@@ -282,8 +307,8 @@ const KINDS = new Set(['page', 'tool', 'action'])
 const clip = (v, n) => (v == null ? null : String(v).slice(0, n))
 
 const insertEvent = db.prepare(`INSERT INTO analytics_events
-  (ts, day, visitor, user_id, kind, name, detail, referrer, device, browser)
-  VALUES (?,?,?,?,?,?,?,?,?,?)`)
+  (ts, day, visitor, user_id, kind, name, detail, referrer, device, browser, country, campaign)
+  VALUES (?,?,?,?,?,?,?,?,?,?,?,?)`)
 
 // Per-visitor write cap, so a single client cannot flood the table.
 const trackCounts = new Map()
@@ -332,6 +357,8 @@ app.post('/api/track', express.text({ type: 'text/plain', limit: '8kb' }), (req,
     if (typeof body === 'string') { try { body = JSON.parse(body) } catch { body = null } }
     if (!body || typeof body !== 'object') return res.status(204).end()
 
+    if (isBot(req.headers['user-agent'])) return res.status(204).end()
+
     const kind = String(body.kind || '')
     const name = clip(body.name, 120)
     if (!KINDS.has(kind) || !name) return res.status(204).end()
@@ -347,7 +374,8 @@ app.post('/api/track', express.text({ type: 'text/plain', limit: '8kb' }), (req,
 
     const { device, browser } = parseAgent(req.headers['user-agent'])
     insertEvent.run(Date.now(), day, visitor, userId, kind, name,
-      clip(body.detail, 200), refHost(body.referrer), device, browser)
+      clip(body.detail, 200), refHost(body.referrer), device, browser,
+      countryOf(req), clip(body.campaign, 60))
   } catch { /* never surface analytics failures to the page */ }
   res.status(204).end()
 })
@@ -548,6 +576,54 @@ app.get('/api/admin/analytics', auth, adminOnly, (req, res) => {
     return { visitors: r?.v || 0, events: r?.h || 0, pageviews: p?.h || 0 }
   }
 
+  // A VISIT is a run of events from one visitor with no 30-minute gap. Derived
+  // at query time with window functions rather than stored, so there is no
+  // session row to keep and nothing extra to expire.
+  const VISIT_GAP = 30 * 60 * 1000
+  const visitCte = `
+    WITH marked AS (
+      SELECT visitor, ts, kind, name,
+        CASE WHEN ts - LAG(ts) OVER (PARTITION BY visitor ORDER BY ts) > ${VISIT_GAP}
+              OR LAG(ts) OVER (PARTITION BY visitor ORDER BY ts) IS NULL
+             THEN 1 ELSE 0 END AS is_start
+      FROM analytics_events WHERE day >= ?
+    ),
+    visits AS (
+      SELECT visitor, ts, kind, name,
+        SUM(is_start) OVER (PARTITION BY visitor ORDER BY ts ROWS UNBOUNDED PRECEDING) AS vno
+      FROM marked
+    )`
+
+  const perVisit = db.prepare(`${visitCte}
+    SELECT visitor, vno,
+      SUM(CASE WHEN kind = 'page' THEN 1 ELSE 0 END) pages,
+      MAX(ts) - MIN(ts) AS dur
+    FROM visits GROUP BY visitor, vno`).all(since)
+  const withPages = perVisit.filter((v) => v.pages > 0)
+  const bounced = withPages.filter((v) => v.pages === 1).length
+  const engagement = {
+    visits: withPages.length,
+    // Share of visits that were a single page and then gone.
+    bounceRate: withPages.length ? Math.round((bounced / withPages.length) * 100) : 0,
+    pagesPerVisit: withPages.length
+      ? Math.round((withPages.reduce((a, v) => a + v.pages, 0) / withPages.length) * 10) / 10 : 0,
+    // Median, not mean: one tab left open for six hours would wreck a mean.
+    medianSeconds: (() => {
+      const d = withPages.filter((v) => v.pages > 1).map((v) => v.dur).sort((a, b) => a - b)
+      return d.length ? Math.round(d[Math.floor(d.length / 2)] / 1000) : 0
+    })(),
+  }
+
+  // The page each visit started on -- where people actually enter the site.
+  const entries = db.prepare(`${visitCte}
+    , firsts AS (
+      SELECT visitor, vno, name,
+        ROW_NUMBER() OVER (PARTITION BY visitor, vno ORDER BY ts) rn
+      FROM visits WHERE kind = 'page'
+    )
+    SELECT name, COUNT(*) hits, COUNT(DISTINCT visitor) visitors
+    FROM firsts WHERE rn = 1 GROUP BY name ORDER BY hits DESC LIMIT 15`).all(since)
+
   res.json({
     generatedAt: Date.now(),
     days,
@@ -555,6 +631,17 @@ app.get('/api/admin/analytics', auth, adminOnly, (req, res) => {
     today: window(1),
     week: window(7),
     month: window(30),
+    engagement,
+    entries,
+    // Distinct visitors seen in the last five minutes.
+    live: db.prepare('SELECT COUNT(DISTINCT visitor) n FROM analytics_events WHERE ts > ?')
+      .get(Date.now() - 5 * 60 * 1000)?.n || 0,
+    countries: q(`SELECT country name, COUNT(DISTINCT visitor) visitors
+      FROM analytics_events WHERE day >= ? AND country IS NOT NULL
+      GROUP BY country ORDER BY visitors DESC LIMIT 15`, since),
+    campaigns: q(`SELECT campaign name, COUNT(DISTINCT visitor) visitors
+      FROM analytics_events WHERE day >= ? AND campaign IS NOT NULL
+      GROUP BY campaign ORDER BY visitors DESC LIMIT 15`, since),
     // One row per day so the dashboard can draw a trend without post-processing.
     series: q(`SELECT day,
         COUNT(DISTINCT visitor) visitors,
@@ -588,6 +675,26 @@ app.get('/api/admin/analytics', auth, adminOnly, (req, res) => {
       FROM analytics_events e JOIN users u ON u.id = e.user_id
       WHERE e.day >= ? ORDER BY e.ts DESC LIMIT 60`, since),
   })
+})
+
+// CSV of the daily aggregate, for anyone who would rather work in a spreadsheet.
+// Aggregates only -- there is no per-visitor export because there is no
+// per-visitor record to export.
+app.get('/api/admin/analytics/export', auth, adminOnly, (req, res) => {
+  const days = Math.min(365, Math.max(1, Number(req.query.days) || 90))
+  const since = utcDay(Date.now() - (days - 1) * 86400000)
+  const rows = db.prepare(`SELECT day,
+      COUNT(DISTINCT visitor) visitors,
+      SUM(CASE WHEN kind = 'page' THEN 1 ELSE 0 END) pageviews,
+      SUM(CASE WHEN kind = 'tool' THEN 1 ELSE 0 END) tool_opens,
+      SUM(CASE WHEN kind = 'action' THEN 1 ELSE 0 END) actions
+    FROM analytics_events WHERE day >= ? GROUP BY day ORDER BY day`).all(since)
+  const csv = ['day,visitors,pageviews,tool_opens,actions']
+    .concat(rows.map((r) => [r.day, r.visitors, r.pageviews, r.tool_opens, r.actions].join(',')))
+    .join('\n')
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8')
+  res.setHeader('Content-Disposition', `attachment; filename="kingdom846-analytics-${utcDay()}.csv"`)
+  res.send(csv)
 })
 
 app.get('/api/admin/leaders', auth, adminOnly, (_req, res) => {

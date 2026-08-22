@@ -25,6 +25,18 @@ const optedOut = (() => {
 // "referrer" would just be our own site.
 let referrerSent = false
 
+// ?utm_source=discord on a shared link, read once and then forgotten. This is
+// the only thing here that reads the URL, and it reads a value the person who
+// SHARED the link put there -- not anything about the visitor.
+const campaign = (() => {
+  try {
+    const p = new URLSearchParams(location.search)
+    const v = p.get('utm_source') || p.get('utm_campaign') || p.get('ref')
+    return v ? String(v).slice(0, 60) : null
+  } catch { return null }
+})()
+let campaignSent = false
+
 // Same page fired twice in a row is a re-render, not a visit.
 let lastPage = null
 
@@ -54,6 +66,10 @@ function send(kind, name, detail) {
   if (!name) return
   const payload = { kind, name: String(name).slice(0, 120) }
   if (detail != null) payload.detail = String(detail).slice(0, 200)
+  if (campaign && !campaignSent) {
+    campaignSent = true
+    payload.campaign = campaign
+  }
   if (!referrerSent) {
     referrerSent = true
     try {

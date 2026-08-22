@@ -9,6 +9,7 @@ const MINE = {
   archers:  { attack: 577.3, lethality: 399.0, defense: 543.1, health: 357.8, tier: 'T10' },
 }
 const MY_COUNTS = [81750, 24525, 57225]           // 50 / 15 / 35, total 163,500
+const countsFor = (b) => (b.split ? b.split.map((p) => Math.round(MY_TOTAL * p / 100)) : MY_COUNTS)
 const MY_TOTAL = 163500
 
 const BATTLES = [
@@ -30,26 +31,35 @@ const BATTLES = [
     result: 'VICTORY', myLoss: 122245, theirLoss: 161900, theirTotal: 161900 },
   { id: 'G', beast: 'Ferocious', them: { a: 393.0, L: 557.1 }, counts: [64720, 48540, 48540],
     result: 'VICTORY', myLoss:  98126, theirLoss: 161800, theirTotal: 161800 },
+  { id: 'H', beast: 'Starving',  them: { a: 391.0, L: 553.3 }, counts: [64680, 48510, 48510],
+    result: 'VICTORY', myLoss: 124319, theirLoss: 161700, theirTotal: 161700 },
+  // I is the FIRST fight at a different composition -- 46/21/33 instead of
+  // 50/15/35 -- and against the SAME beast as H. Its troop row was shown in
+  // percentage mode; the enemy's 40/30/30 matches its own counts exactly, which
+  // confirms that view is count share, not power share.
+  { id: 'I', beast: 'Starving',  them: { a: 391.0, L: 553.3 }, counts: [64680, 48510, 48510],
+    split: [46, 21, 33],
+    result: 'DEFEAT',  myLoss: 163500, theirLoss: 127998, theirTotal: 161700 },
 ]
 
-const army = () => Object.fromEntries(T.map((t, k) => [t, { count: MY_COUNTS[k], ...MINE[t] }]))
+const army = (b) => { const c = b ? countsFor(b) : MY_COUNTS; return Object.fromEntries(T.map((t, k) => [t, { count: c[k], ...MINE[t] }])) }
 const foe = (b) => Object.fromEntries(T.map((t, k) => [t, {
   count: b.counts[k], attack: b.them.a, defense: b.them.a, lethality: b.them.L, health: b.them.L, tier: 'T10' }]))
 
-console.log('SEVEN REAL OUTCOMES — same split 50/15/35 every time\n')
-console.log('  id  enemy atk  RESULT    my survivors      their survivors   ACTUAL edge')
+console.log('NINE REAL OUTCOMES\n')
+console.log('  id  split     enemy atk  RESULT    my survivors      their survivors   ACTUAL edge')
 for (const b of BATTLES) {
   const mySurv = MY_TOTAL - b.myLoss, theirSurv = b.theirTotal - b.theirLoss
   const edge = mySurv / MY_TOTAL - theirSurv / b.theirTotal
   b.actualEdge = edge
-  console.log(`  ${b.id}   ${String(b.them.a).padStart(6)}${b.them.inferred ? '*' : ' '}   ${b.result.padEnd(8)}  ${String(mySurv.toLocaleString()).padStart(7)} (${(mySurv/MY_TOTAL*100).toFixed(1)}%)   ${String(theirSurv.toLocaleString()).padStart(7)} (${(theirSurv/b.theirTotal*100).toFixed(1)}%)   ${(edge*100).toFixed(1).padStart(6)}%`)
+  console.log(`  ${b.id}  ${(b.split||[50,15,35]).join('/').padEnd(9)} ${String(b.them.a).padStart(6)}${b.them.inferred ? '*' : ' '}   ${b.result.padEnd(8)}  ${String(mySurv.toLocaleString()).padStart(7)} (${(mySurv/MY_TOTAL*100).toFixed(1)}%)   ${String(theirSurv.toLocaleString()).padStart(7)} (${(theirSurv/b.theirTotal*100).toFixed(1)}%)   ${(edge*100).toFixed(1).padStart(6)}%`)
 }
 
 console.log('\nWHAT OUR MODEL SAYS ABOUT THE SAME SEVEN FIGHTS\n')
 console.log('  id  predicted edge   predicted outcome   ACTUAL edge   ACTUAL     error')
 let errs = []
 for (const b of BATTLES) {
-  const r = runBattle(army(), foe(b), { maxTurns: 4000 })
+  const r = runBattle(army(b), foe(b), { maxTurns: 4000 })
   const pred = r.survivalEdge
   const err = pred - b.actualEdge
   errs.push(err)
@@ -62,5 +72,5 @@ console.log('\nHOW MUCH DOES REALITY ACTUALLY VARY?\n')
 const acts = BATTLES.map(b => b.actualEdge*100)
 console.log(`  same split, seven fights: ${acts.map(a=>a.toFixed(1)+'%').join('  ')}`)
 console.log(`  real spread: ${(Math.max(...acts)-Math.min(...acts)).toFixed(1)} points, and it crosses zero (one loss, two wins)`)
-const d = simulateOutcomes(army(), foe(BATTLES[1]), { trials: 300 })
+const d = simulateOutcomes(army(BATTLES[1]), foe(BATTLES[1]), { trials: 300 })
 console.log(`  our simulated spread on the same fight: +/-${(d.stdDev*100).toFixed(1)} points, ${(d.winRate*100).toFixed(0)}% wins`)

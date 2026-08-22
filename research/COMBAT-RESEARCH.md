@@ -8,7 +8,7 @@ Written after the previous model was found to be built on invented constants.
 The failure mode to avoid: fitting our numbers to another calculator's output
 and calling it validation.
 
-## GROUND TRUTH — five real Forest of Life outcomes  [OBS]
+## GROUND TRUTH — nine real Forest of Life outcomes  [OBS]
 
 **The first calibration data that is not another calculator's opinion.** Three
 battles, all fought with the same split (50/15/35), against near-identical
@@ -110,6 +110,40 @@ model returned a **negative score every time and the player won five**. A minus
 sign reads as "you lose"; it was wrong 5 times in 7. Only the **comparative**
 figure is shown now — the gap to the played opener — because a shared bias
 cancels in a difference, and the ranking is the part that has survived checking.
+
+### FIRST RANKING EVIDENCE — and it points against us  [OBS]
+
+Battle **I** is the first fight at a different composition: **46/21/33** instead
+of 50/15/35 — and against the *same beast* as battle H (Starving, 391.0/553.3,
+161,700). Its troop row was shown in percentage mode; the enemy's 40/30/30
+matches its own counts exactly, confirming that view is count share.
+
+| split | our score | REAL result |
+|---|---|---|
+| 50/15/35 | −8.4% | **VICTORY +24.0%** |
+| 46/21/33 | −2.9% | **DEFEAT −20.8%** |
+
+**Our model rates 46/21/33 as +5.5 points BETTER. Reality had it lose while the
+opener won** — 44.8 points apart on the same opponent.
+
+Pooling everything:
+
+| split | n | mean | sd | wins |
+|---|---|---|---|---|
+| 50/15/35 | 8 | **+15.1%** | 22.2 | 6/8 |
+| 46/21/33 | 1 | −20.8% | — | 0/1 |
+
+Difference **35.9 points**, standard error 23.6 → **1.5σ**. **Suggestive, not
+conclusive.** One sample on the 46/21/33 side, against a per-battle σ of 22, is
+entirely consistent with the two splits being equal.
+
+This matters because it cuts against `FRONT_ROW_SPILL = 0.35`, which moved our
+recommendation *toward* more Cavalry and fewer Infantry — exactly the direction
+46/21/33 sits in. **Not reverting on n=1.** Flipping the model on a single
+sample is the same error this file exists to record.
+
+**To settle it: about 6 more fights at 46/21/33** (or any non-opener split).
+At σ=22 and a 36-point gap, ~7 per split gives 80% power. We have 8 and 1.
 
 ### What is NOT being changed yet, and why
 

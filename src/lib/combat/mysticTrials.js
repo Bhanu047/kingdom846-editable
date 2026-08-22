@@ -20,7 +20,7 @@
 // commit an army, you are dividing a fixed one. So this module optimizes a
 // split and never asks the player about heroes or march size.
 
-import { TROOP_TYPES, runBattle, armyTotal, DEFAULT_TIER, NEAR_OPTIMAL_TOLERANCE } from './kingshotCombat.js'
+import { TROOP_TYPES, runBattle, armyTotal, DEFAULT_TIER, NEAR_OPTIMAL_TOLERANCE, simulateOutcomes } from './kingshotCombat.js'
 
 // [DOC] Each zone draws on a different pool of your bonuses, which is why the
 // same account reports ~180% in Knowledge Nexus and ~897% in Molten Fort.
@@ -164,11 +164,25 @@ export function optimizeTrialSplit({
     archers: spanOf(2),
   }
 
-  // What the player most needs to know, and what we never used to say: on a
-  // stage you cannot clear with ANY split, the recommendation is the least-bad
-  // way to lose, not a plan. Presenting it as a plan is how a losing fight came
-  // back looking fine.
-  const verdict = !best ? 'none' : anyClears ? 'clears' : 'unwinnable'
+  // The spread on the recommended split, with the abilities rolled per round
+  // rather than averaged. This is the honest error bar on the score -- NOT a
+  // win probability. See the note below on why we do not publish one.
+  const distribution = best
+    ? simulateOutcomes(armyFromSplit(total, best.composition, yourStats, yourTier), enemyArmy, { trials: 300 })
+    : null
 
-  return { candidates, best, baseline, band, anyClears, verdict, totalTroops: total, zone, step }
+  // Deliberately NOT returned: a clears / does-not-clear verdict.
+  //
+  // What has been validated is the RANKING -- which split beats which. Checked
+  // against three real reports it agrees closely with an established tool (on
+  // Forest of Life our 60/15/25 and its 57/21/21 score within 0.1 points of each
+  // other, ranks 95 and 96 of 5,151).
+  //
+  // The absolute win/lose call has NOT survived that check, and fails in a
+  // specific direction: it scored a Knowledge Nexus fight the player actually
+  // won as a heavy loss, and it scores Forest of Life at 7-11 sigma from even
+  // where an established Monte Carlo tool gives ~50%. A model that is confidently
+  // wrong is worse than one that stays quiet, so this returns a comparative score
+  // and the callers say plainly that it does not predict the outcome.
+  return { candidates, best, baseline, band, anyClears, distribution, totalTroops: total, zone, step }
 }

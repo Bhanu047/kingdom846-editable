@@ -253,6 +253,87 @@ of fight — its UI strings include *"All ratios statistically tied — battle i
 unwinnable"* and *"The recommended ratio is just the least-bad option, not a
 winning strategy."*
 
+### The verdict was the defect, not the split  [OBS]
+
+A third Forest of Life report, transcribed exactly from the Battle Details
+screen (earlier notes had 403.0/570.5 and counts 64,960/48,720 — both slightly
+wrong; correct values are below):
+
+| | mine | theirs |
+|---|---|---|
+| Attack / Defense | 577.3 / 543.1 | 400.0 / 400.0 |
+| Lethality / Health | 388.1 / 368.6 | 566.7 / 566.7 |
+| Troops | 163,500 (81,750 / 24,525 / 57,225) | 162,300 (64,920 / 48,690 / 48,690) |
+
+They are **11.5% stronger per troop** with essentially equal numbers.
+
+**On the split we and Frakinator agree almost exactly.** Scored on the same
+full 5,151-split grid:
+
+| split | score | rank |
+|---|---|---|
+| our 60/15/25 | −16.7% | 95 |
+| Frakinator 57/21/21 | −16.7% | 96 |
+| as played 50/15/35 | −23.2% | 677 |
+| classic 50/25/25 | −19.5% | 340 |
+
+Two picks, 0.1 points and one rank apart. **The composition question is settled;
+it was never the problem.**
+
+**The disagreement is entirely the verdict.** Frakinator: ~50% chance to win.
+Ours: "NO SPLIT CLEARS THIS STAGE — the least-bad way to lose — come back when
+your bonuses are higher."
+
+### Randomness: measured, and it does not rescue the verdict
+
+[DOC] The engine resolves "over several turns, each broken up into multiple
+exchanges", where each round depends on "current stats, remaining troop count,
+**which hero abilities trigger that round**". So ability triggers are per-round
+and army-wide, not per-troop averages — and battle simulators offer "fast mode
+for a stable read, or **Monte Carlo** when you want to see the effect of
+skill-roll variance". The engine now supports both (`rng` on `runBattle`,
+`simulateOutcomes`).
+
+Rolling Ambusher (20%) and Volley (10%) per round, 300–600 runs:
+
+| split | fast-mode | Monte Carlo mean ± sd | wins | σ from even |
+|---|---|---|---|---|
+| 60/15/25 | −17.0% | −15.7% ± 1.5 | **0 / 600** | 10.7 |
+| 57/21/21 | −17.4% | −16.2% ± 2.1 | **0 / 600** | 7.6 |
+| 50/15/35 | −23.2% | −23.5% ± 2.2 | **0 / 600** | 10.9 |
+
+A ±2-point spread that never crosses zero. **The documented randomness cannot
+turn this into a coin flip**, so no amount of it explains Frakinator's 50%. That
+is a negative result and it is recorded as one — the temptation was to inflate
+the variance until 50% appeared, which is the 2.7× counter mistake again.
+
+### What was actually done about it
+
+Our model is 7.6–10.9σ certain of a loss. An established tool says 50%. One of
+them is badly wrong and nothing in the model can say which. But there is a prior:
+**the only fight with a known real outcome — Knowledge Nexus — was a win that
+this model scored as a heavy loss.** The absolute verdict has failed every time
+it has been checkable, in the same direction.
+
+So the win/lose call is gone from both tools. The result now returns a
+comparative score (validated), the near-optimal band, and the Monte Carlo spread
+as an error bar — and says in the UI that it ranks splits and does not predict
+outcomes. A model that is confidently wrong about whether a stage is winnable is
+worse than one that declines to say.
+
+**This was a self-inflicted regression.** `MysticSuite.jsx` already carried a
+comment saying the absolute verdict "has not survived that check ... so stating
+one here would be asserting something we've measured to be wrong". A red
+"unwinnable" panel was then added directly beneath it.
+
+### A search that could not reach its own answer
+
+Default bounds were opener ±15/10/10. On Forest of Life (opener 50/15/35) that
+floors Archers at 25%, so Frakinator's 57/21/**21** and our own unbounded
+optimum 64/16/**20** were both outside the search — only 23 splits were tested,
+and neither answer was among them. Widened to ±20 (56 splits; the tool now
+returns 65/15/20, next to the unbounded 64/16/20).
+
 ### The constants are not the problem — the structure is
 
 Swept the three constants whose sources give a range or an approximation rather

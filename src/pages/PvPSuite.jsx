@@ -513,12 +513,16 @@ export default function PvPSuite() {
                 </div>
               )}
 
-              {/* And say it plainly when no split wins, instead of printing a
-                  "best split" over a fight that loses every way you cut it. */}
-              {!sweepResult.anyWins && (
-                <div className="stagger-in rounded-2xl border border-red-300/25 bg-red-300/[.05] p-4">
-                  <div className="text-[10px] font-bold uppercase tracking-[.14em] text-red-200/80">No split wins this fight</div>
-                  <div className="mt-1.5 text-xs leading-relaxed text-parchment/60">All {sweepResult.candidates.length} compositions tested lose, so the split above is the <b className="text-red-200/90">least-bad way to lose</b> — not a way to win. In PvP those losses are real and permanent, so the useful move is to skip this target, bring more troops, or add joiners — not to re-cut the same army.</div>
+              {/* Deliberately no "no split wins this fight" panel. It was here and
+                  it was wrong: what has been validated about this model is how it
+                  ORDERS splits, not its absolute win/lose call, which scored a real
+                  win as a heavy loss on a checked report. */}
+              {sweepResult.distribution && (
+                <div className="stagger-in rounded-2xl border border-gold/12 bg-white/[.02] p-4">
+                  <div className="text-[9px] uppercase tracking-wider text-parchment/35">How much to read into the score</div>
+                  <div className="mt-1.5 font-mono text-sm text-parchment/80">{(sweepResult.distribution.meanEdge * 100).toFixed(1)}% ± {(sweepResult.distribution.stdDev * 100).toFixed(1)} across {sweepResult.distribution.trials} simulated runs</div>
+                  <div className="mt-1.5 text-[11px] leading-relaxed text-parchment/50">A battle resolves over many rounds and which abilities fire in a round is a roll, so the same split does not give the same result twice. That is this split re-fought {sweepResult.distribution.trials} times with Ambusher and the Archer double-shot rolled per round rather than averaged — and in PvP, hero skills add roll variance on top that this does not model, so treat it as a floor on the spread.</div>
+                  <div className="mt-2.5 text-[11px] leading-relaxed text-amber-100/60"><b className="text-amber-200">This score ranks splits; it does not call the winner.</b> Use it to choose between compositions, not as a forecast — and in PvP the losses are real, so when it is close, send less.</div>
                 </div>
               )}
               </div>

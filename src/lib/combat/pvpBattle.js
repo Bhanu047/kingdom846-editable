@@ -11,7 +11,7 @@
 //   - Both compositions are given. The optimizer answers a narrower question:
 //     given a total you are willing to commit, how should it be split.
 
-import { TROOP_TYPES, runBattle, armyTotal, DEFAULT_TIER, NEAR_OPTIMAL_TOLERANCE } from './kingshotCombat.js'
+import { TROOP_TYPES, runBattle, armyTotal, DEFAULT_TIER, NEAR_OPTIMAL_TOLERANCE, simulateOutcomes } from './kingshotCombat.js'
 
 const num = (v, f = 0) => (Number.isFinite(Number(v)) ? Number(v) : f)
 
@@ -125,10 +125,21 @@ export function optimizePvpComposition({
     ? [Math.min(...near.map((c) => c.split[i])), Math.max(...near.map((c) => c.split[i]))]
     : [0, 0])
 
+  const distribution = best
+    ? simulateOutcomes(
+        Object.fromEntries(TROOP_TYPES.map((type) => [type, {
+          count: Math.round(total * best.composition[type]),
+          attack: num(yourStats?.[type]?.attack), lethality: num(yourStats?.[type]?.lethality),
+          defense: num(yourStats?.[type]?.defense), health: num(yourStats?.[type]?.health),
+          tier: yourStats?.[type]?.tier || yourTier,
+        }])), enemyArmy, { trials: 300 })
+    : null
+
   return {
     candidates,
     best,
     bestByLosses,
+    distribution,
     anyWins: winners.length > 0,
     band: {
       count: near.length,

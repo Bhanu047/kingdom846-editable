@@ -17,7 +17,12 @@ const TRIAL_SOURCES = Object.fromEntries(MYSTIC_ZONE_NAMES.map((z) => [z, MYSTIC
 // rather than across the whole simplex, because left unbounded it wanders to
 // corners real play never recommends (0% Cavalry, 50%+ Archers). The window
 // comes from played results; the ranking inside it is the model's opinion.
-const BOUND_SLACK = { infantry: 15, cavalry: 10, archers: 10 }
+// Wide enough that the search can actually reach its own optimum. These used to
+// be 15/10/10 around the opener, which on Forest of Life floored Archers at 25%
+// -- so 57/21/21, and our own unbounded best of 64/16/20, were both outside the
+// search by construction. No model is good enough to find an answer it is not
+// allowed to test.
+const BOUND_SLACK = { infantry: 20, cavalry: 20, archers: 20 }
 export function openerBounds(trial) {
   const [inf, cav, arc] = (TRIAL_OPENERS[trial] || '50/15/35').split('/').map(Number)
   const w = (v, s) => [String(Math.max(0, v - s)), String(Math.min(100, v + s))]
@@ -453,7 +458,7 @@ export default function MysticSuite() {
         </div>
         <span className="mt-2 block text-[10px] leading-relaxed text-parchment/35">All three types get a Min/Max range — Archers included, because bounding only Infantry and Cavalry lets Archers absorb whatever is left and run to any share. These default to a window around <b className="text-parchment/55">{trial}</b>'s played opener ({TRIAL_OPENERS[trial]}); right now the search tests Infantry <b className="text-parchment/55">{minInfantry || 0}–{maxInfantry || 100}%</b>, Cavalry <b className="text-parchment/55">{minCavalry || 0}–{maxCavalry || 100}%</b>, Archers <b className="text-parchment/55">{minArchers || 0}–{maxArchers || 100}%</b>. Widen them to explore outside the opener.</span>
         <div className="mt-4 rounded-xl border border-amber-300/15 bg-amber-300/[.035] p-3 text-[11px] leading-relaxed text-amber-100/60">
-          <b className="text-amber-200">How much to trust this.</b> Every mechanic here traces to a published source: the +10% counter triangle (which <i>is</i> the troops' Master Brawler / Charge / Ranged Strike abilities), Cavalry's 20% chance to slip past the front line, the Archer double-shot, the front-row targeting order, and troop tier. Nothing is fitted to make our numbers agree with anyone else's. Checked against a real <b className="text-amber-200">Knowledge Nexus</b> report it calls the stage as cleared — which is what happened — and its near-optimal range covers both the played opener and the answer an established tool gives. On an even matchup with no tier gap it still leans somewhat heavy on Infantry and light on Archers against what players actually field, so where it disagrees with <b className="text-amber-200">{trial}</b>'s opener ({TRIAL_OPENERS[trial]}) by more than the range below, the opener is the safer bet. Both are scored side by side. There's no randomness in this model, so unlike a Monte Carlo tool there's no win-percentage to give — you get a clears / does-not-clear call instead. </div>
+          <b className="text-amber-200">How much to trust this.</b> Every mechanic here traces to a published source: the +10% counter triangle (which <i>is</i> the troops' Master Brawler / Charge / Ranged Strike abilities), Cavalry's 20% chance to slip past the front line, the Archer double-shot, the front-row targeting order, and troop tier. Nothing is fitted to make our numbers agree with anyone else's. Checked against a real <b className="text-amber-200">Knowledge Nexus</b> report it calls the stage as cleared — which is what happened — and its near-optimal range covers both the played opener and the answer an established tool gives. On an even matchup with no tier gap it still leans somewhat heavy on Infantry and light on Archers against what players actually field, so where it disagrees with <b className="text-amber-200">{trial}</b>'s opener ({TRIAL_OPENERS[trial]}) by more than the range below, the opener is the safer bet. Both are scored side by side. What it will not give you is a win percentage, and that is on purpose: its ranking of splits holds up against real reports, its absolute win/lose call does not, and a confident wrong answer about whether a stage is winnable is the most damaging thing this tool could tell you. </div>
         <div className="mt-4 flex justify-center gap-3">
           <button onClick={run} disabled={!ready} className="btn-primary btn-royal px-8 disabled:opacity-40"><Icon name="sparkles" size={15} /> Run Optimizer</button>
           <button onClick={reset} className="inline-flex items-center gap-1.5 rounded-xl border border-gold/20 bg-white/[.02] px-5 py-2.5 text-xs font-bold uppercase tracking-wider text-parchment/60 hover:border-gold/35 hover:text-parchment"><Icon name="refresh" size={14} /> Reset</button>
@@ -475,13 +480,12 @@ export default function MysticSuite() {
               <div className="stagger-in rounded-2xl border border-gold/25 bg-gold/[.05] p-5 text-center text-gold-bright">
                 <div className="text-[10px] font-bold uppercase tracking-[.14em] text-gold-bright/60">{playerName.trim() ? <><span data-k846-player-name="true">{playerName.trim()}</span> · Recommended Split</> : 'Recommended Split'}</div>
                 <div className="mt-1 font-display text-2xl font-bold" data-k846-outcome-label="true">{pct(result.best.composition.infantry)} / {pct(result.best.composition.cavalry)} / {pct(result.best.composition.archers)}</div>
-                <div className="mt-1 text-xs text-parchment/50">Infantry / Cavalry / Archers · best of {result.candidates.length} splits tested, {result.best.clears ? 'clears this stage' : 'does not clear'} · survival edge {(result.best.survivalEdge * 100).toFixed(1)}%</div>
-                <div className="mt-2 text-[10px] leading-relaxed text-parchment/40">Survival edge is the share of your force left, minus the share of theirs. Compare it against the played opener below.</div>
+                <div className="mt-1 text-xs text-parchment/50">Infantry / Cavalry / Archers · best of {result.candidates.length} splits tested · score {(result.best.survivalEdge * 100).toFixed(1)}%{result.baseline ? <>, {(result.best.survivalEdge - result.baseline.survivalEdge) >= 0 ? '+' : ''}{((result.best.survivalEdge - result.baseline.survivalEdge) * 100).toFixed(1)} vs the opener</> : null}</div>
+                <div className="mt-2 text-[10px] leading-relaxed text-parchment/40">The score compares splits against each other. It is not a prediction of whether you win — see below.</div>
               </div>
 
-              {/* Both blocks below travel into the downloaded report: a report
-                  that shows a recommended split without saying the stage is
-                  unwinnable is the same mistake, just shareable. */}
+              {/* Both blocks below travel into the downloaded report, so a
+                  shared report carries the same caveats as the screen. */}
               <div data-report-clone="verdict" className="space-y-4">
               {/* The single split above is the centre of a range, not a
                   prescription. The objective is flat -- dozens of splits score
@@ -489,9 +493,8 @@ export default function MysticSuite() {
                   and stopping there is false precision. It is also why our
                   answer and another calculator's can look ten points apart on
                   Infantry while being worth ~2 points of survival to you. */}
-              {/* Suppressed when the band covers the entire search: on a fight that
-                  wipes you under every split, everything ties, and "anything in
-                  this range" adds nothing the verdict below doesn't already say. */}
+              {/* Suppressed when the band covers the entire search: if every
+                  split ties, "anything in this range" says nothing. */}
               {result.band && result.band.count > 1 && result.band.count < result.candidates.length && (
                 <div className="stagger-in rounded-2xl border border-gold/12 bg-white/[.02] p-4">
                   <div className="text-[9px] uppercase tracking-wider text-parchment/35">Anything in this range is as good</div>
@@ -500,26 +503,24 @@ export default function MysticSuite() {
                 </div>
               )}
 
-              {/* And the thing we never said before: whether the stage can be
-                  cleared at all. Printing "Recommended Split" over a fight that
-                  loses under every one of 5,000 compositions reads as a plan.
-                  It isn't one, and presenting it as one is what made a lost
-                  battle come back looking fine. */}
-              {(() => {
-                const clearing = result.candidates.filter((c) => c.clears).length
-                const zoneSources = (TRIAL_SOURCES[trial] || []).join(', ')
-                return result.verdict === 'unwinnable' ? (
-                  <div className="stagger-in rounded-2xl border border-red-300/25 bg-red-300/[.05] p-4">
-                    <div className="text-[10px] font-bold uppercase tracking-[.14em] text-red-200/80">No split clears this stage</div>
-                    <div className="mt-1.5 text-xs leading-relaxed text-parchment/60">Every one of the {result.candidates.length} compositions tested loses this fight, so the split above is the <b className="text-red-200/90">least-bad way to lose</b> — not a way through. Rearranging troops will not close this gap{zoneSources ? <> — {trial} is scored off <b className="text-parchment/80">{zoneSources}</b>, and that is what has to come up</> : null}. Come back when those bonuses are higher.</div>
-                  </div>
-                ) : (
-                  <div className="stagger-in rounded-2xl border border-emerald-300/25 bg-emerald-300/[.05] p-4">
-                    <div className="text-[10px] font-bold uppercase tracking-[.14em] text-emerald-200/80">This stage clears</div>
-                    <div className="mt-1.5 text-xs leading-relaxed text-parchment/60">{clearing} of the {result.candidates.length} splits tested clear it. The one above is the cheapest of them — it wipes the stage while keeping the most of your force.</div>
-                  </div>
-                )
-              })()}
+              {/* NO clears / does-not-clear verdict here, and this is deliberate.
+                  It was added, and it was wrong to add: the note at the top of
+                  this result block already recorded that the model's ranking of
+                  splits survives checking while its absolute win/lose call does
+                  not. Then a big red "no split clears this stage, come back when
+                  your bonuses are higher" panel went in anyway, on fights where
+                  an established tool gives a real chance of winning. Telling
+                  someone a stage is hopeless is the most damaging thing this
+                  tool can get wrong, and it is the part we have measured to be
+                  unreliable. So it states what it knows and stops there. */}
+              {result.distribution && (
+                <div className="stagger-in rounded-2xl border border-gold/12 bg-white/[.02] p-4">
+                  <div className="text-[9px] uppercase tracking-wider text-parchment/35">How much to read into the score</div>
+                  <div className="mt-1.5 font-mono text-sm text-parchment/80">{(result.distribution.meanEdge * 100).toFixed(1)}% ± {(result.distribution.stdDev * 100).toFixed(1)} across {result.distribution.trials} simulated runs</div>
+                  <div className="mt-1.5 text-[11px] leading-relaxed text-parchment/50">Kingshot resolves a battle over many rounds, and which abilities fire in a given round is a roll — so the same split does not give the same result twice. That range is this split re-fought {result.distribution.trials} times with Cavalry's Ambusher and the Archer double-shot rolled each round instead of averaged.</div>
+                  <div className="mt-2.5 text-[11px] leading-relaxed text-amber-100/60"><b className="text-amber-200">This score ranks splits. It does not call the winner.</b> Checked against real reports, the ordering holds up — on a Forest of Life report this tool's pick and an established optimizer's pick scored within 0.1 points of each other. The absolute win/lose call does not hold up: it scored a Knowledge Nexus stage the player <i>actually cleared</i> as a heavy loss. Use the split, and take the number as "this beats that", not as a forecast.</div>
+                </div>
+              )}
               </div>
               {(() => {
                 const yourSide = { infantry: result.totalTroops * result.best.composition.infantry, cavalry: result.totalTroops * result.best.composition.cavalry, archers: result.totalTroops * result.best.composition.archers }
@@ -536,7 +537,7 @@ export default function MysticSuite() {
                   <div className="stagger-in rounded-2xl border border-gold/10 bg-white/[.02] p-4">
                     <div className="text-[9px] uppercase tracking-wider text-parchment/35">{trial} played opener ({TRIAL_OPENERS[trial]})</div>
                     <div className={`mt-1 font-mono text-lg font-bold ${result.baseline.survivalEdge >= 0 ? 'text-emerald-300' : 'text-red-300'}`}>{(result.baseline.survivalEdge * 100).toFixed(1)}%</div>
-                    <div className="mt-0.5 text-[10px] text-parchment/40">{result.baseline.clears ? 'clears' : 'does not clear'} · what players actually run</div>
+                    <div className="mt-0.5 text-[10px] text-parchment/40">what players actually run</div>
                   </div>
                   <div className="stagger-in rounded-2xl border border-gold/20 bg-gold/[.04] p-4">
                     <div className="text-[9px] uppercase tracking-wider text-parchment/35">Our search</div>

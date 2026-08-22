@@ -42,16 +42,23 @@ export const COUNTER_BONUS = 1.10
 // double-count inflated exactly the troop our recommendations already leaned on
 // too hard. Removed.
 
-// [IMPL] Cavalry "Ambusher": ~20% chance to bypass the enemy Infantry front
-// line and strike Archers directly. Modelled as a damage split rather than a
-// coin flip so the result stays deterministic. This single mechanic is why
-// Cavalry is worth taking: without it Cavalry never reaches the type it
-// counters, and any honest optimizer concludes it is worthless.
+// [DOC] Cavalry "Ambusher": 20% of Cavalry bypass the enemy Infantry front line
+// each round and strike Archers directly. This single mechanic is why Cavalry is
+// worth taking: without it Cavalry never reaches the type it counters, and any
+// honest optimizer concludes it is worthless.
+//
+// It is a PER-ROUND trigger, not a per-troop average: published descriptions of
+// the engine say each round resolves on "current stats, remaining troop count,
+// WHICH HERO ABILITIES TRIGGER THAT ROUND, and other factors". Spending it as a
+// flat 20% of every volley is the expected value of that roll -- the "fast mode"
+// read that battle simulators offer alongside a Monte Carlo one. Both are
+// supported here: `rollAbilities` switches between them.
 export const AMBUSH_SHARE = 0.20
 
-// [IMPL] Archers "Volley": ~10% chance to fire twice, so the expected
-// multiplier is 0.9 x 1 + 0.1 x 2.
+// [DOC] Archers "Volley": 10% chance to fire twice, so the expected multiplier
+// is 0.9 x 1 + 0.1 x 2. Same per-round trigger as Ambusher above.
 export const ARCHER_VOLLEY_MULTIPLIER = 1.10
+export const ARCHER_VOLLEY_CHANCE = 0.10
 
 // Troop tier. [DOC] A full T11 army carries "roughly 15 to 20 percent more
 // stats than T10 across the board"; 1.175 is the midpoint. Expressed relative
@@ -143,6 +150,54 @@ export function killsDealt({ attackerCount, attackerStats, defenderStats, attack
   return Math.sqrt(count) * (offence / defence) * num(skillMod, 1) * counterBonus * special
 }
 
+/**
+ * Runs the same fight many times with the abilities ROLLED each round instead of
+ * averaged, and reports the spread. This is the "Monte Carlo" read that battle
+ * simulators offer next to their deterministic "fast" one, and it exists because
+ * a single deterministic number hides how close a fight actually is.
+ *
+ * The seed is derived from the armies, so the same fight always returns the same
+ * figures -- a recommendation that changes every time you press the button is
+ * worse than useless.
+ *
+ * What it is NOT: a model of every random element in the real game. It rolls the
+ * two abilities we have sourced trigger chances for. Hero skills are the other
+ * documented source of roll variance and Mystic Trials has no heroes outside
+ * Coliseum and Radiant Spire, so for Trials this is most of it; for PvP it is a
+ * floor on the true spread, not the whole of it.
+ */
+export function simulateOutcomes(attackerArmy, defenderArmy, { trials = 400, attackerSkillMod = 1, defenderSkillMod = 1, maxTurns = 4000 } = {}) {
+  const fingerprint = TROOP_TYPES.reduce((acc, t) => acc
+    + num(attackerArmy?.[t]?.count) * 7 + num(defenderArmy?.[t]?.count) * 13
+    + num(attackerArmy?.[t]?.attack) * 3 + num(defenderArmy?.[t]?.attack) * 5, 1)
+  let seed = (Math.abs(Math.floor(fingerprint)) % 2147483647) || 1
+  const rng = () => { seed = (seed * 1103515245 + 12345) >>> 0; return seed / 4294967296 }
+
+  const edges = []
+  let wins = 0
+  for (let i = 0; i < Math.max(1, trials); i += 1) {
+    const r = runBattle(attackerArmy, defenderArmy, { attackerSkillMod, defenderSkillMod, maxTurns, rng })
+    edges.push(r.survivalEdge)
+    if (r.attackerWins) wins += 1
+  }
+  edges.sort((a, b) => a - b)
+  const n = edges.length
+  const mean = edges.reduce((a, b) => a + b, 0) / n
+  const variance = edges.reduce((a, b) => a + (b - mean) ** 2, 0) / n
+  const stdDev = Math.sqrt(variance)
+  return {
+    trials: n,
+    winRate: wins / n,
+    meanEdge: mean,
+    stdDev,
+    best: edges[n - 1],
+    worst: edges[0],
+    // How many standard deviations of simulated spread separate this fight from
+    // an even one. Below ~2 the model cannot honestly call a winner.
+    sigmasFromEven: stdDev > 0 ? Math.abs(mean) / stdDev : Infinity,
+  }
+}
+
 // [IMPL] Row-based combat: every line attacks the enemy's front row, in the
 // order Infantry -> Cavalry -> Archers. Cavalry's Ambush is the only thing
 // that reaches past it.
@@ -166,7 +221,7 @@ export function cloneArmy(army) {
 }
 
 /** One side's full volley. Returns kills inflicted, keyed by defender type. */
-export function resolveVolley(attacker, defender, skillMod = 1) {
+export function resolveVolley(attacker, defender, skillMod = 1, rng = null) {
   const losses = { infantry: 0, cavalry: 0, archers: 0 }
   const front = frontLine(defender)
   if (!front) return losses
@@ -177,21 +232,31 @@ export function resolveVolley(attacker, defender, skillMod = 1) {
 
     const ambushAvailable = attackerType === 'cavalry' && front === 'infantry' && defender.archers.count > 0
     if (ambushAvailable) {
-      // The volley splits: most of it into the wall, the Ambush share past it.
-      losses.infantry += killsDealt({
-        attackerCount: count, attackerStats: attacker.cavalry, defenderStats: defender.infantry,
-        attackerType: 'cavalry', defenderType: 'infantry', skillMod, specialMultiplier: 1 - AMBUSH_SHARE,
-      })
-      losses.archers += killsDealt({
-        attackerCount: count, attackerStats: attacker.cavalry, defenderStats: defender.archers,
-        attackerType: 'cavalry', defenderType: 'archers', skillMod, specialMultiplier: AMBUSH_SHARE,
-      })
+      // Averaged: most of the volley into the wall, the Ambush share past it.
+      // Rolled: the whole volley goes one way or the other this round.
+      const share = rng ? (rng() < AMBUSH_SHARE ? 1 : 0) : AMBUSH_SHARE
+      if (share < 1) {
+        losses.infantry += killsDealt({
+          attackerCount: count, attackerStats: attacker.cavalry, defenderStats: defender.infantry,
+          attackerType: 'cavalry', defenderType: 'infantry', skillMod, specialMultiplier: 1 - share,
+        })
+      }
+      if (share > 0) {
+        losses.archers += killsDealt({
+          attackerCount: count, attackerStats: attacker.cavalry, defenderStats: defender.archers,
+          attackerType: 'cavalry', defenderType: 'archers', skillMod, specialMultiplier: share,
+        })
+      }
       continue
     }
 
+    const special = attackerType === 'archers' && rng
+      ? (rng() < ARCHER_VOLLEY_CHANCE ? 2 : 1)   // Volley either fires twice this round or it does not
+      : null                                      // null -> killsDealt uses the averaged multiplier
+
     losses[front] += killsDealt({
       attackerCount: count, attackerStats: attacker[attackerType], defenderStats: defender[front],
-      attackerType, defenderType: front, skillMod,
+      attackerType, defenderType: front, skillMod, specialMultiplier: special,
     })
   }
   return losses
@@ -207,7 +272,7 @@ export function resolveVolley(attacker, defender, skillMod = 1) {
  * "more survivors" is not a win condition. [OPEN] whether a Mystic stage is
  * actually won by wiping the enemy is unconfirmed; see COMBAT-RESEARCH.md.
  */
-export function runBattle(attackerArmy, defenderArmy, { attackerSkillMod = 1, defenderSkillMod = 1, maxTurns = 500 } = {}) {
+export function runBattle(attackerArmy, defenderArmy, { attackerSkillMod = 1, defenderSkillMod = 1, maxTurns = 500, rng = null } = {}) {
   const attacker = cloneArmy(attackerArmy)
   const defender = cloneArmy(defenderArmy)
   const startingAttacker = armyTotal(attacker)
@@ -218,8 +283,8 @@ export function runBattle(attackerArmy, defenderArmy, { attackerSkillMod = 1, de
   let stalled = false
   for (; turns < maxTurns; turns += 1) {
     if (!armyTotal(attacker) || !armyTotal(defender)) break
-    const defenderLosses = resolveVolley(attacker, defender, attackerSkillMod)
-    const attackerLosses = resolveVolley(defender, attacker, defenderSkillMod)
+    const defenderLosses = resolveVolley(attacker, defender, attackerSkillMod, rng)
+    const attackerLosses = resolveVolley(defender, attacker, defenderSkillMod, rng)
 
     let killedSomething = false
     for (const type of TROOP_TYPES) {

@@ -253,6 +253,70 @@ of fight — its UI strings include *"All ratios statistically tied — battle i
 unwinnable"* and *"The recommended ratio is just the least-bad option, not a
 winning strategy."*
 
+### The constants are not the problem — the structure is
+
+Swept the three constants whose sources give a range or an approximation rather
+than an exact figure (tier 1.15–1.20, Ambush 0.15–0.25, Volley 1.05–1.15), at
+1% grid, over all three reports:
+
+| setting | Knowledge Nexus | Molten Fort | Forest of Life |
+|---|---|---|---|
+| shipped (1.175 / 0.20 / 1.10) | 58/18/24 | 67/13/20 | 65/17/18 |
+| all low | 61/18/21 | 69/13/18 | 68/16/16 |
+| all high | 51/19/30 | 66/14/20 | 63/15/22 |
+| **full spread** | **51–61 / 17–21 / 21–30** | **66–69 / 13–14 / 18–20** | **63–68 / 15–17 / 16–22** |
+
+Knowledge Nexus clears under every combination. Two conclusions:
+
+1. **The recommendation is stable.** The optimum moves at most ±5 points on
+   Infantry across the entire sourced uncertainty, well inside the
+   near-optimal band the UI already reports. The band is not overstating.
+2. **The disagreement with other tools survives all of it.** Molten Fort stays
+   at 66–69% Infantry against Frakinator's 52; Forest of Life at 63–68 against
+   46. No combination of sourced constants comes close. **The residual gap is
+   structural, not a matter of tuning.**
+
+### What the structure actually is
+
+Decomposing one Forest of Life fight names it:
+
+| split | turns survived | total damage dealt | opening damage/turn | turns the front row holds |
+|---|---|---|---|---|
+| 33/33/34 | 302 | 111,764 | **746** (highest) | 77 |
+| 46/21/33 | 319 | 118,036 | 736 | 114 |
+| 65/17/18 | **347** | **129,353** | 694 (lowest) | **182** |
+
+Spreading troops evenly gives the **highest** instantaneous output — that is
+√-concavity working as expected. It still loses, because it deals the **least**
+damage overall.
+
+The reason is a property of the damage equation that is easy to miss:
+**damage depends on the attacker's own count and nothing else.** The defender's
+headcount never enters it. Combined with front-row targeting, that means a
+troop parked behind the wall deals its *full* output every round until the wall
+in front of it collapses — being protected costs nothing. So the optimizer
+correctly concludes that the best use of a troop is to be the wall, and lands
+at 63–68% Infantry.
+
+The other implementation has no wall at all (§4) — every row is exposed to a
+preferred attacker from round one, so nothing is ever protected, and it lands
+much lower on Infantry. **Our answer and theirs differ almost entirely because
+of this one structural choice**, and the published mechanics support ours:
+Infantry front, Archers backline "ideally never touched", Cavalry's Ambusher as
+the one documented way past.
+
+The hedge in that phrasing — "absorbs *most* incoming damage", "*ideally* never
+touched" — is the open edge. If the wall leaks, our Infantry share is too high
+by roughly the amount it leaks.
+
+**What would settle it:** one real battle report from a fight where neither
+side was wiped, showing per-type losses. If Archers lost troops while Infantry
+was still standing, the wall leaks and our model over-protects the back rows.
+If Archer losses stay near zero until Infantry collapses, our model is right
+and the tools that disagree with us are wrong. Mystic Trials cannot supply this
+(no casualties) — it needs a PvP or rally report. Do not pick a leak rate
+without it; that is the same mistake as the 2.7x counter.
+
 ### Hypotheses tested and rejected
 
 Recorded so they are not re-tried:
@@ -299,11 +363,13 @@ Recorded so they are not re-tried:
 6. **TrueGold (TG0–TG8)** boosts T10 troops and is a separate axis from tier;
    the UI collects it but no model uses it.
 7. **Lower-tier multipliers** (T1–T6, T7–T9) are extrapolated, not sourced.
-8. **Why we stay heavier on Infantry than players field.** On even matchups we
-   land ~10 points high on Infantry and ~8 low on Archers against both
-   Frakinator and the openers, consistently. Everything cheap has been tried
-   (§9). The likeliest remaining cause is that real combat is stochastic —
-   established tools rank by Monte Carlo **win probability**, and when you are
-   behind, the split that maximises the chance of an upset is not the one that
-   maximises expected survival. Our model is deterministic and cannot express
-   that. Fixing it properly means a randomised engine, not another constant.
+8. **Why we stay heavier on Infantry than players field.** Now narrowed, not
+   resolved. It is **not** the constants (§9 sweeps them all) and **not** the
+   sqrt exponent or the ranking objective (both rejected below). It is the
+   combination of front-row targeting with a damage term that ignores the
+   defender's headcount, which makes a protected back row free. Settling it
+   needs a real report with per-type losses; see §9. The Monte Carlo theory
+   that established tools rank by win probability is a separate matter and
+   would not by itself close a gap this size, since the two documented random
+   elements (Ambush 20%, Volley 10%) are per-troop and average out almost
+   exactly at army scale.

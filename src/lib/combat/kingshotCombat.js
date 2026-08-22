@@ -55,6 +55,22 @@ export const COUNTER_BONUS = 1.10
 // supported here: `rollAbilities` switches between them.
 export const AMBUSH_SHARE = 0.20
 
+// ---------------------------------------------------------------------------
+// CONSTANTS FREEZE. Two fitted constants live below -- STAT_PAIR_WEIGHT and
+// FRONT_ROW_SPILL. No more get fitted to the current data set, and these two do
+// not move again without materially more evidence.
+//
+// The reason is measured, not cautionary. Two REPLICATED fights now exist --
+// the same beast, same stats, same split, fought twice -- and they landed 43.7
+// and 35.9 points apart, flipping the outcome both times. That puts the
+// per-battle sd near 28, so a model that predicted every battle's true mean
+// perfectly would still show MAE ~22.6. Ours shows 18.0 over sixteen battles.
+//
+// Scoring BELOW the floor a perfect model faces is not skill. It is the
+// signature of fitting noise with two free parameters on sixteen points.
+// See research/noise-floor.mjs and COMBAT-RESEARCH.md sec.13.
+// ---------------------------------------------------------------------------
+
 // How much of a volley reaches PAST the front row.
 //
 // [DOC] says Infantry "absorbs MOST incoming damage" and Archers are "IDEALLY

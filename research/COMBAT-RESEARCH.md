@@ -1091,3 +1091,80 @@ Why 50/15/35 beat 52/15/33 is **not** established by this data. Reality's
 ordering could be real signal, or one draw of a coin. Three battles, one each,
 cannot separate those, and this file will not pretend otherwise. What *is*
 established is that spill 0.35 ranked all three backwards and 0.20 does not.
+
+---
+
+## 13. Battles P and Q: the replication, and a hard ceiling on the model  [OBS]
+
+The one report this file could not manufacture finally arrived — **the same
+fight, fought twice**. Crystal Cave, Cesares Prospector 76/685,
+60000/45000/45000, fielded 87,000 / 22,500 / 40,500 (58/15/27) both times, own
+bonuses 84.5 / 638 / 536.5 both times. Nothing distinguishes the inputs.
+
+| id | result | my losses | their losses | edge |
+|---|---|---|---|---|
+| Q | **VICTORY** | 121,587 | 150,000 | **+18.9** |
+| P | DEFEAT | 150,000 | 124,439 | **−17.0** |
+
+**35.9 points apart, and it flipped the outcome.** That is the second such pair
+in this file — D vs E in Forest of Life was 43.7 points apart and also flipped.
+
+### The noise, measured properly
+
+Matched pairs are the only data that measure the noise directly, because every
+input term cancels. For a pair, sd = |d|/√2; pooling k pairs, sd² = Σd²/2k
+(`research/noise-floor.mjs`):
+
+| pair | room | edges | gap |
+|---|---|---|---|
+| D vs E | Forest of Life | +15.2 / −28.5 | 43.7 |
+| P vs Q | Crystal Cave | +18.9 / −17.0 | 35.9 |
+
+**Pooled per-battle sd ≈ 28 points.** Earlier sections quote ~17; that figure
+was wrong and is superseded.
+
+### The finding that stops further fitting
+
+A *perfect* model — one that predicts each battle's true conditional mean —
+still has error, because the battle itself is random. For a normal that floor
+is sd·√(2/π):
+
+```
+best MAE any model can reach   22.6 points
+our MAE over 16 battles        18.0 points
+```
+
+**We are 4.5 points below the floor. That is not skill — it is fitting noise.**
+Two constants (`STAT_PAIR_WEIGHT`, `FRONT_ROW_SPILL`) were fitted on this many
+points, and scoring better than a perfect model is exactly what overfitting
+looks like.
+
+So: **no further constant gets fitted to this data set.** Both current values
+were re-checked with P and Q added and neither moves — spill is still flat
+across its range with 0.20 in the correct region, and W = 1.09 is still both
+the MAE minimum and the only value ranking both original pairs right (bias also
+improved to +1.2, near zero). They stay. Nothing new joins them until there is
+materially more data, and specifically more *replicated pairs*.
+
+### Honesty about how little two pairs pin down
+
+Two pairs is two degrees of freedom. The 95% CI on that sd runs from **15 to
+178 points**. The *direction* is solid — replicated fights flip outcomes, twice
+observed — but the number 28 is not. Which is why the conclusion drawn from it
+is a freeze on fitting, not a new constant.
+
+### What this settles from §12
+
+§12 left open whether 50/15/35 genuinely beat 52/15/33 or whether one coin
+landed heads. This does not answer it directly, but it removes the reason to
+assume signal: at this scale, *identical* compositions produce 36–44 point
+swings across the win/loss line. A 53-point gap between two splits 2% apart is
+comfortably inside what pure noise produces. **Treat it as a coin until a
+replication says otherwise.**
+
+### The split fielded, for the record
+
+58/15/27 sits **inside** the model's near-optimal band for that fight (57–65 /
+12–18 / 21–27), 1.0 points off the top. The model had nothing to correct here,
+and it went 1–1. That is the expected result of fielding a good split against a
+near-even beast, and it is the behaviour the tool should produce.

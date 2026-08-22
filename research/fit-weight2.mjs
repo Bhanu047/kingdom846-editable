@@ -50,16 +50,24 @@ const B=[
  ['M','CC', [50,15,35], 77.0,690.0,[60000,45000,45000], 33.3],
  ['N','CC', [46,21,33], 77.0,690.0,[60000,45000,45000],-38.4],
  ['O','CC', [52,15,33], 77.0,690.0,[60000,45000,45000],-20.1],
+ // P and Q are the SAME FIGHT twice -- same beast, same stats, same split --
+ // and finished on opposite sides of the result. My bonuses that day were
+ // 84.5 / 638 / 536.5, slightly under the M-O set, so they carry an override.
+ ['P','CC', [58,15,27], 76.0,685.0,[60000,45000,45000],-17.0,'PQ'],
+ ['Q','CC', [58,15,27], 76.0,685.0,[60000,45000,45000], 18.9,'PQ'],
 ]
-const ME={FoL:FOL_ME,CC:CC_ME}, TOT={FoL:163500,CC:150000}
+const PQ_ME={infantry:{attack:84.5,lethality:638,defense:84.5,health:638},
+             cavalry:{attack:84.5,lethality:536.5,defense:84.5,health:536.5},
+             archers:{attack:84.5,lethality:638,defense:84.5,health:638}}
+const ME={FoL:FOL_ME,CC:CC_ME,PQ:PQ_ME}, TOT={FoL:163500,CC:150000}
 console.log('  W     MAE all   MAE FoL   MAE CC    bias    pairs right')
 for(const W of [1.00,1.03,1.06,1.09,1.12,1.15,1.20]){
   const run=mk(0.20,W)
-  const errs=B.map(([id,room,split,a,L,c,act])=>run(pct(ME[room],TOT[room],split),en(a,L,c))-act)
+  const errs=B.map(([id,room,split,a,L,c,act,ov])=>run(pct(ME[ov||room],TOT[room],split),en(a,L,c))-act)
   const mae=v=>v.reduce((s,x)=>s+Math.abs(x),0)/v.length
   const fol=errs.filter((_,i)=>B[i][1]==='FoL'), cc=errs.filter((_,i)=>B[i][1]==='CC')
   const p1=run(pct(FOL_ME,163500,[50,15,35]),en(391,553.3,[64680,48510,48510]))-run(pct(FOL_ME,163500,[46,21,33]),en(391,553.3,[64680,48510,48510]))
   const p2=run(pct(CC_ME,150000,[50,15,35]),en(77,690,[60000,45000,45000]))-run(pct(CC_ME,150000,[46,21,33]),en(77,690,[60000,45000,45000]))
   console.log(`  ${W.toFixed(2)}  ${mae(errs).toFixed(1).padStart(7)}   ${mae(fol).toFixed(1).padStart(7)}   ${mae(cc).toFixed(1).padStart(7)}  ${(errs.reduce((s,x)=>s+x,0)/errs.length).toFixed(1).padStart(6)}      ${(p1>0?1:0)+(p2>0?1:0)}/2`)
 }
-console.log('\n  noise floor (D vs E, identical fight, opposite result): ~17.2')
+console.log('\n  per-battle sd from TWO replicated fights (research/noise-floor.mjs): ~28')

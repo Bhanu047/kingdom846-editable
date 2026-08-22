@@ -6,12 +6,12 @@ const line = (c, s) => ({ count: c, ...s })
 const dist = (a, b) => Math.abs(a[0] - b[0]) + Math.abs(a[1] - b[1]) + Math.abs(a[2] - b[2])
 
 const REPORTS = [
-  { zone: 'Knowledge Nexus', total: 185200, frak: [57, 15, 27], truth: 'player WON',
+  { zone: 'Knowledge Nexus', total: 185200, frak: [57, 15, 27], truth: 'player WON', yourTier: 'T11',
     you: { infantry: { attack: 180.5, lethality: 166.5, defense: 178.3, health: 155.5 },
            cavalry: { attack: 180.5, lethality: 155.5, defense: 178.3, health: 155.5 },
            archers: { attack: 180.5, lethality: 155.5, defense: 178.3, health: 161.0 } },
     them: Object.fromEntries(T.map((t, i) => [t, line([60000, 45000, 45000][i], { attack: 222, lethality: 222, defense: 222, health: 222 })])) },
-  { zone: 'Molten Fort', total: 150000, frak: [52, 21, 27], truth: 'Frakinator ~20% win',
+  { zone: 'Molten Fort', total: 150000, frak: [52, 21, 27], truth: 'Frakinator ~20% win', yourTier: 'T10',
     you: { infantry: { attack: 897.4, lethality: 205, defense: 903.5, health: 205 },
            cavalry: { attack: 859.2, lethality: 205, defense: 865.3, health: 205 },
            archers: { attack: 897.4, lethality: 205, defense: 903.5, health: 205 } },
@@ -20,9 +20,9 @@ const REPORTS = [
 
 console.log('=========== MYSTIC TRIALS MODEL ===========')
 for (const r of REPORTS) {
-  const o = optimizeTrialSplit({ totalTroops: r.total, yourStats: r.you, enemyArmy: r.them, zone: r.zone, stepPercent: 1 })
+  const o = optimizeTrialSplit({ totalTroops: r.total, yourStats: r.you, enemyArmy: r.them, zone: r.zone, stepPercent: 1, yourTier: r.yourTier })
   const opener = MYSTIC_ZONES[r.zone].opener
-  console.log(`\n${r.zone}  (${r.truth})`)
+  console.log(`\n${r.zone}  (${r.truth})   your tier ${r.yourTier} vs stage T10`)
   console.log(`  zone stats      ${MYSTIC_ZONES[r.zone].sources.join(', ')}`)
   console.log(`  our best        ${o.best.split.join('/').padEnd(10)} edge ${(o.best.survivalEdge * 100).toFixed(1)}%  clears: ${o.best.clears}`)
   console.log(`  Frakinator      ${r.frak.join('/').padEnd(10)} off by ${dist(o.best.split, r.frak)}`)

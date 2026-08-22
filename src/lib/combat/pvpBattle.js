@@ -11,7 +11,7 @@
 //   - Both compositions are given. The optimizer answers a narrower question:
 //     given a total you are willing to commit, how should it be split.
 
-import { TROOP_TYPES, runBattle, armyTotal } from './kingshotCombat.js'
+import { TROOP_TYPES, runBattle, armyTotal, DEFAULT_TIER } from './kingshotCombat.js'
 
 const num = (v, f = 0) => (Number.isFinite(Number(v)) ? Number(v) : f)
 
@@ -63,6 +63,7 @@ export function optimizePvpComposition({
   attackerSkills = {},
   defenderSkills = {},
   stepPercent = 5,
+  yourTier = DEFAULT_TIER,
 } = {}) {
   const total = Math.max(0, Math.floor(num(totalTroops)))
   if (total <= 0 || armyTotal(enemyArmy) <= 0) {
@@ -81,6 +82,7 @@ export function optimizePvpComposition({
         lethality: num(yourStats?.[type]?.lethality),
         defense: num(yourStats?.[type]?.defense),
         health: num(yourStats?.[type]?.health),
+        tier: yourStats?.[type]?.tier || yourTier,
       }]))
       const result = simulatePvpBattle({ attacker: army, defender: enemyArmy, attackerSkills, defenderSkills })
       candidates.push({

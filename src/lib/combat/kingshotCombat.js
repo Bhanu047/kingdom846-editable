@@ -43,6 +43,38 @@ export const AMBUSH_SHARE = 0.20
 // multiplier is 0.9 x 1 + 0.1 x 2.
 export const ARCHER_VOLLEY_MULTIPLIER = 1.10
 
+// Troop tier. [DOC] A full T11 army carries "roughly 15 to 20 percent more
+// stats than T10 across the board"; 1.175 is the midpoint. Expressed relative
+// to T10 because that is what Mystic Trials hands you and what most PvP is
+// fought at.
+//
+// This matters far more than its size suggests. The multiplier lands on each
+// of the four stats, so it hits offence as Attack x Lethality and defence as
+// Defense x Health -- t^2 each way, and the two compound. T11 against T10 is
+// therefore a ~1.9x swing in the damage ratio, not 17.5%.
+//
+// It is also what resolves the report we could not explain: in Knowledge
+// Nexus the opponent held a 2.02x per-troop edge on stats, which said the
+// player should be routed, and the player won. They were T11 against T10.
+// 2.02 / 1.91 = 1.06, near parity -- matching both the outcome and the ~40%
+// an established tool gave that fight.
+//
+// [OPEN] Only the T10/T11 gap is sourced. The lower entries assume the same
+// step compounding downward and are approximations; comparisons between two
+// low tiers are the least trustworthy thing in this file.
+export const TIER_STAT_MULTIPLIER = {
+  'T11': 1.175,
+  'T10': 1.0,
+  'T7-T9': 0.851,
+  'T1-T6': 0.724,
+}
+export const DEFAULT_TIER = 'T10'
+
+export function tierMultiplier(tier) {
+  const m = TIER_STAT_MULTIPLIER[tier]
+  return Number.isFinite(m) && m > 0 ? m : 1
+}
+
 const num = (v, fallback = 0) => (Number.isFinite(Number(v)) ? Number(v) : fallback)
 
 export function counters(attackerType, defenderType) {
@@ -76,8 +108,13 @@ export function killsDealt({ attackerCount, attackerStats, defenderStats, attack
   const count = Math.max(0, num(attackerCount))
   if (count <= 0) return 0
 
-  const offence = (100 + num(attackerStats?.attack)) / 100 * (100 + num(attackerStats?.lethality)) / 100
-  const defence = (100 + num(defenderStats?.defense)) / 100 * (100 + num(defenderStats?.health)) / 100
+  // Tier scales the underlying troop, so it lands on both stats in each pair:
+  // squared into offence, squared into defence.
+  const attackerTier = tierMultiplier(attackerStats?.tier)
+  const defenderTier = tierMultiplier(defenderStats?.tier)
+
+  const offence = (100 + num(attackerStats?.attack)) / 100 * (100 + num(attackerStats?.lethality)) / 100 * attackerTier * attackerTier
+  const defence = (100 + num(defenderStats?.defense)) / 100 * (100 + num(defenderStats?.health)) / 100 * defenderTier * defenderTier
   if (defence <= 0) return 0
 
   const special = specialMultiplier == null
@@ -108,6 +145,7 @@ export function cloneArmy(army) {
     lethality: num(army?.[type]?.lethality),
     defense: num(army?.[type]?.defense),
     health: num(army?.[type]?.health),
+    tier: army?.[type]?.tier || DEFAULT_TIER,
   }]))
 }
 

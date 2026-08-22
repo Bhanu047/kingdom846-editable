@@ -20,7 +20,7 @@
 // commit an army, you are dividing a fixed one. So this module optimizes a
 // split and never asks the player about heroes or march size.
 
-import { TROOP_TYPES, runBattle, armyTotal } from './kingshotCombat.js'
+import { TROOP_TYPES, runBattle, armyTotal, DEFAULT_TIER } from './kingshotCombat.js'
 
 // [DOC] Each zone draws on a different pool of your bonuses, which is why the
 // same account reports ~180% in Knowledge Nexus and ~897% in Molten Fort.
@@ -46,13 +46,14 @@ const num = (v, f = 0) => (Number.isFinite(Number(v)) ? Number(v) : f)
 const clampFraction = (v) => Math.min(1, Math.max(0, v))
 
 /** Builds an army of `total` troops split by fractions, all sharing per-type stats. */
-export function armyFromSplit(total, split, statsByType) {
+export function armyFromSplit(total, split, statsByType, tier = DEFAULT_TIER) {
   return Object.fromEntries(TROOP_TYPES.map((type) => [type, {
     count: Math.round(Math.max(0, num(total)) * clampFraction(num(split[type]))),
     attack: num(statsByType?.[type]?.attack),
     lethality: num(statsByType?.[type]?.lethality),
     defense: num(statsByType?.[type]?.defense),
     health: num(statsByType?.[type]?.health),
+    tier: statsByType?.[type]?.tier || tier,
   }]))
 }
 
@@ -87,6 +88,7 @@ export function optimizeTrialSplit({
   yourSkillMod = 1,
   stepPercent = 5,
   bounds = null,
+  yourTier = DEFAULT_TIER,
 } = {}) {
   const total = Math.max(0, Math.floor(num(totalTroops)))
   if (total <= 0 || armyTotal(enemyArmy) <= 0) {
@@ -104,7 +106,7 @@ export function optimizeTrialSplit({
 
   const evaluate = (inf, cav, arc) => {
     const split = { infantry: inf / 100, cavalry: cav / 100, archers: arc / 100 }
-    const army = armyFromSplit(total, split, yourStats)
+    const army = armyFromSplit(total, split, yourStats, yourTier)
     const result = runTrialStage({ yourArmy: army, enemyArmy, zone, yourSkillMod })
     return {
       split: [inf, cav, arc],

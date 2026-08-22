@@ -141,40 +141,65 @@ Baseline formation reported by players: **50/20/30**.
 
 ---
 
-## 8. Validation status
+## 8. Troop tier  [DOC]
 
-Prototype implementing sections 1–4, grid-searched at 1% resolution
-(5,151 splits) against the player's two real reports:
+A full T11 army carries **"roughly 15 to 20 percent more stats than T10
+across the board"**. Midpoint 1.175, expressed relative to T10 (what Mystic
+hands you, and where most PvP is fought).
 
-| | our optimum | Frakinator | played opener | Cavalry |
-|---|---|---|---|---|
-| Knowledge Nexus | 68/14/18 | 57/15/27 | 50/20/30 | 14% ✅ |
-| Molten Fort | 69/12/19 | 52/21/27 | 60/15/25 | 12% ✅ |
+This is far bigger than it looks. The multiplier lands on each of the four
+stats, so it enters offence as Attack x Lethality and defence as
+Defense x Health — t² each way — and the two compound. **T11 against T10 is a
+~1.9x swing in the damage ratio, not 17.5%.**
 
-**Fixed:** Cavalry now appears at a sane share with no fitted constants.
-The optimum is interior and balanced rather than pinned to a corner.
+This resolved open question 1. In Knowledge Nexus the opponent held a **2.02x**
+per-troop stat edge, so every wipe-based model said the player should be
+routed — and they won. They were **T11 against the stage's T10** (confirmed by
+the player: the "Lv." under each portrait is troop tier).
+2.02 / 1.91 = **1.06**, near parity. That matches the outcome and the ~40%
+an established tool gave the same fight.
 
-**Still wrong:** Archers come out ~18% against a real-world ~27%, and
-Infantry correspondingly too high. Suspected cause — damage scales as
-√count while a troop's value as a shield scales linearly with count, so
-stacking the front line always looks better than it is. Whether the real
-game's damage really is √count is [IMPL], not [DOC].
+[OPEN] Only the T10/T11 gap is sourced. Lower tiers assume the same step
+compounding downward and are approximations.
 
 ---
 
-## 9. Open questions  [OPEN] — do not guess these
+## 9. Validation status
 
-1. **The Knowledge Nexus report was a win, and no wipe-based model can
-   produce that.** The opponent led on all four stats and had only 19% fewer
-   troops, yet the player won. Something is missing from the win condition or
-   the inputs.
-2. **What is the "Lv." under each portrait in the report?** Knowledge Nexus
-   showed the player at **Lv. 11.0** and the opponent at **Lv. 10.0**, while
-   Molten Fort showed **10.0 vs 10.0**. If that is troop tier, a T11-vs-T10
-   advantage would plausibly explain question 1 — and we model no tier effect
-   at all. If it is hero level, it means something else entirely.
-3. **Is a Mystic stage won by wiping the enemy, or by surviving / scoring?**
-   Guides describe clearing stages but not the victory test.
-4. **Is damage really √count?** [IMPL] only. This single choice drives the
-   whole composition answer.
+Grid-searched at 1% resolution (5,151 splits) against the player's two real
+reports, with nothing fitted — every constant is sourced above.
+
+| | our optimum | clears? | Frakinator | off by | played opener | Cavalry |
+|---|---|---|---|---|---|---|
+| Knowledge Nexus (T11 vs T10) | **54/19/27** | **yes** ✅ | 57/15/27 | **7** | 50/20/30 | 19% |
+| Molten Fort (T10 vs T10) | 69/12/19 | no | 52/21/27 | 34 | 60/15/25 | 12% |
+
+**Knowledge Nexus is a genuine three-way agreement** — our answer, Frakinator's,
+and the community opener all cluster at roughly 50-57 / 15-20 / 27-30, and the
+model correctly says the stage clears, which is what happened.
+
+**Molten Fort still leans too heavily on Infantry** (69 vs a real-world 52-60)
+and too light on Archers (19 vs 25-27). Note it sits *between* the opener (60)
+and Frakinator (52) on Infantry, so it is not absurd — but the bias is real and
+shows up in the even matchup where no tier edge masks it. Suspected cause
+unchanged: damage scales as sqrt(count) while a troop's worth as a shield
+scales linearly, so the front line always looks better than it is. Whether the
+real game's damage is truly sqrt(count) is [IMPL], not [DOC] — it is the single
+least-verified load-bearing choice remaining.
+
+---
+
+## 10. Open questions  [OPEN] — do not guess these
+
+1. ~~Knowledge Nexus was a win no model reproduced~~ — **resolved**: troop tier
+   (§8).
+2. ~~What is the "Lv." under each portrait~~ — **resolved**: troop tier,
+   confirmed by the player.
+3. **Is damage really sqrt(count)?** [IMPL] only, and it drives the whole
+   composition answer — it is why Archers come out low.
+4. **Is a Mystic stage won by wiping the enemy, or by surviving / scoring?**
+   Guides describe clearing stages but never state the victory test.
 5. **Exact Ambush and Volley probabilities** — 20% and 10% are [IMPL].
+6. **TrueGold (TG0-TG8)** boosts T10 troops and is a separate axis from tier;
+   the UI collects it but no model uses it.
+7. **Lower-tier multipliers** (T1-T6, T7-T9) are extrapolated, not sourced.

@@ -77,62 +77,52 @@ const MEDALS = ['🥇', '🥈', '🥉']
 // without knowing your army size, but "-2.3%" reads the same regardless.
 export function CompositionChart({ items, total }) {
   const reveal = useReveal()
-  const gid = useId()
   if (!items.length) return null
-  const ROW_H = 44, PAD = 10, L = 158, R = 64, W = 900
-  const H = items.length * ROW_H + PAD * 2
   const pcts = items.map((c) => total > 0 ? (c.margin / total) * 100 : 0)
   const maxV = Math.max(0, ...pcts), minV = Math.min(0, ...pcts)
   const span = Math.max(0.001, maxV - minV)
-  const chartW = W - L - R
-  const xFor = (v) => L + (v - minV) / span * chartW
-  const zeroX = xFor(0)
-  const barH = ROW_H - 16
-  const rowTop = (i) => PAD + i * ROW_H
+  const at = (v) => (v - minV) / span * 100
+  const zero = at(0)
   const ticks = [minV, minV + span / 2, maxV]
   return (
-    <div className="relative rounded-2xl border border-gold/15 bg-[#07101e] p-4">
-      <svg viewBox={`0 0 ${W} ${H}`} className="w-full">
-        <defs>
-          <linearGradient id={`${gid}-w`} x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stopColor="#34d399" stopOpacity=".55" /><stop offset="100%" stopColor="#6ee7b7" /></linearGradient>
-          <linearGradient id={`${gid}-l`} x1="1" y1="0" x2="0" y2="0"><stop offset="0%" stopColor="#f87171" stopOpacity=".55" /><stop offset="100%" stopColor="#fca5a5" /></linearGradient>
-        </defs>
-        {[0, .25, .5, .75, 1].map((t) => <line key={t} x1={L + t * chartW} x2={L + t * chartW} y1={0} y2={H} stroke="rgba(226,199,125,.07)" />)}
-        <line x1={zeroX} x2={zeroX} y1={0} y2={H} stroke="rgba(226,199,125,.3)" strokeWidth="1.5" />
+    <div className="rounded-2xl border border-gold/15 bg-[#07101e] p-3 sm:p-4">
+      <div className="space-y-1">
         {items.map((c, i) => {
-          const v = pcts[i], win = v >= 0, endX = xFor(v)
-          const x = Math.min(zeroX, endX), w = Math.max(0.001, Math.abs(endX - zeroX))
-          return <rect key={i} x={x} y={rowTop(i) + 8} width={w} height={barH} rx={barH / 2} fill={`url(#${gid}-${win ? 'w' : 'l'})`} style={{ transformBox: 'fill-box', transformOrigin: win ? 'left' : 'right', transform: reveal ? 'scaleX(1)' : 'scaleX(0)', transition: `transform .9s cubic-bezier(.16,1,.3,1) ${i * 70}ms`, filter: `drop-shadow(0 0 6px ${win ? '#34d39990' : '#f8717190'})` }} />
-        })}
-      </svg>
-      {/* Plain HTML labels, not SVG <text> — html2canvas 1.4.1 renders SVG
-          text (and the whole SVG along with it) blank in exported reports. */}
-      {items.map((c, i) => {
-        const v = pcts[i], win = v >= 0, endX = xFor(v)
-        const cy = (rowTop(i) + ROW_H / 2) / H * 100
-        return (
-          <div key={i} className="pointer-events-none absolute -translate-y-1/2" style={{ top: `${cy}%`, left: '0.5%' }}>
-            <div className="flex items-center gap-1.5">
-              <span className={`grid h-5 w-5 shrink-0 place-items-center rounded-full text-[10px] font-black ${i < 3 ? '' : 'border border-gold/20 bg-black/30 text-parchment/40'}`}>{i < 3 ? MEDALS[i] : <span className="text-[8px]">#{i + 1}</span>}</span>
-              <div className="flex h-3 w-10 shrink-0 overflow-hidden rounded-full border border-gold/15">
-                <div style={{ width: `${c.composition.infantry * 100}%`, background: TROOP_COLORS.infantry }} />
-                <div style={{ width: `${c.composition.cavalry * 100}%`, background: TROOP_COLORS.cavalry }} />
-                <div style={{ width: `${c.composition.archers * 100}%`, background: TROOP_COLORS.archers }} />
+          const v = pcts[i], win = v >= 0, end = at(v)
+          const left = Math.min(zero, end), width = Math.max(0.4, Math.abs(end - zero))
+          return (
+            <div key={i} className="flex items-center gap-2">
+              <div className="flex w-[92px] shrink-0 items-center gap-1.5 sm:w-[124px]">
+                <span className={`grid h-5 w-5 shrink-0 place-items-center rounded-full text-[10px] font-black ${i < 3 ? '' : 'border border-gold/20 bg-black/30 text-parchment/40'}`}>{i < 3 ? MEDALS[i] : <span className="text-[8px]">#{i + 1}</span>}</span>
+                <div className="hidden h-3 w-9 shrink-0 overflow-hidden rounded-full border border-gold/15 sm:flex">
+                  <div style={{ width: `${c.composition.infantry * 100}%`, background: TROOP_COLORS.infantry }} />
+                  <div style={{ width: `${c.composition.cavalry * 100}%`, background: TROOP_COLORS.cavalry }} />
+                  <div style={{ width: `${c.composition.archers * 100}%`, background: TROOP_COLORS.archers }} />
+                </div>
+                <span className="whitespace-nowrap font-mono text-[10px] font-semibold tabular-nums text-parchment/75">{Math.round(c.composition.infantry * 100)}/{Math.round(c.composition.cavalry * 100)}/{Math.round(c.composition.archers * 100)}</span>
               </div>
-              <span className="whitespace-nowrap font-mono text-[10px] font-semibold text-parchment/75">{Math.round(c.composition.infantry * 100)}/{Math.round(c.composition.cavalry * 100)}/{Math.round(c.composition.archers * 100)}</span>
+              <div className="relative h-5 flex-1">
+                <span className="absolute inset-y-0 w-px bg-gold/25" style={{ left: `${zero}%` }} />
+                <span
+                  className="absolute inset-y-[3px] rounded-full"
+                  style={{
+                    left: `${left}%`, width: `${width}%`,
+                    background: win ? 'linear-gradient(90deg,rgba(52,211,153,.55),#6ee7b7)' : 'linear-gradient(270deg,rgba(248,113,113,.55),#fca5a5)',
+                    transformOrigin: win ? 'left' : 'right',
+                    transform: reveal ? 'scaleX(1)' : 'scaleX(0)',
+                    transition: `transform .9s cubic-bezier(.16,1,.3,1) ${i * 70}ms`,
+                  }}
+                />
+              </div>
+              <span className={`w-[46px] shrink-0 whitespace-nowrap text-right font-mono text-[10px] font-bold tabular-nums sm:w-[54px] sm:text-[11px] ${win ? 'text-emerald-300' : 'text-red-300'}`}>{v >= 0 ? '+' : ''}{v.toFixed(1)}%</span>
             </div>
-          </div>
-        )
-      })}
-      {items.map((c, i) => {
-        const v = pcts[i], win = v >= 0, endX = xFor(v)
-        const cy = (rowTop(i) + ROW_H / 2) / H * 100
-        return (
-          <div key={i} className={`pointer-events-none absolute -translate-y-1/2 whitespace-nowrap font-mono text-[11px] font-bold ${win ? 'text-emerald-300' : 'text-red-300'}`} style={{ top: `${cy}%`, left: `${(endX + (win ? 8 : -8)) / W * 100}%`, transform: `translateY(-50%) ${win ? '' : 'translateX(-100%)'}` }}>{v >= 0 ? '+' : ''}{v.toFixed(1)}%</div>
-        )
-      })}
-      <div className="pointer-events-none absolute bottom-1 flex justify-between text-[9px] text-parchment/30" style={{ left: `${L / W * 100}%`, right: `${R / W * 100}%` }}>
-        {ticks.map((t, i) => <span key={i}>{t >= 0 ? '+' : ''}{t.toFixed(0)}%</span>)}
+          )
+        })}
+      </div>
+      <div className="mt-2 flex text-[9px] text-parchment/30">
+        <span className="w-[92px] shrink-0 sm:w-[124px]" />
+        <span className="flex flex-1 justify-between">{ticks.map((t, i) => <span key={i}>{t >= 0 ? '+' : ''}{t.toFixed(0)}%</span>)}</span>
+        <span className="w-[46px] shrink-0 sm:w-[54px]" />
       </div>
     </div>
   )

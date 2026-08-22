@@ -272,6 +272,63 @@ of fight — its UI strings include *"All ratios statistically tied — battle i
 unwinnable"* and *"The recommended ratio is just the least-bad option, not a
 winning strategy."*
 
+### The Infantry bias: found, and fixed  [OBS]
+
+Four Forest of Life reports from the same player, plus Molten Fort and
+Knowledge Nexus. Our Archer share against two independent references:
+
+| | archers |
+|---|---|
+| community opener (Forest of Life) | 35% |
+| Frakinator, four runs | 33, 21, 33, 33 |
+| **ours** | **20%** |
+
+We were the outlier against both. That is not one tool's noise.
+
+**Cause.** The front row absorbed **100%** of every volley until it died, so a
+troop behind the wall dealt full damage for free and the optimiser correctly
+concluded the best use of any troop was to *be* the wall. But the sources say
+Infantry "absorbs **most** incoming damage" and Archers are "**ideally** never
+touched". Most is not all; ideally is not always. Modelling the remainder as
+zero was our choice, not the game's.
+
+**`FRONT_ROW_SPILL = 0.30`** — the share of a volley that reaches past the front
+row. Swept 0–0.45 against five real reports across three zones, scored against
+two independent targets simultaneously:
+
+| spill | vs Frakinator | vs community openers | combined |
+|---|---|---|---|
+| 0.00 | 110 | 130 | 240 |
+| 0.20 | 74 | 84 | 158 |
+| **0.30** | **60** | **70** | **130** |
+| 0.40 | 82 | 80 | 162 |
+
+Halves the disagreement with both at once, sits inside what "absorbs most"
+allows, and Knowledge Nexus — the one fight with a known real outcome — still
+resolves as the win it actually was (+39%). Molten Fort went from 34 points off
+Frakinator to 6.
+
+**This is the only fitted number in the engine, and the distinction from the
+2.7× counter matters:** that bent a *documented* constant to match one tool's
+output. This is an *undocumented* structural quantity, bounded by its source,
+calibrated against two independent references over five reports.
+
+Before/after on the newest report (163,500 vs 161,500, they are 8% stronger per
+troop): **65/15/20 → 54/19/27**, against Frakinator's 52/15/33 and the opener
+50/15/35.
+
+### A wrong input was invisible  [OBS]
+
+A report was optimised as **203,775** troops when it was **163,500**:
+
+    81,750 (your Infantry) + 57,225 (your Archers) + 64,800 (the ENEMY's Infantry)
+
+The player's Cavalry, 24,525, was missing and the opponent's Infantry had taken
+its place. That inflated total turned a −11% result into **+44.2%** and a
++90,036 troop margin — a losing fight reported as comfortably won. The result
+showed the *recommended* per-type counts and a total but never the three numbers
+entered, so there was nothing on screen to check against. It now echoes them.
+
 ### The verdict was the defect, not the split  [OBS]
 
 A third Forest of Life report, transcribed exactly from the Battle Details

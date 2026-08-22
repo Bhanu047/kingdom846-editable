@@ -55,6 +55,37 @@ export const COUNTER_BONUS = 1.10
 // supported here: `rollAbilities` switches between them.
 export const AMBUSH_SHARE = 0.20
 
+// How much of a volley reaches PAST the front row.
+//
+// [DOC] says Infantry "absorbs MOST incoming damage" and Archers are "IDEALLY
+// never touched". Most is not all, and ideally is not always -- the remainder
+// is left unspecified by every source found. This engine used to model it as
+// zero: the front row soaked 100% until it died. That is a choice, not a rule,
+// and it was the wrong one. It meant a troop behind the wall dealt full damage
+// for free, so the optimiser correctly concluded the best use of any troop was
+// to BE the wall, and it returned ~20% Archers when the community opener says
+// 35% and an established optimizer says 21-33% across four runs. We were the
+// outlier against both.
+//
+// **This is the one fitted number in this file, and it is fitted to references
+// rather than invented.** Swept 0 to 0.45 against five of the player's real
+// reports across three zones, scored against TWO independent targets at once:
+//
+//   spill  vs Frakinator  vs community openers  combined
+//   0.00        110              130              240
+//   0.20         74               84              158
+//   0.30 <--     60               70              130
+//   0.40         82               80              162
+//
+// 0.30 halves the disagreement with both simultaneously, sits inside what
+// "absorbs most" allows, and keeps Knowledge Nexus -- the only fight with a
+// known real outcome -- resolving as the win it actually was (+39%).
+//
+// It is NOT the 2.7x counter mistake repeated: that bent a DOCUMENTED constant
+// to fit one tool's output. This is an undocumented structural quantity, bounded
+// by its source, calibrated against two independent references over five reports.
+export const FRONT_ROW_SPILL = 0.30
+
 // [DOC] Archers "Volley": 10% chance to fire twice, so the expected multiplier
 // is 0.9 x 1 + 0.1 x 2. Same per-round trigger as Ambusher above.
 export const ARCHER_VOLLEY_MULTIPLIER = 1.10
@@ -223,41 +254,42 @@ export function cloneArmy(army) {
 /** One side's full volley. Returns kills inflicted, keyed by defender type. */
 export function resolveVolley(attacker, defender, skillMod = 1, rng = null) {
   const losses = { infantry: 0, cavalry: 0, archers: 0 }
-  const front = frontLine(defender)
-  if (!front) return losses
+  const standing = TROOP_TYPES.filter((type) => num(defender?.[type]?.count) > 0)
+  if (!standing.length) return losses
+
+  const front = standing[0]
+  const back = standing.slice(1)
+  // With nothing behind it the front row absorbs the whole volley -- otherwise
+  // the spill would simply vanish and a single-type army would take less total
+  // damage than a mixed one, which is not a mechanic, it is a leak.
+  const spill = back.length ? FRONT_ROW_SPILL : 0
+
+  const hit = (attackerType, defenderType, portion) => {
+    if (portion <= 0) return
+    const volley = attackerType === 'archers'
+      ? (rng ? (rng() < ARCHER_VOLLEY_CHANCE ? 2 : 1) : ARCHER_VOLLEY_MULTIPLIER)
+      : 1
+    losses[defenderType] += killsDealt({
+      attackerCount: attacker[attackerType].count,
+      attackerStats: attacker[attackerType], defenderStats: defender[defenderType],
+      attackerType, defenderType, skillMod, specialMultiplier: portion * volley,
+    })
+  }
 
   for (const attackerType of TROOP_TYPES) {
-    const count = attacker[attackerType].count
-    if (count <= 0) continue
+    if (attacker[attackerType].count <= 0) continue
 
-    const ambushAvailable = attackerType === 'cavalry' && front === 'infantry' && defender.archers.count > 0
-    if (ambushAvailable) {
-      // Averaged: most of the volley into the wall, the Ambush share past it.
-      // Rolled: the whole volley goes one way or the other this round.
-      const share = rng ? (rng() < AMBUSH_SHARE ? 1 : 0) : AMBUSH_SHARE
-      if (share < 1) {
-        losses.infantry += killsDealt({
-          attackerCount: count, attackerStats: attacker.cavalry, defenderStats: defender.infantry,
-          attackerType: 'cavalry', defenderType: 'infantry', skillMod, specialMultiplier: 1 - share,
-        })
-      }
-      if (share > 0) {
-        losses.archers += killsDealt({
-          attackerCount: count, attackerStats: attacker.cavalry, defenderStats: defender.archers,
-          attackerType: 'cavalry', defenderType: 'archers', skillMod, specialMultiplier: share,
-        })
-      }
-      continue
+    // Ambusher comes off the top: that share always reaches the Archers,
+    // whatever the rest of the volley does.
+    let remaining = 1
+    if (attackerType === 'cavalry' && front !== 'archers' && defender.archers.count > 0) {
+      const ambush = rng ? (rng() < AMBUSH_SHARE ? 1 : 0) : AMBUSH_SHARE
+      hit('cavalry', 'archers', ambush)
+      remaining = 1 - ambush
     }
 
-    const special = attackerType === 'archers' && rng
-      ? (rng() < ARCHER_VOLLEY_CHANCE ? 2 : 1)   // Volley either fires twice this round or it does not
-      : null                                      // null -> killsDealt uses the averaged multiplier
-
-    losses[front] += killsDealt({
-      attackerCount: count, attackerStats: attacker[attackerType], defenderStats: defender[front],
-      attackerType, defenderType: front, skillMod, specialMultiplier: special,
-    })
+    hit(attackerType, front, remaining * (1 - spill))
+    for (const row of back) hit(attackerType, row, remaining * spill / back.length)
   }
   return losses
 }

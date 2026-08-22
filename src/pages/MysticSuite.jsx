@@ -491,72 +491,41 @@ export default function MysticSuite() {
           <h3 className="mt-1 font-display text-2xl font-bold text-parchment">Best Composition Found</h3>
           {result.best ? (
             <div className="mt-4 space-y-4">
-              {/* The headline is the split, not a win/lose call. The model's
-                  ranking of splits against each other is what's been checked
-                  against known-good answers; its absolute verdict has not
-                  survived that check -- it scores a Knowledge Nexus fight the
-                  player actually won as a heavy loss -- so stating one here
-                  would be asserting something we've measured to be wrong. */}
-              <div className="stagger-in rounded-2xl border border-gold/25 bg-gold/[.05] p-5 text-center text-gold-bright">
-                <div className="text-[10px] font-bold uppercase tracking-[.14em] text-gold-bright/60">{playerName.trim() ? <><span data-k846-player-name="true">{playerName.trim()}</span> · Recommended Split</> : 'Recommended Split'}</div>
-                <div className="mt-1 font-display text-2xl font-bold" data-k846-outcome-label="true">{pct(result.best.composition.infantry)} / {pct(result.best.composition.cavalry)} / {pct(result.best.composition.archers)}</div>
-                <div className="mt-1 text-xs text-parchment/50">Infantry / Cavalry / Archers · best of {result.candidates.length} splits tested · score {(result.best.survivalEdge * 100).toFixed(1)}%{result.baseline ? <>, {(result.best.survivalEdge - result.baseline.survivalEdge) >= 0 ? '+' : ''}{((result.best.survivalEdge - result.baseline.survivalEdge) * 100).toFixed(1)} vs the opener</> : null}</div>
-                <div className="mt-2 text-[10px] leading-relaxed text-parchment/40">A comparative score, not a win prediction.</div>
-              </div>
+              {/* One card, not four. This was a headline, an entry echo, a
+                  range panel and a three-paragraph score caveat stacked on top
+                  of each other -- everything true, and far too much to read to
+                  go and field a troop split. Same facts, one block.
 
-              {/* Echo the entered counts. The result used to show only the
-                  RECOMMENDED per-type numbers and a total, so if a count was
-                  mistyped or mis-parsed from a screenshot there was nothing on
-                  screen to check it against — a 163,500 army was once optimised
-                  as 203,775 and came back "winning" off the back of it. */}
-              <div className="stagger-in rounded-2xl border border-gold/10 bg-white/[.02] px-4 py-3">
-                <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-                  <span className="text-[9px] uppercase tracking-wider text-parchment/35">Read from your entry</span>
-                  <span className="font-mono text-[11px] text-parchment/70">{TROOPS.map((t) => fmt(n(yours[t.key].count))).join('  /  ')}<span className="text-parchment/35"> = </span>{fmt(result.totalTroops)}</span>
-                </div>
-                <div className="mt-1 text-[10px] leading-relaxed text-parchment/40">Infantry / Cavalry / Archers, as entered. If that doesn't match your report, fix it above and re-run — every number below is built on it.</div>
-              </div>
+                  Still no win/lose call: the model's ORDERING of splits checks
+                  out against real reports, its absolute verdict does not (it
+                  scored a Knowledge Nexus stage the player actually cleared as a
+                  heavy loss), so stating one would assert something measured to
+                  be wrong. */}
+              <div data-report-clone="verdict">
+                <div className="stagger-in rounded-2xl border border-gold/25 bg-gold/[.05] p-5 text-center text-gold-bright">
+                  <div className="text-[10px] font-bold uppercase tracking-[.14em] text-gold-bright/60">{playerName.trim() ? <><span data-k846-player-name="true">{playerName.trim()}</span> · Recommended Split</> : 'Recommended Split'}</div>
+                  <div className="mt-1 font-display text-2xl font-bold" data-k846-outcome-label="true">{pct(result.best.composition.infantry)} / {pct(result.best.composition.cavalry)} / {pct(result.best.composition.archers)}</div>
+                  <div className="mt-0.5 text-[10px] uppercase tracking-wider text-parchment/40">Infantry / Cavalry / Archers</div>
 
-              {/* Both blocks below travel into the downloaded report, so a
-                  shared report carries the same caveats as the screen. */}
-              <div data-report-clone="verdict" className="space-y-4">
-              {/* The single split above is the centre of a range, not a
-                  prescription. The objective is flat -- dozens of splits score
-                  within a point of the winner -- so quoting one to the percent
-                  and stopping there is false precision. It is also why our
-                  answer and another calculator's can look ten points apart on
-                  Infantry while being worth ~2 points of survival to you. */}
-              {/* Suppressed when the band covers the entire search: if every
-                  split ties, "anything in this range" says nothing. */}
-              {result.band && result.band.count > 1 && result.band.count < result.candidates.length && (
-                <div className="stagger-in rounded-2xl border border-gold/12 bg-white/[.02] p-4">
-                  <div className="text-[9px] uppercase tracking-wider text-parchment/35">Anything in this range is as good</div>
-                  <div className="mt-1 font-mono text-lg font-bold text-parchment">{result.band.infantry[0]}–{result.band.infantry[1]} / {result.band.cavalry[0]}–{result.band.cavalry[1]} / {result.band.archers[0]}–{result.band.archers[1]}</div>
-                  <div className="mt-1 text-[10px] leading-relaxed text-parchment/45">{result.band.count} of {result.candidates.length} splits score within {(result.band.tolerance * 100).toFixed(0)} point of the best. Field whatever in that range fits the troops you have.</div>
-                </div>
-              )}
+                  {result.band && result.band.count > 1 && result.band.count < result.candidates.length && (
+                    <div className="mt-3 font-mono text-sm text-parchment/75">Also fine: {result.band.infantry[0]}–{result.band.infantry[1]} / {result.band.cavalry[0]}–{result.band.cavalry[1]} / {result.band.archers[0]}–{result.band.archers[1]}</div>
+                  )}
 
-              {/* NO clears / does-not-clear verdict here, and this is deliberate.
-                  It was added, and it was wrong to add: the note at the top of
-                  this result block already recorded that the model's ranking of
-                  splits survives checking while its absolute win/lose call does
-                  not. Then a big red "no split clears this stage, come back when
-                  your bonuses are higher" panel went in anyway, on fights where
-                  an established tool gives a real chance of winning. Telling
-                  someone a stage is hopeless is the most damaging thing this
-                  tool can get wrong, and it is the part we have measured to be
-                  unreliable. So it states what it knows and stops there. */}
-              {result.distribution && (
-                <div className="stagger-in rounded-2xl border border-gold/12 bg-white/[.02] p-4">
-                  <div className="text-[9px] uppercase tracking-wider text-parchment/35">How much to read into the score</div>
-                  <div className="mt-1.5 font-mono text-sm text-parchment/80">{(result.distribution.meanEdge * 100).toFixed(1)}% ± {(result.distribution.stdDev * 100).toFixed(1)} across {result.distribution.trials} simulated runs</div>
-                  <div className="mt-1.5 text-[11px] leading-relaxed text-parchment/50"><b className="text-amber-200/90">Ranks splits — doesn't call the winner.</b> Use it as "this beats that".</div>
-                  <details className="group mt-1.5">
-                    <summary className="cursor-pointer list-none text-[10px] uppercase tracking-wider text-gold-bright/50 hover:text-gold-bright/80">Why <span className="inline-block transition-transform group-open:rotate-90">›</span></summary>
-                    <div className="mt-1.5 text-[10px] leading-relaxed text-parchment/45">A battle runs over many rounds and which abilities fire in a round is a roll, so the same split doesn't repeat exactly — that spread is {result.distribution.trials} re-fights with Ambusher and the Archer double-shot rolled per round. Against real reports the <i>ordering</i> holds up: on a Forest of Life report our pick and an established optimizer's landed within 0.1 points. The absolute win/lose call doesn't — it scored a Knowledge Nexus stage the player actually cleared as a heavy loss, so it isn't published.</div>
+                  {/* The entered counts, echoed. Without this a mistyped or
+                      mis-parsed count had nothing on screen to check against --
+                      a 163,500 army was once optimised as 203,775 and came back
+                      "winning" because of it. */}
+                  <div className="mt-3 border-t border-gold/12 pt-2.5 font-mono text-[11px] text-parchment/55">
+                    <span className="text-parchment/35">you entered </span>{TROOPS.map((t) => fmt(n(yours[t.key].count))).join(' / ')}<span className="text-parchment/35"> = </span>{fmt(result.totalTroops)}
+                  </div>
+                  <div className="mt-2 text-[10px] leading-relaxed text-parchment/40">
+                    Score {(result.best.survivalEdge * 100).toFixed(1)}%{result.distribution ? <> (±{(result.distribution.stdDev * 100).toFixed(1)} over {result.distribution.trials} runs)</> : null}{result.baseline ? <>, {(result.best.survivalEdge - result.baseline.survivalEdge) >= 0 ? '+' : ''}{((result.best.survivalEdge - result.baseline.survivalEdge) * 100).toFixed(1)} vs the opener</> : null} · ranks splits, not a win prediction
+                  </div>
+                  <details className="group mt-1">
+                    <summary className="cursor-pointer list-none text-[10px] uppercase tracking-wider text-gold-bright/45 hover:text-gold-bright/80">Why <span className="inline-block transition-transform group-open:rotate-90">›</span></summary>
+                    <div className="mt-1.5 text-left text-[10px] leading-relaxed text-parchment/45">Best of {result.candidates.length} splits tested{result.band && result.band.count > 1 ? <>, {result.band.count} of them within a point of each other — the exact headline number isn't worth chasing</> : null}. Which abilities fire in a round is a roll, so the same split doesn't repeat exactly; the ± is {result.distribution ? result.distribution.trials : 300} re-fights with Ambusher and the Archer double-shot rolled per round. Against real reports the <i>ordering</i> holds up; the absolute win/lose call doesn't — it scored a Knowledge Nexus stage the player actually cleared as a heavy loss — so it isn't published.</div>
                   </details>
                 </div>
-              )}
               </div>
               {(() => {
                 const yourSide = { infantry: result.totalTroops * result.best.composition.infantry, cavalry: result.totalTroops * result.best.composition.cavalry, archers: result.totalTroops * result.best.composition.archers }

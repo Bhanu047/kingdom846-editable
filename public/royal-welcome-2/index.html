@@ -119,23 +119,22 @@ body.nogl #bg{display:none;}
 @keyframes crestIn{from{opacity:0;transform:translateY(34px) scale(.86);filter:blur(20px)}
                    to{opacity:1;transform:translateY(0) scale(1);filter:blur(0)}}
 @keyframes crestFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+/* Separating the crest from a bright hall used to be a radial pool behind it.
+   A rectangle of shade behind a shape this intricate never matches its
+   silhouette -- on War Camp's sunset it read as a dark smudge sitting on the
+   sky, which is what you saw. drop-shadow follows the crest's own alpha, so
+   the darkening lands exactly behind the filigree and nowhere else.
+   --crest-lift is how much a hall needs: most need none. */
 .crest{width:100%;height:100%;object-fit:contain;display:block;
-  filter:drop-shadow(0 0 50px rgba(230,194,102,.26)) drop-shadow(0 22px 46px rgba(0,0,0,.8));}
+  filter:drop-shadow(0 0 50px rgba(230,194,102,.26))
+         drop-shadow(0 22px 46px rgba(0,0,0,.8))
+         drop-shadow(0 0 10px rgba(0,0,0,var(--crest-lift,0)))
+         drop-shadow(0 0 26px rgba(0,0,0,var(--crest-lift,0)));}
 
-  1%{opacity:.85}
-  12%{opacity:.85}
-  14%{opacity:0;background-position:230% 0}
-  100%{opacity:0;background-position:-130% 0}}
 
 .halo{position:absolute;left:50%;top:50%;width:190%;height:135%;transform:translate(-50%,-50%);opacity:0;pointer-events:none;
   background:radial-gradient(closest-side, rgba(var(--acc),.20), rgba(var(--acc),0) 70%),
-             radial-gradient(closest-side, rgba(var(--acc2),.14), rgba(var(--acc2),0) 62%),
-             /* On a dark hall the crest reads on its own. Over War Camp's burning
-                sunset, or Cathedral's blown-out windows, gold filigree on a bright
-                sky loses its edges and the crest goes half-transparent. This is a
-                pool of shade behind it -- ground for it to stand on. Zero on the
-                dark halls, where it would only be a smudge. */
-             radial-gradient(42% 34% at 50% 48%, rgba(3,6,12,var(--crest-shade,0)), rgba(3,6,12,0) 72%);}
+             radial-gradient(closest-side, rgba(var(--acc2),.14), rgba(var(--acc2),0) 62%);}
 .play .halo{animation:fadeIn 2.2s ease-out 3.1s forwards, haloPulse 7s ease-in-out 5.4s infinite;}
 @keyframes haloPulse{0%,100%{opacity:1}50%{opacity:.55}}
 
@@ -703,7 +702,7 @@ body[data-theme="coronation"]{--disp:'Cinzel Decorative',serif;--disp-w:900;--di
 /* 03 Moonlit Realm -- whispered, not announced. The thinnest weight, the
    widest tracking, the smallest wordmark and a reduced crest, so most of the
    frame is night. */
-body[data-theme="moonlit"]{--crest-shade:.30;--disp:'Cormorant Garamond',serif;--disp-w:300;--disp-track:.3em;
+body[data-theme="moonlit"]{--crest-lift:.35;--disp:'Cormorant Garamond',serif;--disp-w:300;--disp-track:.3em;
   --disp-size:clamp(32px,6.8vw,94px);--crest-h:clamp(165px,37vh,410px);
   --eyebrow-track:.5em;--eyebrow-w:400;--tag-w:300;--orn:'\2727\FE0E';}
 
@@ -718,7 +717,7 @@ body[data-theme="embers"]{--disp:'Bebas Neue',sans-serif;--disp-w:400;--disp-tra
 /* 05 Ivory Cathedral -- carved into the wall rather than printed. Inscriptional
    small caps, generous tracking, the tallest crest, and a maltese cross for
    the ornament. */
-body[data-theme="cathedral"]{--crest-shade:.34;--disp:'Marcellus SC',serif;--disp-w:400;--disp-track:.17em;
+body[data-theme="cathedral"]{--crest-lift:.55;--disp:'Marcellus SC',serif;--disp-w:400;--disp-track:.17em;
   --disp-size:clamp(35px,7.4vw,104px);--crest-h:clamp(205px,47vh,520px);
   --eyebrow-track:.4em;--orn:'\2720\FE0E';}
 
@@ -734,7 +733,7 @@ body[data-theme="cathedral"]{--crest-shade:.34;--disp:'Marcellus SC',serif;--dis
    didone in the set, so it cannot be mistaken for the other eight. The square
    corners stay -- that part was right. The button keeps Cinzel, because
    Bodoni's hairlines vanish at 11px. */
-body[data-theme="storm"]{--crest-shade:.26;--disp:'Bodoni Moda',serif;--disp-w:900;--disp-track:.1em;
+body[data-theme="storm"]{--crest-lift:.30;--disp:'Bodoni Moda',serif;--disp-w:900;--disp-track:.1em;
   --disp-size:clamp(40px,8.4vw,118px);--crest-h:clamp(178px,38vh,420px);
   --eyebrow-track:.36em;--eyebrow-w:600;
   --tag-fam:'Bodoni Moda',serif;--tag-style:italic;--tag-w:500;--tag-track:.03em;
@@ -748,7 +747,7 @@ body[data-theme="dragongate"]{--disp:'Yeseva One',serif;--disp-w:400;--disp-trac
 
 /* 08 Royal War Camp -- a standard stitched in the field, not set in a print
    shop. Rugged, blackletter-adjacent, still readable at a glance. */
-body[data-theme="warcamp"]{--crest-shade:.62;--disp:'Grenze Gotisch',serif;--disp-w:700;--disp-track:.07em;
+body[data-theme="warcamp"]{--crest-lift:.72;--disp:'Grenze Gotisch',serif;--disp-w:700;--disp-track:.07em;
   --disp-size:clamp(44px,9.4vw,132px);
   --cta-fam:'Grenze Gotisch',serif;--cta-w:700;--cta-track:.22em;--orn:'\2748\FE0E';}
 

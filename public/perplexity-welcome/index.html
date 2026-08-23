@@ -249,11 +249,25 @@ body.entering .stage    { opacity: 0; scale: 1.35; transition: opacity .85s ease
 body.entering .vignette { opacity: 0; transition: opacity 1.3s ease; }
 body.entering .hair,
 body.entering .bar      { opacity: 0; transition: opacity .7s ease; }
-.whiteout {
+/* This was a literal wash to white: #FFF6DC ramped to opacity 1 and HELD
+   there, finishing at 2.2s while the hand-off to the site fires at 2.0s. So the
+   last thing anyone saw before the Dashboard was a full white screen, and a
+   dark site arriving out of white reads as a fault rather than an effect.
+   The arch still blooms -- but it blooms and PASSES, and the screen then closes
+   to the site's own ink, so the Dashboard opens out of darkness. */
+.arch-bloom {
   position: fixed; inset: 0; z-index: 40; pointer-events: none; opacity: 0;
-  background: radial-gradient(circle at 50% 38%, #FFF6DC, #FFE6A8 34%, rgba(255,214,130,0) 72%);
+  background: radial-gradient(circle at 50% 38%, rgba(255,231,168,.92), rgba(255,205,118,.40) 36%, rgba(255,188,88,0) 72%);
 }
-body.entering .whiteout { opacity: 1; transition: opacity 1.5s ease .7s; }
+body.entering .arch-bloom { animation: archBloom 1.8s ease-out .5s forwards; }
+@keyframes archBloom { 0%{opacity:0} 28%{opacity:.82} 100%{opacity:0} }
+
+.gate-veil {
+  position: fixed; inset: 0; z-index: 45; pointer-events: none; opacity: 0;
+  background: #060810;
+}
+body.entering .gate-veil { animation: gateVeil 1.15s cubic-bezier(.42,0,.58,1) .85s forwards; }
+@keyframes gateVeil { from{opacity:0} to{opacity:1} }
 
 @media (max-width: 620px) {
   .crest { height: 26vh }
@@ -269,6 +283,8 @@ body.entering .whiteout { opacity: 1; transition: opacity 1.5s ease .7s; }
   .wordmark .ch { -webkit-text-fill-color: #EBCE76; color: #EBCE76; background: none; filter: none }
   .flare, .motes { display: none }
   body.entering .room, body.entering .bloom, body.entering .stage { transition-duration: .01ms !important }
+  body.entering .arch-bloom { animation: none; opacity: 0 }
+  body.entering .gate-veil  { animation: none; opacity: 1 }
 }
 </style>
 </head>
@@ -301,7 +317,8 @@ body.entering .whiteout { opacity: 1; transition: opacity 1.5s ease .7s; }
   </span>
 </div>
 
-<div class="whiteout" aria-hidden="true"></div>
+<div class="arch-bloom" aria-hidden="true"></div>
+<div class="gate-veil" aria-hidden="true"></div>
 <audio id="toll" preload="auto"><source src="/assets/gate-toll.wav" type="audio/wav"></audio>
 
 <script>

@@ -67,6 +67,12 @@
   .btn-ghost {
     @apply btn text-parchment/70 hover:text-parchment hover:bg-white/5;
   }
+  /* A tighter button for places where the control is secondary to the content
+     around it -- the About header, where three of them sit under a paragraph
+     and were carrying the same weight as the copy. */
+  .btn-sm {
+    @apply gap-1.5 px-3 py-1.5 text-[10px];
+  }
 
   .nav-item {
     @apply flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-parchment/70 transition cursor-pointer;

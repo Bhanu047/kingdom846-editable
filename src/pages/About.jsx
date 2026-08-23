@@ -127,36 +127,27 @@ export default function About() {
             {/* Fades into the copy below so the banner and the panel read as one
                 surface rather than a picture with a caption stuck under it. */}
             <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-ink-2 to-transparent" aria-hidden="true" />
-            <div className="absolute inset-0 flex items-center justify-center">
-              <img src="./assets/crest-846.webp" alt="" className="hero-crest h-32 w-auto md:h-48" />
-            </div>
           </div>
-          <div className="p-7 text-center md:p-9">
-            <div className="flex flex-wrap items-center justify-center gap-2">
+          {/* Sized down across the board. On a phone this header was taking
+              most of a screen before any of the kingdom's actual record
+              appeared, which is a poor trade for a page people open to read
+              the numbers. */}
+          <div className="p-5 text-center md:p-7">
+            <div className="flex flex-wrap items-center justify-center gap-1.5">
               <Pill tone="gold">{tracker846.tier}</Pill>
               <Pill tone="blue">KvK #{latestKvk.kvk}</Pill>
               <Pill tone="red">vs {latestKvk.opponent}</Pill>
             </div>
-            <h1 className="gilt-display mt-4 font-decorative text-4xl font-black tracking-[.03em] md:text-6xl">KINGDOM 846</h1>
-            <p className="mt-2 font-display text-sm tracking-[.12em] text-gold-bright/85 md:text-base">“{kingdom.motto}”</p>
-            <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-parchment/70">
-              Kingdom 846 is an <span className="text-gold-bright">S-Tier</span> realm built around four alliances moving under one crown. Discipline in preparation, coordinated rallies, and kingdom-first command define the realm. The newest KvK chapter is <span className="text-gold-bright">K846 vs K795</span>.
+            <h1 className="gilt-display mt-3 font-decorative text-[26px] font-black leading-tight tracking-[.03em] sm:text-3xl md:text-4xl">KINGDOM 846</h1>
+            <p className="mt-1.5 font-display text-[11px] tracking-[.1em] text-gold-bright/85 md:text-xs">“{kingdom.motto}”</p>
+            <p className="mx-auto mt-3 max-w-xl text-[13px] leading-relaxed text-parchment/70">
+              An <span className="text-gold-bright">S-Tier</span> realm of four alliances under one crown — disciplined in preparation, coordinated in the rally, kingdom-first in command. Latest chapter: <span className="text-gold-bright">K846 vs K795</span>.
             </p>
-            <div className="mt-6 flex flex-wrap justify-center gap-2">
-              <a href="https://ks-atlas.com/kingdom/846" target="_blank" rel="noreferrer" className="btn-secondary"><Icon name="arrow" size={14} /> Atlas Profile</a>
-              <a href="https://kingshotoptimizer.com/kvk-rankings/kingdom/846" target="_blank" rel="noreferrer" className="btn-secondary"><Icon name="swords" size={14} /> KvK Rankings</a>
-              <span className="btn-ghost"><Icon name="crown" size={14} /> Kingdom 846</span>
+            <div className="mt-4 flex flex-wrap justify-center gap-2">
+              <a href="https://ks-atlas.com/kingdom/846" target="_blank" rel="noreferrer" className="btn-secondary btn-sm"><Icon name="arrow" size={13} /> Atlas</a>
+              <a href="https://kingshotoptimizer.com/kvk-rankings/kingdom/846" target="_blank" rel="noreferrer" className="btn-secondary btn-sm"><Icon name="swords" size={13} /> KvK Ranking</a>
+              <span className="btn-ghost btn-sm"><Icon name="crown" size={13} /> Kingdom 846</span>
             </div>
-            {/* The tracker figures on this page are snapshots -- neither
-                ks-atlas nor kingshotoptimizer publishes an API, so they are
-                read and entered by hand. Saying when they were last checked is
-                the honest alternative to a page that looks live and is not.
-                Day count beside it IS live: it derives from the founding date. */}
-            <p className="mt-4 text-[11px] text-parchment/45">
-              Day <span className="text-gold-bright/80 tabular-nums">{kingdom.currentDay}</span> of the realm
-              <span className="mx-2 text-gold/25">&#9670;</span>
-              Tracker figures verified {new Date(kingdom.trackerVerified + 'T00:00:00Z').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' })}
-            </p>
           </div>
         </div>
       </Panel>
@@ -235,8 +226,8 @@ export default function About() {
           <div className="eyebrow text-gold/70">Kingdom Atlas</div>
           <h2 className="mt-1 font-display text-2xl font-bold text-parchment">Standing &amp; Analytics</h2>
           <p className="mt-1 max-w-3xl text-xs leading-relaxed text-parchment/50">
-            The kingdom&apos;s Atlas profile — score components, the six performance metrics, how the
-            record has trended, and what the next KvK does to it.
+            The kingdom&apos;s Atlas profile — where the score comes from, the six performance
+            metrics, and how the standing has moved.
           </p>
         </div>
         <AtlasAnalytics />

@@ -95,8 +95,8 @@ export default function Dashboard({ onNavigate }) {
       )}
 
       <Panel glow className="hero-frame relative overflow-hidden p-0 gold-corners">
-        <div className="relative h-64 md:h-96 hero-shimmer">
-          <ArtImage src={hallImage} alt="Kingdom 846" className="h-full w-full hall-breathe" />
+        <div className="relative min-h-[19rem] md:h-96 hero-shimmer">
+          <div className="absolute inset-0"><ArtImage src={hallImage} alt="Kingdom 846" className="h-full w-full hall-breathe" /></div>
           {/* No hero-overlay here: hero-grade below is this hero's scrim, and
               stacking both is what crushed the hall to near-black. */}
           {/* Grade, bloom and rake, matching the welcome screen so the entrance
@@ -114,14 +114,14 @@ export default function Dashboard({ onNavigate }) {
             <span className="ember" style={{ left: '25%', animationDelay: '2s' }} />
             <span className="ember" style={{ left: '65%', animationDelay: '6s' }} />
           </div>
-          <div className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center md:px-10">
+          <div className="relative flex min-h-[19rem] flex-col items-center justify-center px-6 py-8 text-center md:min-h-0 md:h-full md:px-10 md:py-0">
             <img
               src="./assets/crest-846.webp"
               alt=""
-              className="hero-crest mb-3 h-24 w-auto md:h-36"
+              className="hero-crest mb-2.5 h-[4.5rem] w-auto sm:h-24 md:h-36"
             />
             <div className="eyebrow text-glow">Royal Portal</div>
-            <h1 className="gilt-display mt-2 font-decorative text-5xl font-black tracking-[.03em] md:text-7xl">KINGDOM 846</h1>
+            <h1 className="gilt-display mt-2 font-decorative text-[2.6rem] font-black leading-[1.05] tracking-[.03em] sm:text-5xl md:text-7xl">KINGDOM 846</h1>
             <p className="mt-1.5 font-display text-sm tracking-[0.15em] text-gold md:text-base text-glow">One Crown. Four Alliances. Endless Glory.</p>
             <div className="mt-5 flex flex-wrap justify-center gap-2">
               <button onClick={() => onNavigate('alliances')} className="btn-primary btn-royal sparkle-btn"><Icon name="shield" size={14} /> View Alliances</button>

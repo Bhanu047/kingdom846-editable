@@ -30,73 +30,163 @@ function CalculatePrompt({label}){return <div className="mt-5 flex flex-col item
   <div className="text-xs text-parchment/45">Click <b className="text-gold-bright">{label}</b> above to run the analysis.</div>
 </div>}
 
-// A flat stroke colour per segment was what made this donut read as a pie
-// chart from a spreadsheet. Each segment now runs through its own SVG gradient
-// -- lit on the outer edge, falling to a deeper shade -- and a slow counter
-// ring turns behind it so the graphic is never completely still.
+// The commander's dial.
 //
-// Gradients rather than CSS filters on purpose: html2canvas rasterises an SVG
-// wholesale, so gradients survive into the downloadable report while a CSS
-// filter on the same element would be dropped.
+// This was a pie chart with a gradient on it. Three things make it read as an
+// instrument instead:
+//
+// CELLS. Every bar on the site is notched on a fixed pitch (.k-seg), and a
+// smooth ring sitting next to notched bars read as two different instruments
+// on one page. The ring is now divided into 60 cells by a dark overlay, which
+// puts it in the same family -- and a segmented ring is what a game uses for a
+// resource meter, which is the register asked for.
+//
+// A GRADUATED BEZEL. 48 marks around the outside, every fourth one long. A
+// dial without graduations is a shape; with them it is something that measures.
+//
+// A READOUT. The centre used to show "45/30/25" with no key anywhere on the
+// card, so you had to already know the order to read it. The three rows below
+// the dial name each troop against its own colour.
+//
+// All of it is native SVG geometry -- lines, circles, dash arrays, gradients.
+// No CSS filters and no arc (A) path commands: html2canvas drops the former
+// outright and does not rasterise the latter, so either would export blank.
 function Donut({ratio,title='Optimal Distribution',center='Best Formation'}){
   const reveal=useReveal()
   const gid=useId()
   const a=Math.round(ratio.infantry*100),b=Math.round(ratio.cavalry*100),c=Math.max(0,100-a-b)
-  const R=68,C=2*Math.PI*R
-  const segs=[{key:'infantry',pct:a,color:'#5D90E8',lit:'#9FBEF4'},{key:'cavalry',pct:b,color:'#E0B23B',lit:'#F5D888'},{key:'archers',pct:c,color:'#D76158',lit:'#F0A197'}]
+  const CX=90,CY=90,R=62,SW=16,C=2*Math.PI*R
+  const segs=[
+    {key:'infantry',label:'Infantry',pct:a,color:'#5D90E8',lit:'#8FB2F0'},
+    {key:'cavalry', label:'Cavalry', pct:b,color:'#E0B23B',lit:'#F0CE72'},
+    {key:'archers', label:'Archers', pct:c,color:'#D76158',lit:'#E68C82'},
+  ]
+  const ticks=Array.from({length:48},(_,i)=>{
+    const ang=(i/48)*Math.PI*2,long=i%4===0
+    const r0=R+SW/2+4,r1=r0+(long?9:4)
+    return {i,long,x1:CX+r0*Math.cos(ang),y1:CY+r0*Math.sin(ang),x2:CX+r1*Math.cos(ang),y2:CY+r1*Math.sin(ang)}
+  })
+  // 60 cells: dash on, hairline gap. Drawn OVER the segments in the plate's own
+  // background colour so the divisions read as cut into the ring rather than as
+  // a second ring laid on top of it.
+  const cell=C/60
   let acc=0
-  return <div className="chart-card rounded-2xl p-4">
-    <div className="text-center font-display text-lg font-bold text-parchment">{title}</div>
-    <div className="relative mx-auto mt-4 h-48 w-48">
-      <svg viewBox="0 0 160 160" className="h-full w-full -rotate-90">
+  return <div className="k-plate p-4">
+    <div className="text-center text-[9px] font-bold uppercase tracking-[.16em] text-gold/60">{title}</div>
+    <div className="relative mx-auto mt-3 aspect-square w-full max-w-[210px]">
+      <svg viewBox="0 0 180 180" className="h-full w-full -rotate-90">
         <defs>
-          {segs.map(s=><linearGradient key={s.key} id={`${gid}-${s.key}`} x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor={s.lit}/><stop offset="55%" stopColor={s.color}/><stop offset="100%" stopColor={s.color} stopOpacity=".72"/></linearGradient>)}
+          {segs.map(s=><linearGradient key={s.key} id={`${gid}-${s.key}`} x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor={s.lit}/><stop offset="36%" stopColor={s.color}/><stop offset="100%" stopColor={s.color} stopOpacity=".7"/></linearGradient>)}
         </defs>
-        <circle cx="80" cy="80" r={R} fill="none" stroke="rgba(255,255,255,.06)" strokeWidth="15"/>
-        <circle cx="80" cy="80" r={R+11} fill="none" stroke="rgba(226,199,125,.14)" strokeWidth="1" strokeDasharray="3 9" className="donut-ring"/>
-        {segs.map(s=>{const len=(s.pct/100)*C,start=acc;acc+=len;return <circle key={s.key} cx="80" cy="80" r={R} fill="none" stroke={`url(#${gid}-${s.key})`} strokeWidth="15" strokeLinecap="round" strokeDasharray={reveal?`${len} ${C-len}`:`0 ${C}`} strokeDashoffset={-start} style={{transition:'stroke-dasharray .9s cubic-bezier(.34,1.56,.64,1)',transitionDelay:`${segs.indexOf(s)*140}ms`}}/>})}
+        {/* Bezel: two hairlines and the graduation marks. */}
+        <circle cx={CX} cy={CY} r={R+SW/2+2} fill="none" stroke="rgba(226,199,125,.16)" strokeWidth=".8"/>
+        <circle cx={CX} cy={CY} r={R-SW/2-2} fill="none" stroke="rgba(226,199,125,.16)" strokeWidth=".8"/>
+        {ticks.map(t=><line key={t.i} x1={t.x1} y1={t.y1} x2={t.x2} y2={t.y2} stroke={t.long?'rgba(232,199,102,.5)':'rgba(232,199,102,.22)'} strokeWidth={t.long?1.4:1}/>)}
+        {/* The well the ring is inlaid into. */}
+        <circle cx={CX} cy={CY} r={R} fill="none" stroke="rgba(255,255,255,.05)" strokeWidth={SW}/>
+        <circle cx={CX} cy={CY} r={R+SW/2+15} fill="none" stroke="rgba(226,199,125,.13)" strokeWidth=".9" strokeDasharray="2 10" className="donut-ring"/>
+        {segs.map((s,i)=>{const len=(s.pct/100)*C,start=acc;acc+=len;return <circle key={s.key} cx={CX} cy={CY} r={R} fill="none" stroke={`url(#${gid}-${s.key})`} strokeWidth={SW} strokeDasharray={reveal?`${len} ${C-len}`:`0 ${C}`} strokeDashoffset={-start} style={{transition:'stroke-dasharray .95s cubic-bezier(.34,1.5,.64,1)',transitionDelay:`${i*150}ms`}}/>})}
+        {/* Cell divisions, cut last so they sit over every segment. */}
+        <circle cx={CX} cy={CY} r={R} fill="none" stroke="#070d19" strokeWidth={SW} strokeDasharray={`1.6 ${cell-1.6}`} opacity=".85"/>
+        <circle cx={CX} cy={CY} r={R} fill="none" stroke="rgba(255,255,255,.07)" strokeWidth={SW} strokeDasharray={`.7 ${cell-.7}`} strokeDashoffset="-1.6"/>
       </svg>
       <div className="absolute inset-0 grid place-items-center">
-        <div className="grid h-28 w-28 place-items-center rounded-full border border-gold/15 bg-[#07101e] text-center">
-          <div><div className="text-[8px] uppercase tracking-widest text-parchment/35">{center}</div><div className="font-mono text-xl font-black text-gold-bright">{a}/{b}/{c}</div></div>
+        <div className="grid place-items-center rounded-full text-center" style={{width:'52%',height:'52%',backgroundImage:'linear-gradient(168deg,#16233d,#070d19 76%)',border:'1px solid rgba(226,199,125,.24)'}}>
+          <div>
+            <div className="text-[7px] uppercase tracking-[.18em] text-parchment/40">{center}</div>
+            <div className="gilt-text font-mono text-[19px] font-black leading-tight">{a}/{b}/{c}</div>
+          </div>
         </div>
       </div>
+    </div>
+    <div className="mx-auto mt-3 w-full max-w-[210px] space-y-1">
+      {segs.map(s=><div key={s.key} className="flex items-center gap-2 text-[10px]">
+        <span className="h-2 w-2 shrink-0 rounded-[2px]" style={{backgroundColor:s.color}}/>
+        <span className="flex-1 uppercase tracking-[.1em] text-parchment/50">{s.label}</span>
+        <span className="font-mono font-bold text-parchment/85">{s.pct}%</span>
+      </div>)}
     </div>
   </div>
 }
 
 function gaussian(mean,sigma,bins=24){const lo=Math.max(0,mean-3.2*sigma),hi=mean+3.2*sigma,step=(hi-lo)/bins,raw=Array.from({length:bins},(_,i)=>{const x=lo+(i+.5)*step,z=(x-mean)/sigma;return{x,y:Math.exp(-.5*z*z)}}),sum=raw.reduce((s,d)=>s+d.y,0);return raw.map(d=>({...d,y:d.y/sum}))}
 
+// The projection.
+//
+// Two smooth curves on a grid is a statistics plot. The point of this chart is
+// not the two distributions, it is the DISTANCE between them -- how much you
+// gain by changing formation -- and that was the one thing it never drew.
+//
+// THE GAIN BAND. The span between the current mean and the optimal mean is now
+// filled with a hatched region and labelled with the delta. It is hatched with
+// an SVG <pattern> rather than a CSS repeating-gradient because this chart is
+// cloned into the downloadable report, and html2canvas rasterises an SVG
+// wholesale -- patterns and gradients survive, CSS effects on the same element
+// would not.
+//
+// THE REVEAL. The old entrance scaled the whole plot group on X, which squashes
+// the curves horizontally and drags the stroke width along with it -- the lines
+// visibly thickened as they settled. Both traces now draw along their own
+// length and the fills wipe in behind them, so nothing is ever distorted.
+//
+// GRADUATIONS. Vertical marks as well as horizontal, faint, so the plot reads
+// as an instrument face rather than as a chart with a background.
 function Histogram({mean,optimal,sigma}){
   const reveal=useReveal(), gid=useId()
   const cur=gaussian(mean,sigma),opt=gaussian(optimal,sigma*Math.max(.75,optimal/Math.max(mean,.001)))
   const all=[...cur,...opt],min=Math.min(...all.map(d=>d.x)),max=Math.max(...all.map(d=>d.x)),my=Math.max(...all.map(d=>d.y))
-  const W=760,H=280,L=48,R=18,T=30,B=42,base=H-B
+  const W=760,H=296,L=48,R=18,T=50,B=44,base=H-B
   const x=v=>L+(v-min)/(max-min)*(W-L-R),y=v=>H-B-v/my*(H-T-B)
   const areaPath=pts=>{const s=smoothPath(pts.map(d=>({x:x(d.x),y:y(d.y)})));return`${s} L${x(pts[pts.length-1].x)},${base} L${x(pts[0].x)},${base} Z`}
   const linePath=pts=>smoothPath(pts.map(d=>({x:x(d.x),y:y(d.y)})))
-  return <div className="chart-card rounded-2xl p-3 md:p-4">
-    <div className="flex flex-wrap justify-between gap-2"><div><div className="chart-title text-[9px] font-bold uppercase tracking-[.16em]">Current vs Optimal Damage Distribution</div><div className="font-display text-lg font-bold text-parchment">10,000-Hunt Projection</div></div><div className="text-[10px] text-parchment/50"><span className="text-[#7f9ed6]">● Current</span> &nbsp; <span className="text-gold-bright">● Optimal</span></div></div>
+  const peak=pts=>pts.reduce((m,d)=>d.y>m.y?d:m,pts[0])
+  const pc=peak(cur),po=peak(opt)
+  const gainL=Math.min(x(mean),x(optimal)),gainW=Math.abs(x(optimal)-x(mean))
+  const gain=optimal-mean, gainPct=mean>0?gain/mean*100:0
+  return <div className="k-plate p-3 md:p-4">
+    <div className="flex flex-wrap justify-between gap-2"><div><div className="text-[9px] font-bold uppercase tracking-[.16em] text-gold/60">Current vs Optimal Damage Distribution</div><div className="font-display text-lg font-bold text-parchment">10,000-Hunt Projection</div></div><div className="text-[10px] text-parchment/50"><span className="text-[#7f9ed6]">● Current</span> &nbsp; <span className="text-gold-bright">● Optimal</span></div></div>
     <div className="relative mt-2">
       <svg viewBox={`0 0 ${W} ${H}`} className="w-full">
         <defs>
-          <linearGradient id={`${gid}-cur`} x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#7f9ed6" stopOpacity=".55"/><stop offset="100%" stopColor="#7f9ed6" stopOpacity="0"/></linearGradient>
-          <linearGradient id={`${gid}-opt`} x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#e3ba41" stopOpacity=".45"/><stop offset="100%" stopColor="#e3ba41" stopOpacity="0"/></linearGradient>
+          <linearGradient id={`${gid}-cur`} x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#7f9ed6" stopOpacity=".5"/><stop offset="100%" stopColor="#7f9ed6" stopOpacity="0"/></linearGradient>
+          <linearGradient id={`${gid}-opt`} x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#e3ba41" stopOpacity=".42"/><stop offset="100%" stopColor="#e3ba41" stopOpacity="0"/></linearGradient>
+          <pattern id={`${gid}-hatch`} width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+            <line x1="0" y1="0" x2="0" y2="8" stroke="rgba(232,199,102,.30)" strokeWidth="1.4"/>
+          </pattern>
+          {/* Wipes. A clip rectangle that grows is the only way to reveal a
+              filled area without scaling -- and unlike a transform it cannot
+              distort what is inside it. */}
+          <clipPath id={`${gid}-wipe`}><rect x={L} y="0" width={reveal?W-L-R:0} height={H} style={{transition:'width 1.15s cubic-bezier(.16,1,.3,1)'}}/></clipPath>
         </defs>
         {[0,.25,.5,.75,1].map(t=><line key={t} x1={L} x2={W-R} y1={T+t*(H-T-B)} y2={T+t*(H-T-B)} stroke="rgba(226,199,125,.10)"/>)}
-        <g style={{transformOrigin:`${L}px ${base}px`,transform:reveal?'scaleX(1)':'scaleX(0)',transition:'transform 1.1s cubic-bezier(.16,1,.3,1)'}}>
+        {[0,1,2,3,4,5,6,7,8].map(i=><line key={i} x1={L+i/8*(W-L-R)} x2={L+i/8*(W-L-R)} y1={T} y2={base} stroke="rgba(226,199,125,.055)"/>)}
+        {/* The gain band, behind the curves. */}
+        {gainW>2&&<g style={{opacity:reveal?1:0,transition:'opacity .6s ease .95s'}}>
+          <rect x={gainL} y={T} width={gainW} height={base-T} fill={`url(#${gid}-hatch)`}/>
+          <rect x={gainL} y={T} width={gainW} height={base-T} fill="rgba(232,199,102,.05)"/>
+        </g>}
+        <g clipPath={`url(#${gid}-wipe)`}>
           <path d={areaPath(cur)} fill={`url(#${gid}-cur)`}/>
-          <path d={linePath(cur)} fill="none" stroke="#9eb9ef" strokeWidth="2.5"/>
           <path d={areaPath(opt)} fill={`url(#${gid}-opt)`}/>
-          <path d={linePath(opt)} fill="none" stroke="#e8c558" strokeWidth="2.5"/>
         </g>
-        <line x1={x(mean)} x2={x(mean)} y1={T} y2={base} stroke="#7f9ed6" strokeDasharray="5 5" strokeWidth="2"/>
-        <line x1={x(optimal)} x2={x(optimal)} y1={T} y2={base} stroke="#e3ba41" strokeDasharray="5 5" strokeWidth="2"/>
+        <path d={linePath(cur)} pathLength="1" strokeDasharray="1" strokeDashoffset={reveal?0:1} fill="none" stroke="#9eb9ef" strokeWidth="2.5" style={{transition:'stroke-dashoffset 1.15s cubic-bezier(.16,1,.3,1)'}}/>
+        <path d={linePath(opt)} pathLength="1" strokeDasharray="1" strokeDashoffset={reveal?0:1} fill="none" stroke="#e8c558" strokeWidth="2.5" style={{transition:'stroke-dashoffset 1.15s cubic-bezier(.16,1,.3,1) .12s'}}/>
+        <line x1={x(mean)} x2={x(mean)} y1={T} y2={base} stroke="#7f9ed6" strokeDasharray="5 5" strokeWidth="1.8"/>
+        <line x1={x(optimal)} x2={x(optimal)} y1={T} y2={base} stroke="#e3ba41" strokeDasharray="5 5" strokeWidth="1.8"/>
+        {/* Struck markers at each peak, not haloes. A plotted point is a ring
+            and a dot; anything that emits light reads as a notification. */}
+        <g style={{opacity:reveal?1:0,transition:'opacity .45s ease 1.05s'}}>
+          <circle cx={x(pc.x)} cy={y(pc.y)} r="5.5" fill="none" stroke="#9eb9ef" strokeWidth="1.6"/>
+          <circle cx={x(pc.x)} cy={y(pc.y)} r="2.4" fill="#cfdefb"/>
+          <circle cx={x(po.x)} cy={y(po.y)} r="5.5" fill="none" stroke="#e8c558" strokeWidth="1.6"/>
+          <circle cx={x(po.x)} cy={y(po.y)} r="2.4" fill="#f6e2a4"/>
+        </g>
       </svg>
       {/* Plain HTML labels, not SVG <text> -- html2canvas 1.4.1 renders SVG
           text (and the whole SVG along with it) blank in exported reports. */}
-      <div className="pointer-events-none absolute -translate-x-1/2 whitespace-nowrap text-[12px] font-semibold text-[#9eb9ef]" style={{left:`${x(mean)/W*100}%`,top:`${2/H*100}%`}}>Current {fmt(mean)}</div>
-      <div className="pointer-events-none absolute -translate-x-1/2 whitespace-nowrap text-[12px] font-semibold text-[#e8c558]" style={{left:`${x(optimal)/W*100}%`,top:`${16/H*100}%`}}>Optimal {fmt(optimal)}</div>
+      <div className="pointer-events-none absolute -translate-x-1/2 whitespace-nowrap text-[12px] font-semibold text-[#9eb9ef]" style={{left:`${x(mean)/W*100}%`,top:`${5/H*100}%`}}>Current {fmt(mean)}</div>
+      <div className="pointer-events-none absolute -translate-x-1/2 whitespace-nowrap text-[12px] font-semibold text-[#e8c558]" style={{left:`${x(optimal)/W*100}%`,top:`${25/H*100}%`}}>Optimal {fmt(optimal)}</div>
+      {gainW>34&&<div className="pointer-events-none absolute -translate-x-1/2 whitespace-nowrap rounded-full border border-gold/30 bg-ink/85 px-2 py-[3px] text-[10px] font-bold uppercase tracking-[.1em] text-gold-bright" style={{left:`${(gainL+gainW/2)/W*100}%`,top:`${(H-B-26)/H*100}%`,opacity:reveal?1:0,transition:'opacity .5s ease 1.15s'}}>{gain>=0?'+':''}{gainPct.toFixed(1)}% gain</div>}
       <div className="pointer-events-none absolute -translate-x-1/2 whitespace-nowrap text-[11px] text-parchment/50" style={{left:'50%',top:`${(H-18)/H*100}%`}}>Projected Hunt Impact</div>
     </div>
   </div>

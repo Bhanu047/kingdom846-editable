@@ -113,46 +113,115 @@ function OutcomeBanner({ outcome, attackerLeft, defenderLeft, rounds, playerName
   )
 }
 
+// The attrition trace.
+//
+// A battle resolves in discrete rounds, and the old chart drew it as a
+// continuous line over a blank field -- which hid the two things the chart
+// exists to show: where the rounds fall, and the round the fight turned.
+//
+// ROUND DIVISIONS. A hairline at every round, so you can count them off the
+// axis instead of inferring them from three tick labels.
+//
+// THE TURN. Where the two traces cross, the losing side started losing. It is
+// the one moment in the chart worth marking, and it is now marked -- a struck
+// crosshair with the round number on it. Found by scanning for the sign change
+// between consecutive rounds and interpolating linearly between them, which is
+// exact for straight segments and close enough under the smoothed curve.
+//
+// THE END CAPS were two haloed circles running a breathing glow animation --
+// the last literal glow left in the Battle Lab. They are now rings and dots:
+// a plotted terminus is struck, not lit.
 function RoundChart({ rounds }) {
   const reveal = useReveal()
   const gid = useId()
   if (!rounds.length) return null
-  const W = 760, H = 260, L = 48, R = 18, T = 20, B = 40, base = H - B
+  const W = 760, H = 268, L = 48, R = 18, T = 22, B = 42, base = H - B
   const last = rounds.length - 1
   const maxV = Math.max(...rounds.map((r) => Math.max(r.attackerRemaining, r.defenderRemaining)), 1)
   const x = (i) => L + i / Math.max(1, last) * (W - L - R)
   const y = (v) => H - B - v / maxV * (H - T - B)
-  const linePath = (key) => smoothPath(rounds.map((r, i) => ({ x: x(i), y: y(r[key]) })))
+  // A battle can resolve in a single round, and that case was quietly broken
+  // before this rebuild: smoothPath returns '' for fewer than two points, so
+  // areaPath emitted a d= that began with L and Chrome rejected the whole path
+  // ("Expected moveto path command"). Nothing traced. Guard it, and draw the
+  // end markers alone -- one round has a result, it just has no curve.
+  const multi = rounds.length > 1
+  const pts = (key) => rounds.map((r, i) => ({ x: x(i), y: y(r[key]) }))
+  const linePath = (key) => (multi ? smoothPath(pts(key)) : '')
   const areaPath = (key) => `${linePath(key)} L${x(last)},${base} L${x(0)},${base} Z`
-  const ticks = [0, Math.round(last / 2), last]
+  // The gap between the two traces IS the story of the fight, and it was the
+  // one thing not drawn. Two translucent areas stacked on top of each other
+  // also composited to mauve wherever the armies ran close -- which on an even
+  // matchup is the whole chart. One band between the lines instead: same
+  // hatch the Bear projection uses for its gain, so the site says "this is the
+  // margin" the same way twice.
+  const bandPath = multi
+    ? `${smoothPath(pts('attackerRemaining'))} ${smoothPath([...pts('defenderRemaining')].reverse()).replace(/^M/, 'L')} Z`
+    : ''
+  // Deduped: at one round this was [0, 0, 0], which printed "Round 1" three
+  // times on top of itself and tripped React's duplicate-key warning.
+  const ticks = [...new Set([0, Math.round(last / 2), last])]
+  // Only draw a division per round while they stay legible; a 30-round fight
+  // would otherwise fill the plot with hairlines.
+  const divisions = rounds.length <= 24 ? rounds.map((_, i) => i) : []
+  // The crossover: first round where the sign of (attacker - defender) flips.
+  let cross = null
+  for (let i = 1; i <= last; i++) {
+    const p = rounds[i - 1].attackerRemaining - rounds[i - 1].defenderRemaining
+    const q = rounds[i].attackerRemaining - rounds[i].defenderRemaining
+    if (p === 0 || (p > 0) === (q > 0)) continue
+    const t = p / (p - q)
+    cross = { x: x(i - 1 + t), y: y(rounds[i - 1].attackerRemaining + t * (rounds[i].attackerRemaining - rounds[i - 1].attackerRemaining)), round: i + 1 }
+    break
+  }
   return (
     <div className="k-plate p-4">
-      <div className="text-[9px] font-bold uppercase tracking-[.15em] text-gold/60">Troops Remaining by Round</div>
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <div className="text-[9px] font-bold uppercase tracking-[.15em] text-gold/60">Troops Remaining by Round</div>
+        {cross && <div className="text-[9px] font-bold uppercase tracking-[.13em] text-parchment/45">Turned on round {cross.round}</div>}
+      </div>
       <div className="relative mt-2">
         <svg viewBox={`0 0 ${W} ${H}`} className="w-full">
           <defs>
-            <linearGradient id={`${gid}-a`} x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#7f9ed6" stopOpacity=".5"/><stop offset="100%" stopColor="#7f9ed6" stopOpacity="0"/></linearGradient>
-            <linearGradient id={`${gid}-d`} x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#c8655a" stopOpacity=".42"/><stop offset="100%" stopColor="#c8655a" stopOpacity="0"/></linearGradient>
+            <linearGradient id={`${gid}-a`} x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#7f9ed6" stopOpacity=".36"/><stop offset="100%" stopColor="#7f9ed6" stopOpacity="0"/></linearGradient>
+            <linearGradient id={`${gid}-d`} x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#c8655a" stopOpacity=".26"/><stop offset="100%" stopColor="#c8655a" stopOpacity="0"/></linearGradient>
+            {/* A growing clip rather than a scaleX group: scaling squashes the
+                curves and drags the stroke width with them, so the traces
+                visibly thickened as they settled. */}
+            <pattern id={`${gid}-hatch`} width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+              <line x1="0" y1="0" x2="0" y2="8" stroke="rgba(232,199,102,.26)" strokeWidth="1.3" />
+            </pattern>
+            <clipPath id={`${gid}-wipe`}><rect x={L} y="0" width={reveal ? W - L - R : 0} height={H} style={{ transition: 'width 1.15s cubic-bezier(.16,1,.3,1)' }}/></clipPath>
           </defs>
           {[0, .25, .5, .75, 1].map((t) => <line key={t} x1={L} x2={W - R} y1={T + t * (H - T - B)} y2={T + t * (H - T - B)} stroke="rgba(226,199,125,.10)" />)}
-          <g style={{ transformOrigin: `${L}px ${base}px`, transform: reveal ? 'scaleX(1)' : 'scaleX(0)', transition: 'transform 1.1s cubic-bezier(.16,1,.3,1)' }}>
-            <path d={areaPath('attackerRemaining')} fill={`url(#${gid}-a)`} />
-            <path d={areaPath('defenderRemaining')} fill={`url(#${gid}-d)`} />
-          </g>
-          <path d={linePath('attackerRemaining')} pathLength="1" strokeDasharray="1" strokeDashoffset={reveal ? 0 : 1} fill="none" stroke="#7f9ed6" strokeWidth="3" style={{ transition: 'stroke-dashoffset 1.1s cubic-bezier(.16,1,.3,1)' }} />
-          <path d={linePath('defenderRemaining')} pathLength="1" strokeDasharray="1" strokeDashoffset={reveal ? 0 : 1} fill="none" stroke="#c8655a" strokeWidth="3" style={{ transition: 'stroke-dashoffset 1.1s cubic-bezier(.16,1,.3,1) .15s' }} />
-          <g style={{ opacity: reveal ? 1 : 0, transition: 'opacity .4s ease 1s' }}>
-            <circle cx={x(last)} cy={y(rounds[last].attackerRemaining)} r="9" fill="#7f9ed6" opacity=".22" style={{ animation: 'glow-breathe 2.2s ease-in-out infinite' }} />
-            <circle cx={x(last)} cy={y(rounds[last].attackerRemaining)} r="4.5" fill="#c7d7f5" stroke="#07101e" strokeWidth="2" />
-            <circle cx={x(last)} cy={y(rounds[last].defenderRemaining)} r="9" fill="#c8655a" opacity=".22" style={{ animation: 'glow-breathe 2.2s ease-in-out infinite .3s' }} />
-            <circle cx={x(last)} cy={y(rounds[last].defenderRemaining)} r="4.5" fill="#f2c4bc" stroke="#07101e" strokeWidth="2" />
+          {divisions.map((i) => <line key={i} x1={x(i)} x2={x(i)} y1={T} y2={base} stroke="rgba(226,199,125,.07)" />)}
+          {multi && <>
+            <g clipPath={`url(#${gid}-wipe)`}>
+              <path d={areaPath('defenderRemaining')} fill={`url(#${gid}-d)`} />
+              <path d={bandPath} fill={`url(#${gid}-hatch)`} fillRule="evenodd" />
+              <path d={bandPath} fill="rgba(232,199,102,.05)" fillRule="evenodd" />
+            </g>
+            <path d={linePath('attackerRemaining')} pathLength="1" strokeDasharray="1" strokeDashoffset={reveal ? 0 : 1} fill="none" stroke="#7f9ed6" strokeWidth="3" style={{ transition: 'stroke-dashoffset 1.15s cubic-bezier(.16,1,.3,1)' }} />
+            <path d={linePath('defenderRemaining')} pathLength="1" strokeDasharray="1" strokeDashoffset={reveal ? 0 : 1} fill="none" stroke="#c8655a" strokeWidth="3" style={{ transition: 'stroke-dashoffset 1.15s cubic-bezier(.16,1,.3,1) .15s' }} />
+          </>}
+          {cross && <g style={{ opacity: reveal ? 1 : 0, transition: 'opacity .45s ease 1.15s' }}>
+            <line x1={cross.x} x2={cross.x} y1={T} y2={base} stroke="rgba(232,199,102,.4)" strokeWidth="1.2" strokeDasharray="3 4" />
+            <circle cx={cross.x} cy={cross.y} r="7" fill="none" stroke="rgba(232,199,102,.75)" strokeWidth="1.4" />
+            <circle cx={cross.x} cy={cross.y} r="2.2" fill="#f2dc9d" />
+          </g>}
+          <g style={{ opacity: reveal ? 1 : 0, transition: 'opacity .45s ease 1.05s' }}>
+            <circle cx={x(last)} cy={y(rounds[last].attackerRemaining)} r="6" fill="none" stroke="#7f9ed6" strokeWidth="1.8" />
+            <circle cx={x(last)} cy={y(rounds[last].attackerRemaining)} r="2.6" fill="#c7d7f5" />
+            <circle cx={x(last)} cy={y(rounds[last].defenderRemaining)} r="6" fill="none" stroke="#c8655a" strokeWidth="1.8" />
+            <circle cx={x(last)} cy={y(rounds[last].defenderRemaining)} r="2.6" fill="#f2c4bc" />
           </g>
         </svg>
         {/* Plain HTML labels, not SVG <text> — html2canvas 1.4.1 renders SVG
             text (and the whole SVG along with it) blank in exported reports. */}
         {ticks.map((i) => <div key={i} className="pointer-events-none absolute -translate-x-1/2 whitespace-nowrap text-[10px] font-semibold text-parchment/40" style={{ left: `${x(i) / W * 100}%`, top: `${(H - 14) / H * 100}%` }}>Round {i + 1}</div>)}
+        {[1, .5, 0].map((f) => <div key={f} className="pointer-events-none absolute -translate-y-1/2 whitespace-nowrap text-right font-mono text-[9px] text-parchment/35" style={{ right: `${(W - L + 6) / W * 100}%`, top: `${y(maxV * f) / H * 100}%` }}>{fmt(maxV * f)}</div>)}
       </div>
-      <div className="mt-1 flex justify-center gap-4 text-[10px]"><span className="text-[#7f9ed6]">● Your Army</span><span className="text-[#c8655a]">● Enemy Army</span></div>
+      <div className="mt-1 flex flex-wrap justify-center gap-4 text-[10px]"><span className="text-[#7f9ed6]">● Your Army</span><span className="text-[#c8655a]">● Enemy Army</span><span className="text-gold/55">▨ Lead</span></div>
     </div>
   )
 }
@@ -249,40 +318,82 @@ function FormationBlocksMatchup({ yourSide, enemySide, yourLabel = 'YOUR ARMY', 
   )
 }
 
-// NEW OPTION — "Victory Podium": top 3 compositions shown as a leaderboard
-// podium (1st/2nd/3rd place blocks), leaning into game-leaderboard styling
-// rather than a chart at all.
+// The victory podium.
+//
+// The idea was right and the execution was not: three flat rectangles with
+// 🥇🥈🥉 on top. Emoji were the least premium thing on the site -- they render
+// as someone else's artwork in someone else's palette, and on Windows they are
+// a different set entirely.
+//
+// Now: struck gilt roundels carrying Roman numerals, and plinths with a lit top
+// face and a shadowed front so they read as blocks of stone rather than as
+// coloured rectangles. A gilt floor rule runs under all three, because a
+// podium that does not sit on anything just floats.
+const PODIUM_RANK = { 0: 'I', 1: 'II', 2: 'III' }
+
 function VictoryPodium({ top3 }) {
   const reveal = useReveal()
   if (!top3.length) return null
   const order = [1, 0, 2].filter((i) => top3[i])
-  const HEIGHTS = { 0: 84, 1: 56, 2: 36 }
-  const MEDALS = { 0: '🥇', 1: '🥈', 2: '🥉' }
-  const ROW_H = 176
+  const HEIGHTS = { 0: 100, 1: 64, 2: 42 }
+  const ROW_H = 222
   return (
     <div className="k-plate p-4 md:p-5">
-      <div className="flex justify-center gap-3" style={{ height: ROW_H }}>
+      <div className="text-center text-[9px] font-bold uppercase tracking-[.16em] text-gold/60">Top Three Compositions</div>
+      <div className="relative mt-3 flex justify-end gap-4 md:gap-6" style={{ height: ROW_H, alignItems: 'flex-end', justifyContent: 'center' }}>
         {order.map((i, idx) => {
           const c = top3[i]
           const h = reveal ? HEIGHTS[i] : 0
           const delay = `${idx * 130}ms`
+          const first = i === 0
           return (
-            <div key={i} className="relative w-28" style={{ height: ROW_H }}>
-              <div className="absolute inset-x-0 flex flex-col items-center" style={{ bottom: h + 8, opacity: reveal ? 1 : 0, transition: `bottom .8s cubic-bezier(.16,1,.3,1) ${delay}, opacity .5s ease ${delay}` }}>
-                <div className="text-lg">{MEDALS[i]}</div>
-                <div className="k-track mt-1 flex h-3 w-20 overflow-hidden rounded-full border border-gold/15">
+            <div key={i} className="relative w-28 md:w-32" style={{ height: ROW_H }}>
+              <div className="absolute inset-x-0 flex flex-col items-center" style={{ bottom: h + 22, opacity: reveal ? 1 : 0, transition: `bottom .85s cubic-bezier(.16,1,.3,1) ${delay}, opacity .5s ease ${delay}` }}>
+                {/* The roundel. A struck disc: gilt rim, dark face, numeral. */}
+                <div
+                  className="grid place-items-center rounded-full font-display font-black leading-none"
+                  style={{
+                    width: first ? 34 : 27, height: first ? 34 : 27,
+                    fontSize: first ? 14 : 11,
+                    color: first ? '#F6E2A4' : i === 1 ? '#D8DEE9' : '#E0B08A',
+                    backgroundImage: 'linear-gradient(160deg,#1a2743,#080f1d 78%)',
+                    border: `1px solid ${first ? 'rgba(232,199,102,.62)' : i === 1 ? 'rgba(206,214,228,.42)' : 'rgba(206,150,102,.42)'}`,
+                  }}
+                >{PODIUM_RANK[i]}</div>
+                <div className="k-track mt-1.5 flex h-3 w-20 overflow-hidden rounded-full border border-gold/15">
                   <div className="k-seg" style={{ width: `${c.composition.infantry * 100}%`, '--c': TROOP_COLORS.infantry }} />
                   <div className="k-seg" style={{ width: `${c.composition.cavalry * 100}%`, '--c': TROOP_COLORS.cavalry }} />
                   <div className="k-seg" style={{ width: `${c.composition.archers * 100}%`, '--c': TROOP_COLORS.archers }} />
                 </div>
                 <div className="mt-1 font-mono text-[10px] text-parchment/60">{Math.round(c.composition.infantry * 100)}/{Math.round(c.composition.cavalry * 100)}/{Math.round(c.composition.archers * 100)}</div>
               </div>
-              <div className={`absolute inset-x-0 bottom-0 flex items-end justify-center rounded-t-lg border-x border-t ${i === 0 ? 'k-sheen border-gold/50 bg-gradient-to-t from-gold/[.28] via-gold/[.12] to-gold/[.04]' : 'border-gold/15 bg-gradient-to-t from-white/[.08] to-white/[.02]'}`} style={{ height: `${h}px`, transition: `height .8s cubic-bezier(.16,1,.3,1) ${delay}` }}>
-                <div className="pb-2 font-mono text-sm font-black text-gold-bright">{c.margin >= 0 ? '+' : ''}{fmt(c.margin)}</div>
+              {/* The plinth. Two layers: a front face, and a 4px lit top slab
+                  sitting on it. The slab is what turns a rectangle into a
+                  block -- it is the only edge catching the room's light. */}
+              <div
+                className="absolute inset-x-0 bottom-3 rounded-t-[6px]"
+                style={{
+                  height: `${h}px`,
+                  transition: `height .85s cubic-bezier(.16,1,.3,1) ${delay}`,
+                  backgroundImage: first
+                    ? 'linear-gradient(180deg,#7d6526,#4a3b14 48%,#2a2109)'
+                    : 'linear-gradient(180deg,#2c3446,#1b2130 52%,#111725)',
+                  borderLeft: `1px solid ${first ? 'rgba(240,212,128,.55)' : 'rgba(226,199,125,.26)'}`,
+                  borderRight: `1px solid ${first ? 'rgba(240,212,128,.55)' : 'rgba(226,199,125,.26)'}`,
+                  borderTop: `1px solid ${first ? 'rgba(255,246,218,.72)' : 'rgba(255,246,218,.34)'}`,
+                }}
+              >
+                {first && <div className="k-sheen-fill" />}
+                <div className="absolute inset-x-0 top-0 h-1" style={{ backgroundImage: first ? 'linear-gradient(180deg,rgba(255,246,218,.42),transparent)' : 'linear-gradient(180deg,rgba(255,246,218,.18),transparent)' }} />
+                <div className="absolute inset-x-0 bottom-2 text-center font-mono text-sm font-black text-gold-bright">{c.margin >= 0 ? '+' : ''}{fmt(c.margin)}</div>
               </div>
             </div>
           )
         })}
+        {/* The floor: a lit rule with the dais falling away under it. Without
+            it the three plinths simply stop, and stopping is not standing. */}
+        <div className="pointer-events-none absolute inset-x-0 bottom-3 h-px" style={{ backgroundImage: 'linear-gradient(90deg,transparent,rgba(240,212,128,.6) 16%,rgba(240,212,128,.6) 84%,transparent)' }} />
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-3" style={{ backgroundImage: 'linear-gradient(180deg,rgba(0,0,0,.5),transparent)' }} />
       </div>
     </div>
   )

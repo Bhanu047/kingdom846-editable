@@ -1810,6 +1810,25 @@ select.royal-select option {
 .kv-live .k-sheen { overflow: visible }
 .kv-live .k-sheen::after { display: none }
 
+/* Sheen as an OVERLAY rather than as a modifier on the host.
+   .k-sheen sets position:relative to contain its ::after, and Tailwind's
+   .absolute is a single class with the same specificity -- so putting k-sheen
+   on an absolutely positioned element silently drops it back into normal flow.
+   That is exactly what happened to the podium's winning plinth: it rendered at
+   the TOP of its column instead of standing on the floor, with the medal and
+   composition bar overlapping it. Use this variant on a child inside the
+   positioned element instead; k-sheen itself stays for in-flow hosts. */
+.k-sheen-fill {
+  position: absolute; inset: 0; overflow: hidden; pointer-events: none;
+  border-radius: inherit;
+}
+.k-sheen-fill::after {
+  content: ""; position: absolute; top: 0; bottom: 0; left: 0; width: 14%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.55), transparent);
+  animation: bar-sheen 4.6s cubic-bezier(.5,0,.5,1) infinite;
+}
+.kv-live .k-sheen-fill::after, .k846-v2 .k-sheen-fill::after { display: none }
+
 /* Numbers that sit on top of a filled bar. Flat text on a bright fill loses
    its edges; this keeps it legible on gold as well as on red. */
 .k-seg-label {
@@ -1820,7 +1839,7 @@ select.royal-select option {
 
 @media (prefers-reduced-motion: reduce) {
   .k-seg, .k-seg--v { transition: none !important }
-  .k-sheen::after   { animation: none !important; opacity: 0 !important }
+  .k-sheen::after, .k-sheen-fill::after { animation: none !important; opacity: 0 !important }
 }
 
 /* The dashed ring behind the donut. Slow enough to read as an instrument

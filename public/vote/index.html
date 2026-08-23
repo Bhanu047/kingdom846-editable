@@ -444,7 +444,10 @@ function openTheatre(id){
   $('tload').style.display = 'grid';
   // one iframe at a time: these are full WebGL scenes and a phone will not
   // hold nine of them at once
-  frame.src = '../royal-welcome-2/index.html?theme=' + encodeURIComponent(id);
+  // fresh=1 forces the full intro. Without it the build's skipIntroOnReturn
+  // fires on the second gate you open and every one after jumps straight to
+  // the composed frame -- which would mean voting on eight still images.
+  frame.src = '../royal-welcome-2/index.html?fresh=1&theme=' + encodeURIComponent(id);
   $('theatre').classList.add('on');
   document.body.style.overflow = 'hidden';
   // Keyboard and screen-reader users would otherwise be left on the card behind

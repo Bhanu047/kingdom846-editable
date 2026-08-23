@@ -109,8 +109,8 @@ body.nogl #bg{display:none;}
 @keyframes lightPass{0%{opacity:0;background-position:-130% 0}10%{opacity:1}88%{opacity:1}100%{opacity:0;background-position:230% 0}}
 
 .halo{position:absolute;left:50%;top:50%;width:190%;height:135%;transform:translate(-50%,-50%);opacity:0;pointer-events:none;
-  background:radial-gradient(closest-side, rgba(230,194,102,.20), rgba(230,194,102,0) 70%),
-             radial-gradient(closest-side, rgba(120,165,255,.12), rgba(120,165,255,0) 60%);}
+  background:radial-gradient(closest-side, rgba(var(--acc),.20), rgba(var(--acc),0) 70%),
+             radial-gradient(closest-side, rgba(var(--acc2),.14), rgba(var(--acc2),0) 62%);}
 .play .halo{animation:fadeIn 2.2s ease-out 3.1s forwards, haloPulse 7s ease-in-out 5.4s infinite;}
 @keyframes haloPulse{0%,100%{opacity:1}50%{opacity:.55}}
 
@@ -129,8 +129,96 @@ body.nogl #bg{display:none;}
 .title span.sp{width:.36em;}
 .play .title span{animation:letterIn .85s cubic-bezier(.16,.74,.22,1) forwards;}
 @keyframes letterIn{from{opacity:0;transform:translateY(22px) scale(.94);filter:blur(12px)}
-  to{opacity:1;transform:translateY(0) scale(1);
-     filter:drop-shadow(0 1px 0 rgba(255,246,219,.4)) drop-shadow(0 4px 14px rgba(0,0,0,.85)) drop-shadow(0 0 30px rgba(230,194,102,.26));}}
+  to{opacity:1;transform:translateY(0) scale(1);filter:var(--title-lit);}}
+
+/* ---------- how each hall composes itself ----------
+   The nine used to share one entrance: crest drops, letters rise, done. That
+   made the choice between them almost entirely a choice of wallpaper. The
+   schedule below is deliberately unchanged -- the crest still lands at 2.4s
+   and the letters still run from 4.85s, so the score still hits with the
+   impact -- but the CHARACTER of the motion now belongs to the room.
+   Sapphire keeps the composed default; it is the flagship and the baseline
+   the others are read against. */
+
+/* Coronation -- ceremonial. The crest is set down with weight, and the letters
+   rise like a fanfare rather than settling. */
+body[data-theme="coronation"] .play .crest-wrap{
+  animation:crestSet 1.9s cubic-bezier(.2,.9,.24,1) 2.3s forwards, crestFloat 8s ease-in-out 4.4s infinite;}
+@keyframes crestSet{0%{opacity:0;transform:translateY(-46px) scale(1.08);filter:blur(18px)}
+  62%{opacity:1;transform:translateY(6px) scale(.99);filter:blur(0)}
+  100%{opacity:1;transform:translateY(0) scale(1);filter:blur(0)}}
+body[data-theme="coronation"] .play .title span{animation:letterRise 1s cubic-bezier(.16,.8,.24,1) forwards;}
+@keyframes letterRise{from{opacity:0;transform:translateY(46px) scale(.9);filter:blur(14px)}
+  to{opacity:1;transform:none;filter:var(--title-lit);}}
+
+/* Moonlit -- mysterious. Nothing arrives; it resolves out of the mist. */
+body[data-theme="moonlit"] .play .crest-wrap{
+  animation:crestMist 2.5s cubic-bezier(.24,.6,.26,1) 2.0s forwards, crestFloat 10s ease-in-out 4.4s infinite;}
+@keyframes crestMist{from{opacity:0;transform:translateY(8px) scale(.98);filter:blur(34px)}
+  to{opacity:1;transform:none;filter:blur(0)}}
+body[data-theme="moonlit"] .play .title span{animation:letterMist 1.5s ease-out forwards;}
+@keyframes letterMist{from{opacity:0;transform:none;filter:blur(20px)}
+  to{opacity:1;transform:none;filter:var(--title-lit);}}
+
+/* Ember Throne -- forceful. The crest arrives hot and the letters catch like
+   fire taking hold, flickering before they hold steady. */
+body[data-theme="embers"] .play .crest-wrap{
+  animation:crestForge 1.4s cubic-bezier(.1,.9,.2,1) 2.5s forwards, crestFloat 7s ease-in-out 4.4s infinite;}
+@keyframes crestForge{0%{opacity:0;transform:translateY(52px) scale(.8);filter:blur(24px) brightness(2.2)}
+  55%{opacity:1;transform:translateY(-5px) scale(1.03);filter:blur(0) brightness(1.5)}
+  100%{opacity:1;transform:none;filter:blur(0) brightness(1)}}
+body[data-theme="embers"] .play .title span{animation:letterCatch .95s ease-out forwards;}
+@keyframes letterCatch{0%{opacity:0;transform:translateY(20px);filter:blur(12px)}
+  40%{opacity:1}52%{opacity:.45}62%{opacity:1}72%{opacity:.7}
+  100%{opacity:1;transform:none;filter:var(--title-lit);}}
+
+/* Ivory Cathedral -- sacred. Everything blooms open out of the light instead
+   of moving through space. */
+body[data-theme="cathedral"] .play .crest-wrap{
+  animation:crestBloom 2.2s cubic-bezier(.2,.7,.24,1) 2.2s forwards, crestFloat 9s ease-in-out 4.4s infinite;}
+@keyframes crestBloom{0%{opacity:0;transform:scale(.76);filter:blur(26px) brightness(2.4)}
+  100%{opacity:1;transform:scale(1);filter:blur(0) brightness(1)}}
+body[data-theme="cathedral"] .play .title span{animation:letterBloom 1.2s ease-out forwards;}
+@keyframes letterBloom{from{opacity:0;transform:scale(.88);filter:blur(16px) brightness(2)}
+  to{opacity:1;transform:none;filter:var(--title-lit);}}
+
+/* Storm Fortress -- dramatic. The crest is revealed by the strike, and the
+   letters snap in hard rather than easing. */
+body[data-theme="storm"] .play .crest-wrap{
+  animation:crestStrike 1.5s cubic-bezier(.14,.86,.2,1) 2.4s forwards, crestFloat 8s ease-in-out 4.4s infinite;}
+@keyframes crestStrike{0%{opacity:0;transform:scale(1.04);filter:blur(20px) brightness(3)}
+  12%{opacity:1;filter:blur(2px) brightness(2.6)}22%{opacity:.35;filter:blur(6px) brightness(1)}
+  34%{opacity:1;filter:blur(0) brightness(2)}48%{opacity:.8}
+  100%{opacity:1;transform:scale(1);filter:blur(0) brightness(1)}}
+body[data-theme="storm"] .play .title span{animation:letterSnap .55s cubic-bezier(.2,1.5,.3,1) forwards;}
+@keyframes letterSnap{0%{opacity:0;transform:translateY(14px) scale(1.14);filter:blur(9px)}
+  100%{opacity:1;transform:none;filter:var(--title-lit);}}
+
+/* Dragon Gate -- monumental. The crest comes forward out of depth, so the
+   entrance feels like crossing the gate rather than watching it. */
+body[data-theme="dragongate"] .play .crest-wrap{
+  animation:crestApproach 2.1s cubic-bezier(.22,.68,.24,1) 2.3s forwards, crestFloat 8s ease-in-out 4.4s infinite;}
+@keyframes crestApproach{from{opacity:0;transform:scale(1.42);filter:blur(28px)}
+  to{opacity:1;transform:scale(1);filter:blur(0)}}
+body[data-theme="dragongate"] .play .title span{animation:letterApproach 1.05s cubic-bezier(.2,.72,.24,1) forwards;}
+@keyframes letterApproach{from{opacity:0;transform:scale(1.5);filter:blur(16px)}
+  to{opacity:1;transform:none;filter:var(--title-lit);}}
+
+/* Royal War Camp -- the standard going up. Everything is raised from below. */
+body[data-theme="warcamp"] .play .crest-wrap{
+  animation:crestRaise 2s cubic-bezier(.18,.78,.22,1) 2.3s forwards, crestFloat 8s ease-in-out 4.4s infinite;}
+@keyframes crestRaise{from{opacity:0;transform:translateY(76px) scale(.94);filter:blur(18px)}
+  to{opacity:1;transform:none;filter:blur(0)}}
+body[data-theme="warcamp"] .play .title span{animation:letterRise 1s cubic-bezier(.16,.8,.24,1) forwards;}
+
+/* Celestial Palace -- weightless. Everything drifts up and keeps drifting. */
+body[data-theme="celestial"] .play .crest-wrap{
+  animation:crestDrift 2.8s cubic-bezier(.26,.58,.28,1) 1.9s forwards, crestFloat 12s ease-in-out 4.4s infinite;}
+@keyframes crestDrift{from{opacity:0;transform:translateY(64px) scale(.92);filter:blur(22px)}
+  to{opacity:1;transform:none;filter:blur(0)}}
+body[data-theme="celestial"] .play .title span{animation:letterDrift 1.6s cubic-bezier(.24,.6,.26,1) forwards;}
+@keyframes letterDrift{from{opacity:0;transform:translateY(38px);filter:blur(14px)}
+  to{opacity:1;transform:none;filter:var(--title-lit);}}
 .title::after{content:"";position:absolute;inset:-10% -4%;pointer-events:none;mix-blend-mode:screen;opacity:0;
   background:linear-gradient(100deg,rgba(255,255,255,0) 42%,rgba(255,252,235,.65) 50%,rgba(255,255,255,0) 58%);
   background-size:300% 100%;background-position:-120% 0;}
@@ -138,7 +226,7 @@ body.nogl #bg{display:none;}
 @keyframes titleSheen{0%{opacity:0;background-position:-120% 0}15%{opacity:.9}85%{opacity:.9}100%{opacity:0;background-position:220% 0}}
 
 .impact{position:absolute;inset:0;z-index:24;pointer-events:none;opacity:0;
-  background:radial-gradient(58% 42% at 50% 50%, rgba(255,240,200,.3), rgba(255,240,200,0) 70%);}
+  background:radial-gradient(58% 42% at 50% 50%, rgba(var(--acc),.32), rgba(var(--acc),0) 70%);}
 .play .impact{animation:flash 900ms ease-out 5.95s forwards;}
 @keyframes flash{0%{opacity:0}16%{opacity:1}100%{opacity:0}}
 
@@ -204,19 +292,41 @@ body.preview .hud.right button{font-size:8px;padding:8px 10px;}
 .play #skip{opacity:1;}
 .stage.done #skip{opacity:0;pointer-events:none;}
 
+/* ---------- each hall gets its own light ----------
+   Every theme used to share one warm cream-and-gold treatment: the same
+   entrance flash, the same crest halo, the same impact bloom, the same glow on
+   the wordmark. In a gold hall that is right. On Sapphire, Moonlit, Storm and
+   Celestial it was a warm flash going off in a cold room, which is what made
+   the entrance read wrong. Each theme now carries its own accent, seeded from
+   the ray colour its own shader already lights the scene with, so the flash
+   belongs to the room it happens in.
+   --acc is the light itself, --acc2 the deeper edge of it, --flash-pos where
+   it originates: fire halls bloom up from the braziers, Cathedral and Storm
+   come from above. */
+body{--acc:255,246,220;--acc2:255,222,150;--flash-pos:50% 50%;
+  --title-lit:drop-shadow(0 1px 0 rgba(255,246,219,.4)) drop-shadow(0 4px 14px rgba(0,0,0,.85)) drop-shadow(0 0 30px rgba(var(--acc),.30));}
+body[data-theme="sapphire"]  {--acc:148,188,255;--acc2:94,140,232;}
+body[data-theme="coronation"]{--acc:255,224,160;--acc2:255,182,88; --flash-pos:50% 74%;}
+body[data-theme="moonlit"]   {--acc:196,222,255;--acc2:140,176,236;}
+body[data-theme="embers"]    {--acc:255,150,64; --acc2:214,52,14;  --flash-pos:50% 80%;}
+body[data-theme="cathedral"] {--acc:255,246,220;--acc2:255,214,140;--flash-pos:50% 24%;}
+body[data-theme="storm"]     {--acc:214,232,255;--acc2:104,152,255;--flash-pos:50% 12%;}
+body[data-theme="dragongate"]{--acc:255,176,88; --acc2:230,90,28;  --flash-pos:50% 72%;}
+body[data-theme="warcamp"]   {--acc:255,190,104;--acc2:224,104,36; --flash-pos:50% 76%;}
+body[data-theme="celestial"] {--acc:154,198,255;--acc2:170,124,255;}
+
 .flash{position:fixed;inset:0;z-index:60;pointer-events:none;opacity:0;
-  background:radial-gradient(72% 60% at 50% 50%, rgba(255,246,220,.97), rgba(255,222,150,.4) 45%, rgba(0,0,0,0) 78%);}
+  background:radial-gradient(78% 66% at var(--flash-pos), rgba(var(--acc),.94), rgba(var(--acc2),.40) 46%, rgba(0,0,0,0) 78%);}
 .entering .flash{animation:enterFlash 1.7s ease-out forwards;}
 @keyframes enterFlash{0%{opacity:0}38%{opacity:1}100%{opacity:0}}
+/* Storm does not bloom, it strikes: a double lightning pulse on the way out. */
+body[data-theme="storm"].entering .flash{animation:enterStrike 1.7s linear forwards;}
+@keyframes enterStrike{0%{opacity:0}5%{opacity:1}11%{opacity:.12}17%{opacity:.92}25%{opacity:.18}42%{opacity:.8}100%{opacity:0}}
+/* Ember Throne flares rather than flashes -- it comes up out of the fire. */
+body[data-theme="embers"].entering .flash{animation:enterFlare 1.9s cubic-bezier(.3,0,.3,1) forwards;}
+@keyframes enterFlare{0%{opacity:0;transform:scale(.82)}30%{opacity:1}100%{opacity:0;transform:scale(1.18)}}
 .entering .content{animation:contentOut 1.6s cubic-bezier(.5,0,.2,1) forwards;}
 @keyframes contentOut{to{opacity:0;transform:scale(1.12);filter:blur(14px)}}
-
-.gate{position:fixed;inset:0;z-index:80;background:#000;cursor:pointer;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;transition:opacity 1s ease;}
-.gate.hide{opacity:0;pointer-events:none;}
-.gate h1{font-size:clamp(10px,1.25vw,15px);font-weight:500;letter-spacing:.44em;animation:gatePulse 3.2s ease-in-out infinite;}
-.gate p{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:14px;color:rgba(239,223,180,.4);}
-@keyframes gatePulse{0%,100%{opacity:.35}50%{opacity:1}}
 
 @media (max-width:720px){
   .title{letter-spacing:.06em}.eyebrow{letter-spacing:.22em;font-size:8.5px}.eyebrow s{width:20px}
@@ -277,13 +387,8 @@ body.preview .hud.right button{font-size:8px;padding:8px 10px;}
   <div class="flash"></div>
 </div>
 
-<div class="gate" id="gate" role="button" tabindex="0" aria-label="Enter Kingdom 846">
-  <h1>KINGDOM 846</h1>
-  <p>click to begin</p>
-</div>
-
 <noscript>
-  <style>.gate{display:none}.stage{background:#05070f}.content .eyebrow,.content .title span,.content .tagline,.content .cta,.content .crest-wrap,.content .rule{opacity:1!important;filter:none!important;transform:none!important}.blackout,.bar{display:none}.fallback{display:block!important}</style>
+  <style>.stage{background:#05070f}.content .eyebrow,.content .title span,.content .tagline,.content .cta,.content .crest-wrap,.content .rule{opacity:1!important;filter:none!important;transform:none!important}.blackout,.bar{display:none}.fallback{display:block!important}</style>
 </noscript>
 
 <script type="application/ld+json">
@@ -491,6 +596,8 @@ const THEMES = {
 
 const PARAMS = new URLSearchParams(location.search);
 const PREVIEW = PARAMS.has('preview');
+// ?fresh=1 is what the voting page passes: play the intro every single time.
+const FORCE_INTRO = PREVIEW || PARAMS.has('fresh');
 if (THEMES[PARAMS.get('theme')]) CONFIG.theme = PARAMS.get('theme');
 if (!THEMES[CONFIG.theme]) CONFIG.theme = 'sapphire';
 document.body.dataset.theme = CONFIG.theme;
@@ -763,8 +870,31 @@ const Score = (() => {
     pad(at,[98,196,293.66,392,587.33],.085,4.2);
   }
   return {
+    // Browsers refuse to start audio without a user gesture. The old build met
+    // that with a full-screen "click to begin" wall. This meets it invisibly:
+    // try to start, and if the context is blocked, resume on the first
+    // interaction that happens anyway -- a tap, a key, a scroll. Nobody is ever
+    // asked to click before the film runs, and where a gesture already
+    // happened (someone tapped a card to open this) sound simply starts.
+    arm(){
+      init();
+      if (ac.state === 'running') return;
+      const go = () => {
+        ac.resume().then(() => {
+          if (ac.state === 'running') off.forEach(f => f());
+        }).catch(() => {});
+      };
+      const evs = ['pointerdown','touchstart','keydown','wheel'];
+      const off = evs.map(e => {
+        const h = () => go();
+        window.addEventListener(e, h, { passive: true });
+        return () => window.removeEventListener(e, h);
+      });
+      go();
+    },
+    get muted(){ return !on },
     start(){
-      init(); if (ac.state==='suspended') ac.resume();
+      init(); if (ac.state!=='running') ac.resume().catch(()=>{});
       subBass(); hallAir(); torchCrackle();
       pad(1.2,[130.81,196,261.63],.05,4);
       shimmer(3.4);
@@ -779,7 +909,6 @@ const Score = (() => {
 
 /* ===== sequence ===== */
 const stage = document.getElementById('stage');
-const gate  = document.getElementById('gate');
 const INTRO_LENGTH = 8.6; // seconds until the screen is fully composed
 
 function run(withAudio){
@@ -799,29 +928,40 @@ function skipIntro(){
   stage.classList.add('done');
 }
 
+// FORCE_INTRO exists because skipIntroOnReturn was quietly breaking the one
+// job the previews have. It is keyed to sessionStorage, so on a page that opens
+// several gates in a row -- the voting page, the gallery -- the FIRST gate
+// played its intro and every one after it jumped straight to the composed
+// frame. Measured: opening sapphire, then coronation, then moonlit left the
+// last two at stage.done after 1.5s. Anyone comparing the nine would have seen
+// one of them animate. A preview always plays; only the real splash, where a
+// returning visitor does not want eight seconds every time, still skips.
 function begin(){
-  if (gate.classList.contains('hide')) return;
-  gate.classList.add('hide');
-  const seen = CONFIG.skipIntroOnReturn && sessionStorage.getItem('k846_intro') === '1';
+  const seen = !FORCE_INTRO && CONFIG.skipIntroOnReturn
+            && (() => { try { return sessionStorage.getItem('k846_intro') === '1' } catch { return false } })();
+  Score.arm();
   run(!seen);
   if (seen) requestAnimationFrame(skipIntro);
   try { sessionStorage.setItem('k846_intro','1'); } catch(_){}
 }
 
-gate.addEventListener('click', begin);
-gate.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); begin(); } });
+// No gate, no "click to begin" -- the film starts itself.
+if (document.readyState === 'complete') begin();
+else window.addEventListener('load', begin, { once: true });
 document.getElementById('skip').addEventListener('click', e => { e.stopPropagation(); skipIntro(); });
-document.getElementById('replay').addEventListener('click', e => { e.stopPropagation(); run(false); });
+document.getElementById('replay').addEventListener('click', e => { e.stopPropagation(); Score.arm(); run(true); });
 document.getElementById('sound').addEventListener('click', e => {
   e.stopPropagation();
   e.currentTarget.textContent = Score.toggle() ? 'SOUND ON' : 'SOUND OFF';
 });
+// The button is now a mute switch, not the way sound gets turned on.
+document.getElementById('sound').textContent = 'SOUND ON';
 document.querySelectorAll('.theme').forEach(b => b.addEventListener('click', e => {
   e.stopPropagation();
   document.body.dataset.theme = CONFIG.theme = b.dataset.theme;
   document.querySelectorAll('.theme').forEach(x => x.classList.toggle('on', x === b));
   BG.setTheme(b.dataset.theme);
-  run(false);
+  run(true);
 }));
 document.getElementById('enter').addEventListener('click', () => {
   Score.fanfare();

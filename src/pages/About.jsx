@@ -1,7 +1,7 @@
 import { useId } from 'react'
 import { Panel, SectionTitle, Pill, ArtImage } from '../components/ui'
 import Icon from '../components/Icon'
-import { smoothPath, useReveal } from '../lib/chartAnim'
+import { smoothPath, useInView } from '../lib/chartAnim'
 import { kingdom } from '../data/kingdom'
 import { tracker846 } from '../data/tracker846'
 import { realmImage } from '../data/realmArt'
@@ -42,7 +42,10 @@ function fmtDate(iso) {
 // snapshot, and inventing a curve for it would make the page look live while
 // being fiction. The card says which series it is showing for that reason.
 function RatingEvolution() {
-  const reveal = useReveal()
+  // Scroll-triggered like the Atlas charts below it: this card sits well down
+  // the page, so a mount-based reveal had already finished before the reader
+  // ever got to it.
+  const [chartRef, reveal] = useInView()
   const gid = useId()
   // Oldest first -- the history is stored newest first for the table.
   const runs = [...tracker846.kvk.history].reverse()
@@ -67,7 +70,7 @@ function RatingEvolution() {
   return (
     <Panel>
       <SectionTitle eyebrow="Trajectory" title="Rating Evolution" />
-      <div className="relative mt-2">
+      <div ref={chartRef} className="relative mt-2">
         <svg viewBox={`0 0 ${W} ${H}`} className="w-full">
           <defs>
             <linearGradient id={`${gid}-q`} x1="0" y1="0" x2="0" y2="1">

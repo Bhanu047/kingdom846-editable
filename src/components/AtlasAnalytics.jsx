@@ -2,7 +2,7 @@ import { useId, useMemo } from 'react'
 import { Panel, SectionTitle, Pill } from './ui'
 import Icon from './Icon'
 import { tracker846 } from '../data/tracker846'
-import { smoothPath, useReveal } from '../lib/chartAnim'
+import { smoothPath, useInView } from '../lib/chartAnim'
 
 // The Atlas profile, rebuilt on our own page.
 //
@@ -81,7 +81,7 @@ function reconstructedScore(rows) {
 }
 
 function ScoreHistory() {
-  const reveal = useReveal()
+  const [ref, reveal] = useInView()
   const gid = useId()
   const runs = runsOldestFirst()
   const series = runs.map((k, i) => ({ kvk: k.kvk, value: reconstructedScore(runs.slice(0, i + 1)) }))
@@ -105,7 +105,7 @@ function ScoreHistory() {
         <span className="text-[11px] text-parchment/50">KvK {atlas.lastMove.fromKvk} → {atlas.lastMove.toKvk}</span>
         <span className="ml-auto font-mono text-lg font-black text-gold-bright">{atlas.score.toFixed(2)}</span>
       </div>
-      <div className="relative mt-2">
+      <div ref={ref} className="relative mt-2">
         <svg viewBox={`0 0 ${W} ${H}`} className="w-full">
           <defs>
             <linearGradient id={`${gid}-f`} x1="0" y1="0" x2="0" y2="1">
@@ -147,7 +147,7 @@ function ScoreHistory() {
 }
 
 function RankHistory() {
-  const reveal = useReveal()
+  const [ref, reveal] = useInView()
   const { atlas, tier } = tracker846
   const prev = atlas.rank + atlas.lastMove.ranks
 
@@ -172,7 +172,7 @@ function RankHistory() {
           game, so unlike the score it cannot be reconstructed from our own
           record -- two positions are genuinely all there is, and a ladder shows
           a move between two of them better than a mostly-empty plot. */}
-      <div className="relative mt-7 h-12">
+      <div ref={ref} className="relative mt-7 h-12">
         <div className="absolute inset-x-0 top-1/2 h-[3px] -translate-y-1/2 overflow-hidden rounded-full bg-white/[.06]">
           <div className="h-full rounded-full"
             style={{
@@ -222,7 +222,7 @@ function RankHistory() {
    from the KvK history, so this one is complete.
    ------------------------------------------------------------------------ */
 function PerformanceTrend() {
-  const reveal = useReveal()
+  const [ref, reveal] = useInView()
   const runs = runsOldestFirst()
   const pts = useMemo(() => {
     let p = 0, b = 0
@@ -232,43 +232,74 @@ function PerformanceTrend() {
       return { kvk: k.kvk, prep: (p / (i + 1)) * 100, battle: (b / (i + 1)) * 100 }
     })
   }, [])
-  const W = 520, H = 190, L = 40, R = 16, T = 20, B = 30
+
+  // preserveAspectRatio="none" so the plot stretches to whatever height the
+  // card ends up with. This card sits in a grid row beside the radar and gets
+  // stretched to match it -- measured, that left 248px of empty panel under a
+  // 178px chart, half the card doing nothing. A line plot has no intrinsic
+  // aspect ratio to protect, and the only things that WOULD distort under a
+  // non-uniform scale are the end markers, so those are HTML dots positioned
+  // over the SVG rather than circles inside it.
+  const W = 520, H = 200, L = 40, R = 16, T = 16, B = 26
   const x = (i) => L + (i / (pts.length - 1)) * (W - L - R)
   const y = (v) => H - B - (v / 100) * (H - T - B)
   const path = (key) => smoothPath(pts.map((p, i) => ({ x: x(i), y: y(p[key]) })))
   const last = pts[pts.length - 1]
+  const pct = (v) => `${(v / W) * 100}%`
+  const vpct = (v) => `${(v / H) * 100}%`
+  const k = tracker846.kvk
 
   return (
-    <Panel>
+    <Panel className="flex flex-col">
       <SectionTitle eyebrow="Consistency" title="Performance Trend" />
       <div className="mt-1 flex flex-wrap items-baseline gap-3 text-[11px]">
         <span style={{ color: BLUE }}>● Prep {Math.round(last.prep)}%</span>
         <span style={{ color: GOLD }}>● Battle {Math.round(last.battle)}%</span>
       </div>
-      <div className="relative mt-2">
-        <svg viewBox={`0 0 ${W} ${H}`} className="w-full">
+      <div ref={ref} className="relative mt-2 min-h-[160px] flex-1">
+        <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className="h-full w-full">
           {[0, 25, 50, 75, 100].map((t) => (
-            <line key={t} x1={L} x2={W - R} y1={y(t)} y2={y(t)} stroke="rgba(226,199,125,.10)" />
+            <line key={t} x1={L} x2={W - R} y1={y(t)} y2={y(t)} stroke="rgba(226,199,125,.10)" vectorEffect="non-scaling-stroke" />
           ))}
+          {pts.map((p, i) => (
+            <line key={p.kvk} x1={x(i)} x2={x(i)} y1={T} y2={H - B} stroke="rgba(226,199,125,.05)" vectorEffect="non-scaling-stroke" />
+          ))}
+          {/* non-scaling-stroke keeps these 2.6px however far the box stretches;
+              without it a tall card would fatten the lines. */}
           <path d={path('prep')} pathLength="1" strokeDasharray="1" strokeDashoffset={reveal ? 0 : 1}
-            fill="none" stroke={BLUE} strokeWidth="2.6"
-            style={{ transition: 'stroke-dashoffset 1.1s cubic-bezier(.16,1,.3,1)' }} />
+            fill="none" stroke={BLUE} strokeWidth="2.6" vectorEffect="non-scaling-stroke"
+            style={{ transition: 'stroke-dashoffset 1.2s cubic-bezier(.16,1,.3,1)' }} />
           <path d={path('battle')} pathLength="1" strokeDasharray="1" strokeDashoffset={reveal ? 0 : 1}
-            fill="none" stroke={GOLD} strokeWidth="2.6"
-            style={{ transition: 'stroke-dashoffset 1.1s cubic-bezier(.16,1,.3,1) .14s' }} />
-          <g style={{ opacity: reveal ? 1 : 0, transition: 'opacity .4s ease 1s' }}>
-            <circle cx={x(pts.length - 1)} cy={y(last.prep)} r="4.5" fill="none" stroke={BLUE} strokeWidth="1.6" />
-            <circle cx={x(pts.length - 1)} cy={y(last.battle)} r="4.5" fill="none" stroke={GOLD} strokeWidth="1.6" />
-          </g>
+            fill="none" stroke={GOLD} strokeWidth="2.6" vectorEffect="non-scaling-stroke"
+            style={{ transition: 'stroke-dashoffset 1.2s cubic-bezier(.16,1,.3,1) .16s' }} />
         </svg>
+        {[{ v: last.prep, c: BLUE }, { v: last.battle, c: GOLD }].map((m) => (
+          <div key={m.c} className="pointer-events-none absolute h-[9px] w-[9px] -translate-x-1/2 -translate-y-1/2 rounded-full border-2"
+            style={{ left: pct(x(pts.length - 1)), top: vpct(y(m.v)), borderColor: m.c, background: '#0b1222',
+              opacity: reveal ? 1 : 0, transition: 'opacity .4s ease 1.1s' }} />
+        ))}
         {[0, 50, 100].map((t) => (
           <div key={t} className="pointer-events-none absolute -translate-y-1/2 font-mono text-[9px] text-parchment/35"
-            style={{ right: `${(W - L + 6) / W * 100}%`, top: `${y(t) / H * 100}%` }}>{t}%</div>
+            style={{ right: `${((W - L + 6) / W) * 100}%`, top: vpct(y(t)) }}>{t}%</div>
         ))}
         {[0, pts.length - 1].map((i) => (
           <div key={i} className="pointer-events-none absolute whitespace-nowrap text-[9px] font-semibold text-parchment/40"
-            style={{ left: i === 0 ? `${x(i) / W * 100}%` : undefined, right: i ? '2%' : undefined, top: `${(H - 12) / H * 100}%` }}>
-            #{pts[i].kvk}
+            style={{ left: i === 0 ? pct(x(i)) : undefined, right: i ? '2%' : undefined, bottom: 0 }}>#{pts[i].kvk}</div>
+        ))}
+      </div>
+
+      {/* The card is stretched to the radar's height either way, so it may as
+          well carry the record the curves are drawn from. */}
+      <div className="mt-4 grid grid-cols-3 gap-2">
+        {[
+          { label: 'Prep', value: k.prep.record, sub: `${k.prep.winRate}% win` },
+          { label: 'Battle', value: k.battle.record, sub: `${k.battle.winRate}% win` },
+          { label: 'Best streak', value: k.prep.best, sub: 'consecutive' },
+        ].map((c) => (
+          <div key={c.label} className="rounded-lg bg-white/5 p-2.5 text-center">
+            <div className="font-display text-base font-bold text-parchment">{c.value}</div>
+            <div className="text-[9px] uppercase tracking-wider text-parchment/45">{c.label}</div>
+            <div className="mt-0.5 text-[9px] text-parchment/35">{c.sub}</div>
           </div>
         ))}
       </div>
@@ -283,7 +314,7 @@ function PerformanceTrend() {
 const SEG_COLORS = { base: '#E0B23B', dominv: '#5D90E8', form: '#5BC98C', streaks: '#C77FD8', history: '#D76158' }
 
 function ScoreBreakdown() {
-  const reveal = useReveal()
+  const [ref, reveal] = useInView()
   const { breakdown, score, experiencePenalty } = tracker846.atlas
   const total = breakdown.reduce((s, b) => s + b.pts, 0)
 
@@ -295,7 +326,7 @@ function ScoreBreakdown() {
         <span className="gilt-text font-mono text-3xl font-black">{score.toFixed(2)}</span>
         <span className="text-[11px] text-parchment/40">breakdown is approximate</span>
       </div>
-      <div className="k-track mt-3 flex h-5 overflow-hidden rounded-full border border-gold/15">
+      <div ref={ref} className="k-track mt-3 flex h-5 overflow-hidden rounded-full border border-gold/15">
         {breakdown.map((b, i) => (
           <div key={b.key} className="k-seg" title={`${b.label} ${b.pts}`}
             style={{ width: reveal ? `${(b.pts / total) * 100}%` : '0%', '--c': SEG_COLORS[b.key], transitionDelay: `${i * 90}ms` }} />
@@ -328,7 +359,7 @@ function ScoreBreakdown() {
    same trap that printed the PvP radar's labels on top of its own polygon.
    ------------------------------------------------------------------------ */
 function PerformanceRadar() {
-  const reveal = useReveal()
+  const [ref, reveal] = useInView()
   const gid = useId()
   const axes = tracker846.atlas.radar
   const CX = 170, CY = 152, R = 96
@@ -343,7 +374,7 @@ function PerformanceRadar() {
   return (
     <Panel>
       <SectionTitle eyebrow="Profile" title="Performance Radar" />
-      <div className="relative mt-2">
+      <div ref={ref} className="relative mt-2">
         <svg viewBox="0 0 340 300" className="w-full" role="img"
           aria-label={`Performance radar. ${axes.map((a) => `${a.label}: ${a.value}%`).join(', ')}.`}>
           <defs>

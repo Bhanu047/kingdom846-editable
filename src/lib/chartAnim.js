@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 // Flips true one paint after mount, so a CSS transition has a real "from"
 // state to animate away from instead of the element popping in fully
@@ -46,4 +46,56 @@ export function smoothPath(pts) {
     d += `C${c1x},${c1y} ${c2x},${c2y} ${p2.x},${p2.y}`
   }
   return d
+}
+
+// Reveal when the chart actually reaches the screen, not when it mounts.
+//
+// useReveal flips one frame after mount, which is right for a chart that
+// appears in response to a click -- a Battle Lab result. It is wrong for a
+// chart sitting far down a long page: the whole page mounts at once, so every
+// entrance plays while the reader is still at the top, and by the time they
+// scroll down the charts are already finished and look permanently static.
+// That is why the About analytics read as flat.
+//
+// One-shot on purpose. Re-animating every time a chart scrolls past is the
+// thing that makes long pages exhausting.
+export function useInView(options) {
+  const [seen, setSeen] = useState(false)
+  const ref = useRef(null)
+
+  useEffect(() => {
+    const el = ref.current
+    if (!el || seen) return undefined
+    if (typeof IntersectionObserver === 'undefined'
+      || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      setSeen(true)
+      return undefined
+    }
+    const io = new IntersectionObserver((entries) => {
+      for (const e of entries) {
+        // Already scrolled past counts as seen. Without this a chart the reader
+        // JUMPS over -- a restored scroll position, an anchor link, a fast
+        // fling -- never intersects at all, so its entrance never fires and its
+        // line stays at the hidden start state permanently. Caught exactly that
+        // on Atlas Score History: scroll straight to the section below it and
+        // the curve was simply never drawn.
+        const passed = !e.isIntersecting && e.boundingClientRect.bottom <= e.rootBounds?.top
+        if (!e.isIntersecting && !passed) continue
+        setSeen(true)
+        io.disconnect()
+      }
+    }, {
+      // threshold 0, never a fraction: a card taller than the viewport can
+      // never reach one, and would sit un-animated forever. The negative
+      // bottom margin holds the entrance back until the card is properly on
+      // screen rather than firing it one pixel in.
+      rootMargin: '0px 0px -10% 0px',
+      threshold: 0,
+      ...options,
+    })
+    io.observe(el)
+    return () => io.disconnect()
+  }, [seen, options])
+
+  return [ref, seen]
 }

@@ -244,29 +244,21 @@ body {
 body.entering .room     { animation: none; scale: 1.9; transition: scale 2.2s cubic-bezier(.55,0,.2,1); }
 body.entering .shafts,
 body.entering .shafts-2 { animation: none; opacity: 0; transition: opacity 1.2s ease; }
-body.entering .bloom    { animation: none; scale: 5; opacity: 1; transition: scale 2.2s cubic-bezier(.55,0,.2,1), opacity 1.6s ease; }
+/* scale:5 turned a 74vmin cream circle into 370vmin at FULL opacity -- that
+   was the other half of the whiteout, and the flash that survived removing
+   it. The light passes and goes out now instead of swallowing the frame. */
+body.entering .bloom    { animation: none; scale: 2.3; opacity: 0; transition: scale 2s cubic-bezier(.55,0,.2,1), opacity 1s ease; }
 body.entering .stage    { opacity: 0; scale: 1.35; transition: opacity .85s ease, scale 1.9s cubic-bezier(.55,0,.2,1); }
 body.entering .vignette { opacity: 0; transition: opacity 1.3s ease; }
 body.entering .hair,
 body.entering .bar      { opacity: 0; transition: opacity .7s ease; }
-/* This was a literal wash to white: #FFF6DC ramped to opacity 1 and HELD
-   there, finishing at 2.2s while the hand-off to the site fires at 2.0s. So the
-   last thing anyone saw before the Dashboard was a full white screen, and a
-   dark site arriving out of white reads as a fault rather than an effect.
-   The arch still blooms -- but it blooms and PASSES, and the screen then closes
-   to the site's own ink, so the Dashboard opens out of darkness. */
-.arch-bloom {
-  position: fixed; inset: 0; z-index: 40; pointer-events: none; opacity: 0;
-  background: radial-gradient(circle at 50% 38%, rgba(255,231,168,.92), rgba(255,205,118,.40) 36%, rgba(255,188,88,0) 72%);
-}
-body.entering .arch-bloom { animation: archBloom 1.8s ease-out .5s forwards; }
-@keyframes archBloom { 0%{opacity:0} 28%{opacity:.82} 100%{opacity:0} }
-
 .gate-veil {
   position: fixed; inset: 0; z-index: 45; pointer-events: none; opacity: 0;
   background: #060810;
 }
-body.entering .gate-veil { animation: gateVeil 1.15s cubic-bezier(.42,0,.58,1) .85s forwards; }
+/* The exit is now a fall to dark, not a bloom: the room rushes past, the
+   light goes out, and the screen closes to the site's own ground. */
+body.entering .gate-veil { animation: gateVeil 1.25s cubic-bezier(.38,0,.6,1) .45s forwards; }
 @keyframes gateVeil { from{opacity:0} to{opacity:1} }
 
 @media (max-width: 620px) {
@@ -283,7 +275,6 @@ body.entering .gate-veil { animation: gateVeil 1.15s cubic-bezier(.42,0,.58,1) .
   .wordmark .ch { -webkit-text-fill-color: #EBCE76; color: #EBCE76; background: none; filter: none }
   .flare, .motes { display: none }
   body.entering .room, body.entering .bloom, body.entering .stage { transition-duration: .01ms !important }
-  body.entering .arch-bloom { animation: none; opacity: 0 }
   body.entering .gate-veil  { animation: none; opacity: 1 }
 }
 </style>
@@ -317,7 +308,6 @@ body.entering .gate-veil { animation: gateVeil 1.15s cubic-bezier(.42,0,.58,1) .
   </span>
 </div>
 
-<div class="arch-bloom" aria-hidden="true"></div>
 <div class="gate-veil" aria-hidden="true"></div>
 <audio id="toll" preload="auto"><source src="/assets/gate-toll.wav" type="audio/wav"></audio>
 

@@ -107,5 +107,25 @@ export function trackTool(tool, detail) {
 /** Anything else worth counting: a login, a report download, an application. */
 export function trackAction(action, detail) { send('action', action, detail) }
 
+/**
+ * Counts clicks on links leaving the site — the Discord invite, guide links.
+ * Records the destination HOST only, never the full URL, and attaches once
+ * globally rather than per component.
+ */
+export function installOutboundTracking() {
+  if (optedOut || typeof document === 'undefined') return
+  document.addEventListener('click', (e) => {
+    try {
+      const a = e.target?.closest?.('a[href]')
+      if (!a) return
+      const url = new URL(a.href, location.href)
+      // Same-origin links are page views, which are already counted.
+      if (url.origin === location.origin) return
+      if (!/^https?:$/.test(url.protocol)) return
+      trackAction('outbound', url.hostname.replace(/^www\./, ''))
+    } catch { /* a malformed href is not worth a console error */ }
+  }, { capture: true, passive: true })
+}
+
 /** True when the visitor has asked not to be tracked, so the UI can say so. */
 export const trackingDisabled = optedOut

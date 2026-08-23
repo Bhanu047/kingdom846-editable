@@ -630,9 +630,41 @@ app.get('/api/admin/analytics', auth, adminOnly, (req, res) => {
     retentionDays: RETENTION_DAYS,
     today: window(1),
     week: window(7),
-    month: window(30),
+    // The currently selected window, which is what `previous` is comparable to.
+    // `month` was a fixed 30 days and produced a meaningless percentage when
+    // the range switch was set to anything else.
+    selected: window(days),
     engagement,
     entries,
+    // Same-length window immediately before this one, so the dashboard can show
+    // direction rather than a bare number.
+    previous: (() => {
+      const from = utcDay(Date.now() - (2 * days - 1) * 86400000)
+      const to = utcDay(Date.now() - days * 86400000)
+      const r = db.prepare(`SELECT COUNT(DISTINCT visitor) v,
+          SUM(CASE WHEN kind = 'page' THEN 1 ELSE 0 END) p
+        FROM analytics_events WHERE day >= ? AND day <= ?`).get(from, to)
+      return { visitors: r?.v || 0, pageviews: r?.p || 0 }
+    })(),
+    // When the kingdom is actually online, as a weekday x hour grid in UTC.
+    // Returned raw so the browser can shift it into the viewer's own timezone;
+    // for a game community this is the most directly useful thing here.
+    activity: q(`SELECT
+        CAST(strftime('%w', ts / 1000, 'unixepoch') AS INTEGER) dow,
+        CAST(strftime('%H', ts / 1000, 'unixepoch') AS INTEGER) hour,
+        COUNT(DISTINCT visitor) visitors
+      FROM analytics_events WHERE day >= ? GROUP BY dow, hour`, since),
+    // What the people who are here right now are looking at.
+    livePages: db.prepare(`SELECT name, COUNT(DISTINCT visitor) visitors
+      FROM analytics_events WHERE ts > ? AND kind = 'page'
+      GROUP BY name ORDER BY visitors DESC LIMIT 8`).all(Date.now() - 5 * 60 * 1000),
+    // Site health: links out, and routes that resolved to nothing.
+    outbound: q(`SELECT detail name, COUNT(*) hits
+      FROM analytics_events WHERE day >= ? AND kind = 'action' AND name = 'outbound' AND detail IS NOT NULL
+      GROUP BY detail ORDER BY hits DESC LIMIT 12`, since),
+    notFound: q(`SELECT detail name, COUNT(*) hits
+      FROM analytics_events WHERE day >= ? AND kind = 'action' AND name = 'notfound' AND detail IS NOT NULL
+      GROUP BY detail ORDER BY hits DESC LIMIT 12`, since),
     // Distinct visitors seen in the last five minutes.
     live: db.prepare('SELECT COUNT(DISTINCT visitor) n FROM analytics_events WHERE ts > ?')
       .get(Date.now() - 5 * 60 * 1000)?.n || 0,
@@ -653,8 +685,11 @@ app.get('/api/admin/analytics', auth, adminOnly, (req, res) => {
     tools: q(`SELECT name, COUNT(*) hits, COUNT(DISTINCT visitor) visitors
       FROM analytics_events WHERE day >= ? AND kind = 'tool'
       GROUP BY name ORDER BY hits DESC LIMIT 25`, since),
+    // outbound and notfound get their own panels below, so they are excluded
+    // here rather than swamping the list of things people actually did.
     actions: q(`SELECT name, COUNT(*) hits, COUNT(DISTINCT visitor) visitors
       FROM analytics_events WHERE day >= ? AND kind = 'action'
+        AND name NOT IN ('outbound', 'notfound')
       GROUP BY name ORDER BY hits DESC LIMIT 25`, since),
     referrers: q(`SELECT referrer name, COUNT(DISTINCT visitor) visitors
       FROM analytics_events WHERE day >= ? AND referrer IS NOT NULL

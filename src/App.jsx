@@ -1,5 +1,5 @@
 import { useState, useMemo, lazy, Suspense, useEffect } from 'react'
-import { trackPage } from './lib/analytics'
+import { trackPage, trackAction, installOutboundTracking } from './lib/analytics'
 import Sidebar from './components/Sidebar'
 import Icon from './components/Icon'
 import ErrorBoundary from './components/ErrorBoundary'
@@ -58,6 +58,14 @@ function getPageFromHash() {
 
 function navigateTo(page) { window.location.hash = '/' + page }
 
+// Every hash the switch below handles. Kept next to it so adding a route and
+// forgetting this list shows up as a phantom 404 in analytics, not silence.
+const KNOWN_PAGES = new Set([
+  'dashboard', 'about', 'privacy', 'alliances', 'events', 'timeline', 'news',
+  'guides', 'rankings', 'transfer', 'battle-lab', 'apply', 'apply-chief',
+  'apply-noble', 'admin', 'console', 'leader-portal', 'war-room', 'settings',
+])
+
 function Placeholder({ title, icon = 'bell', note }) {
   return (
     <div className="grid place-items-center py-20">
@@ -95,6 +103,15 @@ function Shell() {
   // One page view per navigation. Deliberately keyed on `page` rather than the
   // hash, so a re-render or a query-string tweak does not double-count.
   useEffect(() => { trackPage(page) }, [page])
+
+  // One delegated listener for the whole app, attached once.
+  useEffect(() => { installOutboundTracking() }, [])
+
+  // A hash that matches no route silently falls through to the dashboard, so a
+  // dead link from Discord looks like a normal visit. Record it instead.
+  useEffect(() => {
+    if (page && !KNOWN_PAGES.has(page)) trackAction('notfound', page)
+  }, [page])
 
   const navigate = (p) => {
     navigateTo(p)

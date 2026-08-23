@@ -317,13 +317,29 @@ function Analytics() {
       </div>
 
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-        {[['Today', data.today], ['Last 7 days', data.week], ['Last 30 days', data.month]].map(([label, w]) => (
-          <div key={label} className="rounded-xl border border-gold/12 bg-white/[.02] p-3">
-            <div className="text-[10px] uppercase tracking-wider text-parchment/40">{label}</div>
-            <div className="mt-0.5 font-display text-2xl text-gold-bright">{w.visitors.toLocaleString()}</div>
-            <div className="text-[10px] text-parchment/45">visitors · {w.pageviews.toLocaleString()} views</div>
-          </div>
-        ))}
+        {[['Today', data.today, null], ['Last 7 days', data.week, null],
+          [`Last ${data.days} days`, data.selected, data.previous]].map(([label, w, prev]) => {
+          // Only the selected window has a comparable previous period.
+          const delta = prev && prev.visitors > 0
+            ? Math.round(((w.visitors - prev.visitors) / prev.visitors) * 100) : null
+          return (
+            <div key={label} className="rounded-xl border border-gold/12 bg-white/[.02] p-3">
+              <div className="text-[10px] uppercase tracking-wider text-parchment/40">{label}</div>
+              <div className="mt-0.5 flex items-baseline gap-2">
+                <span className="font-display text-2xl text-gold-bright">{w.visitors.toLocaleString()}</span>
+                {delta !== null && (
+                  <span className={`text-[11px] font-semibold ${delta >= 0 ? 'text-emerald-300/80' : 'text-red-300/80'}`}>
+                    {delta >= 0 ? '▲' : '▼'} {Math.abs(delta)}%
+                  </span>
+                )}
+              </div>
+              <div className="text-[10px] text-parchment/45">
+                visitors · {w.pageviews.toLocaleString()} views
+                {delta !== null ? <span className="text-parchment/30"> · vs previous {data.days}d</span> : null}
+              </div>
+            </div>
+          )
+        })}
       </div>
 
       {/* Visit-level quality. Counts alone cannot tell you whether people stayed. */}
@@ -360,6 +376,21 @@ function Analytics() {
         )}
       </div>
 
+      <ActivityGrid rows={data.activity} />
+
+      {data.livePages.length > 0 && (
+        <div className="rounded-xl border border-emerald-300/20 bg-emerald-300/[.03] p-3">
+          <div className="mb-2 text-[10px] uppercase tracking-wider text-emerald-200/50">On the site right now</div>
+          <div className="flex flex-wrap gap-2">
+            {data.livePages.map((r) => (
+              <span key={r.name} className="rounded-md bg-emerald-400/10 px-2 py-1 text-[11px] text-emerald-100/80">
+                {r.name} <span className="text-emerald-200/50">· {r.visitors}</span>
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="grid gap-3 md:grid-cols-2">
         <RankList title="Top pages" rows={data.pages} unit="views" valueKey="hits" />
         <RankList title="Battle Lab tools" rows={data.tools} unit="opens" valueKey="hits" />
@@ -368,6 +399,8 @@ function Analytics() {
         <RankList title="Traffic sources" rows={data.referrers} unit="visitors" valueKey="visitors" empty="All direct — no external referrers." />
         <RankList title="Campaign links" rows={data.campaigns} unit="visitors" valueKey="visitors" empty="Add ?utm_source=discord to a shared link to track it here." />
         <RankList title="Countries" rows={data.countries} unit="visitors" valueKey="visitors" empty="Your host is not sending a country header." />
+        <RankList title="Links out" rows={data.outbound} unit="clicks" valueKey="hits" empty="No outbound clicks yet." />
+        <RankList title="Dead links" rows={data.notFound} unit="hits" valueKey="hits" empty="No broken routes — good." />
         <RankList title="Devices" rows={data.devices} unit="visitors" valueKey="visitors" />
         <RankList title="Browsers" rows={data.browsers} unit="visitors" valueKey="visitors" />
       </div>
@@ -418,6 +451,62 @@ function Analytics() {
         Raw IPs are never stored. Visitors who send Do Not Track or Global Privacy Control are not recorded
         at all. Event rows are pruned after {data.retentionDays} days, with daily totals kept.
       </p>
+    </div>
+  )
+}
+
+// When the kingdom is online. The server returns UTC buckets; this shifts them
+// into the admin's own timezone, which for a game community is the difference
+// between a useful chart and a confusing one.
+function ActivityGrid({ rows }) {
+  const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+  const cells = new Array(168).fill(0)
+  // getTimezoneOffset is minutes BEHIND UTC, so a positive value means local is
+  // behind and the bucket moves earlier. Rounded to the hour; half-hour zones
+  // like IST land on the nearer hour rather than being dropped.
+  const shift = -Math.round(new Date().getTimezoneOffset() / 60)
+  let max = 0
+  for (const r of rows) {
+    const i = (((r.dow * 24 + r.hour + shift) % 168) + 168) % 168
+    cells[i] += r.visitors
+    if (cells[i] > max) max = cells[i]
+  }
+  const tzName = (() => {
+    try { return Intl.DateTimeFormat().resolvedOptions().timeZone } catch { return 'local time' }
+  })()
+
+  return (
+    <div className="rounded-xl border border-gold/12 bg-white/[.02] p-3">
+      <div className="mb-2 flex items-baseline justify-between gap-2">
+        <span className="text-[10px] uppercase tracking-wider text-parchment/40">When the kingdom is online</span>
+        <span className="text-[9px] text-parchment/30">{tzName}</span>
+      </div>
+      {max === 0 ? (
+        <p className="text-[11px] text-parchment/35">Not enough traffic yet.</p>
+      ) : (
+        <div className="overflow-x-auto">
+          <div className="min-w-[420px]">
+            {DAYS.map((d, dow) => (
+              <div key={d} className="flex items-center gap-[3px]">
+                <span className="w-7 shrink-0 text-right text-[9px] text-parchment/35">{d}</span>
+                {Array.from({ length: 24 }, (_, h) => {
+                  const v = cells[dow * 24 + h]
+                  return (
+                    <div key={h} className="h-3 flex-1 rounded-[2px]"
+                      style={{ backgroundColor: v ? `rgba(226,181,48,${0.12 + (v / max) * 0.75})` : 'rgba(255,255,255,.03)' }}
+                      title={`${d} ${String(h).padStart(2, '0')}:00 — ${v} visitor${v === 1 ? '' : 's'}`} />
+                  )
+                })}
+              </div>
+            ))}
+            <div className="mt-1 flex gap-[3px] pl-7 text-[8px] text-parchment/25">
+              {Array.from({ length: 24 }, (_, h) => (
+                <span key={h} className="flex-1 text-center">{h % 6 === 0 ? h : ''}</span>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

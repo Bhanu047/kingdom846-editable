@@ -502,6 +502,141 @@ body[data-theme="celestial"] .play .tagline{animation:celestialArrive 2.4s cubic
 body[data-theme="celestial"] .play .cta{animation:celestialCta 2s cubic-bezier(.24,.6,.26,1) 7.8s forwards, ctaGlow 4.5s ease-in-out 9.0s infinite;}
 body[data-theme="celestial"] .play .crown-mini{animation:celestialArrive 2s cubic-bezier(.24,.6,.26,1) 8.2s forwards;}
 
+/* ================= NINE SCRIPTS =================
+   The motion languages made each beat behave differently, but every hall still
+   performed the SAME beats, in the same order, for the same length, saying the
+   same words. Seven elements, one running order, 8.6 seconds, nine times. That
+   is one script with nine accents, not nine experiences.
+   So the script itself now differs. A hall may not have an eyebrow at all. It
+   may show the wordmark before the crest, or the crest last of everything. It
+   may run under six seconds or over thirteen. Element set, running order and
+   length are all the hall's own -- only "centred" and "ends on ENTER THE
+   REALM" are fixed, because one is your instruction and the other is the door.
+   Delays below OVERRIDE the motion-language timings above; the languages still
+   supply the manner. */
+
+/* SAPPHIRE -- THE STATE PORTRAIT -- the complete formal ceremony, every element, in
+   order, evenly. The reference the other eight depart from. */
+body[data-theme="sapphire"] .play .eyebrow{animation-delay:4.0s;}
+body[data-theme="sapphire"] .play .crest-wrap{animation-delay:2.4s;}
+body[data-theme="sapphire"] .play .rule{animation-delay:6.2s;}
+body[data-theme="sapphire"] .play .tagline{animation-delay:6.5s;}
+body[data-theme="sapphire"] .play .crown-mini{animation-delay:7.6s;}
+body[data-theme="sapphire"] .play .cta{animation-delay:7.4s;}
+body[data-theme="sapphire"] .play .rule s{animation-delay:6.2s;}
+body[data-theme="sapphire"] .play .impact{animation-delay:5.95s;}
+body[data-theme="sapphire"] .play .halo{animation-delay:3.0s,5.3s;}
+body[data-theme="sapphire"] .play .bar.top,body[data-theme="sapphire"] .play .bar.bot{animation-delay:.2s,6.6s;}
+
+/* CORONATION -- THE CROWNING -- the crest arrives ALONE and is left to hold in silence
+   for three full seconds. No eyebrow; the crest is the announcement. Then
+   the rest follows it in a rush, and the crown is set BEFORE the invitation. */
+body[data-theme="coronation"] .eyebrow{display:none;}
+body[data-theme="coronation"] .play .crest-wrap{animation-delay:2.0s;}
+body[data-theme="coronation"] .play .rule{animation-delay:6.5s;}
+body[data-theme="coronation"] .play .tagline{animation-delay:6.9s;}
+body[data-theme="coronation"] .play .crown-mini{animation-delay:7.5s;}
+body[data-theme="coronation"] .play .cta{animation-delay:8.3s;}
+body[data-theme="coronation"] .play .rule s{animation-delay:6.5s;}
+body[data-theme="coronation"] .play .impact{animation-delay:5.3s;}
+body[data-theme="coronation"] .play .halo{animation-delay:2.6s,4.9s;}
+body[data-theme="coronation"] .play .bar.top,body[data-theme="coronation"] .play .bar.bot{animation-delay:.2s,7.4s;}
+
+/* MOONLIT -- THE SLOW REVEAL -- inverted and almost empty. The line of poetry comes
+   FIRST, before anything is shown, and the kingdom resolves behind it. No
+   rule, no crown. Four beats over eleven seconds, the quietest of the nine. */
+body[data-theme="moonlit"] .eyebrow{display:none;}
+body[data-theme="moonlit"] .rule{display:none;}
+body[data-theme="moonlit"] .crown-mini{display:none;}
+body[data-theme="moonlit"] .play .crest-wrap{animation-delay:4.2s;}
+body[data-theme="moonlit"] .play .tagline{animation-delay:2.2s;}
+body[data-theme="moonlit"] .play .cta{animation-delay:9.2s;}
+body[data-theme="moonlit"] .play .impact{animation-delay:6.7s;}
+body[data-theme="moonlit"] .play .halo{animation-delay:4.8s,7.1s;}
+body[data-theme="moonlit"] .play .bar.top,body[data-theme="moonlit"] .play .bar.bot{animation-delay:.2s,9.4s;}
+
+/* EMBERS -- THE FORGE -- shortest and most violent. Three beats, nothing else: the
+   WORD burns in first, out of nothing, then the crest drops onto it, then
+   the door. No eyebrow, no rule, no tagline, no crown. Six seconds. */
+body[data-theme="embers"] .eyebrow{display:none;}
+body[data-theme="embers"] .rule{display:none;}
+body[data-theme="embers"] .tagline{display:none;}
+body[data-theme="embers"] .crown-mini{display:none;}
+body[data-theme="embers"] .play .crest-wrap{animation-delay:3.4s;}
+body[data-theme="embers"] .play .cta{animation-delay:5.2s;}
+body[data-theme="embers"] .play .impact{animation-delay:3.4s;}
+body[data-theme="embers"] .play .halo{animation-delay:4.0s,6.3s;}
+body[data-theme="embers"] .play .bar.top,body[data-theme="embers"] .play .bar.bot{animation-delay:.2s,4.6s;}
+
+/* CATHEDRAL -- THE LITURGY -- longest and most ordered. The cross is set before the
+   name: the rule draws BEFORE the wordmark. Long silences between beats.
+   Twelve and a half seconds, the most patient of the nine. */
+body[data-theme="cathedral"] .play .eyebrow{animation-delay:3.4s;}
+body[data-theme="cathedral"] .play .crest-wrap{animation-delay:1.8s;}
+body[data-theme="cathedral"] .play .rule{animation-delay:5.6s;}
+body[data-theme="cathedral"] .play .tagline{animation-delay:9.0s;}
+body[data-theme="cathedral"] .play .crown-mini{animation-delay:10.2s;}
+body[data-theme="cathedral"] .play .cta{animation-delay:10.8s;}
+body[data-theme="cathedral"] .play .rule s{animation-delay:5.6s;}
+body[data-theme="cathedral"] .play .impact{animation-delay:7.3s;}
+body[data-theme="cathedral"] .play .halo{animation-delay:2.4s,4.7s;}
+body[data-theme="cathedral"] .play .bar.top,body[data-theme="cathedral"] .play .bar.bot{animation-delay:.2s,10.4s;}
+
+/* STORM -- THE STRIKE -- two beats. Everything the hall has arrives in one instant
+   on a single flash, then the door. Under six seconds; nothing builds. */
+body[data-theme="storm"] .crown-mini{display:none;}
+body[data-theme="storm"] .play .eyebrow{animation-delay:2.9s;}
+body[data-theme="storm"] .play .crest-wrap{animation-delay:2.9s;}
+body[data-theme="storm"] .play .rule{animation-delay:2.9s;}
+body[data-theme="storm"] .play .tagline{animation-delay:2.9s;}
+body[data-theme="storm"] .play .cta{animation-delay:4.5s;}
+body[data-theme="storm"] .play .rule s{animation-delay:2.9s;}
+body[data-theme="storm"] .play .impact{animation-delay:2.85s;}
+body[data-theme="storm"] .play .halo{animation-delay:3.5s,5.8s;}
+body[data-theme="storm"] .play .bar.top,body[data-theme="storm"] .play .bar.bot{animation-delay:.2s,3.8s;}
+
+/* DRAGONGATE -- THE PROCESSION -- one thing at a time, evenly spaced, out of depth. The
+   imperial mark leads and the crest comes late, so you are walked in rather
+   than shown. No rule. */
+body[data-theme="dragongate"] .rule{display:none;}
+body[data-theme="dragongate"] .play .eyebrow{animation-delay:3.4s;}
+body[data-theme="dragongate"] .play .crest-wrap{animation-delay:5.6s;}
+body[data-theme="dragongate"] .play .tagline{animation-delay:8.2s;}
+body[data-theme="dragongate"] .play .crown-mini{animation-delay:2.2s;}
+body[data-theme="dragongate"] .play .cta{animation-delay:9.2s;}
+body[data-theme="dragongate"] .play .impact{animation-delay:6.9s;}
+body[data-theme="dragongate"] .play .halo{animation-delay:6.2s,8.5s;}
+body[data-theme="dragongate"] .play .bar.top,body[data-theme="dragongate"] .play .bar.bot{animation-delay:.2s,8.4s;}
+
+/* WARCAMP -- THE MUSTER -- everything arrives in PAIRS, on a drum. Eyebrow and rule
+   together, then crest, then wordmark and tagline together, then the door.
+   No crown; a camp does not display one. */
+body[data-theme="warcamp"] .crown-mini{display:none;}
+body[data-theme="warcamp"] .play .eyebrow{animation-delay:2.6s;}
+body[data-theme="warcamp"] .play .crest-wrap{animation-delay:4.2s;}
+body[data-theme="warcamp"] .play .rule{animation-delay:2.6s;}
+body[data-theme="warcamp"] .play .tagline{animation-delay:6.0s;}
+body[data-theme="warcamp"] .play .cta{animation-delay:7.6s;}
+body[data-theme="warcamp"] .play .rule s{animation-delay:2.6s;}
+body[data-theme="warcamp"] .play .impact{animation-delay:5.95s;}
+body[data-theme="warcamp"] .play .halo{animation-delay:4.8s,7.1s;}
+body[data-theme="warcamp"] .play .bar.top,body[data-theme="warcamp"] .play .bar.bot{animation-delay:.2s,6.4s;}
+
+/* CELESTIAL -- THE CONSTELLATION -- nothing is where you expect it. The crown appears
+   first out of empty sky, then the line, then the name, and the crest comes
+   LAST of all, after everything it is supposed to introduce. Thirteen
+   seconds, the slowest of the nine. */
+body[data-theme="celestial"] .play .eyebrow{animation-delay:6.4s;}
+body[data-theme="celestial"] .play .crest-wrap{animation-delay:9.2s;}
+body[data-theme="celestial"] .play .rule{animation-delay:7.8s;}
+body[data-theme="celestial"] .play .tagline{animation-delay:3.0s;}
+body[data-theme="celestial"] .play .crown-mini{animation-delay:1.6s;}
+body[data-theme="celestial"] .play .cta{animation-delay:11.2s;}
+body[data-theme="celestial"] .play .rule s{animation-delay:7.8s;}
+body[data-theme="celestial"] .play .impact{animation-delay:9.1s;}
+body[data-theme="celestial"] .play .halo{animation-delay:9.8s,12.1s;}
+body[data-theme="celestial"] .play .bar.top,body[data-theme="celestial"] .play .bar.bot{animation-delay:.2s,11.0s;}
+
 /* ================= HOW THE WORDMARK ARRIVES =================
    Every hall spelled KINGDOM 846 out letter by letter, left to right, with a
    light pass over it afterwards. Nine times. That single piece of choreography
@@ -916,15 +1051,19 @@ const LOW_TIER = matchMedia('(max-width:820px)').matches
 // arrive in reading order. Everywhere else the letters share a delay, so the
 // WORD lands rather than being typed out.
 const REVEAL = {
+  // These are the wordmark beats from each hall's script. They live here rather
+  // than in CSS because the letters get an inline animation-delay, and an inline
+  // style beats a stylesheet rule -- setting them in CSS looked right and did
+  // nothing, which put Storm's wordmark AFTER its own door.
   sapphire:  { at: 4.85, stagger: 0 },
-  coronation:{ at: 4.95, stagger: 0 },
-  moonlit:   { at: 4.60, stagger: 0 },
-  embers:    { at: 4.70, stagger: 0 },
-  cathedral: { at: 4.90, stagger: 0 },
-  storm:     { at: 5.00, stagger: 0 },
-  dragongate:{ at: 4.85, stagger: 0 },
-  warcamp:   { at: 4.85, stagger: 0 },
-  celestial: { at: 4.40, scatter: 1.5 },
+  coronation:{ at: 5.40, stagger: 0 },
+  moonlit:   { at: 6.80, stagger: 0 },
+  embers:    { at: 1.70, stagger: 0 },   // the word burns in before the crest
+  cathedral: { at: 7.40, stagger: 0 },
+  storm:     { at: 2.90, stagger: 0 },   // everything at once on the strike
+  dragongate:{ at: 7.00, stagger: 0 },
+  warcamp:   { at: 6.00, stagger: 0 },
+  celestial: { at: 4.80, scatter: 1.4 },
 };
 (function(){
   const el = document.getElementById('title');
@@ -1319,47 +1458,47 @@ const Score = (() => {
     // Cold, noble, composed. Strings and glass.
     sapphire(){
       subBass(); hallAir(); torchCrackle();
-      pad(1.2,[130.81,196,261.63],.05,4); shimmer(3.4);
-      pad(4.0,[174.61,261.63,349.23],.045,3);
-      impact(6.0); pad(6.6,[146.83,220,293.66,440],.04,6);
+      pad(1.15,[130.81,196,261.63],.05,4); shimmer(3.35);
+      pad(3.95,[174.61,261.63,349.23],.045,3);
+      impact(5.95); pad(6.55,[146.83,220,293.66,440],.04,6);
     },
     // A crowning: brass answering itself, then bells over the strike.
     coronation(){
       subBass(); hallAir(); torchCrackle();
-      brass(1.0,[130.81,196,261.63],.055,2.2);
-      brass(2.6,[164.81,246.94,329.63],.06,2.2);
-      brass(4.4,[196,293.66,392],.07,1.9);
-      impact(6.0); drum(6.0,72,.5);
-      bell(6.1,1046.5,.09); bell(6.5,1318.5,.075);
-      brass(6.2,[261.63,392,523.25],.08,4.4);
+      brass(0.3,[130.81,196,261.63],.055,2.2);
+      brass(1.9,[164.81,246.94,329.63],.06,2.2);
+      brass(3.7,[196,293.66,392],.07,1.9);
+      impact(5.3); drum(5.3,72,.5);
+      bell(5.4,1046.5,.09); bell(5.8,1318.5,.075);
+      brass(5.5,[261.63,392,523.25],.08,4.4);
     },
     // Almost nothing: air, a far-off bell, one low breath.
     moonlit(){
       hallAir(); wind(.05);
       pad(.8,[110,164.81,220],.036,7);
-      bell(2.6,880,.05); bell(5.0,1174.7,.042);
-      pad(4.2,[130.81,196,246.94],.03,6);
-      impact(6.0); bell(6.15,1318.5,.06);
-      pad(6.6,[98,146.83,220,293.66],.033,7);
+      bell(3.3,880,.05); bell(5.7,1174.7,.042);
+      pad(4.9,[130.81,196,246.94],.03,6);
+      impact(6.7); bell(6.85,1318.5,.06);
+      pad(7.3,[98,146.83,220,293.66],.033,7);
     },
     // A forge. Low, dirty, and struck.
     embers(){
       subBass(); torchCrackle(); torchCrackle();
-      drum(1.1,58,.34); drum(2.3,58,.3); drum(3.5,52,.36);
-      pad(1.0,[65.41,98,130.81],.06,5);
-      drum(4.6,49,.42); drum(5.3,49,.46);
-      impact(6.0); drum(6.0,44,.6); drum(6.42,58,.34);
-      pad(6.6,[73.42,110,146.83],.055,6);
+      drum(0,58,.34); drum(0,58,.3); drum(0.9,52,.36);
+      pad(0,[65.41,98,130.81],.06,5);
+      drum(2.0,49,.42); drum(2.7,49,.46);
+      impact(3.4); drum(3.4,44,.6); drum(3.82,58,.34);
+      pad(4.0,[73.42,110,146.83],.055,6);
     },
     // Stone and organ. Reverent, slow, enormous.
     cathedral(){
       hallAir();
       organ(.6,98,.055,7.5);
-      shimmer(3.0); shimmer(4.4);
-      organ(4.2,130.81,.05,5);
-      impact(6.0); bell(6.05,1567.98,.07);
-      organ(6.5,146.83,.06,7);
-      pad(6.8,[587.33,880,1174.66],.028,6);
+      shimmer(4.3); shimmer(5.7);
+      organ(5.5,130.81,.05,5);
+      impact(7.3); bell(7.35,1567.98,.07);
+      organ(7.8,146.83,.06,7);
+      pad(8.1,[587.33,880,1174.66],.028,6);
     },
     // Weather. This had two noise beds running at once -- rain and wind -- plus
     // three thunders inside six seconds, each four seconds long, so they piled
@@ -1367,40 +1506,40 @@ const Score = (() => {
     // distant roll early, and the sky only truly breaking on the strike.
     storm(){
       subBass(); rain(.06);
-      thunder(1.3,.13,false);           // far off, no crack
-      pad(2.0,[97.99,146.83,185],.04,5);
-      impact(6.0); thunder(5.96,.32,true); drum(6.02,60,.45);
-      pad(6.6,[110,164.81,207.65,277.18],.042,6);
+      thunder(0,.13,false);           // far off, no crack
+      pad(0,[97.99,146.83,185],.04,5);
+      impact(2.85); thunder(2.81,.32,true); drum(2.87,60,.45);
+      pad(3.45,[110,164.81,207.65,277.18],.042,6);
     },
     // A gate opening: gongs, a deep drum, and a pentatonic figure.
     dragongate(){
       subBass(); hallAir(); torchCrackle();
       gong(.8,110,.16);
-      drum(2.4,62,.34);
-      arpeggio(3.2,[293.66,349.23,440,523.25],.045,.34);
-      gong(4.6,146.83,.13);
-      impact(6.0); gong(6.0,98,.22); drum(6.05,55,.5);
-      pad(6.7,[110,164.81,220,329.63],.04,6);
+      drum(3.3,62,.34);
+      arpeggio(4.1,[293.66,349.23,440,523.25],.045,.34);
+      gong(5.5,146.83,.13);
+      impact(6.9); gong(6.9,98,.22); drum(6.95,55,.5);
+      pad(7.6,[110,164.81,220,329.63],.04,6);
     },
     // A camp before a march: drums, wind, a horn.
     warcamp(){
       subBass(); hallAir(); torchCrackle(); wind(.04);
-      drum(1.0,70,.3); drum(1.5,70,.22); drum(2.0,58,.34);
-      drum(3.0,70,.3); drum(3.5,70,.22); drum(4.0,58,.36);
-      brass(4.3,[146.83,220,293.66],.055,2.4);
-      drum(5.0,70,.32); drum(5.5,70,.26);
-      impact(6.0); drum(6.0,52,.55);
-      brass(6.3,[174.61,261.63,349.23],.06,4.2);
+      drum(0.95,70,.3); drum(1.45,70,.22); drum(1.95,58,.34);
+      drum(2.95,70,.3); drum(3.45,70,.22); drum(3.95,58,.36);
+      brass(4.25,[146.83,220,293.66],.055,2.4);
+      drum(4.95,70,.32); drum(5.45,70,.26);
+      impact(5.95); drum(5.95,52,.55);
+      brass(6.25,[174.61,261.63,349.23],.06,4.2);
     },
     // Above the world. Bells, no bass, nothing struck hard.
     celestial(){
       hallAir(); wind(.055);
       pad(.6,[261.63,392,523.25],.03,7);
-      arpeggio(2.2,[783.99,987.77,1174.66,1567.98],.05,.42);
-      pad(4.0,[293.66,440,587.33],.028,6);
-      impact(6.0);
-      arpeggio(6.1,[1046.5,1318.51,1567.98,2093],.055,.3);
-      pad(6.7,[329.63,493.88,659.25,987.77],.03,7);
+      arpeggio(5.3,[783.99,987.77,1174.66,1567.98],.05,.42);
+      pad(7.1,[293.66,440,587.33],.028,6);
+      impact(9.1);
+      arpeggio(9.2,[1046.5,1318.51,1567.98,2093],.055,.3);
+      pad(9.8,[329.63,493.88,659.25,987.77],.03,7);
     },
   };
 
@@ -1449,7 +1588,10 @@ const Score = (() => {
 
 /* ===== sequence ===== */
 const stage = document.getElementById('stage');
-const INTRO_LENGTH = 8.6; // seconds until the screen is fully composed
+// Each hall now runs its own length -- Storm is done in 5.8s, Celestial takes
+// 13.0s -- so SKIP INTRO has to jump to the right place for the hall it is in.
+const SCRIPT_LENGTH = { sapphire:8.6, coronation:9.4, moonlit:11.4, embers:6.6, cathedral:12.4, storm:5.8, dragongate:10.4, warcamp:8.4, celestial:13.0 };
+const INTRO_LENGTH = SCRIPT_LENGTH[CONFIG.theme] || 8.6;
 
 function run(withAudio){
   stage.classList.remove('play','done');

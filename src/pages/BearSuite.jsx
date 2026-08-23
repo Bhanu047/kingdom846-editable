@@ -159,6 +159,30 @@ export default function BearSuite(){
  const ratio=useMemo(()=>ratioFromCounts(troopCounts),[troopCounts]),total=useMemo(()=>TROOPS.reduce((s,t)=>s+Math.max(0,n(troopCounts[t.key])),0),[troopCounts]),ready=validStats(impactStats)&&n(capacity)>0&&n(participants)>0&&total>0
  const result=useMemo(()=>ready?computeHuntImpact({stats:normalized(impactStats),tier:impactTier,tg,ratio,leadHeroes:impactHeroes,troopCounts:Object.fromEntries(TROOPS.map(t=>[t.key,n(troopCounts[t.key])])),capacity:n(capacity),participants:n(participants),joiners}):null,[ready,impactStats,impactTier,tg,ratio,impactHeroes,troopCounts,capacity,participants,joiners])
  const mean=result?.impactIndex||0,optimal=result?.optimalImpactIndex||0,eff=result?.efficiency||0,gain=Math.max(0,optimal-mean),active=joiners.filter(j=>j.hero!=='None').length,sigma=mean*clamp(.08+.012*Math.max(0,4-active),.08,.16),p5=Math.max(0,mean-1.645*sigma),p95=mean+1.645*sigma
+ // SINGLE SOURCE OF TRUTH for the downloadable report.
+ //
+ // The dashboard in public/hunt-impact-command-dashboard-v4.js used to rebuild
+ // this whole calculation by scraping the DOM -- finding an element whose text
+ // is exactly "Infantry", walking up to an ancestor with three inputs, and
+ // assuming they are [attack, lethality, hero, widget] in that order. Its maths
+ // are identical to this engine's (verified to float precision in
+ // research/impact-parity.mjs), so any mismatch a player sees between the screen
+ // and their download comes from that scraper reading different inputs than
+ // React is actually using -- which a UI change silently causes.
+ //
+ // Publishing the live state here removes the second source. The report reads
+ // this when present and only falls back to scraping if it is missing.
+ useEffect(()=>{
+  if(typeof window==='undefined')return
+  window.__k846HuntImpact = ready&&result ? {
+   ready:true, at:Date.now(),
+   stats:normalized(impactStats), heroes:impactHeroes, tier:impactTier, tg,
+   counts:Object.fromEntries(TROOPS.map(t=>[t.key,n(troopCounts[t.key])])),
+   total, ratio, capacity:n(capacity), participants:n(participants), joiners,
+   mean, optimal, eff,
+  } : { ready:false, at:Date.now() }
+ },[ready,result,impactStats,impactHeroes,impactTier,tg,troopCounts,total,ratio,capacity,participants,joiners,mean,optimal,eff])
+
  const sensitivity=useMemo(()=>{if(!ready||!result)return[];const stats=applyJoinerBonuses(normalized(impactStats),joiners),scale=Math.sqrt(Math.max(1,total));return Array.from({length:11},(_,i)=>i-5).map(delta=>{const shift=delta/100,scoreFor=target=>{const r={...ratio},others=TROOPS.map(t=>t.key).filter(k=>k!==target);r[target]=clamp(r[target]+shift,0,1);const rem=1-r[target],sum=others.reduce((s,k)=>s+ratio[k],0)||1;others.forEach(k=>r[k]=rem*ratio[k]/sum);return computeBearDamageScore({stats,tier:impactTier,tg,ratio:r,leadHeroes:impactHeroes})*scale};return{delta,infantry:scoreFor('infantry'),cavalry:scoreFor('cavalry'),archers:scoreFor('archers')}})},[ready,result,impactStats,joiners,total,ratio,impactTier,tg,impactHeroes])
  const currentPct=Object.fromEntries(TROOPS.map(t=>[t.key,Math.round(ratio[t.key]*100)])),optRatio=result?.optimalRatio||result?.ratio||ratio
  async function copyFormation(){if(!formationResult)return;try{await navigator.clipboard.writeText(buildBearChatMessage(formationResult));setCopied(true);setTimeout(()=>setCopied(false),1200)}catch{}}

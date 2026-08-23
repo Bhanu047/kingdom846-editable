@@ -1,4 +1,4 @@
-import { computeBearDamageScore, optimizeBearFormation } from './bearOptimizer'
+import { computeBearDamageScore, optimizeBearFormation } from './bearOptimizer.js'
 
 const TYPES = ['infantry', 'cavalry', 'archers']
 

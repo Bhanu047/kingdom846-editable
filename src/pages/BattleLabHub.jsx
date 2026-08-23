@@ -10,7 +10,7 @@ const REQUEST_KEY = 'kingdom846.battleLab.requestedModule'
 const DEDICATED = { bear: BearSuite, mystic: MysticSuite, battle: PvPSuite, formation: FormationSuite, codex: CodexSuite }
 
 const TOOLS = [
-  { id: 'bear', title: 'Bear', icon: 'target', image: './assets/art-bear-trap.png', imagePosition: '50% 15%', description: 'Build your Hunt Formation and measure Hunt Impact for your exact rally stats.', accent: 'from-amber-950/85 via-ink/45 to-transparent' },
+  { id: 'bear', title: 'Bear', icon: 'paw', image: './assets/art-bear-trap.png', imagePosition: '50% 15%', description: 'Build your Hunt Formation and measure Hunt Impact for your exact rally stats.', accent: 'from-amber-950/85 via-ink/45 to-transparent' },
   { id: 'mystic', title: 'Mystic', icon: 'sparkles', image: './assets/art-hero-meta.png', description: 'Enter both sides of a Mystic Trial battle report and find the troop split that wins by the widest margin.', accent: 'from-violet-950/85 via-ink/45 to-transparent' },
   { id: 'battle', title: 'PvP', icon: 'swords', image: './assets/art-castle-battle.png', description: 'Run a round-by-round battle between two armies and see who’s left standing.', accent: 'from-red-950/85 via-ink/45 to-transparent' },
   { id: 'formation', title: 'Formation', icon: 'layers', image: './assets/strategy-war-academy.png', description: 'Build and compare tactical troop formations for different targets.', accent: 'from-emerald-950/85 via-ink/45 to-transparent' },

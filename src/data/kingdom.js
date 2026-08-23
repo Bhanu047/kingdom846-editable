@@ -429,6 +429,6 @@ export const nav = [
   { id: 'news', label: 'News', icon: 'newspaper' },
   { id: 'guides', label: 'Guides', icon: 'book' },
   { id: 'rankings', label: 'Rankings', icon: 'trophy' },
-  { id: 'transfer', label: 'Transfer', icon: 'arrow' },
+  { id: 'transfer', label: 'Transfer', icon: 'transfer' },
   { id: 'apply', label: 'Apply', icon: 'scroll' }
 ]

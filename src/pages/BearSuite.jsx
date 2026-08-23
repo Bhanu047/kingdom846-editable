@@ -111,7 +111,7 @@ function Sensitivity({points,mean}){
     <div className="chart-title text-[9px] font-bold uppercase tracking-[.15em]">Formation Sensitivity</div>
     <div className="text-xs text-parchment/45">Actual projected impact as each troop share shifts ±5%.</div>
     <svg viewBox={`0 0 ${W} ${H}`} className="mt-2 w-full">
-      {lines.map(([k,color,delay])=><path key={k} d={path(k)} pathLength="1" fill="none" stroke={color} strokeWidth="3" strokeDasharray="1" strokeDashoffset={reveal?0:1} style={{transition:`stroke-dashoffset 1.1s cubic-bezier(.16,1,.3,1) ${delay}ms`,filter:`drop-shadow(0 0 4px ${color}55)`}}/>)}
+      {lines.map(([k,color,delay])=><path key={k} d={path(k)} pathLength="1" fill="none" stroke={color} strokeWidth="3.5" strokeDasharray="1" strokeDashoffset={reveal?0:1} style={{transition:`stroke-dashoffset 1.1s cubic-bezier(.16,1,.3,1) ${delay}ms`}}/>)}
       <line x1={x(0)} x2={x(0)} y1={T} y2={H-B} stroke="rgba(244,236,211,.35)" strokeDasharray="4 4"/>
       <text x={x(0)} y={H-8} textAnchor="middle" fill="rgba(244,236,211,.55)" fontSize="11">Current {fmt(mean)}</text>
     </svg>

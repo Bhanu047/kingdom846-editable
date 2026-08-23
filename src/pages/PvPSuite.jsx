@@ -139,8 +139,8 @@ function RoundChart({ rounds }) {
             <path d={areaPath('attackerRemaining')} fill={`url(#${gid}-a)`} />
             <path d={areaPath('defenderRemaining')} fill={`url(#${gid}-d)`} />
           </g>
-          <path d={linePath('attackerRemaining')} pathLength="1" strokeDasharray="1" strokeDashoffset={reveal ? 0 : 1} fill="none" stroke="#7f9ed6" strokeWidth="3" style={{ transition: 'stroke-dashoffset 1.1s cubic-bezier(.16,1,.3,1)', filter: 'drop-shadow(0 0 5px #7f9ed680)' }} />
-          <path d={linePath('defenderRemaining')} pathLength="1" strokeDasharray="1" strokeDashoffset={reveal ? 0 : 1} fill="none" stroke="#c8655a" strokeWidth="3" style={{ transition: 'stroke-dashoffset 1.1s cubic-bezier(.16,1,.3,1) .15s', filter: 'drop-shadow(0 0 5px #c8655a80)' }} />
+          <path d={linePath('attackerRemaining')} pathLength="1" strokeDasharray="1" strokeDashoffset={reveal ? 0 : 1} fill="none" stroke="#7f9ed6" strokeWidth="3" style={{ transition: 'stroke-dashoffset 1.1s cubic-bezier(.16,1,.3,1)' }} />
+          <path d={linePath('defenderRemaining')} pathLength="1" strokeDasharray="1" strokeDashoffset={reveal ? 0 : 1} fill="none" stroke="#c8655a" strokeWidth="3" style={{ transition: 'stroke-dashoffset 1.1s cubic-bezier(.16,1,.3,1) .15s' }} />
           <g style={{ opacity: reveal ? 1 : 0, transition: 'opacity .4s ease 1s' }}>
             <circle cx={x(last)} cy={y(rounds[last].attackerRemaining)} r="9" fill="#7f9ed6" opacity=".22" style={{ animation: 'glow-breathe 2.2s ease-in-out infinite' }} />
             <circle cx={x(last)} cy={y(rounds[last].attackerRemaining)} r="4.5" fill="#c7d7f5" stroke="#07101e" strokeWidth="2" />
@@ -182,11 +182,11 @@ function StatRadar({ yourStats, enemyStats, yourLabel = 'YOUR ARMY', enemyLabel 
           </defs>
           {[.25, .5, .75, 1].map((s) => <polygon key={s} points={gridPoly(s)} fill="none" stroke="rgba(226,199,125,.12)" />)}
           <g style={{ transformOrigin: `${CX}px ${CY}px`, transform: reveal ? 'scale(1)' : 'scale(0)', transition: 'transform 1s cubic-bezier(.16,1,.3,1)' }}>
-            <polygon points={poly(yourStats)} fill={`url(#${gid}-y)`} stroke="#7f9ed6" strokeWidth="2" style={{ filter: 'drop-shadow(0 0 6px #7f9ed680)' }} />
-            <polygon points={poly(enemyStats)} fill={`url(#${gid}-e)`} stroke="#c8655a" strokeWidth="2" style={{ filter: 'drop-shadow(0 0 6px #c8655a80)' }} />
+            <polygon points={poly(yourStats)} fill={`url(#${gid}-y)`} stroke="#7f9ed6" strokeWidth="2"  />
+            <polygon points={poly(enemyStats)} fill={`url(#${gid}-e)`} stroke="#c8655a" strokeWidth="2"  />
             {AXES.map((a, i) => {
               const [yx, yy] = pt(i, yourStats[a.key], maxes[i]), [ex, ey] = pt(i, enemyStats[a.key], maxes[i])
-              return <g key={a.key}><circle cx={yx} cy={yy} r="3" fill="#c7d7f5" style={{ filter: 'drop-shadow(0 0 4px #7f9ed6)' }} /><circle cx={ex} cy={ey} r="3" fill="#f2c4bc" style={{ filter: 'drop-shadow(0 0 4px #c8655a)' }} /></g>
+              return <g key={a.key}><circle cx={yx} cy={yy} r="3" fill="#c7d7f5"  /><circle cx={ex} cy={ey} r="3" fill="#f2c4bc"  /></g>
             })}
           </g>
         </svg>

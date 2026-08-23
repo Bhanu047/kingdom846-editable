@@ -132,18 +132,71 @@ function Risk({mean,sigma}){
 function CompareBars({current,optimal}){
   const reveal=useReveal()
   const max=Math.max(current,optimal,1)
+  const gain=optimal-current
+  const gainPct=current>0?gain/current*100:0
+  // Two flat fills with a 10px glow behind each. The glow was the rejected
+  // look and box-shadow spread is one of the things html2canvas gets wrong, so
+  // it never matched the exported report either. These use the same struck
+  // material as every other bar on the site, and the GAIN -- the only number
+  // here anyone acts on -- is stated rather than left to be worked out by
+  // comparing two bar lengths.
+  const rows=[['Current',current,'#5D82C4'],['Optimal',optimal,'#E0B23B']]
   return <div className="rounded-2xl border border-gold/15 bg-[#07101e] p-4">
     <div className="text-[9px] font-bold uppercase tracking-[.15em] text-gold/60">Current vs Optimal Summary</div>
-    <div className="mt-5 space-y-5">{[['Current',current,'bg-[#7f9ed6]','rgba(127,158,214,.55)'],['Optimal',optimal,'bg-gold/80','rgba(226,181,48,.55)']].map(([l,v,c,glow])=><div key={l}><div className="mb-2 flex justify-between"><span className="text-xs text-parchment/60">{l}</span><span className="font-mono font-bold text-parchment">{fmt(v)}</span></div><div className="h-5 overflow-hidden rounded bg-white/5"><div className={`h-full ${c}`} style={{width:reveal?`${v/max*100}%`:'0%',transition:'width 1.1s cubic-bezier(.16,1,.3,1)',boxShadow:`0 0 10px ${glow}`}}/></div></div>)}</div>
+    <div className="mt-5 space-y-4">{rows.map(([l,v,c],i)=><div key={l}>
+      <div className="mb-1.5 flex items-baseline justify-between">
+        <span className="text-xs uppercase tracking-wider text-parchment/55">{l}</span>
+        <span className="font-mono text-sm font-bold tabular-nums text-parchment">{fmt(v)}</span>
+      </div>
+      <div className="k-track h-5 overflow-hidden rounded">
+        <div className="k-seg h-full" style={{width:reveal?`${v/max*100}%`:'0%','--c':c,transitionDelay:`${i*120}ms`}}/>
+      </div>
+    </div>)}</div>
+    <div className="mt-4 flex items-center gap-3 border-t border-gold/12 pt-3">
+      <span className="text-[10px] uppercase tracking-[.14em] text-parchment/40">Potential gain</span>
+      <span className="chart-pop ml-auto font-mono text-lg font-black tabular-nums" style={{color:gain>=0?'#7BE0A8':'#F0A197'}}>
+        {gain>=0?'+':''}{fmt(gain)}
+      </span>
+      <span className="font-mono text-xs font-bold tabular-nums" style={{color:gain>=0?'#7BE0A8':'#F0A197',opacity:.72}}>
+        {gain>=0?'+':''}{gainPct.toFixed(1)}%
+      </span>
+    </div>
   </div>
 }
 
 function RangeChart({p5,mean,p95}){
   const reveal=useReveal()
+  // The old bar was a fixed three-stop gradient with a marker pinned at 50%,
+  // so it drew the same picture whatever the numbers were -- the mean always
+  // sat dead centre even when it was nowhere near the middle of the range.
+  // The marker now sits where the mean actually falls between p5 and p95.
+  const span=Math.max(1,p95-p5)
+  const meanAt=Math.min(96,Math.max(4,(mean-p5)/span*100))
   return <div className="rounded-2xl border border-gold/15 bg-[#07101e] p-4">
     <div className="text-[9px] font-bold uppercase tracking-[.15em] text-gold/60">Damage Range / Confidence</div>
-    <div className="mt-6 grid grid-cols-3 text-center"><div><div className="text-[9px] text-parchment/35">LOW 5%</div><div className="font-mono font-bold text-[#7f9ed6]">{fmt(p5)}</div></div><div><div className="text-[9px] text-parchment/35">EXPECTED</div><div className="font-mono font-bold text-gold-bright">{fmt(mean)}</div></div><div><div className="text-[9px] text-parchment/35">HIGH 95%</div><div className="font-mono font-bold text-[#c8655a]">{fmt(p95)}</div></div></div>
-    <div className="relative mx-5 mt-5 h-3 rounded-full bg-gradient-to-r from-[#7f9ed6] via-[#d9b94e] to-[#c8655a]"><span className="absolute left-1/2 top-[-5px] h-6 w-[2px] bg-parchment" style={{opacity:reveal?1:0,transition:'opacity .6s ease .7s'}}/></div>
+    <div className="mt-5 grid grid-cols-3 text-center">
+      <div><div className="text-[9px] uppercase tracking-wider text-parchment/35">Low 5%</div><div className="font-mono text-sm font-bold tabular-nums text-[#7f9ed6]">{fmt(p5)}</div></div>
+      <div><div className="text-[9px] uppercase tracking-wider text-parchment/35">Expected</div><div className="font-mono text-base font-black tabular-nums text-gold-bright">{fmt(mean)}</div></div>
+      <div><div className="text-[9px] uppercase tracking-wider text-parchment/35">High 5%</div><div className="font-mono text-sm font-bold tabular-nums text-[#d9b94e]">{fmt(p95)}</div></div>
+    </div>
+    <div className="relative mx-4 mt-5">
+      <div className="k-track h-3.5 overflow-hidden rounded-full">
+        <div className="h-full" style={{
+          backgroundColor:'#5D82C4',
+          backgroundImage:'linear-gradient(90deg, #5D82C4 0%, #8A93B8 34%, #D9B94E 62%, #C8655A 100%)',
+          width:reveal?'100%':'0%',
+          transition:'width 1.1s cubic-bezier(.16,1,.3,1)',
+        }}/>
+      </div>
+      {/* The mean, where it actually falls in the range. */}
+      <span className="absolute top-[-7px] h-7 w-[2px] rounded-full bg-parchment" style={{
+        left:reveal?`${meanAt}%`:'50%',
+        transform:'translateX(-50%)',
+        opacity:reveal?1:0,
+        transition:'left 1.1s cubic-bezier(.34,1.42,.52,1) .2s, opacity .5s ease .35s',
+      }}/>
+    </div>
+    <div className="mt-2 text-center text-[10px] text-parchment/35">90% of hunts land inside this range</div>
   </div>
 }
 

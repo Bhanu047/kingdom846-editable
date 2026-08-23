@@ -69,70 +69,93 @@ body {
 body.opening .seam-light { opacity: 1; transform: scaleX(1); }
 
 /* --- The gates ----------------------------------------------------------- */
+/* First attempt made these SOLID dark panels, and that was the mistake: it hid
+   the hall completely, so the screen lost everything that made the old one
+   feel rich and became a dark fence with a badge on it.
+   Real palace gates are OPENWORK -- gilded bars with air between them -- and
+   the light behind is the whole point. These are transparent between the bars,
+   so the hall glows through the gate and the gold is lit from behind rather
+   than painted on black. */
 .gates { position: fixed; inset: 0; z-index: 5; transform-style: preserve-3d; }
 .gate {
-  position: absolute; top: -2%; bottom: -2%; width: 50.4%;
-  background:
-    /* vertical bar filigree */
-    repeating-linear-gradient(90deg,
-      rgba(0,0,0,.55) 0 2px,
-      rgba(255,255,255,.028) 2px 4px,
-      transparent 4px 30px),
-    /* panel shading, so the metal turns as the gate swings */
-    linear-gradient(100deg, #05040A 0%, var(--iron) 26%, var(--iron-lit) 52%, var(--iron) 74%, #06050B 100%);
-  /* No preserve-3d here. .gates needs it so both leaves rotate inside the
-     body's perspective, but a leaf with its own background and absolutely
-     positioned children gets split into separate compositing layers by it,
-     and Chrome then failed to paint the panel behind the ornament -- a
-     rectangle of the hall showed straight through the closed gate. The leaf
-     only has to be a flat rotated plane, so flat is what it should be. */
+  position: absolute; top: 0; bottom: -2%; width: 50.4%;
+  /* Gilded vertical bars on a 58px pitch. Every stop between bars is fully
+     transparent -- that is what lets the hall through. Each bar is built from
+     five stops so it reads as a round rod catching light down one side. */
+  background-image: repeating-linear-gradient(90deg,
+      transparent 0 40px,
+      rgba(0,0,0,.6)       40px 41px,
+      #6B5414              41px 43px,
+      #C9A238              43px 46px,
+      #FFF6DA              46px 48px,
+      #A8842A              48px 51px,
+      #4A3A10              51px 53px,
+      rgba(0,0,0,.55)      53px 54px,
+      transparent          54px 92px);
   will-change: transform;
   transition: transform 2.5s cubic-bezier(.62,.02,.2,1), filter 2.5s ease;
 }
 .gate-l { left: 0;  transform-origin: left center;  }
 .gate-r { right: 0; transform-origin: right center; }
-
-/* Closed, the gates carry a faint inward lean so the join catches light. */
 .gate-l { transform: rotateY(2.2deg); }
 .gate-r { transform: rotateY(-2.2deg); }
-body.opening .gate-l { transform: rotateY(-104deg); filter: brightness(.35); }
-body.opening .gate-r { transform: rotateY(104deg);  filter: brightness(.35); }
+body.opening .gate-l { transform: rotateY(-104deg); filter: brightness(.4); }
+body.opening .gate-r { transform: rotateY(104deg);  filter: brightness(.4); }
+
+/* Spear-point finials along the top rail. Same pitch as the bars so every
+   point sits on one. */
+.finials {
+  position: absolute; left: 0; right: 0; top: 0; height: 34px;
+  background-image:
+    repeating-linear-gradient(90deg, transparent 0 22px,
+      transparent 22px 23px, transparent 23px 36px, transparent 36px 58px);
+}
+.finial {
+  position: absolute; top: 0; width: 14px; height: 30px;
+  translate: -50% 0;
+  background: linear-gradient(180deg, #FFF6DA 0%, #E8C766 26%, #C9A238 58%, #6B5414 100%);
+  clip-path: polygon(50% 0%, 100% 42%, 74% 42%, 74% 100%, 26% 100%, 26% 42%, 0 42%);
+  filter: drop-shadow(0 2px 3px rgba(0,0,0,.75));
+}
 
 /* The lit meeting edge -- the single detail that sells these as metal. */
-.gate-edge { position: absolute; top: 0; bottom: 0; width: 14px; }
+.gate-edge { position: absolute; top: 0; bottom: 0; width: 16px; }
 .gate-l .gate-edge {
   right: 0;
-  background: linear-gradient(90deg, transparent, rgba(212,175,55,.30) 40%, var(--gold-lit) 88%, #fff8e2 100%);
+  background: linear-gradient(90deg, transparent, rgba(212,175,55,.42) 34%, #E8C766 74%, #FFF8E2 100%);
 }
 .gate-r .gate-edge {
   left: 0;
-  background: linear-gradient(270deg, transparent, rgba(212,175,55,.30) 40%, var(--gold-lit) 88%, #fff8e2 100%);
+  background: linear-gradient(270deg, transparent, rgba(212,175,55,.42) 34%, #E8C766 74%, #FFF8E2 100%);
 }
 
-/* Horizontal cross-braces with rivets, positioned as a real gate is braced. */
+/* Heavy rails. Solid gold across the openwork, which is what braces a real
+   gate and gives the eye somewhere to rest between the bars. */
 .brace {
-  position: absolute; left: 0; right: 0; height: 3.4vh; min-height: 22px;
-  background:
-    linear-gradient(180deg, rgba(255,246,218,.30), rgba(212,175,55,.42) 22%, rgba(74,58,16,.85) 60%, rgba(0,0,0,.6));
-  box-shadow: 0 2px 6px rgba(0,0,0,.7);
+  position: absolute; left: 0; right: 0; height: 3vh; min-height: 20px;
+  background: linear-gradient(180deg,
+    #FFF6DA 0%, #E8C766 16%, #C9A238 44%, #8A6A1C 74%, #3E3009 100%);
+  box-shadow: 0 3px 10px rgba(0,0,0,.8), inset 0 1px 0 rgba(255,255,255,.4);
 }
-.brace.b1 { top: 16%; }
-.brace.b2 { top: 47%; }
-.brace.b3 { top: 78%; }
+.brace.b1 { top: 15%; }
+.brace.b2 { top: 46%; }
+.brace.b3 { top: 88%; }
 .rivet {
-  position: absolute; width: 9px; height: 9px; border-radius: 50%;
-  background: radial-gradient(circle at 34% 30%, #FFF3CE, var(--gold) 52%, #4A3A10 100%);
-  box-shadow: 0 1px 2px rgba(0,0,0,.8);
+  position: absolute; width: 10px; height: 10px; border-radius: 50%;
+  background: radial-gradient(circle at 34% 30%, #FFFBEC, #E8C766 44%, #6B5414 100%);
+  box-shadow: 0 1px 3px rgba(0,0,0,.85);
   top: 50%; translate: 0 -50%;
 }
 
-/* Scrollwork, one flourish per gate, mirrored. */
+/* Scrollwork, one flourish per gate, mirrored. Bright now rather than a dim
+   line, because it is gilding catching the light from behind. */
 .gate-orn {
-  position: absolute; top: 50%; width: 46%; aspect-ratio: 1; translate: 0 -50%;
-  opacity: .5; pointer-events: none;
+  position: absolute; top: 50%; width: 48%; aspect-ratio: 1; translate: 0 -50%;
+  opacity: .92; pointer-events: none;
+  filter: drop-shadow(0 3px 6px rgba(0,0,0,.8));
 }
-.gate-l .gate-orn { right: 6%; }
-.gate-r .gate-orn { left: 6%; transform: scaleX(-1); }
+.gate-l .gate-orn { right: 5%; }
+.gate-r .gate-orn { left: 5%; transform: scaleX(-1); }
 
 /* --- The seal ------------------------------------------------------------ */
 /* The crest straddles the join and reads as what is holding the gates shut.
@@ -158,7 +181,11 @@ body.opening .gate-r { transform: rotateY(104deg);  filter: brightness(.35); }
 .seal-glow {
   position: absolute; width: 50vh; height: 50vh; max-width: 480px; max-height: 480px;
   border-radius: 50%; pointer-events: none;
-  background: radial-gradient(circle, rgba(255,226,150,.34), rgba(212,175,55,.10) 46%, transparent 72%);
+  /* Dark core under the warm halo: the crest has to sit on something, or the
+     bars behind it read straight through the shield. */
+  background:
+    radial-gradient(circle, rgba(4,6,12,.90) 0%, rgba(4,6,12,.55) 30%, transparent 56%),
+    radial-gradient(circle, rgba(255,226,150,.40) 12%, rgba(212,175,55,.13) 48%, transparent 74%);
   animation: seal-breathe 4.6s ease-in-out infinite;
 }
 @keyframes seal-breathe { 0%,100% { opacity:.6; scale:1 } 50% { opacity:1; scale:1.09 } }
@@ -182,6 +209,15 @@ body.opening .seal-crack { animation: seal-crack .85s cubic-bezier(.16,1,.3,1) b
 /* --- The plate ----------------------------------------------------------- */
 /* Wordmark and controls sit on the gates, below the seal, so they belong to
    the object rather than floating over a photograph. */
+.plate::before {
+  content: ""; position: absolute; inset: -8% -12% -14% -12%; z-index: -1;
+  border-radius: 50%;
+  /* Text over openwork is unreadable -- the bars run straight through the
+     letterforms. This is the shadow the gate would cast behind a mounted
+     plate, and it gives the wordmark a ground to sit on without adding a
+     visible box. */
+  background: radial-gradient(58% 52% at 50% 46%, rgba(4,6,12,.94), rgba(4,6,12,.72) 52%, transparent 78%);
+}
 .plate {
   position: fixed; left: 50%; top: 70%; z-index: 9;
   translate: -50% 0; width: min(92vw, 720px);
@@ -323,26 +359,28 @@ body.opening .scene { transform: translateZ(190px); opacity: 0; }
 <div class="scene">
   <div class="gates" aria-hidden="true">
     <div class="gate gate-l">
+      <div class="finials"></div>
       <div class="brace b1"></div><div class="brace b2"></div><div class="brace b3"></div>
-      <svg class="gate-orn" viewBox="0 0 200 200" fill="none" stroke="#D4AF37" stroke-linecap="round">
+      <svg class="gate-orn" viewBox="0 0 200 200" fill="none" stroke="url(#gilt)" stroke-linecap="round"><defs><linearGradient id="gilt" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#FFF6DA"/><stop offset="38%" stop-color="#E8C766"/><stop offset="70%" stop-color="#C9A238"/><stop offset="100%" stop-color="#8A6A1C"/></linearGradient></defs>
         <path d="M100 18 C58 18 30 52 30 96 C30 140 60 176 100 182" stroke-width="2" opacity=".55"/>
         <path d="M100 40 C70 40 50 66 50 96 C50 128 72 154 100 160" stroke-width="1.2" opacity=".4"/>
         <path d="M100 96 C76 96 64 82 64 70 C64 58 74 52 82 56 C90 60 88 72 78 74" stroke-width="1.5" opacity=".6"/>
         <path d="M100 96 C76 96 64 110 64 122 C64 134 74 140 82 136 C90 132 88 120 78 118" stroke-width="1.5" opacity=".6"/>
         <circle cx="100" cy="96" r="7" stroke-width="1.6" opacity=".7"/>
-        <circle cx="100" cy="96" r="2.6" fill="#F7E8B8" stroke="none" opacity=".85"/>
+        <circle cx="100" cy="96" r="2.6" fill="#FFF8E2" stroke="none" opacity=".95"/>
       </svg>
       <div class="gate-edge"></div>
     </div>
     <div class="gate gate-r">
+      <div class="finials"></div>
       <div class="brace b1"></div><div class="brace b2"></div><div class="brace b3"></div>
-      <svg class="gate-orn" viewBox="0 0 200 200" fill="none" stroke="#D4AF37" stroke-linecap="round">
+      <svg class="gate-orn" viewBox="0 0 200 200" fill="none" stroke="url(#gilt)" stroke-linecap="round">
         <path d="M100 18 C58 18 30 52 30 96 C30 140 60 176 100 182" stroke-width="2" opacity=".55"/>
         <path d="M100 40 C70 40 50 66 50 96 C50 128 72 154 100 160" stroke-width="1.2" opacity=".4"/>
         <path d="M100 96 C76 96 64 82 64 70 C64 58 74 52 82 56 C90 60 88 72 78 74" stroke-width="1.5" opacity=".6"/>
         <path d="M100 96 C76 96 64 110 64 122 C64 134 74 140 82 136 C90 132 88 120 78 118" stroke-width="1.5" opacity=".6"/>
         <circle cx="100" cy="96" r="7" stroke-width="1.6" opacity=".7"/>
-        <circle cx="100" cy="96" r="2.6" fill="#F7E8B8" stroke="none" opacity=".85"/>
+        <circle cx="100" cy="96" r="2.6" fill="#FFF8E2" stroke="none" opacity=".95"/>
       </svg>
       <div class="gate-edge"></div>
     </div>
@@ -372,7 +410,7 @@ body.opening .scene { transform: translateZ(190px); opacity: 0; }
   </div>
 </div>
 
-<audio id="fanfare" preload="auto"><source src="/assets/fanfare.wav" type="audio/wav"></audio>
+<audio id="toll" preload="auto"><source src="/assets/gate-toll.wav" type="audio/wav"></audio>
 
 <script>
 (function () {
@@ -394,19 +432,32 @@ body.opening .scene { transform: translateZ(190px); opacity: 0; }
     el.setAttribute('aria-label', text);
   })();
 
-  /* Rivets: spaced along each brace rather than hand-placed, so they stay
-     even at any viewport width. */
+  /* Rivets on the rails, and a spear point on top of every bar. Both are
+     generated rather than hand-placed so they stay aligned to the 58px bar
+     pitch at any viewport width -- hand-placed ornament drifts out of
+     register the moment the window is resized. */
   (function () {
     if (reduced) return;
     var braces = document.querySelectorAll('.brace');
     for (var b = 0; b < braces.length; b++) {
-      for (var k = 1; k <= 5; k++) {
+      for (var k = 1; k <= 6; k++) {
         var r = document.createElement('span');
         r.className = 'rivet';
-        r.style.left = (k * 100 / 6).toFixed(1) + '%';
+        r.style.left = (k * 100 / 7).toFixed(2) + '%';
         braces[b].appendChild(r);
       }
     }
+    var PITCH = 92, OFFSET = 47;
+    document.querySelectorAll('.finials').forEach(function (rail) {
+      var w = rail.getBoundingClientRect().width || innerWidth / 2;
+      rail.innerHTML = '';
+      for (var x = OFFSET; x < w; x += PITCH) {
+        var f = document.createElement('span');
+        f.className = 'finial';
+        f.style.left = x + 'px';
+        rail.appendChild(f);
+      }
+    });
   })();
 
   /* Dust in the light. Cheap: 26 divs on CSS animations, no rAF loop. */
@@ -455,14 +506,22 @@ body.opening .scene { transform: translateZ(190px); opacity: 0; }
     }, { passive: true });
   })();
 
-  /* Fanfare. Autoplay is blocked until the visitor interacts on most browsers,
-     so it is armed here and fired on the first gesture -- including the one
-     that opens the gates. */
-  var fanfare = document.getElementById('fanfare');
-  function playFanfare() {
-    if (!fanfare) return;
-    fanfare.volume = 0.55;
-    var p = fanfare.play();
+  /* The toll. Deliberately tied to the gates OPENING rather than played on
+     load: browsers block autoplay until the visitor interacts, so a load-time
+     sound is either silently swallowed or fires late over a screen that has
+     already settled. Firing it on the click means it always lands, and it
+     lands on the thing it is describing.
+
+     The sound itself is a synthesised bronze bell -- two strikes a fifth
+     apart -- over a D major brass swell, with a short metallic transient at
+     the very top so it starts with a mechanism rather than fading up out of
+     nothing. */
+  var toll = document.getElementById('toll');
+  function playToll() {
+    if (!toll) return;
+    try { toll.currentTime = 0; } catch (e) {}
+    toll.volume = 0.6;
+    var p = toll.play();
     if (p && p.catch) p.catch(function () {});
   }
 
@@ -473,7 +532,7 @@ body.opening .scene { transform: translateZ(190px); opacity: 0; }
   function openGates() {
     if (opened) return;
     opened = true;
-    playFanfare();
+    playToll();
     document.body.classList.add('opening');
     setTimeout(function () {
       parent.postMessage({ type: 'k846-enter-realm' }, location.origin);
@@ -486,7 +545,6 @@ body.opening .scene { transform: translateZ(190px); opacity: 0; }
   addEventListener('keydown', function (e) {
     if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openGates(); }
   });
-  addEventListener('pointerdown', playFanfare, { once: true, passive: true });
 })();
 </script>
 </body>

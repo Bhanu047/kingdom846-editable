@@ -8,6 +8,8 @@
 //  - Kingshot Optimizer timeline: https://kingshotoptimizer.com/kingdom-timeline/846
 //  - Kingshot Optimizer KvK rankings: https://kingshotoptimizer.com/kvk-rankings/kingdom/846
 
+import { tracker846 } from './tracker846'
+
 export const kingdom = {
   id: 846,
   name: 'Kingdom 846',
@@ -43,7 +45,17 @@ export const kingdom = {
     battlePhase: { wins: 8, losses: 2, streak: '5W', winRate: '80%', best: '5W' },
   },
   created: '2025-08-17',
-  currentDay: 359,
+  // Kingdom age is DERIVED, not stored. It was hardcoded at 359 and had drifted
+  // to twelve days stale, which is the failure mode of every snapshotted
+  // counter: it is right on the day it is written and wrong every day after.
+  get currentDay() {
+    const start = Date.parse(this.created + 'T00:00:00Z')
+    return Math.max(1, Math.floor((Date.now() - start) / 86400000) + 1)
+  },
+  // The tracker figures below ARE snapshots -- they come from ks-atlas and
+  // kingshotoptimizer, which have no public API. This records when they were
+  // last checked so the page can say so rather than implying they are live.
+  trackerVerified: '2026-08-23',
   kvkRating: 2.564,
   kvkCurrentRank: 25,
   source: 'https://ks-atlas.com/kingdom/846',
@@ -51,12 +63,43 @@ export const kingdom = {
   kvkSource: 'https://kingshotoptimizer.com/kvk-rankings/kingdom/846'
 }
 
-// Dashboard hero stats — mix of kingdom status + public tracker data (all real).
+// Kingdom hero stats.
+//
+// Nothing imports this today -- it is a leftover export. It is kept rather than
+// deleted because the shape is useful, but it was four hardcoded strings and
+// every one had drifted from tracker846.js, which the pages actually read:
+// 2.564 / rank 25 here against 2.873 / rank 15 there, 7 of 10 dominations
+// against 8 of 11, Atlas #66 against #33, and a different leading alliance
+// than kingdom.leadingAlliance. None of that was on screen, but the moment
+// someone wired this up it would have shipped stale figures beside live ones.
+//
+// Derived from the tracker snapshot now, so it cannot drift again: updating
+// tracker846.js updates this with it.
 export const stats = [
-  { label: 'Leading Alliance', value: '[RYO]', icon: 'shield', sub: 'Spiders' },
-  { label: 'KvK Rating', value: '2.564', icon: 'trophy', sub: 'Global Rank #25' },
-  { label: 'KvK Dominations', value: '7/10', icon: 'crown', sub: '70% domination rate' },
-  { label: 'Atlas Rank', value: '#66', icon: 'landmark', sub: 'Top 3.3% · S-Tier' }
+  {
+    label: 'Leading Alliance',
+    value: kingdom.leadingAlliance.match(/\[([^\]]+)\]/)?.[1] ?? kingdom.leadingAlliance,
+    icon: 'shield',
+    sub: kingdom.leadingAlliance.replace(/^\[[^\]]+\]\s*/, ''),
+  },
+  {
+    label: 'KvK Rating',
+    value: tracker846.kvk.rating.toFixed(3),
+    icon: 'trophy',
+    sub: `Global Rank #${tracker846.kvk.rank}`,
+  },
+  {
+    label: 'KvK Dominations',
+    value: `${tracker846.kvk.dominations}/${tracker846.kvk.total}`,
+    icon: 'crown',
+    sub: `${tracker846.kvk.dominationRate}% domination rate`,
+  },
+  {
+    label: 'Atlas Rank',
+    value: `#${tracker846.atlas.rank}`,
+    icon: 'landmark',
+    sub: tracker846.tier,
+  },
 ]
 
 // Recurring alliance event names, in pairs — times are set per-alliance via Admin → Alliances.

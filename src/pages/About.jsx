@@ -52,6 +52,16 @@ export default function About() {
               <a href="https://kingshotoptimizer.com/kvk-rankings/kingdom/846" target="_blank" rel="noreferrer" className="btn-secondary"><Icon name="swords" size={14} /> KvK Rankings</a>
               <span className="btn-ghost"><Icon name="crown" size={14} /> Kingdom 846</span>
             </div>
+            {/* The tracker figures on this page are snapshots -- neither
+                ks-atlas nor kingshotoptimizer publishes an API, so they are
+                read and entered by hand. Saying when they were last checked is
+                the honest alternative to a page that looks live and is not.
+                Day count beside it IS live: it derives from the founding date. */}
+            <p className="mt-4 text-[11px] text-parchment/45">
+              Day <span className="text-gold-bright/80 tabular-nums">{kingdom.currentDay}</span> of the realm
+              <span className="mx-2 text-gold/25">&#9670;</span>
+              Tracker figures verified {new Date(kingdom.trackerVerified + 'T00:00:00Z').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' })}
+            </p>
           </div>
         </div>
       </Panel>

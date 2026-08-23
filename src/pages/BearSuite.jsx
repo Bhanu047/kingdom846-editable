@@ -34,14 +34,14 @@ function Donut({ratio,title='Optimal Distribution',center='Best Formation'}){
   const reveal=useReveal()
   const a=Math.round(ratio.infantry*100),b=Math.round(ratio.cavalry*100),c=Math.max(0,100-a-b)
   const R=68,C=2*Math.PI*R
-  const segs=[{key:'infantry',pct:a,color:'#d9b94e'},{key:'cavalry',pct:b,color:'#7f9ed6'},{key:'archers',pct:c,color:'#c8655a'}]
+  const segs=[{key:'infantry',pct:a,color:'#5D90E8'},{key:'cavalry',pct:b,color:'#E0B23B'},{key:'archers',pct:c,color:'#D76158'}]
   let acc=0
-  return <div className="rounded-2xl border border-gold/20 bg-[#07101e] p-4">
+  return <div className="chart-card chart-rise rounded-2xl p-4">
     <div className="text-center font-display text-lg font-bold text-parchment">{title}</div>
     <div className="relative mx-auto mt-4 h-48 w-48">
       <svg viewBox="0 0 160 160" className="h-full w-full -rotate-90">
         <circle cx="80" cy="80" r={R} fill="none" stroke="rgba(255,255,255,.06)" strokeWidth="15"/>
-        {segs.map(s=>{const len=(s.pct/100)*C,start=acc;acc+=len;return <circle key={s.key} cx="80" cy="80" r={R} fill="none" stroke={s.color} strokeWidth="15" strokeLinecap="round" strokeDasharray={reveal?`${len} ${C-len}`:`0 ${C}`} strokeDashoffset={-start} style={{transition:'stroke-dasharray 1.1s cubic-bezier(.16,1,.3,1)',filter:`drop-shadow(0 0 5px ${s.color}55)`}}/>})}
+        {segs.map(s=>{const len=(s.pct/100)*C,start=acc;acc+=len;return <circle key={s.key} cx="80" cy="80" r={R} fill="none" stroke={s.color} strokeWidth="15" strokeLinecap="round" strokeDasharray={reveal?`${len} ${C-len}`:`0 ${C}`} strokeDashoffset={-start} style={{transition:'stroke-dasharray 1.1s cubic-bezier(.16,1,.3,1)',transitionDelay:`${segs.indexOf(s)*140}ms`}}/>})}
       </svg>
       <div className="absolute inset-0 grid place-items-center">
         <div className="grid h-28 w-28 place-items-center rounded-full border border-gold/15 bg-[#07101e] text-center">
@@ -62,8 +62,8 @@ function Histogram({mean,optimal,sigma}){
   const x=v=>L+(v-min)/(max-min)*(W-L-R),y=v=>H-B-v/my*(H-T-B)
   const areaPath=pts=>{const s=smoothPath(pts.map(d=>({x:x(d.x),y:y(d.y)})));return`${s} L${x(pts[pts.length-1].x)},${base} L${x(pts[0].x)},${base} Z`}
   const linePath=pts=>smoothPath(pts.map(d=>({x:x(d.x),y:y(d.y)})))
-  return <div className="rounded-2xl border border-gold/20 bg-[#07101e] p-3 md:p-4">
-    <div className="flex flex-wrap justify-between gap-2"><div><div className="text-[9px] font-bold uppercase tracking-[.16em] text-gold/60">Current vs Optimal Damage Distribution</div><div className="font-display text-lg font-bold text-parchment">10,000-Hunt Projection</div></div><div className="text-[10px] text-parchment/50"><span className="text-[#7f9ed6]">● Current</span> &nbsp; <span className="text-gold-bright">● Optimal</span></div></div>
+  return <div className="chart-card chart-rise rounded-2xl p-3 md:p-4">
+    <div className="flex flex-wrap justify-between gap-2"><div><div className="chart-title text-[9px] font-bold uppercase tracking-[.16em]">Current vs Optimal Damage Distribution</div><div className="font-display text-lg font-bold text-parchment">10,000-Hunt Projection</div></div><div className="text-[10px] text-parchment/50"><span className="text-[#7f9ed6]">● Current</span> &nbsp; <span className="text-gold-bright">● Optimal</span></div></div>
     <div className="relative mt-2">
       <svg viewBox={`0 0 ${W} ${H}`} className="w-full">
         <defs>
@@ -93,16 +93,16 @@ function Sensitivity({points,mean}){
   const reveal=useReveal()
   if(!points.length)return null
   const W=760,H=240,L=48,R=18,T=20,B=38,x=v=>L+(v+5)/10*(W-L-R),vals=points.flatMap(p=>[p.infantry,p.cavalry,p.archers]),lo=Math.min(...vals),hi=Math.max(...vals),y=v=>H-B-(v-lo)/Math.max(.001,hi-lo)*(H-T-B),path=k=>points.map((p,i)=>`${i?'L':'M'}${x(p.delta)},${y(p[k])}`).join(' ')
-  const lines=[['infantry','#d9b94e',0],['cavalry','#7f9ed6',120],['archers','#c8655a',240]]
-  return <div className="rounded-2xl border border-gold/15 bg-[#07101e] p-4">
-    <div className="text-[9px] font-bold uppercase tracking-[.15em] text-gold/60">Formation Sensitivity</div>
+  const lines=[['infantry','#5D90E8',0],['cavalry','#E0B23B',120],['archers','#D76158',240]]
+  return <div className="chart-card chart-rise rounded-2xl p-4">
+    <div className="chart-title text-[9px] font-bold uppercase tracking-[.15em]">Formation Sensitivity</div>
     <div className="text-xs text-parchment/45">Actual projected impact as each troop share shifts ±5%.</div>
     <svg viewBox={`0 0 ${W} ${H}`} className="mt-2 w-full">
       {lines.map(([k,color,delay])=><path key={k} d={path(k)} pathLength="1" fill="none" stroke={color} strokeWidth="3" strokeDasharray="1" strokeDashoffset={reveal?0:1} style={{transition:`stroke-dashoffset 1.1s cubic-bezier(.16,1,.3,1) ${delay}ms`,filter:`drop-shadow(0 0 4px ${color}55)`}}/>)}
       <line x1={x(0)} x2={x(0)} y1={T} y2={H-B} stroke="rgba(244,236,211,.35)" strokeDasharray="4 4"/>
       <text x={x(0)} y={H-8} textAnchor="middle" fill="rgba(244,236,211,.55)" fontSize="11">Current {fmt(mean)}</text>
     </svg>
-    <div className="flex justify-center gap-4 text-[10px]"><span className="text-[#d9b94e]">● Infantry</span><span className="text-[#7f9ed6]">● Cavalry</span><span className="text-[#c8655a]">● Archers</span></div>
+    <div className="flex justify-center gap-4 text-[10px]"><span className="text-[#5D90E8]">● Infantry</span><span className="text-[#E0B23B]">● Cavalry</span><span className="text-[#D76158]">● Archers</span></div>
   </div>
 }
 
@@ -193,7 +193,7 @@ export default function BearSuite(){
    {label:'Potential Gain',numeric:gain,format:v=>`+${fmt(v)}`,accent:true},
    {label:'Current Formation',numeric:null,value:`${currentPct.infantry}/${currentPct.cavalry}/${currentPct.archers}`,accent:false},
  ]
- return <div className="space-y-5"><section className="panel p-4 md:p-5"><div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between"><div><div className="eyebrow">Bear Calculator</div><h2 className="mt-1 font-display text-2xl font-bold text-parchment">Formation + Impact</h2><p className="mt-1 text-xs text-parchment/50">One live model. Every Hunt Impact visual updates from the same calculation.</p></div><div className="inline-flex rounded-xl border border-gold/15 bg-black/25 p-1"><button onClick={()=>setTab('ratio')} className={`rounded-lg px-4 py-2 text-xs font-bold uppercase ${tab==='ratio'?'bg-gold/15 text-gold-bright':'text-parchment/45'}`}>Hunt Formation</button><button onClick={()=>setTab('damage')} className={`rounded-lg px-4 py-2 text-xs font-bold uppercase ${tab==='damage'?'bg-gold/15 text-gold-bright':'text-parchment/45'}`}>Hunt Impact</button></div></div><div className="mt-4 border-t border-gold/10 pt-4"><PlayerNameField value={playerName} onChange={setPlayerName}/></div></section>
+ return <div data-suite="bear" className="space-y-5"><section className="panel p-4 md:p-5"><div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between"><div><div className="eyebrow">Bear Calculator</div><h2 className="mt-1 font-display text-2xl font-bold text-parchment">Formation + Impact</h2><p className="mt-1 text-xs text-parchment/50">One live model. Every Hunt Impact visual updates from the same calculation.</p></div><div className="inline-flex rounded-xl border border-gold/15 bg-black/25 p-1"><button onClick={()=>setTab('ratio')} className={`rounded-lg px-4 py-2 text-xs font-bold uppercase ${tab==='ratio'?'bg-gold/15 text-gold-bright':'text-parchment/45'}`}>Hunt Formation</button><button onClick={()=>setTab('damage')} className={`rounded-lg px-4 py-2 text-xs font-bold uppercase ${tab==='damage'?'bg-gold/15 text-gold-bright':'text-parchment/45'}`}>Hunt Impact</button></div></div><div className="mt-4 border-t border-gold/10 pt-4"><PlayerNameField value={playerName} onChange={setPlayerName}/></div></section>
  {tab==='ratio'?<div className="grid gap-5 xl:grid-cols-[.82fr_1.18fr]">
    <section className="panel p-5 md:p-6">
      <div className="eyebrow">Hunt Formation Input</div><h3 className="mt-1 font-display text-xl font-bold text-parchment">Rally Bonus Report</h3>

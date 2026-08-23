@@ -1426,3 +1426,63 @@ select.royal-select option {
   background: #0E1220;
   color: #F3E8CC;
 }
+
+
+/* ---- Battle Lab suite identity -------------------------------------------
+   Each tool already had a colour on its hub tile and then lost it the moment
+   you clicked in. These variables carry the tile's colour through the tool and
+   its charts. Scoped to [data-suite] only -- the rest of the site is untouched.
+
+   Deliberately split in two:
+     CHROME (borders, headings, rules, primary action) takes the tool's colour,
+     so the page looks like the tile you came from.
+     DATA SERIES (infantry / cavalry / archers) stay the SAME three colours in
+     every tool, so a reader learns the triad once instead of relearning it in
+     each tool. Re-hueing the series per tool was tried and is what made the
+     charts unreadable. */
+[data-suite] {
+  --suite: #E0B23B;
+  --suite-soft: rgba(224,178,59,.5);
+  --suite-faint: rgba(224,178,59,.14);
+  --suite-ink: rgba(224,178,59,.06);
+}
+[data-suite="bear"]      { --suite:#E0B23B; --suite-soft:rgba(224,178,59,.5);  --suite-faint:rgba(224,178,59,.14);  --suite-ink:rgba(224,178,59,.06); }
+[data-suite="mystic"]    { --suite:#9B7BE8; --suite-soft:rgba(155,123,232,.5); --suite-faint:rgba(155,123,232,.15); --suite-ink:rgba(155,123,232,.07); }
+[data-suite="pvp"]       { --suite:#E05C5C; --suite-soft:rgba(224,92,92,.5);   --suite-faint:rgba(224,92,92,.15);   --suite-ink:rgba(224,92,92,.07); }
+[data-suite="formation"] { --suite:#4FC08A; --suite-soft:rgba(79,192,138,.5);  --suite-faint:rgba(79,192,138,.15);  --suite-ink:rgba(79,192,138,.07); }
+[data-suite="codex"]     { --suite:#4FB8D8; --suite-soft:rgba(79,184,216,.5);  --suite-faint:rgba(79,184,216,.15);  --suite-ink:rgba(79,184,216,.07); }
+
+/* The one data triad, shared by every tool. */
+[data-suite] { --s-inf:#5D90E8; --s-cav:#E0B23B; --s-arc:#D76158; }
+
+/* Chart chrome inside a suite. */
+[data-suite] .chart-card {
+  border: 1px solid var(--suite-faint);
+  background:
+    linear-gradient(158deg, var(--suite-ink) 0%, transparent 44%),
+    #07101e;
+  box-shadow: inset 0 1px 0 var(--suite-faint);
+}
+[data-suite] .chart-title { color: var(--suite); }
+
+/* ---- Motion --------------------------------------------------------------
+   The dashboard should ASSEMBLE when you press Calculate rather than appear.
+   Every effect below is transform/opacity/stroke -- no blur, so nothing here
+   is the halo that got rejected, and nothing costs a repaint of the page. */
+@keyframes draw-in { to { stroke-dashoffset: 0; } }
+@keyframes rise    { from { opacity:0; transform: translateY(10px) } to { opacity:1; transform:none } }
+@keyframes sweep   { from { transform: scaleX(0) } to { transform: scaleX(1) } }
+
+.chart-rise { animation: rise .55s cubic-bezier(.16,1,.3,1) both; }
+.chart-sweep { transform-origin: left center; animation: sweep .85s cubic-bezier(.16,1,.3,1) both; }
+/* A hairline that races along the top of a panel as it lands -- the "official
+   instrument powering up" beat, and the one flourish per card. */
+.chart-card { position: relative; overflow: hidden; }
+.chart-card::after {
+  content:""; position:absolute; top:0; left:0; height:1px; width:100%;
+  background: linear-gradient(90deg, transparent, var(--suite), transparent);
+  transform-origin: left center; animation: sweep 1.1s cubic-bezier(.16,1,.3,1) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .chart-rise, .chart-sweep, .chart-card::after { animation: none !important; }
+}

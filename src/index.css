@@ -1749,7 +1749,17 @@ select.royal-select option {
       rgba(255,255,255,0)   46%,
       rgba(0,0,0,0)         54%,
       rgba(0,0,0,.10)       74%,
-      rgba(0,0,0,.22)      100%);
+      rgba(0,0,0,.22)      100%),
+    /* Notches. A smooth fill reads as a spreadsheet; a segmented one reads as
+       a game HUD, because every health, stamina and XP bar ever shipped is
+       divided into cells. A second background layer of hairlines on a 14px
+       pitch, so it costs nothing and every bar on the site inherits it from
+       this one rule. Deliberately faint -- at full strength the notches
+       compete with the value the bar is there to show. */
+    repeating-linear-gradient(90deg,
+      transparent 0 12px,
+      rgba(0,0,0,.22) 12px 13px,
+      rgba(255,255,255,.08) 13px 14px);
   /* No inset box-shadow here, deliberately. html2canvas 1.4.1 renders an inset
      shadow by flooding the ENTIRE element with the shadow colour instead of
      banding its edges, so `inset 0 1px 0 rgba(255,255,255,.34)` came out as a
@@ -2326,4 +2336,58 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
 
 @media (prefers-reduced-motion: reduce) {
   .hero-bloom, .hero-rake { animation: none !important }
+}
+
+/* ---- Charts: the game-HUD pass ------------------------------------------- */
+/* The brief was cinematic, royal, game -- not a dashboard. Two things carry
+   that beyond the notched bars above: a housing that reads as an instrument
+   rather than a div, and a charge beat when a value lands.
+
+   No glow anywhere. It has been rejected four times; light is carried by
+   gradient ramps and lit edges, which is how a struck object actually shows
+   its shape. */
+
+/* The housing: a recessed well with a gilt rim, so a chart sits IN the panel
+   rather than on it. */
+.k-plate {
+  position: relative;
+  border-radius: 14px;
+  border: 1px solid transparent;
+  background-image:
+    linear-gradient(168deg, rgba(8,14,26,.97), rgba(5,9,18,.98)),
+    linear-gradient(150deg, rgba(255,246,218,.34) 0%, rgba(212,175,55,.20) 24%, rgba(60,46,12,.35) 52%, rgba(212,175,55,.20) 78%, rgba(255,246,218,.30) 100%);
+  background-origin: padding-box, border-box;
+  background-clip: padding-box, border-box;
+}
+/* Registration ticks at the corners -- the marks on an instrument face. Eight
+   gradients on one pseudo, so no extra elements and nothing to clip. */
+.k-plate::after {
+  content: ""; position: absolute; inset: 7px; pointer-events: none;
+  background:
+    linear-gradient(90deg, rgba(232,199,102,.5) 0 13px, transparent 13px) 0 0/100% 1px no-repeat,
+    linear-gradient(270deg, rgba(232,199,102,.5) 0 13px, transparent 13px) 100% 0/100% 1px no-repeat,
+    linear-gradient(180deg, rgba(232,199,102,.5) 0 13px, transparent 13px) 0 0/1px 100% no-repeat,
+    linear-gradient(180deg, rgba(232,199,102,.5) 0 13px, transparent 13px) 100% 0/1px 100% no-repeat,
+    linear-gradient(90deg, rgba(232,199,102,.5) 0 13px, transparent 13px) 0 100%/100% 1px no-repeat,
+    linear-gradient(270deg, rgba(232,199,102,.5) 0 13px, transparent 13px) 100% 100%/100% 1px no-repeat,
+    linear-gradient(0deg, rgba(232,199,102,.5) 0 13px, transparent 13px) 0 100%/1px 100% no-repeat,
+    linear-gradient(0deg, rgba(232,199,102,.5) 0 13px, transparent 13px) 100% 100%/1px 100% no-repeat;
+}
+
+/* The charge beat: the track flashes once behind a bar as it lands. It is the
+   beat a game uses to say the value is final, and it is why a filling bar
+   feels like a result rather than a transition. */
+@keyframes k-charge { 0% { opacity: 0 } 55% { opacity: .45 } 100% { opacity: 0 } }
+.k-track::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  border-radius: inherit;
+  background: linear-gradient(90deg, transparent, rgba(255,246,218,.4), transparent);
+  animation: k-charge 1.1s ease-out .35s both;
+}
+/* An export has no entrance, so the flash would freeze mid-frame across the
+   whole report. */
+.kv-live .k-track::after, .k846-v2 .k-track::after { display: none }
+
+@media (prefers-reduced-motion: reduce) {
+  .k-track::after { animation: none !important; opacity: 0 !important }
 }

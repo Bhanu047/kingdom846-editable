@@ -123,9 +123,9 @@ function Risk({mean,sigma}){
   const reveal=useReveal()
   const erf=x=>{const s=Math.sign(x),a=Math.abs(x),p=.3275911,a1=.254829592,a2=-.284496736,a3=1.421413741,a4=-1.453152027,a5=1.061405429,q=1/(1+p*a);return s*(1-(((((a5*q+a4)*q+a3)*q+a2)*q+a1)*q)*Math.exp(-a*a))}
   const chance=t=>clamp((1-.5*(1+erf((t-mean)/(sigma*Math.SQRT2))))*100,0,100),thresholds=[.85,.95,1.05,1.15,1.25].map(v=>mean*v)
-  return <div className="rounded-2xl border border-gold/15 bg-[#07101e] p-4">
+  return <div className="k-plate p-4">
     <div className="text-[9px] font-bold uppercase tracking-[.15em] text-gold/60">Percentile / Risk — Chance to Exceed</div>
-    <div className="mt-4 space-y-3">{thresholds.map((t,i)=>{const c=chance(t);return <div key={t}><div className="mb-1 flex justify-between text-xs"><span className="text-parchment/55">Above {fmt(t)}</span><span className="font-mono font-bold text-gold-bright">{c.toFixed(1)}%</span></div><div className="h-2 overflow-hidden rounded-full bg-white/5"><div className="h-full rounded-full bg-gradient-to-r from-gold/70 to-gold-bright" style={{width:reveal?`${c}%`:'0%',transition:`width 1s cubic-bezier(.16,1,.3,1) ${i*80}ms`,boxShadow:'0 0 8px rgba(226,181,48,.55)'}}/></div></div>})}</div>
+    <div className="mt-4 space-y-3">{thresholds.map((t,i)=>{const c=chance(t);return <div key={t}><div className="mb-1 flex justify-between text-xs"><span className="text-parchment/55">Above {fmt(t)}</span><span className="font-mono font-bold text-gold-bright">{c.toFixed(1)}%</span></div><div className="h-2 overflow-hidden rounded-full bg-white/5"><div className="h-full rounded-full bg-gradient-to-r from-gold/70 to-gold-bright" style={{width:reveal?`${c}%`:'0%',transition:`width 1s cubic-bezier(.16,1,.3,1) ${i*80}ms`,}}/></div></div>})}</div>
   </div>
 }
 
@@ -141,7 +141,7 @@ function CompareBars({current,optimal}){
   // here anyone acts on -- is stated rather than left to be worked out by
   // comparing two bar lengths.
   const rows=[['Current',current,'#5D82C4'],['Optimal',optimal,'#E0B23B']]
-  return <div className="rounded-2xl border border-gold/15 bg-[#07101e] p-4">
+  return <div className="k-plate p-4">
     <div className="text-[9px] font-bold uppercase tracking-[.15em] text-gold/60">Current vs Optimal Summary</div>
     <div className="mt-5 space-y-4">{rows.map(([l,v,c],i)=><div key={l}>
       <div className="mb-1.5 flex items-baseline justify-between">
@@ -172,7 +172,7 @@ function RangeChart({p5,mean,p95}){
   // The marker now sits where the mean actually falls between p5 and p95.
   const span=Math.max(1,p95-p5)
   const meanAt=Math.min(96,Math.max(4,(mean-p5)/span*100))
-  return <div className="rounded-2xl border border-gold/15 bg-[#07101e] p-4">
+  return <div className="k-plate p-4">
     <div className="text-[9px] font-bold uppercase tracking-[.15em] text-gold/60">Damage Range / Confidence</div>
     <div className="mt-5 grid grid-cols-3 text-center">
       <div><div className="text-[9px] uppercase tracking-wider text-parchment/35">Low 5%</div><div className="font-mono text-sm font-bold tabular-nums text-[#7f9ed6]">{fmt(p5)}</div></div>

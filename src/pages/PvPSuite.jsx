@@ -126,7 +126,7 @@ function RoundChart({ rounds }) {
   const areaPath = (key) => `${linePath(key)} L${x(last)},${base} L${x(0)},${base} Z`
   const ticks = [0, Math.round(last / 2), last]
   return (
-    <div className="rounded-2xl border border-gold/15 bg-[#07101e] p-4">
+    <div className="k-plate p-4">
       <div className="text-[9px] font-bold uppercase tracking-[.15em] text-gold/60">Troops Remaining by Round</div>
       <div className="relative mt-2">
         <svg viewBox={`0 0 ${W} ${H}`} className="w-full">
@@ -173,7 +173,7 @@ function StatRadar({ yourStats, enemyStats, yourLabel = 'YOUR ARMY', enemyLabel 
   const gridPoly = (scale) => AXES.map((a, i) => pt(i, scale, 1)).map(([x, y]) => `${x},${y}`).join(' ')
   const VB_W = 280, VB_H = 250
   return (
-    <div className="rounded-2xl border border-gold/20 bg-[#07101e] p-4 md:p-5">
+    <div className="k-plate p-4 md:p-5">
       <div className="relative mx-auto w-full max-w-md">
         <svg viewBox={`0 0 ${VB_W} ${VB_H}`} className="w-full">
           <defs>
@@ -234,7 +234,7 @@ function FormationBlocks({ side, casualtyFraction, label, color }) {
 
 function FormationBlocksMatchup({ yourSide, enemySide, yourLabel = 'YOUR ARMY', enemyLabel = 'ENEMY ARMY', yourCasualtyFraction, enemyCasualtyFraction }) {
   return (
-    <div className="grid gap-3 rounded-2xl border border-gold/20 bg-[#07101e] p-4 md:grid-cols-2 md:p-5">
+    <div className="grid gap-3 k-plate p-4 md:grid-cols-2 md:p-5">
       <FormationBlocks side={yourSide} label={yourLabel} color="#7f9ed6" casualtyFraction={yourCasualtyFraction} />
       <FormationBlocks side={enemySide} label={enemyLabel} color="#c8655a" casualtyFraction={enemyCasualtyFraction} />
     </div>
@@ -252,7 +252,7 @@ function VictoryPodium({ top3 }) {
   const MEDALS = { 0: '🥇', 1: '🥈', 2: '🥉' }
   const ROW_H = 176
   return (
-    <div className="rounded-2xl border border-gold/20 bg-[#07101e] p-4 md:p-5">
+    <div className="k-plate p-4 md:p-5">
       <div className="flex justify-center gap-3" style={{ height: ROW_H }}>
         {order.map((i, idx) => {
           const c = top3[i]
@@ -269,7 +269,7 @@ function VictoryPodium({ top3 }) {
                 </div>
                 <div className="mt-1 font-mono text-[10px] text-parchment/60">{Math.round(c.composition.infantry * 100)}/{Math.round(c.composition.cavalry * 100)}/{Math.round(c.composition.archers * 100)}</div>
               </div>
-              <div className={`absolute inset-x-0 bottom-0 flex items-end justify-center rounded-t-lg border-x border-t ${i === 0 ? 'k-sheen border-gold/50 bg-gradient-to-t from-gold/[.28] via-gold/[.12] to-gold/[.04]' : 'border-gold/15 bg-gradient-to-t from-white/[.08] to-white/[.02]'}`} style={{ height: `${h}px`, transition: `height .8s cubic-bezier(.16,1,.3,1) ${delay}`, boxShadow: i === 0 ? '0 0 18px rgba(226,181,48,.3)' : 'none' }}>
+              <div className={`absolute inset-x-0 bottom-0 flex items-end justify-center rounded-t-lg border-x border-t ${i === 0 ? 'k-sheen border-gold/50 bg-gradient-to-t from-gold/[.28] via-gold/[.12] to-gold/[.04]' : 'border-gold/15 bg-gradient-to-t from-white/[.08] to-white/[.02]'}`} style={{ height: `${h}px`, transition: `height .8s cubic-bezier(.16,1,.3,1) ${delay}` }}>
                 <div className="pb-2 font-mono text-sm font-black text-gold-bright">{c.margin >= 0 ? '+' : ''}{fmt(c.margin)}</div>
               </div>
             </div>

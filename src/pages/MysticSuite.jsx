@@ -116,7 +116,7 @@ export function CompositionChart({ items, total }) {
   const legend = [['infantry', 'INF'], ['cavalry', 'CAV'], ['archers', 'ARC']]
 
   return (
-    <div className="rounded-2xl border border-gold/15 bg-[#07101e] p-3 sm:p-4">
+    <div className="k-plate p-3 sm:p-4">
       <div className="mb-2 flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           {legend.map(([key, label]) => (
@@ -182,7 +182,7 @@ export function CompositionChart({ items, total }) {
 function ArmyCard({ side, label, border, glow, align, reveal, accent }) {
   const total = Math.max(0, side.infantry) + Math.max(0, side.cavalry) + Math.max(0, side.archers)
   return (
-    <div className={`relative min-w-0 flex-1 overflow-hidden rounded-2xl border p-2.5 sm:p-4 ${border}`} style={{ boxShadow: `inset 0 0 30px ${glow}` }}>
+    <div className={`relative min-w-0 flex-1 overflow-hidden rounded-2xl border p-2.5 sm:p-4 ${border}`} >
       <CornerAccents color={accent} />
       <div className={`text-[9px] font-bold uppercase tracking-wider text-parchment/50 ${align}`}>{label}</div>
       <div className={`badge-shine mt-0.5 rounded-lg font-mono text-base font-black tabular-nums text-parchment sm:text-2xl ${align}`}>{fmt(useCountUp(total))}</div>
@@ -218,7 +218,7 @@ function CornerAccents({ color = 'rgba(226,199,125,.55)' }) {
 export function VsArmyCards({ yourSide, enemySide, yourLabel = 'YOUR FORCE', enemyLabel = 'ENEMY FORCE' }) {
   const reveal = useReveal()
   return (
-    <div className="rounded-2xl border border-gold/20 bg-[#07101e] p-4 md:p-5">
+    <div className="k-plate p-4 md:p-5">
       <div className="flex items-stretch gap-2 md:gap-3">
         <ArmyCard side={yourSide} label={yourLabel} border="border-[#7f9ed6]/25 bg-[#7f9ed6]/[.045]" glow="rgba(127,158,214,.08)" align="text-left" reveal={reveal} accent="rgba(127,158,214,.6)" />
         <div className="flex shrink-0 flex-col items-center justify-center px-1">
@@ -258,7 +258,7 @@ export function ClashGauge({ yourTotal, enemyTotal, margin }) {
   const boundary = Math.min(94, Math.max(6, 50 + pct / 2))
 
   return (
-    <div className="rounded-2xl border border-gold/20 bg-[#07101e] p-4 md:p-5">
+    <div className="k-plate p-4 md:p-5">
       <div className="mb-2.5 flex items-end justify-between gap-3">
         <div className="text-left">
           <div className="text-[10px] font-bold uppercase tracking-[.18em] text-[#9eb9ef]">Your Force</div>

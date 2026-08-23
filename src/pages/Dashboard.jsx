@@ -117,7 +117,7 @@ export default function Dashboard({ onNavigate }) {
           </div>
           <div className="absolute inset-y-0 left-0 flex max-w-xl flex-col justify-center p-6 md:p-10">
             <div className="eyebrow text-glow">Royal Portal</div>
-            <h1 className="gilt-display mt-2 font-display text-5xl font-black tracking-[.02em] md:text-7xl">KINGDOM 846</h1>
+            <h1 className="gilt-display mt-2 font-decorative text-5xl font-black tracking-[.03em] md:text-7xl">KINGDOM 846</h1>
             <p className="mt-1 font-display text-sm tracking-[0.15em] text-gold md:text-base text-glow">One Crown. Four Alliances. Endless Glory.</p>
             <div className="mt-5 flex flex-wrap gap-2">
               <button onClick={() => onNavigate('alliances')} className="btn-primary btn-royal sparkle-btn"><Icon name="shield" size={14} /> View Alliances</button>

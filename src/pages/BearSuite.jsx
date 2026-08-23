@@ -3,7 +3,7 @@ import { trackTool } from '../lib/analytics'
 import Icon from '../components/Icon'
 import { PlayerNameField } from '../components/ui'
 import { usePlayerName } from '../hooks/usePlayerName'
-import { buildBearChatMessage, computeBearDamageScore, optimizeBearFormation } from '../lib/combat/bearOptimizer'
+import { buildBearChatMessage, computeBearDamage, optimizeBearFormation } from '../lib/combat/bearOptimizer'
 import { applyJoinerBonuses, computeHuntImpact, HUNT_JOINER_HEROES } from '../lib/combat/huntImpact'
 import { smoothPath, useCountUp, useReveal } from '../lib/chartAnim'
 
@@ -252,12 +252,12 @@ export default function BearSuite(){
   } : { ready:false, at:Date.now() }
  },[ready,result,impactStats,impactHeroes,impactTier,tg,troopCounts,total,ratio,capacity,participants,joiners,mean,optimal,eff])
 
- const sensitivity=useMemo(()=>{if(!ready||!result)return[];const stats=applyJoinerBonuses(normalized(impactStats),joiners),scale=Math.sqrt(Math.max(1,total));return Array.from({length:11},(_,i)=>i-5).map(delta=>{const shift=delta/100,scoreFor=target=>{const r={...ratio},others=TROOPS.map(t=>t.key).filter(k=>k!==target);r[target]=clamp(r[target]+shift,0,1);const rem=1-r[target],sum=others.reduce((s,k)=>s+ratio[k],0)||1;others.forEach(k=>r[k]=rem*ratio[k]/sum);return computeBearDamageScore({stats,tier:impactTier,tg,ratio:r,leadHeroes:impactHeroes})*scale};return{delta,infantry:scoreFor('infantry'),cavalry:scoreFor('cavalry'),archers:scoreFor('archers')}})},[ready,result,impactStats,joiners,total,ratio,impactTier,tg,impactHeroes])
+ const sensitivity=useMemo(()=>{if(!ready||!result)return[];const stats=applyJoinerBonuses(normalized(impactStats),joiners);return Array.from({length:11},(_,i)=>i-5).map(delta=>{const shift=delta/100,scoreFor=target=>{const r={...ratio},others=TROOPS.map(t=>t.key).filter(k=>k!==target);r[target]=clamp(r[target]+shift,0,1);const rem=1-r[target],sum=others.reduce((s,k)=>s+ratio[k],0)||1;others.forEach(k=>r[k]=rem*ratio[k]/sum);return computeBearDamage({stats,ratio:r,totalTroops:Math.max(1,total)})};return{delta,infantry:scoreFor('infantry'),cavalry:scoreFor('cavalry'),archers:scoreFor('archers')}})},[ready,result,impactStats,joiners,total,ratio,impactTier,tg,impactHeroes])
  const currentPct=Object.fromEntries(TROOPS.map(t=>[t.key,Math.round(ratio[t.key]*100)])),optRatio=result?.optimalRatio||result?.ratio||ratio
  async function copyFormation(){if(!formationResult)return;try{await navigator.clipboard.writeText(buildBearChatMessage(formationResult));setCopied(true);setTimeout(()=>setCopied(false),1200)}catch{}}
  const kpis=[
-   {label:'Projected Impact',numeric:mean,format:fmt,accent:true},
-   {label:'Optimal Impact',numeric:optimal,format:fmt,accent:false},
+   {label:'Projected Damage',numeric:mean,format:fmt,accent:true},
+   {label:'Optimal Damage',numeric:optimal,format:fmt,accent:false},
    {label:'Efficiency',numeric:eff,format:v=>`${v.toFixed(2)}%`,accent:false},
    {label:'Potential Gain',numeric:gain,format:v=>`+${fmt(v)}`,accent:true},
    {label:'Current Formation',numeric:null,value:`${currentPct.infantry}/${currentPct.cavalry}/${currentPct.archers}`,accent:false},
@@ -270,7 +270,8 @@ export default function BearSuite(){
      <form onSubmit={e=>{e.preventDefault();if(formationReady)setFormationCalculated(true)}}>
        <TroopStats stats={formationStats} setStats={setFormationStats} heroes={formationHeroes} setHeroes={setFormationHeroes}/>
        <div className="mt-3 grid grid-cols-2 gap-3"><Select label="Troop Tier" value={formationTier} onChange={setFormationTier}><option>T1-T6</option><option>T7-T9</option><option>T10</option><option>T11</option></Select><Select label="True Gold" value={String(formationTg)} onChange={v=>setFormationTg(Number(v))}>{Array.from({length:9},(_,i)=><option key={i} value={i}>TG{i}</option>)}</Select></div>
-       <button type="submit" disabled={!formationReady} className="btn-primary btn-royal mt-4 w-full justify-center disabled:opacity-40"><Icon name="sparkles" size={15}/> Calculate Hunt Formation</button>
+       <p className="mt-2 text-[10px] text-parchment/40">Tier and True Gold are recorded on your report but don't move the split — the optimal ratio depends only on your Attack and Lethality bonuses.</p>
+      <button type="submit" disabled={!formationReady} className="btn-primary btn-royal mt-4 w-full justify-center disabled:opacity-40"><Icon name="sparkles" size={15}/> Calculate Hunt Formation</button>
      </form>
    </section>
    <section className="panel panel-glow p-5 md:p-6">
@@ -307,7 +308,7 @@ export default function BearSuite(){
        <div className="mt-4 grid gap-4 xl:grid-cols-[1.35fr_.65fr]"><Histogram mean={mean} optimal={optimal} sigma={Math.max(.001,sigma)}/><CompareBars current={mean} optimal={optimal}/></div>
        <div className="mt-4 grid gap-4 lg:grid-cols-2"><Sensitivity points={sensitivity} mean={mean}/><RangeChart p5={p5} mean={mean} p95={p95}/></div>
        <div className="mt-4 grid gap-4 lg:grid-cols-3"><Risk mean={mean} sigma={Math.max(.001,sigma)}/><Donut ratio={ratio} title="Current Formation" center="Current"/><Donut ratio={optRatio} title="Optimal Formation" center="Optimal"/></div>
-       <div className="mt-4 rounded-xl border border-amber-300/15 bg-amber-300/[.035] p-3 text-[11px] leading-relaxed text-amber-100/60">All dashboard visuals use the same live Hunt Impact result. The 10,000-hunt distribution is a modeled probability projection; absolute Bear damage calibration remains separate until validated.</div>
+       <div className="mt-4 rounded-xl border border-amber-300/15 bg-amber-300/[.035] p-3 text-[11px] leading-relaxed text-amber-100/60">All dashboard visuals use the same live Hunt Impact result. Damage is in Bear points, calibrated against the reference calculator's own damage plots — single-type rallies land within 2% of it, mixed splits within about 5%. The 10,000-hunt spread around that figure is still a modeled projection, not a measured one.</div>
      </>}
    </section>
  </div>}

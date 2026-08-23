@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
 <title>Kingdom 846 — Welcome Screen Gallery</title>
+<link rel="icon" type="image/png" href="../favicon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;800&family=Montserrat:wght@400;500;600;700&display=swap">
@@ -60,7 +61,17 @@
   .body{padding:14px 15px 15px;display:flex;flex-direction:column;gap:7px;flex:1}
   .name{font-family:Cinzel,Georgia,serif;font-weight:700;font-size:15px;line-height:1.25}
   .idx{color:var(--gold);font-weight:600;margin-right:.4em}
-  .desc{font-size:12px;line-height:1.6;color:var(--muted);margin:0;flex:1}
+  .desc{font-size:12px;line-height:1.6;color:var(--muted);margin:0}
+  /* What moves. The screenshot is a still, so this is the half of each set
+     it cannot show -- and it is where the nine actually differ. */
+  .motion{
+    font-size:11.5px;line-height:1.62;color:var(--faint);margin:0;flex:1;
+    padding-top:7px;border-top:1px solid rgba(217,180,74,.13);
+  }
+  .motion span{
+    display:block;font-size:9px;font-weight:700;letter-spacing:.16em;
+    text-transform:uppercase;color:var(--gold);margin-bottom:3px;opacity:.75;
+  }
   .row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:4px}
 
   .tag{
@@ -119,10 +130,14 @@
 
   <h2>Your revised sets <span style="font-weight:400;font-size:.72em;color:var(--gold)">· newest</span></h2>
   <p class="sub">
-    The nine you sent second. Same copy and the same eight-second sequence, but this is a later
-    build of the engine: <b style="color:var(--text)">Frozen Citadel has been dropped</b> and its
-    snowfall shader removed entirely, so the set is nine rather than ten. Each tile opens with the
-    switcher live, so you can flip between all nine inside one screen.
+    The nine you sent second. I diffed them against the first package line by line, and the two
+    are the same build: identical artwork, identical shader, identical sequence. The only change is
+    that <b style="color:var(--text)">Frozen Citadel has been dropped</b> — its theme, its button
+    and its whole snowfall shader are cut, sixty-two lines in total. So this is not a redesign to
+    compare against the first ten; it is the same ten with one removed, and the choice is nine.
+    What the revised zips <i>do</i> add is a written motion note per set, below — the half a
+    screenshot cannot show. Each tile opens with the switcher live, so you can flip between all
+    nine inside one screen.
   </p>
   <div class="grid" id="sets2"></div>
 
@@ -173,6 +188,20 @@ const BUILT = [
   },
 ];
 
+// What actually moves in each set, from the SCRIPT.md your revised zips carry.
+// A still cannot show this, and it is the part that separates them.
+const MOTION = {
+  sapphire: 'Blue god rays drift slowly; candle warmth flickers; floor haze breathes; dust moves at two depths; a near-imperceptible 40-second camera push.',
+  coronation: 'Aggressive fire flicker and localised warm bloom; rising heat shimmer; chandelier highlights breathe; smoke rolls across the staircase; embers rise from both braziers.',
+  moonlit: 'Clouds and mist drift on different vectors; moonlight shafts breathe; distant warmth twinkles; foreground dust creates depth; a cooler camera drift than the interior halls.',
+  embers: 'The strongest flame response in the collection; molten lines pulse; twin heat plumes distort the stone; dense embers rise; orange smoke breathes around the lion silhouettes.',
+  cathedral: 'The strongest volumetric-ray profile; pale dust rolls in slow layers; the marble reflection ripples subtly; candles barely flutter; exposure opens more softly than the fire halls.',
+  storm: 'A diagonal procedural rain layer; an intermittent double lightning pulse; cold mist rolls across wet stone; braziers flicker independently; reflections change with each flash.',
+  dragongate: 'Torch bloom runs across dragon scales; mist pours down the steps; heat distortion climbs both pillars; sparse sparks emphasise scale; the camera push feels like crossing the gate.',
+  warcamp: 'Numerous small fires shimmer independently; camp smoke crosses at three speeds; banners take subtle parallax; distant city lights twinkle; warm sunset shafts fade and return.',
+  celestial: 'Procedural blue-violet aurora ribbons; stars breathe at different rates; cloud mist rolls below the terrace; gold particles cross the foreground; the reflection warps slowly.',
+};
+
 const SETS = [
   ['sapphire',  'Sapphire Hall',   'The most balanced flagship. Regal, cold-blue authority with warm gold detail.'],
   ['coronation','Coronation Hall', 'Richest gold option; ceremonial, powerful and fire-lit.'],
@@ -191,7 +220,7 @@ const SETS2 = SETS.filter(([id]) => id !== 'frost');
 
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
-function card({ id, num, name, desc, href, tag, ghost }) {
+function card({ id, num, name, desc, motion, href, tag, ghost }) {
   const el = document.createElement('article');
   el.className = 'card';
   el.innerHTML =
@@ -203,6 +232,7 @@ function card({ id, num, name, desc, href, tag, ghost }) {
     '<div class="body">' +
       '<div class="name">' + (num ? '<span class="idx">' + num + '</span>' : '') + esc(name) + '</div>' +
       '<p class="desc">' + esc(desc) + '</p>' +
+      (motion ? '<p class="motion"><span>Motion</span>' + esc(motion) + '</p>' : '') +
       '<div class="row">' +
         (tag ? '<span class="tag ' + tag.cls + '">' + esc(tag.text) + '</span>' : '') +
         '<a class="open' + (ghost ? ' ghost' : '') + '" href="' + href + '" target="_blank" rel="noopener">Open full screen</a>' +
@@ -220,7 +250,7 @@ BUILT.forEach((b) => built.appendChild(card({
 
 const sets2 = document.getElementById('sets2');
 SETS2.forEach(([id, name, desc], i) => sets2.appendChild(card({
-  id: 'v2-' + id, name, desc,
+  id: 'v2-' + id, name, desc, motion: MOTION[id],
   num: String(i + 1).padStart(2, '0'),
   href: '../royal-welcome-2/index.html?preview=1&theme=' + id,
 })));

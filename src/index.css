@@ -2006,3 +2006,68 @@ select.royal-select option {
 
 /* ---- Selection ----------------------------------------------------------- */
 ::selection { background: rgba(212,175,55,.30); color: #FFF6DA }
+
+/* ---- The rail ------------------------------------------------------------ */
+/* The sidebar is on screen for every second of every visit, so leaving it as a
+   flat panel with a hairline undercut everything else. */
+.royal-rail {
+  background:
+    linear-gradient(180deg, rgba(24,29,52,.96) 0%, rgba(17,21,40,.97) 42%, rgba(21,26,47,.96) 100%);
+}
+.royal-rail-edge {
+  position: absolute; top: 0; right: 0; bottom: 0; width: 2px;
+  background: linear-gradient(180deg,
+    transparent 0%, rgba(212,175,55,.20) 12%, rgba(255,246,218,.55) 46%,
+    rgba(212,175,55,.28) 72%, transparent 100%);
+}
+/* The watermark. object-position keeps the crown in view when the rail is
+   short, and the opacity is low enough that it never competes with a label. */
+.royal-rail-mark {
+  position: absolute; left: 50%; bottom: 8%;
+  width: 190px; height: 190px; translate: -50% 0;
+  background: url('./assets/crest-846.png') center/contain no-repeat;
+  opacity: .045;
+  animation: rail-mark-breathe 14s ease-in-out infinite;
+}
+@keyframes rail-mark-breathe { 0%,100% { opacity: .035; scale: 1 } 50% { opacity: .07; scale: 1.04 } }
+
+/* Nav items: a gilt marker that grows from the centre of the left edge on the
+   active item, rather than a hard 2px inset bar that reads as a scrollbar. */
+.nav-item.active {
+  background: linear-gradient(90deg, rgba(212,175,55,.18), rgba(212,175,55,.04) 55%, transparent);
+  box-shadow: none;
+}
+.nav-item.active::after {
+  content: ""; position: absolute; left: 0; top: 50%; translate: 0 -50%;
+  width: 3px; height: 62%; border-radius: 0 3px 3px 0;
+  background: linear-gradient(180deg, rgba(243,232,204,.35), #E8C766 45%, #D4AF37 70%, rgba(156,122,36,.5));
+  box-shadow: 0 0 10px rgba(232,199,102,.55);
+  animation: nav-mark-in .5s cubic-bezier(.2,1.3,.3,1) both;
+}
+@keyframes nav-mark-in { from { height: 0; opacity: 0 } to { height: 62%; opacity: 1 } }
+.nav-item { transition: color .3s ease, transform .3s cubic-bezier(.16,1,.3,1); }
+.nav-item:hover { transform: translateX(2px); }
+
+/* ---- The header ---------------------------------------------------------- */
+/* Same treatment along the bottom edge, so the content sits inside a frame
+   rather than under a line. */
+.royal-header { position: relative; }
+.royal-header::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px;
+  background: linear-gradient(90deg,
+    transparent 0%, rgba(212,175,55,.22) 10%, rgba(255,246,218,.5) 50%,
+    rgba(212,175,55,.22) 90%, transparent 100%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .royal-rail-mark { animation: none !important }
+  .nav-item.active::after { animation: none !important }
+  .nav-item:hover { transform: none !important }
+}
+
+/* Corner fleurons were tried here and removed. The ornament drew correctly --
+   the SVG decodes, the pseudo carries it -- but .panel-glow::after is inset
+   6px and every real panel puts a badge or a heading in exactly that corner,
+   so the flourish came out half-covered. Half-hidden ornament reads as a
+   rendering bug rather than as luxury, and the gilt ring already carries the
+   material at the panel edge. */

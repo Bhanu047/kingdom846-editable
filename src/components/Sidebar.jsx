@@ -27,10 +27,16 @@ export default function Sidebar({ active, onNavigate, onLogin, onSignOut, user, 
   }
 
   return (
-    <aside className="flex h-full w-64 flex-col border-r border-gold/15 bg-ink-2/90 relative overflow-hidden">
+    <aside className="royal-rail flex h-full w-64 flex-col relative overflow-hidden">
       <div className="absolute top-0 left-0 right-0 h-32 bg-gradient-to-b from-gold/8 to-transparent pointer-events-none" />
       <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-gold/5 to-transparent pointer-events-none" />
-      <div className="absolute top-0 right-0 bottom-0 w-px bg-gradient-to-b from-transparent via-gold/15 to-transparent pointer-events-none" />
+      {/* The rail sat next to the content with a plain hairline. A gilt edge
+          with a bright waist reads as the spine of a bound volume, which is
+          what the rest of the chrome is now dressed as. */}
+      <div className="royal-rail-edge pointer-events-none" />
+      {/* The crest, very faint and very large, so the empty stretch below the
+          nav is a watermark rather than a void. */}
+      <div className="royal-rail-mark pointer-events-none" aria-hidden="true" />
 
       <div className="relative z-10 flex items-center gap-3 px-3.5 py-4">
         <div className="relative grid h-[70px] w-[70px] shrink-0 place-items-center">

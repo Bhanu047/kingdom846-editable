@@ -4,7 +4,8 @@ import Icon from '../components/Icon'
 import { smoothPath, useReveal } from '../lib/chartAnim'
 import { kingdom } from '../data/kingdom'
 import { tracker846 } from '../data/tracker846'
-import { hallImage } from '../data/realmArt'
+import { realmImage } from '../data/realmArt'
+import AtlasAnalytics from '../components/AtlasAnalytics'
 
 const latestKvk = { ...tracker846.kvk.latest, current: true }
 
@@ -119,7 +120,7 @@ export default function About() {
       <Panel glow className="relative overflow-hidden p-0 gold-corners">
         <div>
           <div className="relative h-60 overflow-hidden md:h-80">
-            <ArtImage src={hallImage} alt="The great hall of Kingdom 846" className="h-full w-full hall-breathe" />
+            <ArtImage src={realmImage} alt="Kingdom 846 at first light" className="h-full w-full hall-breathe" />
             <div className="hero-grade absolute inset-0" aria-hidden="true" />
             <div className="hero-bloom" aria-hidden="true" />
             <div className="hero-rake absolute inset-0" aria-hidden="true" />
@@ -226,6 +227,19 @@ export default function About() {
           </Panel>
           <RatingEvolution />
         </div>
+      </div>
+
+      {/* The Atlas profile, rebuilt here rather than only linked. */}
+      <div>
+        <div className="mb-4">
+          <div className="eyebrow text-gold/70">Kingdom Atlas</div>
+          <h2 className="mt-1 font-display text-2xl font-bold text-parchment">Standing &amp; Analytics</h2>
+          <p className="mt-1 max-w-3xl text-xs leading-relaxed text-parchment/50">
+            The kingdom&apos;s Atlas profile — score components, the six performance metrics, how the
+            record has trended, and what the next KvK does to it.
+          </p>
+        </div>
+        <AtlasAnalytics />
       </div>
 
       <Panel glow>

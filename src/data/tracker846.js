@@ -8,6 +8,31 @@ export const tracker846 = {
   atlas: {
     score: 66.38,
     rank: 33,
+    // "Ranks better than 98% of all kingdoms", per the Atlas profile.
+    percentile: 98,
+    tierThreshold: 57,
+    // The only step of the score/rank history the profile actually publishes
+    // as a figure. The rest of the curve is drawn on their page but not given
+    // numerically, so we plot this step and say so rather than inventing it.
+    lastMove: { fromKvk: 16, toKvk: 17, score: 5.47, ranks: 33 },
+    // Atlas labels its own decomposition approximate; these five sum to 66.37
+    // against a published 66.38, which is the rounding that label refers to.
+    breakdown: [
+      { key: 'base',    label: 'Base Score', note: 'win rates', pts: 47.93 },
+      { key: 'dominv',  label: 'Dom / Inv',  note: 'impact',    pts: 4.55 },
+      { key: 'form',    label: 'Form',       note: 'last 5',    pts: 6.61 },
+      { key: 'streaks', label: 'Streaks',    note: 'bonus',     pts: 3.61 },
+      { key: 'history', label: 'History',    note: 'bonus',     pts: 3.67 },
+    ],
+    experiencePenalty: false,
+    radar: [
+      { label: 'Win Rate',   value: 82 },
+      { label: 'Domination', value: 73 },
+      { label: 'Form',       value: 83 },
+      { label: 'Streaks',    value: 100 },
+      { label: 'Experience', value: 100 },
+      { label: 'Resilience', value: 91 },
+    ],
   },
   kvk: {
     total: 11,

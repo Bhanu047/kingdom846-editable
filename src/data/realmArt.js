@@ -19,3 +19,9 @@ export const REALM_HALLS = [
 ]
 
 export const hallImage = `./assets/hall-${REALM_THEME}.webp`
+
+// The realm itself, for the About page. Deliberately NOT the hall: the hall is
+// the room you walk into (entrance and home hero), while About Kingdom is about
+// the kingdom, so it gets the kingdom. This plate was already in the repo,
+// unused, at 2.6MB of PNG; it is now a 253KB WebP.
+export const realmImage = './assets/kingdom-realm.webp'

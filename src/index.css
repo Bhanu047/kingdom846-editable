@@ -2071,3 +2071,108 @@ select.royal-select option {
    so the flourish came out half-covered. Half-hidden ornament reads as a
    rendering bug rather than as luxury, and the gilt ring already carries the
    material at the panel edge. */
+
+/* ============================================================================
+   SCROLL CHOREOGRAPHY + PAGE TRANSITIONS + DISPLAY SCALE
+   ----------------------------------------------------------------------------
+   The single reason the earlier passes read as "no change": everything they
+   touched was a surface treatment. Borders, shadows and 7-degree tilts are
+   refinements -- you have to be looking for them. What actually registers is
+   the page BEHAVING differently: content that performs as you scroll, routes
+   that change with intent, and type at a scale you cannot miss.
+   ========================================================================= */
+
+/* ---- Scroll reveal ------------------------------------------------------- */
+/* Driven by IntersectionObserver (src/lib/reveal.js), not animation-timeline:
+   the old rule was behind @supports and never applied on most browsers. */
+.will-reveal {
+  opacity: 0;
+  transform: translateY(30px) scale(.985);
+  transition:
+    opacity .8s cubic-bezier(.16,1,.3,1),
+    transform .95s cubic-bezier(.22,1,.28,1);
+}
+.will-reveal.is-in { opacity: 1; transform: none; }
+
+/* Children of a revealed block cascade rather than arriving as one slab. The
+   delay is applied to the container's direct children, so it needs no per-item
+   markup. Capped at 8 -- past that a stagger stops reading as choreography and
+   starts reading as lag. */
+.will-reveal.is-in > * { animation: rev-child .7s cubic-bezier(.2,1,.3,1) both; }
+.will-reveal.is-in > :nth-child(1) { animation-delay: .04s }
+.will-reveal.is-in > :nth-child(2) { animation-delay: .10s }
+.will-reveal.is-in > :nth-child(3) { animation-delay: .16s }
+.will-reveal.is-in > :nth-child(4) { animation-delay: .22s }
+.will-reveal.is-in > :nth-child(5) { animation-delay: .28s }
+.will-reveal.is-in > :nth-child(6) { animation-delay: .33s }
+.will-reveal.is-in > :nth-child(7) { animation-delay: .37s }
+.will-reveal.is-in > :nth-child(n+8) { animation-delay: .40s }
+@keyframes rev-child { from { opacity: 0; transform: translateY(14px) } to { opacity: 1; transform: none } }
+
+/* An export has no viewport and no scroll, so nothing would ever reveal and
+   every cloned block would rasterise at its hidden start state. */
+.kv-live .will-reveal, .k846-v2 .will-reveal,
+.kv-live [class*="will-reveal"], .k846-v2 [class*="will-reveal"] {
+  opacity: 1 !important; transform: none !important; transition: none !important;
+}
+.kv-live .will-reveal > *, .k846-v2 .will-reveal > * { animation: none !important; opacity: 1 !important; transform: none !important }
+
+/* ---- Page transition ----------------------------------------------------- */
+/* A route change used to be a 0.45s fade -- indistinguishable from a repaint.
+   Now the outgoing view drops away, a gilt edge sweeps the content area, and
+   the incoming view rises through it. */
+.page-enter {
+  animation: page-rise .72s cubic-bezier(.16,1,.3,1) both;
+  position: relative;
+}
+@keyframes page-rise {
+  from { opacity: 0; transform: translateY(26px) scale(.992); filter: saturate(.7) }
+  to   { opacity: 1; transform: none;                          filter: none }
+}
+.page-enter::before {
+  content: ""; position: absolute; left: -4vw; right: -4vw; top: -2vh; height: 2px;
+  pointer-events: none; z-index: 40;
+  background: linear-gradient(90deg, transparent, rgba(212,175,55,.5) 18%, #FFF6DA 50%, rgba(212,175,55,.5) 82%, transparent);
+  animation: page-sweep .95s cubic-bezier(.62,.02,.2,1) both;
+}
+@keyframes page-sweep {
+  0%   { opacity: 0; transform: scaleX(.1) }
+  22%  { opacity: 1 }
+  100% { opacity: 0; transform: scaleX(1.05) translateY(42vh) }
+}
+
+/* ---- Display scale ------------------------------------------------------- */
+/* Headings were set at Tailwind's text-2xl/3xl -- correct for an admin tool,
+   timid for a royal portal. These are the sizes that make a page feel
+   commissioned rather than assembled. Fluid, so they never overflow a phone. */
+.page-enter h1,
+.page-enter .display-1 {
+  font-size: clamp(2.1rem, 5.2vw, 3.9rem);
+  line-height: 1.02;
+  letter-spacing: -.005em;
+  text-wrap: balance;
+}
+.page-enter h2,
+.page-enter .display-2 {
+  font-size: clamp(1.5rem, 3vw, 2.35rem);
+  line-height: 1.1;
+  text-wrap: balance;
+}
+/* Eyebrows carry the formality: wide tracking is what reads as engraved. */
+.eyebrow {
+  letter-spacing: .30em !important;
+  text-transform: uppercase;
+}
+/* Body copy given room. Long lines in a dark theme are what make a page tiring. */
+.page-enter p { line-height: 1.72; }
+
+/* Suite pages keep their own tighter rhythm -- they are dense tools, and a
+   3.9rem heading over a form field is comedy, not grandeur. */
+[data-suite] h1, [data-suite] h2 { font-size: revert; line-height: revert; }
+
+@media (prefers-reduced-motion: reduce) {
+  .will-reveal { opacity: 1 !important; transform: none !important; transition: none !important }
+  .will-reveal.is-in > * { animation: none !important }
+  .page-enter { animation: none !important }
+  .page-enter::before { display: none }
+}

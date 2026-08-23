@@ -103,9 +103,10 @@
     <h1>Welcome Screen Gallery</h1>
     <p class="lede">
       Every entrance built or supplied so far, in one place — <b>four</b> from earlier in this
-      project and <b>ten</b> from the sets you sent. Nothing here is live. The site still opens on
-      <b>The Approach</b> until you pick. Open any of them full screen, tell me which one you want and
-      what you want changed about it, and I will edit it before it goes anywhere near the entrance.
+      project, the <b>ten</b> from your first package, and the <b>nine</b> from your revised one.
+      Nothing here is live. The site still opens on <b>The Approach</b> until you pick. Open any of
+      them full screen, tell me which one you want and what you want changed about it, and I will
+      edit it before it goes anywhere near the entrance.
     </p>
   </header>
 
@@ -116,12 +117,20 @@
   </p>
   <div class="grid" id="built"></div>
 
-  <h2>The ten sets you supplied</h2>
+  <h2>Your revised sets <span style="font-weight:400;font-size:.72em;color:var(--gold)">· newest</span></h2>
   <p class="sub">
-    All ten share your copy exactly — ONE CROWN · FOUR ALLIANCES / KINGDOM 846 /
-    Where legends are forged in fire and crowned in gold / ENTER THE REALM — and the same
-    eight-second cinematic sequence. What differs is the room, its light and its live motion.
-    Each opens with the theme switcher on, so you can flip between all ten without coming back here.
+    The nine you sent second. Same copy and the same eight-second sequence, but this is a later
+    build of the engine: <b style="color:var(--text)">Frozen Citadel has been dropped</b> and its
+    snowfall shader removed entirely, so the set is nine rather than ten. Each tile opens with the
+    switcher live, so you can flip between all nine inside one screen.
+  </p>
+  <div class="grid" id="sets2"></div>
+
+  <h2>Your first package <span style="font-weight:400;font-size:.72em;color:var(--faint)">· superseded</span></h2>
+  <p class="sub">
+    The original ten, kept so nothing is lost — this is the only place Frozen Citadel still exists.
+    All ten share your copy exactly: ONE CROWN · FOUR ALLIANCES / KINGDOM 846 /
+    Where legends are forged in fire and crowned in gold / ENTER THE REALM.
   </p>
   <div class="grid" id="sets"></div>
 
@@ -177,6 +186,9 @@ const SETS = [
   ['frost',     'Frozen Citadel',  'Cold, regal and untouchable; a kingdom that endures the deepest winter. Adds layered snowfall.'],
 ];
 
+// The revised package. Same nine names as the first, minus Frozen Citadel.
+const SETS2 = SETS.filter(([id]) => id !== 'frost');
+
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
 function card({ id, num, name, desc, href, tag, ghost }) {
@@ -206,9 +218,16 @@ BUILT.forEach((b) => built.appendChild(card({
   ghost: b.tag && b.tag.cls === 'rejected',
 })));
 
+const sets2 = document.getElementById('sets2');
+SETS2.forEach(([id, name, desc], i) => sets2.appendChild(card({
+  id: 'v2-' + id, name, desc,
+  num: String(i + 1).padStart(2, '0'),
+  href: '../royal-welcome-2/index.html?preview=1&theme=' + id,
+})));
+
 const sets = document.getElementById('sets');
 SETS.forEach(([id, name, desc], i) => sets.appendChild(card({
-  id, name, desc,
+  id, name, desc, ghost: true,
   num: String(i + 1).padStart(2, '0'),
   href: '../royal-welcome/index.html?preview=1&theme=' + id,
 })));

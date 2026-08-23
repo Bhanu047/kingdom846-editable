@@ -3,6 +3,7 @@ import { Panel, Pill } from '../components/ui'
 import { Modal } from '../components/RosterPending'
 import Icon from '../components/Icon'
 import { apiJson } from '../lib/api'
+import PageHeader from '../components/PageHeader'
 
 function toneFor(c) {
   return { EVENT: 'gold', UPDATE: 'blue', PVP: 'red', FEATURE: 'muted', ANNOUNCEMENT: 'blue', GUIDE: 'gold' }[c] || 'muted'
@@ -24,20 +25,18 @@ export default function News() {
   return (
     <div className="space-y-4">
       {/* Hero banner */}
-      <Panel glow className="hero-frame relative overflow-hidden p-0">
-        <div className="relative h-36 sm:h-44">
-          <img src="./assets/hero-news.webp" alt="News" className="h-full w-full object-cover" />
-          <div className="hero-overlay absolute inset-0" />
-          <div className="absolute inset-y-0 left-0 flex flex-col justify-center p-6">
-            <div className="eyebrow">Kingdom Chronicle</div>
-            <h1 className="mt-1 font-display text-2xl sm:text-3xl font-bold gradient-gold">News & Dispatches</h1>
-            <p className="mt-1 text-sm text-parchment/50">
-              {synced?.synced_at && <span>Last synced: {new Date(synced.synced_at + 'Z').toLocaleString()}</span>}
-              {loading && <span className="text-gold/50"> Loading...</span>}
-            </p>
-          </div>
-        </div>
-      </Panel>
+      <PageHeader
+        eyebrow="Kingdom Chronicle"
+        title="News &amp; Dispatches"
+        subtitle="Dispatches from the realm, synced from the Kingshot wiki."
+        art="./assets/hero-news.webp"
+        alt="News"
+      >
+        <p className="mt-2 text-xs text-parchment/45">
+          {synced?.synced_at && <span>Last synced: {new Date(synced.synced_at + 'Z').toLocaleString()}</span>}
+          {loading && <span className="text-gold/50"> Loading…</span>}
+        </p>
+      </PageHeader>
 
       <div className="space-y-4">
         {allNews.map((n, i) => (

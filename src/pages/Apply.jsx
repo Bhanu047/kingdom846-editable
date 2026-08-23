@@ -1,5 +1,6 @@
 import { Panel } from '../components/ui'
 import Icon from '../components/Icon'
+import PageHeader from '../components/PageHeader'
 
 const SHEET_LINK = 'https://docs.google.com/spreadsheets/d/1S7YMhrjHGftb2vovfAahrxpbZsplo6M0I2f89NZiWHA/edit?usp=sharing'
 
@@ -25,17 +26,13 @@ export default function Apply({ type, onNavigate }) {
   if (!form) {
     return (
       <div className="space-y-4">
-        <Panel glow className="hero-frame relative overflow-hidden p-0">
-          <div className="relative h-40 sm:h-48">
-            <img src="./assets/hero-apply-chief.webp" alt="Apply" className="h-full w-full object-cover" />
-            <div className="hero-overlay absolute inset-0" />
-            <div className="absolute inset-y-0 left-0 flex flex-col justify-center p-6 md:p-10">
-              <div className="eyebrow">Kingdom 846 leadership</div>
-              <h1 className="mt-1 font-display text-2xl sm:text-3xl font-bold gradient-gold">Apply for a Role</h1>
-              <p className="mt-1 text-sm text-parchment/60">Choose a position to begin your reservation.</p>
-            </div>
-          </div>
-        </Panel>
+        <PageHeader
+          eyebrow="Kingdom 846 Leadership"
+          title="Apply for a Role"
+          subtitle="Choose a position to begin your reservation."
+          art="./assets/hero-apply-chief.webp"
+          alt="Apply"
+        />
         <div className="grid gap-4 sm:grid-cols-2">
           <button onClick={() => onNavigate('apply-chief')} className="panel lift-glow gold-border-hover img-zoom group relative overflow-hidden text-left stagger-in flex flex-col">
             <div className="relative h-32 overflow-hidden">
@@ -66,16 +63,14 @@ export default function Apply({ type, onNavigate }) {
 
   return (
     <div className="space-y-4">
-      <Panel glow className="hero-frame gold-corners relative overflow-hidden p-0">
-        <div className="relative h-36 sm:h-44">
-          <img src={form.art} alt={form.title} className="h-full w-full object-cover" />
-          <div className="hero-overlay absolute inset-0" />
-          <div className="absolute inset-y-0 left-0 flex flex-col justify-center p-6">
-            <button onClick={() => onNavigate('apply')} className="text-xs text-gold/70 hover:text-gold mb-1">← Back to roles</button>
-            <h1 className="font-display text-xl sm:text-2xl font-bold gradient-gold">{form.title}</h1>
-          </div>
-        </div>
-      </Panel>
+      <PageHeader
+        eyebrow="Kingdom 846 Leadership"
+        title={form.title}
+        subtitle="Complete the form below to reserve this position."
+        art={form.art}
+        alt={form.title}
+        action={<button onClick={() => onNavigate('apply')} className="btn-secondary btn-sm">← Back to roles</button>}
+      />
 
       {/* Role info cards */}
       <div className="grid gap-3 sm:grid-cols-3">

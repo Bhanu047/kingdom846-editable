@@ -4,6 +4,7 @@ import Icon from '../components/Icon'
 import { apiJson } from '../lib/api'
 import { useSiteData } from '../context/SiteDataContext'
 import { BANNERS } from '../data/kingdom'
+import PageHeader from '../components/PageHeader'
 
 const PODIUM = {
   1: { grad: 'from-gold/25 via-amber-500/10 to-transparent', ring: 'ring-gold/60', badge: 'bg-gradient-to-b from-gold-bright to-gold text-ink shadow-[0_0_18px_-2px_rgba(212,175,55,.6)]', crown: true, label: 'text-gold' },
@@ -39,17 +40,13 @@ export default function Rankings() {
 
   return (
     <div className="space-y-6">
-      <Panel glow className="relative overflow-hidden p-0 gold-corners">
-        <div className="relative h-40 hero-shimmer">
-          <img src="./assets/hero-rankings.webp" alt="Commander Rankings" className="h-full w-full drift-slow object-cover" loading="lazy" />
-          <div className="absolute inset-0 bg-gradient-to-r from-ink via-ink/80 to-ink/20" />
-          <div className="absolute inset-y-0 left-0 flex flex-col justify-center p-6 md:p-10">
-            <div className="eyebrow text-glow">Hall of Legends</div>
-            <h1 className="gradient-gold glow-pulse mt-1 font-display text-3xl font-bold md:text-4xl">Commander Rankings</h1>
-            <p className="mt-1 text-sm text-parchment/60">Position and name — the kingdom's elite.</p>
-          </div>
-        </div>
-      </Panel>
+      <PageHeader
+        eyebrow="Hall of Legends"
+        title="Commander Rankings"
+        subtitle="Position and name — the kingdom's elite."
+        art="./assets/hero-rankings.webp"
+        alt="Commander Rankings"
+      />
 
       <Panel className="p-3 sm:p-4">
         {source === 'live' && <div className="mb-2 rounded-md border border-emerald-500/20 bg-emerald-500/5 px-3 py-1.5 text-[11px] text-emerald-300">Live roster — synced from alliance leader uploads.</div>}

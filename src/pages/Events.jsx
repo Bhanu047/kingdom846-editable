@@ -3,6 +3,7 @@ import { Panel, Pill, ArtImage, ArtCard } from '../components/ui'
 import { RoyalSectionHeader } from '../components/VisualElements'
 import { timeline, countdownTo, hasPassed } from '../data/kingdom'
 import { useSiteData } from '../context/SiteDataContext'
+import PageHeader from '../components/PageHeader'
 
 // Re-render every second so all countdowns tick live (no manual refresh needed)
 function useNow() {
@@ -67,17 +68,13 @@ export default function Events() {
   const rest = upcoming.filter((e) => !e.featured)
   return (
     <div className="space-y-6">
-      <Panel glow className="relative overflow-hidden p-0 gold-corners">
-        <div className="relative h-48 hero-shimmer">
-          <ArtImage src="./assets/hero-events.webp" alt="Castle battle" className="h-full w-full drift-slow" />
-          <div className="hero-overlay absolute inset-0" />
-          <div className="absolute inset-0 flex flex-col justify-center p-6 md:p-10">
-            <div className="eyebrow text-glow">War Calendar</div>
-            <h1 className="mt-1 font-display text-3xl font-bold gradient-gold glow-pulse drop-shadow-lg">Upcoming Events</h1>
-            <p className="mt-2 max-w-lg text-sm text-parchment/70">Kingdom milestone schedule with live countdowns for upcoming events.</p>
-          </div>
-        </div>
-      </Panel>
+      <PageHeader
+        eyebrow="War Calendar"
+        title="Upcoming Events"
+        subtitle="Kingdom milestone schedule with live countdowns for upcoming events."
+        art="./assets/hero-events.webp"
+        alt="Castle battle"
+      />
 
       {featured.length > 0 && (
         <div className="grid gap-5 md:grid-cols-3">

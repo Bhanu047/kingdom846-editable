@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { Panel, Pill, ArtImage } from '../components/ui'
+import { Panel, Pill } from '../components/ui'
 import Icon from '../components/Icon'
 import { timeline, countdownTo, kingdom, hasPassed } from '../data/kingdom'
+import PageHeader from '../components/PageHeader'
 
 const catTone = {
   Heroes: 'gold', Pets: 'green', Truegold: 'blue', Feature: 'muted', PvP: 'red', Anniversary: 'gold'
@@ -32,23 +33,20 @@ export default function Timeline() {
   return (
     <div className="space-y-6">
       {next && (
-        <Panel glow className="relative overflow-hidden p-0 gold-corners">
-          <div className="relative h-56 overflow-hidden md:h-72">
-            <ArtImage src={timelineArt(next)} alt={next.name} className="h-full w-full drift-slow" />
-            <div className="absolute inset-0 bg-gradient-to-r from-ink via-ink/75 to-ink/10" />
-            <div className="absolute inset-0" style={{ background: 'radial-gradient(circle at 70% 45%, rgba(212,175,55,.12), transparent 40%)' }} />
-            <div className="absolute inset-y-0 left-0 flex max-w-2xl flex-col justify-center p-6 md:p-10">
-              <div className="eyebrow text-gold-bright">Next Milestone</div>
-              <h1 className="mt-1 font-display text-3xl font-bold text-parchment drop-shadow-lg md:text-4xl">{next.name}</h1>
-              <div className="mt-1 text-sm text-gold-bright/90">{new Date(next.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</div>
-              <div className="mt-4 flex gap-2">
-                <Count label="Days" value={countdownTo(next.date).days} />
-                <Count label="Hours" value={countdownTo(next.date).hours} />
-                <Count label="Mins" value={countdownTo(next.date).mins} />
-              </div>
-            </div>
+        <PageHeader
+          tall
+          eyebrow="Next Milestone"
+          title={next.name}
+          subtitle={new Date(next.date + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+          art={timelineArt(next)}
+          alt={next.name}
+        >
+          <div className="mt-4 flex gap-2">
+            <Count label="Days" value={countdownTo(next.date).days} />
+            <Count label="Hours" value={countdownTo(next.date).hours} />
+            <Count label="Mins" value={countdownTo(next.date).mins} />
           </div>
-        </Panel>
+        </PageHeader>
       )}
 
       <Panel>

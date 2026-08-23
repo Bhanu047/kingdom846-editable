@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { Panel, Pill } from '../components/ui'
-import { RoyalSectionHeader } from '../components/VisualElements'
 import { apiJson } from '../lib/api'
 import Icon from '../components/Icon'
+import PageHeader from '../components/PageHeader'
 
 export default function Guides() {
   const [activeId, setActiveId] = useState(null)
@@ -30,20 +30,12 @@ export default function Guides() {
 
   return (
     <div className="space-y-4">
-      <Panel glow className="gold-corners relative overflow-hidden">
-        {/* opacity-25 with no scrim: the figure in this plate was invisible and
-            the header sat on whatever light happened to be behind it. */}
-        <div className="absolute inset-0 z-0">
-          <img src="./assets/hero-guides.webp" alt="" className="h-full w-full object-cover" loading="lazy" />
-        </div>
-        <div className="hero-overlay pointer-events-none absolute inset-0 z-0" />
-        <div className="relative z-10 max-w-2xl">
-          <RoyalSectionHeader icon="book" eyebrow="Knowledge Base" title="Strategy & Guides" />
-          <p className="text-sm text-parchment/80 text-glow">
-            Auto-synced from Kingshot Wiki · {filteredGuides.length} guides available
-          </p>
-        </div>
-      </Panel>
+      <PageHeader
+        eyebrow="Knowledge Base"
+        title="Strategy &amp; Guides"
+        subtitle={`Auto-synced from the Kingshot wiki · ${filteredGuides.length} guides available.`}
+        art="./assets/hero-guides.webp"
+      />
 
       <div className="royal-divider"><span className="royal-divider-icon">◆</span></div>
 

@@ -1,10 +1,10 @@
 import { useState } from 'react'
-import { Panel, ArtImage } from '../components/ui'
+import { ArtImage } from '../components/ui'
 import Icon from '../components/Icon'
-import { Embers } from '../components/Embers'
 import { Modal } from '../components/RosterPending'
 import { useSiteData } from '../context/SiteDataContext'
 import { buildSchedule } from '../data/kingdom'
+import PageHeader from '../components/PageHeader'
 
 const colorMap = {
   gold: { ring: 'ring-gold/40', text: 'text-gold', bg: 'bg-gold/10', grad: 'from-gold/30 to-gold/5' },
@@ -26,15 +26,12 @@ export default function Alliances() {
 
   return (
     <div className="space-y-6">
-      <Panel glow className="aurora-border gold-corners relative overflow-hidden">
-        {/* The artwork used to sit at opacity-30 with nothing over it. That is
-            the worst of both: the scene is too faint to read as a picture, and
-            the copy still has bright candlelight behind it. Full opacity plus a
-            directional scrim gives the artwork back AND makes the copy land. */}
-        <div className="absolute inset-0 z-0"><img src="./assets/hero-council.webp" alt="" className="h-full w-full object-cover" loading="lazy" /></div>
-        <div className="hero-overlay pointer-events-none absolute inset-0 z-0" />
-        <div className="relative z-10 max-w-2xl"><Embers count={10} /><div className="eyebrow text-glow">The Council</div><h1 className="mt-1 font-display text-3xl font-bold gradient-gold glow-pulse">Alliances of 846</h1><p className="mt-2 text-sm text-parchment/80 text-glow">The four pillars of Kingdom 846 — the alliances and the council that hold the realm together.</p></div>
-      </Panel>
+      <PageHeader
+        eyebrow="The Council"
+        title="Alliances of 846"
+        subtitle="The four pillars of Kingdom 846 — the alliances and the council that hold the realm together."
+        art="./assets/hero-council.webp"
+      />
 
       <div className="grid gap-4 lg:grid-cols-2">
         {alliances.map((a) => {

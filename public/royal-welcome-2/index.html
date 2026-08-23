@@ -112,7 +112,7 @@ body.nogl #bg{display:none;}
 .play .eyebrow{animation:eyebrowIn 1.1s cubic-bezier(.22,.61,.36,1) 4.0s forwards;}
 @keyframes eyebrowIn{from{opacity:0;letter-spacing:.18em;filter:blur(5px)}to{opacity:.95;letter-spacing:.40em;filter:blur(0)}}
 
-.crest-stack{position:relative;display:flex;flex-direction:column;align-items:center;}
+.crest-stack{position:relative;display:flex;flex-direction:column;align-items:center;min-height:0;}
 .crest-wrap{position:relative;height:var(--crest-h);aspect-ratio:1024/1536;
   opacity:0;transform:translateY(34px) scale(.86);filter:blur(20px);will-change:opacity,transform,filter;}
 .play .crest-wrap{animation:crestIn 1.7s cubic-bezier(.16,.74,.22,1) 2.4s forwards, crestFloat 8s ease-in-out 4.4s infinite;}
@@ -146,7 +146,13 @@ body.nogl #bg{display:none;}
 
 .halo{position:absolute;left:50%;top:50%;width:190%;height:135%;transform:translate(-50%,-50%);opacity:0;pointer-events:none;
   background:radial-gradient(closest-side, rgba(var(--acc),.20), rgba(var(--acc),0) 70%),
-             radial-gradient(closest-side, rgba(var(--acc2),.14), rgba(var(--acc2),0) 62%);}
+             radial-gradient(closest-side, rgba(var(--acc2),.14), rgba(var(--acc2),0) 62%),
+             /* On a dark hall the crest reads on its own. Over War Camp's burning
+                sunset, or Cathedral's blown-out windows, gold filigree on a bright
+                sky loses its edges and the crest goes half-transparent. This is a
+                pool of shade behind it -- ground for it to stand on. Zero on the
+                dark halls, where it would only be a smudge. */
+             radial-gradient(42% 34% at 50% 48%, rgba(3,6,12,var(--crest-shade,0)), rgba(3,6,12,0) 72%);}
 .play .halo{animation:fadeIn 2.2s ease-out 3.1s forwards, haloPulse 7s ease-in-out 5.4s infinite;}
 @keyframes haloPulse{0%,100%{opacity:1}50%{opacity:.55}}
 
@@ -216,11 +222,17 @@ body[data-theme="cathedral"] .play .title span{animation:letterBloom 1.2s ease-o
 
 /* Storm Fortress -- dramatic. The crest is revealed by the strike, and the
    letters snap in hard rather than easing. */
+/* This used to drop the crest to .35 opacity and back up twice while arriving.
+   Intended as a lightning stutter; it read as an image failing to load, which
+   is the "looks funny" -- a badge blinking is a broken badge, not weather.
+   The strike now happens ONCE: the crest is blown out by the flash and cools
+   into place. Opacity never goes backwards. */
 body[data-theme="storm"] .play .crest-wrap{
-  animation:crestStrike 1.5s cubic-bezier(.14,.86,.2,1) 2.4s forwards, crestFloat 8s ease-in-out 4.4s infinite;}
-@keyframes crestStrike{0%{opacity:0;transform:scale(1.04);filter:blur(20px) brightness(3)}
-  12%{opacity:1;filter:blur(2px) brightness(2.6)}22%{opacity:.35;filter:blur(6px) brightness(1)}
-  34%{opacity:1;filter:blur(0) brightness(2)}48%{opacity:.8}
+  animation:crestStrike 1.6s cubic-bezier(.12,.85,.2,1) 2.4s forwards, crestFloat 8s ease-in-out 4.4s infinite;}
+@keyframes crestStrike{
+  0%{opacity:0;transform:scale(1.05);filter:blur(16px) brightness(4)}
+  9%{opacity:1;transform:scale(1.02);filter:blur(1px) brightness(3.4)}
+  30%{opacity:1;filter:blur(0) brightness(1.7)}
   100%{opacity:1;transform:scale(1);filter:blur(0) brightness(1)}}
 body[data-theme="storm"] .play .title span{animation:letterSnap .55s cubic-bezier(.2,1.5,.3,1) forwards;}
 @keyframes letterSnap{0%{opacity:0;transform:translateY(14px) scale(1.14);filter:blur(9px)}
@@ -288,6 +300,19 @@ body[data-theme="celestial"] .play .title span{animation:letterDrift 1.6s cubic-
                      to{opacity:.96;transform:translateY(0);filter:blur(0)}}
 
 .cta{position:relative;margin-top:clamp(10px,2.4vh,30px);
+  /* inline-flex + line-height:1 rather than relying on the button's own text
+     baseline: the halls now set nine different faces here, and a face with
+     unusual vertical metrics drops its text to the bottom of the box. Grenze
+     Gotisch did exactly that on War Camp -- ENTER THE REALM hanging half out of
+     its own button. Centring the line box makes it independent of the face. */
+  display:inline-flex;align-items:center;justify-content:center;line-height:1;
+  /* Never let the column steal height from the button. .content is a flex
+     column at height:100%, so on the halls that run tall -- Cathedral's
+     520px crest, War Camp's 112px wordmark -- the default flex-shrink was
+     compressing the CTA instead of the artwork. Measured: 28px and 31px
+     against 41px everywhere else, with identical font size and padding.
+     The button is the one thing on screen that must stay hittable. */
+  flex-shrink:0;
   padding:clamp(13px,1.7vh,18px) clamp(28px,4.4vw,56px);
   font-family:var(--cta-fam);font-weight:var(--cta-w);font-size:clamp(10.5px,1.1vw,15px);letter-spacing:var(--cta-track);
   color:#241a08;background:linear-gradient(180deg,#fff5d6 0%,var(--gold-1) 26%,var(--gold-2) 52%,var(--gold-3) 82%,#f3e2ab 100%);
@@ -375,6 +400,138 @@ body[data-theme="celestial"] {--acc:154,198,255;--acc2:170,124,255;}
 /* 01 Sapphire Hall -- Roman inscriptional capitals. The state portrait, and
    the baseline the other eight are read against. Nothing to change. */
 
+/* ================= HOW THE WORDMARK ARRIVES =================
+   Every hall spelled KINGDOM 846 out letter by letter, left to right, with a
+   light pass over it afterwards. Nine times. That single piece of choreography
+   did more than anything else to make the set feel like one screen wearing
+   different clothes, and it is the thing that was disliked.
+   It is gone from eight of the nine. The stagger is set per hall in JS, so the
+   letters now land together and the WORD arrives, in a way that belongs to the
+   room. Only Celestial keeps a per-letter reveal, and there it is randomised
+   rather than sequential -- stars do not come out in reading order. */
+
+/* Coronation -- struck, not typed. It comes down onto the page and stops. */
+body[data-theme="coronation"] .play .title span{animation:titleStamp .82s cubic-bezier(.2,1.1,.26,1) forwards;}
+@keyframes titleStamp{0%{opacity:0;transform:scale(1.24);filter:blur(14px) brightness(2.4)}
+  62%{opacity:1;transform:scale(.985);filter:blur(0) brightness(1.35)}
+  100%{opacity:1;transform:scale(1);filter:var(--title-lit)}}
+
+/* Ember Throne -- it does not move at all. It comes up to heat, the way iron
+   does in a forge: black, then red, then gold. */
+body[data-theme="embers"] .play .title span{animation:titleHeat 2.1s cubic-bezier(.3,.4,.2,1) forwards;}
+@keyframes titleHeat{
+  0%{opacity:0;filter:brightness(.06) sepia(1) saturate(6) hue-rotate(-32deg) blur(3px)}
+  18%{opacity:1;filter:brightness(.34) sepia(1) saturate(8) hue-rotate(-30deg) blur(1px)}
+  55%{opacity:1;filter:brightness(1.5) sepia(.7) saturate(4) hue-rotate(-14deg) blur(0)}
+  100%{opacity:1;filter:var(--title-lit)}}
+
+/* Ivory Cathedral -- light opens across it from the centre, like a shutter
+   being drawn back off an inscription. The wipe is on the word, not the
+   letters, so it reads as one movement of light. */
+body[data-theme="cathedral"] .play .title span{animation:fadeIn .6s ease-out forwards;}
+body[data-theme="cathedral"] .play .title{animation:titleWipe 1.9s cubic-bezier(.24,.62,.24,1) 4.8s backwards;}
+@keyframes titleWipe{from{clip-path:inset(0 50% 0 50%)}to{clip-path:inset(0 -2% 0 -2%)}}
+
+/* Storm -- there is no build. The strike happens and the word is simply
+   there, blown out white for an instant and then cold. */
+body[data-theme="storm"] .play .title span{animation:titleFlash 1.15s cubic-bezier(.1,.9,.2,1) forwards;}
+@keyframes titleFlash{0%{opacity:0;filter:brightness(6) blur(6px)}
+  4%{opacity:1;filter:brightness(5) blur(0)}
+  16%{opacity:1;filter:brightness(1.1)}
+  22%{opacity:.72}
+  30%{opacity:1;filter:brightness(2.4)}
+  100%{opacity:1;filter:var(--title-lit)}}
+
+/* Celestial -- the only per-letter reveal left, and deliberately out of order.
+   The delays are randomised in JS. */
+body[data-theme="celestial"] .play .title span{animation:letterStar 1.9s ease-out forwards;}
+@keyframes letterStar{from{opacity:0;transform:scale(.82);filter:blur(10px) brightness(2.6)}
+  to{opacity:1;transform:none;filter:var(--title-lit)}}
+
+/* ================= COMPOSITION =================
+   Nine fonts inside one identical centred stack is not nine screens, it is one
+   screen nine times. Eyebrow, crest, wordmark, rule, tagline, button, crown --
+   same order, same alignment, same centre, every time. So the layout itself
+   now changes per hall: what dominates, where the eye lands first, whether the
+   thing is centred at all. */
+
+/* Coronation -- THE CROWNING. The crest is the subject and the wordmark is its
+   inscription, so the crest grows and the type shrinks under it, set tight
+   like lettering cut into a plinth. */
+body[data-theme="coronation"] .content{gap:clamp(3px,.5vh,8px);}
+body[data-theme="coronation"] .title{margin-top:clamp(6px,1.6vh,20px);}
+body[data-theme="coronation"] .tagline{margin-top:2px;}
+
+/* Moonlit -- THE WIDE NIGHT. Everything drops into the lower third and the sky
+   is left empty above it. Nothing is centred in the frame; the frame is mostly
+   night with a kingdom sitting low in it. */
+body[data-theme="moonlit"] .content{justify-content:flex-end;padding-bottom:clamp(40px,9vh,110px);}
+body[data-theme="moonlit"] .crest-stack{margin-bottom:clamp(2px,.8vh,12px);}
+
+/* Ember Throne -- THE FORGE MARK. The wordmark is enormous and the crest sits
+   INSIDE it, the type crossing the crest's foot, so the two read as one struck
+   object rather than a badge with a caption. */
+body[data-theme="embers"] .content{gap:0;}
+body[data-theme="embers"] .title{margin-top:clamp(-46px,-6vh,-16px);position:relative;z-index:2;}
+body[data-theme="embers"] .rule{margin-top:clamp(6px,1.4vh,16px);}
+
+/* Ivory Cathedral -- THE ALTARPIECE. Top-weighted and vertical, the way a
+   retable is: the crest hung high, everything else falling away beneath it,
+   the tagline set to a narrow measure like a column of liturgy. */
+body[data-theme="cathedral"] .content{justify-content:flex-start;padding-top:clamp(18px,4vh,54px);}
+body[data-theme="cathedral"] .tagline{max-width:22ch;line-height:1.5;}
+
+/* Storm Fortress -- THE STRIKE. Inverted against all eight others: the
+   wordmark is at the top of the frame and the crest hangs below it, because
+   lightning comes from above and the eye should be dragged downward. */
+body[data-theme="storm"] .content{justify-content:flex-start;padding-top:clamp(26px,6vh,72px);}
+body[data-theme="storm"] .title{order:-1;margin-top:clamp(10px,2.4vh,30px);}
+body[data-theme="storm"] .eyebrow{order:-2;}
+body[data-theme="storm"] .crest-stack{order:0;margin-top:clamp(4px,1.2vh,16px);}
+
+/* Dragon Gate -- THE ARCH. The only one that is not a column. On a wide screen
+   the crest stands to one side and the type beside it, left-aligned, so you
+   read across the gate rather than down it. It stacks again on a phone. */
+@media (min-width:900px){
+  /* Grid, not flex-row. The seven children are flat siblings, so turning the
+     column into a row simply put all seven side by side -- crest shoved off
+     frame, eyebrow clipped, wordmark overflowing. Two explicit columns: the
+     crest holds the left and spans every row, the copy stacks down the right. */
+  body[data-theme="dragongate"] .content{
+    display:grid;grid-template-columns:auto minmax(0,1fr);grid-auto-rows:min-content;
+    align-content:center;justify-items:start;text-align:left;
+    column-gap:clamp(30px,4.6vw,74px);row-gap:clamp(5px,1vh,14px);
+    padding-left:clamp(40px,7vw,110px);padding-right:clamp(40px,6vw,90px);}
+  body[data-theme="dragongate"] .crest-stack{grid-column:1;grid-row:1/-1;align-self:center;}
+  body[data-theme="dragongate"] .eyebrow,
+  body[data-theme="dragongate"] .title,
+  body[data-theme="dragongate"] .rule,
+  body[data-theme="dragongate"] .tagline,
+  body[data-theme="dragongate"] .cta,
+  body[data-theme="dragongate"] .crown-mini{grid-column:2;}
+  body[data-theme="dragongate"] .rule{width:min(360px,26vw);justify-content:flex-start;}
+  body[data-theme="dragongate"] .tagline{max-width:30ch;}
+}
+
+/* Royal War Camp -- THE STANDARD PLANTED. Not centred. The whole block is
+   driven into the left of the frame like a standard into ground, and the camp
+   is left visible to the right of it. */
+@media (min-width:760px){
+  body[data-theme="warcamp"] .content{align-items:flex-start;text-align:left;
+    padding-left:clamp(44px,8vw,130px);padding-right:clamp(44px,8vw,130px);}
+  body[data-theme="warcamp"] .rule{justify-content:flex-start;width:min(420px,40vw);}
+  body[data-theme="warcamp"] .tagline{max-width:34ch;}
+}
+
+/* Celestial Palace -- THE CONSTELLATION. Inverted the other way: the wordmark
+   rides ABOVE the crest, and everything is small inside a great deal of
+   nothing, because the subject of this one is the space, not the object. */
+body[data-theme="celestial"] .content{gap:clamp(10px,2vh,26px);}
+body[data-theme="celestial"] .title{order:-1;}
+body[data-theme="celestial"] .eyebrow{order:-2;}
+body[data-theme="celestial"] .crest-stack{order:0;}
+body[data-theme="celestial"] .rule{order:1;}
+
 /* 02 Coronation Hall -- ceremony. An ornate swashed cut, the heaviest weight
    in the set, tracking pulled in so the word sits like a struck medal, and the
    largest crest: this hall is about the crown, not the room. */
@@ -385,7 +542,7 @@ body[data-theme="coronation"]{--disp:'Cinzel Decorative',serif;--disp-w:900;--di
 /* 03 Moonlit Realm -- whispered, not announced. The thinnest weight, the
    widest tracking, the smallest wordmark and a reduced crest, so most of the
    frame is night. */
-body[data-theme="moonlit"]{--disp:'Cormorant Garamond',serif;--disp-w:300;--disp-track:.3em;
+body[data-theme="moonlit"]{--crest-shade:.30;--disp:'Cormorant Garamond',serif;--disp-w:300;--disp-track:.3em;
   --disp-size:clamp(25px,5.4vw,74px);--crest-h:clamp(165px,37vh,410px);
   --eyebrow-track:.5em;--eyebrow-w:400;--tag-w:300;--orn:'\2727\FE0E';}
 
@@ -400,7 +557,7 @@ body[data-theme="embers"]{--disp:'Bebas Neue',sans-serif;--disp-w:400;--disp-tra
 /* 05 Ivory Cathedral -- carved into the wall rather than printed. Inscriptional
    small caps, generous tracking, the tallest crest, and a maltese cross for
    the ornament. */
-body[data-theme="cathedral"]{--disp:'Marcellus SC',serif;--disp-w:400;--disp-track:.17em;
+body[data-theme="cathedral"]{--crest-shade:.34;--disp:'Marcellus SC',serif;--disp-w:400;--disp-track:.17em;
   --disp-size:clamp(28px,6.1vw,86px);--crest-h:clamp(205px,47vh,520px);
   --eyebrow-track:.4em;--orn:'\2720\FE0E';}
 
@@ -416,7 +573,7 @@ body[data-theme="cathedral"]{--disp:'Marcellus SC',serif;--disp-w:400;--disp-tra
    didone in the set, so it cannot be mistaken for the other eight. The square
    corners stay -- that part was right. The button keeps Cinzel, because
    Bodoni's hairlines vanish at 11px. */
-body[data-theme="storm"]{--disp:'Bodoni Moda',serif;--disp-w:900;--disp-track:.1em;
+body[data-theme="storm"]{--crest-shade:.26;--disp:'Bodoni Moda',serif;--disp-w:900;--disp-track:.1em;
   --disp-size:clamp(32px,7vw,98px);--crest-h:clamp(178px,38vh,420px);
   --eyebrow-track:.36em;--eyebrow-w:600;
   --tag-fam:'Bodoni Moda',serif;--tag-style:italic;--tag-w:500;--tag-track:.03em;
@@ -430,7 +587,7 @@ body[data-theme="dragongate"]{--disp:'Yeseva One',serif;--disp-w:400;--disp-trac
 
 /* 08 Royal War Camp -- a standard stitched in the field, not set in a print
    shop. Rugged, blackletter-adjacent, still readable at a glance. */
-body[data-theme="warcamp"]{--disp:'Grenze Gotisch',serif;--disp-w:700;--disp-track:.07em;
+body[data-theme="warcamp"]{--crest-shade:.62;--disp:'Grenze Gotisch',serif;--disp-w:700;--disp-track:.07em;
   --disp-size:clamp(36px,8vw,112px);
   --cta-fam:'Grenze Gotisch',serif;--cta-w:700;--cta-track:.22em;--orn:'\2748\FE0E';}
 
@@ -446,7 +603,7 @@ body[data-theme="celestial"]{--disp:'Italiana',serif;--disp-w:400;--disp-track:.
 @keyframes enterFlash{0%{opacity:0}38%{opacity:1}100%{opacity:0}}
 /* Storm does not bloom, it strikes: a double lightning pulse on the way out. */
 body[data-theme="storm"].entering .flash{animation:enterStrike 1.7s linear forwards;}
-@keyframes enterStrike{0%{opacity:0}5%{opacity:1}11%{opacity:.12}17%{opacity:.92}25%{opacity:.18}42%{opacity:.8}100%{opacity:0}}
+@keyframes enterStrike{0%{opacity:0}4%{opacity:1}14%{opacity:.55}22%{opacity:.9}100%{opacity:0}}
 /* Ember Throne flares rather than flashes -- it comes up out of the fire. */
 body[data-theme="embers"].entering .flash{animation:enterFlare 1.9s cubic-bezier(.3,0,.3,1) forwards;}
 @keyframes enterFlare{0%{opacity:0;transform:scale(.82)}30%{opacity:1}100%{opacity:0;transform:scale(1.18)}}
@@ -736,13 +893,31 @@ const LOW_TIER = matchMedia('(max-width:820px)').matches
   || matchMedia('(prefers-reduced-motion:reduce)').matches;
 
 /* ===== title letters ===== */
+// A left-to-right letter cascade was the one gesture every hall shared, and it
+// is what made nine rooms feel like one template. Only Celestial still reveals
+// letter by letter, and there the order is scattered on purpose -- stars do not
+// arrive in reading order. Everywhere else the letters share a delay, so the
+// WORD lands rather than being typed out.
+const REVEAL = {
+  sapphire:  { at: 4.85, stagger: 0 },
+  coronation:{ at: 4.95, stagger: 0 },
+  moonlit:   { at: 4.60, stagger: 0 },
+  embers:    { at: 4.70, stagger: 0 },
+  cathedral: { at: 4.90, stagger: 0 },
+  storm:     { at: 5.00, stagger: 0 },
+  dragongate:{ at: 4.85, stagger: 0 },
+  warcamp:   { at: 4.85, stagger: 0 },
+  celestial: { at: 4.40, scatter: 1.5 },
+};
 (function(){
   const el = document.getElementById('title');
+  const r = REVEAL[CONFIG.theme] || REVEAL.sapphire;
   el.textContent = '';
   [...'KINGDOM 846'].forEach((ch,i)=>{
     const s=document.createElement('span');
     if(ch===' '){s.className='sp';s.innerHTML='&nbsp;';} else s.textContent=ch;
-    s.style.animationDelay=(4.85+i*0.075)+'s';
+    s.style.animationDelay = (r.scatter ? r.at + Math.random()*r.scatter
+                                        : r.at + i*(r.stagger||0)) + 's';
     el.appendChild(s);
   });
 })();

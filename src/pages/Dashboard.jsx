@@ -95,18 +95,15 @@ export default function Dashboard({ onNavigate }) {
 
       <Panel glow className="hero-frame relative overflow-hidden p-0 gold-corners">
         <div className="relative h-64 md:h-96 hero-shimmer">
-          <ArtImage src="./assets/hero-throne-room.webp" alt="Kingdom 846" className="h-full w-full drift-slow" />
+          <ArtImage src="./assets/royal-hall.jpg" alt="Kingdom 846" className="h-full w-full hall-breathe" />
           <div className="hero-overlay absolute inset-0" />
-          {/* The throne room is a dark image and the wordmark sat on the flattest
-              part of it, which is what read as dull -- there was nothing behind
-              the type but shadow. These bring the same treatment the welcome
-              screen uses: a warm grade so the room reads as candlelit, a bloom
-              that swells behind the throne like a fire out of frame, and light
-              raking across from the high windows. */}
+          {/* Grade, bloom and rake, matching the welcome screen so the entrance
+              and the home page read as one room. The hall already carries its
+              own lighting, so these only deepen the extremes and hold the
+              centre open for the crest. */}
           <div className="hero-grade absolute inset-0" aria-hidden="true" />
           <div className="hero-bloom" aria-hidden="true" />
           <div className="hero-rake absolute inset-0" aria-hidden="true" />
-          <div className="rune-circle" style={{ right: '10%', top: '20%' }} />
           <div className="ember-field">
             <span className="ember" style={{ left: '15%', animationDelay: '0s' }} />
             <span className="ember" style={{ left: '35%', animationDelay: '1.5s' }} />
@@ -115,11 +112,16 @@ export default function Dashboard({ onNavigate }) {
             <span className="ember" style={{ left: '25%', animationDelay: '2s' }} />
             <span className="ember" style={{ left: '65%', animationDelay: '6s' }} />
           </div>
-          <div className="absolute inset-y-0 left-0 flex max-w-xl flex-col justify-center p-6 md:p-10">
+          <div className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center md:px-10">
+            <img
+              src="./assets/crest-846.webp"
+              alt=""
+              className="hero-crest mb-3 h-24 w-auto md:h-36"
+            />
             <div className="eyebrow text-glow">Royal Portal</div>
             <h1 className="gilt-display mt-2 font-decorative text-5xl font-black tracking-[.03em] md:text-7xl">KINGDOM 846</h1>
-            <p className="mt-1 font-display text-sm tracking-[0.15em] text-gold md:text-base text-glow">One Crown. Four Alliances. Endless Glory.</p>
-            <div className="mt-5 flex flex-wrap gap-2">
+            <p className="mt-1.5 font-display text-sm tracking-[0.15em] text-gold md:text-base text-glow">One Crown. Four Alliances. Endless Glory.</p>
+            <div className="mt-5 flex flex-wrap justify-center gap-2">
               <button onClick={() => onNavigate('alliances')} className="btn-primary btn-royal sparkle-btn"><Icon name="shield" size={14} /> View Alliances</button>
               <button onClick={() => onNavigate('about')} className="btn-secondary gold-border-hover"><Icon name="castle" size={14} /> Kingdom</button>
             </div>

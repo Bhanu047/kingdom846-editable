@@ -31,23 +31,31 @@ export default function About() {
   return (
     <div className="space-y-6 overflow-x-hidden">
       <Panel glow className="relative overflow-hidden p-0 gold-corners">
-        <div className="grid gap-0 md:grid-cols-2">
-          <div className="relative h-64 md:h-full">
-            <ArtImage src="./assets/art-kingdom-status.png" alt="Kingdom 846 castle at sunset" className="h-full w-full drift-slow" />
-            <div className="absolute inset-0 bg-gradient-to-t from-ink/65 via-transparent to-transparent md:bg-gradient-to-r md:from-transparent md:to-ink/35" />
+        <div>
+          <div className="relative h-60 overflow-hidden md:h-80">
+            <ArtImage src="./assets/royal-hall.jpg" alt="The great hall of Kingdom 846" className="h-full w-full hall-breathe" />
+            <div className="hero-grade absolute inset-0" aria-hidden="true" />
+            <div className="hero-bloom" aria-hidden="true" />
+            <div className="hero-rake absolute inset-0" aria-hidden="true" />
+            {/* Fades into the copy below so the banner and the panel read as one
+                surface rather than a picture with a caption stuck under it. */}
+            <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-ink-2 to-transparent" aria-hidden="true" />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <img src="./assets/crest-846.webp" alt="" className="hero-crest h-32 w-auto md:h-48" />
+            </div>
           </div>
-          <div className="p-7 md:p-9">
-            <div className="flex flex-wrap items-center gap-2">
+          <div className="p-7 text-center md:p-9">
+            <div className="flex flex-wrap items-center justify-center gap-2">
               <Pill tone="gold">{tracker846.tier}</Pill>
               <Pill tone="blue">KvK #{latestKvk.kvk}</Pill>
               <Pill tone="red">vs {latestKvk.opponent}</Pill>
             </div>
-            <h1 className="mt-3 font-display text-4xl font-bold gradient-gold glow-pulse">Kingdom 846</h1>
-            <p className="mt-1 text-sm text-gold-bright/80">“{kingdom.motto}”</p>
-            <p className="mt-3 text-sm leading-relaxed text-parchment/70">
+            <h1 className="gilt-display mt-4 font-decorative text-4xl font-black tracking-[.03em] md:text-6xl">KINGDOM 846</h1>
+            <p className="mt-2 font-display text-sm tracking-[.12em] text-gold-bright/85 md:text-base">“{kingdom.motto}”</p>
+            <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-parchment/70">
               Kingdom 846 is an <span className="text-gold-bright">S-Tier</span> realm built around four alliances moving under one crown. Discipline in preparation, coordinated rallies, and kingdom-first command define the realm. The newest KvK chapter is <span className="text-gold-bright">K846 vs K795</span>.
             </p>
-            <div className="mt-5 flex flex-wrap gap-2">
+            <div className="mt-6 flex flex-wrap justify-center gap-2">
               <a href="https://ks-atlas.com/kingdom/846" target="_blank" rel="noreferrer" className="btn-secondary"><Icon name="arrow" size={14} /> Atlas Profile</a>
               <a href="https://kingshotoptimizer.com/kvk-rankings/kingdom/846" target="_blank" rel="noreferrer" className="btn-secondary"><Icon name="swords" size={14} /> KvK Rankings</a>
               <span className="btn-ghost"><Icon name="crown" size={14} /> Kingdom 846</span>

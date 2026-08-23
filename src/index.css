@@ -1091,7 +1091,10 @@ aside {
 
 /* Luxury hero overlay */
 .hero-overlay {
-  background: linear-gradient(90deg, rgba(14,18,32,.97) 0%, rgba(14,18,32,.85) 30%, rgba(14,18,32,.5) 60%, rgba(14,18,32,.2) 100%);
+  /* Neutralised: hero-grade replaced this, and stacking both crushed the hall
+     to near-black. Kept as a no-op rather than deleted because other pages
+     still reference the class. */
+  background: none;
 }
 
 /* Premium header */
@@ -2308,11 +2311,22 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
 
 /* Warm grade: lifts the left third where the copy sits, and deepens the right
    so the throne still reads as the focal point. */
+/* Symmetric, because the hero is centred and the hall is a symmetric
+   composition. An earlier version lifted the left third and dropped an 80%
+   black wash across it -- correct for left-aligned copy, and it buried the
+   left lion completely once the layout moved to centre.
+
+   Edge vignetting is kept deliberately light. The subjects of this image are
+   AT the edges: hard vignetting is the right move for a photograph with a
+   central subject and exactly wrong for one with framing figures, because it
+   deletes the thing doing the framing. Legibility comes from the bottom
+   gradient and the crest's own contrast instead. */
 .hero-grade {
   pointer-events: none;
   background:
-    radial-gradient(72% 96% at 6% 52%, rgba(255,214,140,.20), transparent 60%),
-    linear-gradient(90deg, rgba(6,9,18,.80) 0%, rgba(6,9,18,.42) 34%, rgba(6,9,18,.06) 62%, rgba(6,9,18,.30) 100%);
+    radial-gradient(58% 82% at 50% 46%, rgba(255,220,150,.16), transparent 62%),
+    linear-gradient(90deg, rgba(6,9,18,.30) 0%, rgba(6,9,18,.06) 26%, rgba(6,9,18,0) 50%, rgba(6,9,18,.06) 74%, rgba(6,9,18,.30) 100%),
+    linear-gradient(180deg, rgba(6,9,18,.34) 0%, rgba(6,9,18,0) 42%, rgba(6,9,18,.55) 100%);
 }
 /* A bloom behind the throne on a long cycle. Slow enough to notice only if you
    sit with it, which is the point -- a hero that pulses is a distraction. */
@@ -2391,3 +2405,38 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
 @media (prefers-reduced-motion: reduce) {
   .k-track::after { animation: none !important; opacity: 0 !important }
 }
+
+/* The crest on the home hero. It descends once on load and then holds -- the
+   home page is somewhere people return to, so a crest that re-performs every
+   visit becomes a toll rather than a welcome. */
+.hero-crest {
+  filter: drop-shadow(0 14px 30px rgba(0,0,0,.9));
+  animation: hero-crest-in 1.3s cubic-bezier(.2,1.2,.28,1) both;
+}
+@keyframes hero-crest-in {
+  0%   { opacity: 0; transform: translateY(-26px) scale(.82) }
+  66%  { opacity: 1; transform: translateY(3px) scale(1.03) }
+  100% { opacity: 1; transform: none }
+}
+/* The hall is a symmetric composition, so the bloom belongs dead centre now
+   rather than off to the right where the old throne sat. */
+.hero-bloom { right: 50%; translate: 50% -50%; }
+@media (prefers-reduced-motion: reduce) { .hero-crest { animation: none !important } }
+
+/* Scale-only camera move for the great hall.
+   .drift-slow translates -1.5% horizontally as it scales, which is harmless on
+   an uncomposed photograph and destructive on a symmetric one: it slid the
+   frame sideways and cropped the left lion clean off while revealing more of
+   the right. A composed image can be pushed but not panned. */
+.hall-breathe {
+  object-fit: cover;
+  animation: hall-breathe 34s ease-in-out infinite alternate;
+  will-change: transform;
+}
+@keyframes hall-breathe { from { transform: scale(1.015) } to { transform: scale(1.065) } }
+@media (prefers-reduced-motion: reduce) { .hall-breathe { animation: none !important } }
+
+/* ArtImage ships its own from-ink/70 bottom gradient for use in small cards.
+   Inside a full-bleed hero that is a third dark layer on the same pixels, so
+   the hero opts out and does its own grading. */
+.hero-frame .relative > .pointer-events-none.absolute.inset-0.bg-gradient-to-t { display: none }

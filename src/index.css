@@ -984,13 +984,13 @@
 
 /* ===== LUXURY ROYAL OVERHAUL ===== */
 
-/* Richer body background with subtle damask-like texture */
+/* The body used to carry four fixed radial gradients here. They did the same
+   job the aurora does now -- put colour in the corners -- except they never
+   moved, and two light sources pulling in different directions just muddied
+   each other. The aurora took the job over; the body keeps only the vertical
+   base it sits on. */
 body {
   background-image:
-    radial-gradient(1000px 600px at 15% -10%, rgba(212,175,55,.12), transparent 60%),
-    radial-gradient(1000px 700px at 100% 5%, rgba(140,43,58,.10), transparent 55%),
-    radial-gradient(800px 500px at 50% 100%, rgba(212,175,55,.05), transparent 60%),
-    radial-gradient(400px 300px at 80% 60%, rgba(102,71,166,.06), transparent 55%),
     linear-gradient(180deg, #0E1220 0%, #0A0D18 50%, #0E1220 100%);
 }
 
@@ -1532,3 +1532,290 @@ select.royal-select option {
     animation: none !important;
   }
 }
+
+/* ============================================================================
+   AMBIENT MOTION LAYER
+   ----------------------------------------------------------------------------
+   The site already had a lot of entrance animation: things slid in once and
+   then the page held perfectly still. That stillness is what read as flat, not
+   an absence of animation. Everything below is CONTINUOUS -- it has no end
+   state -- so the page keeps breathing after the entrances finish.
+
+   Two hard constraints shaped these rules:
+
+   1. Anything that can end up inside a downloaded report must avoid blur(),
+      backdrop-filter and mix-blend-mode. html2canvas 1.4.1 silently drops all
+      three, which is what made the old "glow" reports rasterise muddy. So the
+      heavy effects live on FIXED backdrops that no report ever clones, and the
+      in-panel effects are built from plain gradients and transforms.
+
+   2. overflow:hidden + border-radius makes html2canvas mis-clip its contents.
+      Sheens that need clipping are therefore scoped to :hover, which never
+      holds during an export.
+   ========================================================================= */
+
+/* ---- Aurora backdrop ---------------------------------------------------- */
+.aurora-field {
+  position: fixed; inset: -20vmax; z-index: 0; pointer-events: none;
+  overflow: hidden; contain: strict;
+  --ax: 0; --ay: 0;
+}
+.aurora-ribbon {
+  position: absolute; border-radius: 50%;
+  filter: blur(80px); opacity: .85;
+  will-change: transform;
+}
+/* Gold, upper left -- sits behind the crest and the page title. */
+.aurora-r1 {
+  width: 62vmax; height: 46vmax; top: -6vmax; left: -8vmax;
+  background: radial-gradient(circle at 50% 50%, rgba(212,175,55,.30), rgba(212,175,55,.10) 45%, transparent 70%);
+  animation: aurora-drift-a 34s ease-in-out infinite alternate;
+  transform: translate3d(calc(var(--ax) * 14px), calc(var(--ay) * 12px), 0);
+}
+/* Royal blue, right -- the counterweight that keeps it from reading as haze. */
+.aurora-r2 {
+  width: 70vmax; height: 52vmax; top: 8vmax; right: -14vmax;
+  background: radial-gradient(circle at 50% 50%, rgba(58,102,190,.34), rgba(43,74,140,.12) 48%, transparent 72%);
+  animation: aurora-drift-b 44s ease-in-out infinite alternate;
+  transform: translate3d(calc(var(--ax) * -20px), calc(var(--ay) * 16px), 0);
+}
+/* Deep blue, lower left. */
+.aurora-r3 {
+  width: 58vmax; height: 58vmax; bottom: -18vmax; left: 4vmax;
+  background: radial-gradient(circle at 50% 50%, rgba(35,64,132,.30), rgba(35,64,132,.08) 50%, transparent 74%);
+  animation: aurora-drift-c 52s ease-in-out infinite alternate;
+  transform: translate3d(calc(var(--ax) * 24px), calc(var(--ay) * -14px), 0);
+}
+/* A warm ember low centre, so the bottom of long pages isn't dead navy. */
+.aurora-r4 {
+  width: 48vmax; height: 34vmax; bottom: -10vmax; left: 38%;
+  background: radial-gradient(circle at 50% 50%, rgba(232,199,102,.20), rgba(156,122,36,.07) 46%, transparent 70%);
+  animation: aurora-drift-d 40s ease-in-out infinite alternate;
+  transform: translate3d(calc(var(--ax) * -12px), calc(var(--ay) * -10px), 0);
+}
+@keyframes aurora-drift-a {
+  0%   { translate: 0 0;        scale: 1;    opacity: .42 }
+  50%  { translate: 7vmax 4vmax; scale: 1.18; opacity: .58 }
+  100% { translate: 3vmax 9vmax; scale: 1.06; opacity: .46 }
+}
+@keyframes aurora-drift-b {
+  0%   { translate: 0 0;          scale: 1.06; opacity: .40 }
+  50%  { translate: -9vmax 6vmax; scale: 1;    opacity: .60 }
+  100% { translate: -4vmax -5vmax; scale: 1.2; opacity: .44 }
+}
+@keyframes aurora-drift-c {
+  0%   { translate: 0 0;           scale: 1;    opacity: .36 }
+  50%  { translate: 8vmax -7vmax;  scale: 1.16; opacity: .52 }
+  100% { translate: -3vmax -3vmax; scale: 1.04; opacity: .40 }
+}
+@keyframes aurora-drift-d {
+  0%   { translate: 0 0;           scale: 1.1;  opacity: .30 }
+  50%  { translate: -6vmax -4vmax; scale: 1;    opacity: .48 }
+  100% { translate: 5vmax -8vmax;  scale: 1.14; opacity: .34 }
+}
+/* Fine noise over the ribbons. Without it the huge blurred gradients band
+   badly on 8-bit panels -- visible as concentric rings in the gold. */
+.aurora-grain {
+  position: absolute; inset: 0; opacity: .22; pointer-events: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/><feColorMatrix type='saturate' values='0'/></filter><rect width='140' height='140' filter='url(%23n)' opacity='.5'/></svg>");
+}
+
+/* ---- Living surfaces ---------------------------------------------------- */
+/* A highlight that tracks the cursor across a panel. Coordinates come from one
+   delegated listener (see installSurfaceTracking), so this costs one rAF for
+   the whole page no matter how many panels are on it. */
+/* ::before, not ::after -- .panel-glow::after is the inner ornate border and
+   .chart-card::after is the edge-pass sweep. Both would be silently destroyed
+   by reusing ::after here, which is exactly how the .btn-primary re-tone got
+   lost earlier in this work.
+
+   isolation:isolate rather than a z-index on the panel itself: it gives the
+   negative-z pseudo a stacking context to sit in (above the panel background,
+   below the panel content) without changing how the panel layers against its
+   own siblings, and without creating a containing block that would trap a
+   position:fixed modal rendered inside a panel. */
+.panel, .chart-card {
+  --mx: 50%; --my: 50%; --lit: 0;
+  position: relative; isolation: isolate;
+}
+.panel::before, .chart-card::before {
+  content: ""; position: absolute; inset: 0; z-index: -1;
+  border-radius: inherit; pointer-events: none;
+  /* Fallback of 0 matters: if --lit fails to resolve -- which is exactly what
+     happens inside a report clone, where the tracking script never ran and no
+     ancestor declares it -- then `opacity: var(--lit)` is invalid at computed
+     value time and opacity falls back to its INITIAL value of 1. The highlight
+     then paints at full strength over the panel, which is what washed every
+     exported chart out. */
+  opacity: var(--lit, 0);
+  transition: opacity .45s ease;
+  background: radial-gradient(360px circle at var(--mx) var(--my),
+              rgba(232,199,102,.11), rgba(232,199,102,.04) 40%, transparent 68%);
+}
+/* Suites tint their own highlight, so a Mystic panel lights violet and a PvP
+   panel lights red rather than everything lighting gold. */
+[data-suite] .panel::before, [data-suite] .chart-card::before {
+  background: radial-gradient(360px circle at var(--mx) var(--my),
+              var(--suite-soft), transparent 68%);
+}
+
+/* A slow gradient breath on primary surfaces, so even an idle page moves. */
+@keyframes surface-breathe {
+  0%, 100% { background-position: 0% 50% }
+  50%      { background-position: 100% 50% }
+}
+
+/* ---- Text ---------------------------------------------------------------- */
+/* Character-level entrance. Index is set inline as --i so one class covers any
+   length of text. */
+@keyframes char-rise {
+  from { opacity: 0; transform: translateY(.5em) rotateX(-55deg); filter: blur(3px) }
+  to   { opacity: 1; transform: none;                             filter: none }
+}
+.split-char {
+  display: inline-block; white-space: pre;
+  animation: char-rise .62s cubic-bezier(.22,1,.36,1) both;
+  animation-delay: calc(var(--i) * 26ms);
+}
+/* A sheen that crosses a heading every few seconds rather than only on load. */
+@keyframes text-sheen { 0% { background-position: -120% center } 60%, 100% { background-position: 220% center } }
+.sheen-text {
+  background: linear-gradient(100deg,
+    var(--sheen-base, #E8C766) 0%, var(--sheen-base, #E8C766) 38%,
+    #FFF6DA 50%,
+    var(--sheen-base, #E8C766) 62%, var(--sheen-base, #E8C766) 100%);
+  background-size: 220% auto;
+  -webkit-background-clip: text; background-clip: text;
+  color: transparent;
+  animation: text-sheen 7s ease-in-out infinite;
+}
+
+/* ---- Reduced motion ------------------------------------------------------ */
+/* Everything above is decorative. Someone who asks for reduced motion gets the
+   settled end state of all of it, not a still frame mid-animation. */
+@media (prefers-reduced-motion: reduce) {
+  .aurora-ribbon { animation: none !important; opacity: .34 !important }
+  .split-char    { animation: none !important; opacity: 1 !important; transform: none !important; filter: none !important }
+  .sheen-text    { animation: none !important }
+  .panel::before, .chart-card::before { transition: none !important }
+}
+
+/* ---- Chart material ------------------------------------------------------
+   The bars were painted with a single solid colour -- background: <hex> -- so
+   however good the layout was, every chart read as flat. These give a bar
+   actual material: a lit top edge, the body colour through the middle, and the
+   surface falling into shade at the bottom, over a track that reads as recessed.
+
+   All of it is plain gradients and box-shadows. Nothing here uses blur(),
+   backdrop-filter or mix-blend-mode, because these bars get cloned into the
+   downloadable reports and html2canvas 1.4.1 drops all three without warning --
+   which is exactly how the old "glow" reports came out muddy.
+
+   Each segment gets its colour from --c, so one rule serves every chart and
+   the troop palette stays defined in one place in JS.
+   ------------------------------------------------------------------------- */
+.k-track {
+  position: relative;
+  background: #0a1220;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,.55), inset 0 -1px 0 rgba(255,255,255,.03);
+}
+/* Gloss as a separate layer OVER a solid base, not a gradient that replaces
+   the colour. Interpolating from white through the hue to black spends more
+   than half the bar's height on something that isn't the colour, which
+   desaturates it -- gold came out beige and the red came out salmon. Keeping
+   the fill solid underneath means the hue stays exactly what the palette says
+   and the highlight only sits on top of it. */
+.k-seg {
+  position: relative;
+  /* background-color and background-image as SEPARATE properties, not the
+     two-layer `background: <gradient>, <color>` shorthand. On screen both are
+     identical, but html2canvas 1.4.1 does not composite the colour layer of
+     the shorthand -- it rasterised only the gloss over the dark track, so
+     every bar arrived in the downloaded report desaturated. Split like this it
+     renders the same in the browser and in the export. */
+  background-color: var(--c);
+  /* The two transparent stops are deliberately paired -- transparent WHITE
+     next to the white ramp, transparent BLACK next to the black ramp. CSS
+     interpolates gradients premultiplied, so a single `transparent` stop is
+     invisible there; canvas (and therefore html2canvas) interpolates the
+     channels independently, so a stop that fades white to alpha 0 and then
+     ramps to opaque black passes through solid grey on the way. That grey is
+     what desaturated every exported bar into khaki. Matching each transparent
+     stop's RGB to its neighbour makes both engines agree. */
+  background-image:
+    linear-gradient(180deg,
+      rgba(255,255,255,.38) 0%,
+      rgba(255,255,255,.14) 18%,
+      rgba(255,255,255,0)   46%,
+      rgba(0,0,0,0)         54%,
+      rgba(0,0,0,.10)       74%,
+      rgba(0,0,0,.22)      100%);
+  /* No inset box-shadow here, deliberately. html2canvas 1.4.1 renders an inset
+     shadow by flooding the ENTIRE element with the shadow colour instead of
+     banding its edges, so `inset 0 1px 0 rgba(255,255,255,.34)` came out as a
+     34% white sheet over the whole bar. Combined with the black inset it washed
+     every exported bar ~57% toward grey -- a pure red test bar exported as
+     (216,106,106). The gloss gradient already supplies the lit edge, so the
+     shadows were only ever belt-and-braces. */
+  /* A spring rather than a linear ramp: the bar overshoots its value slightly
+     and settles back, which is what makes it feel driven rather than drawn. */
+  transition: width .85s cubic-bezier(.34,1.42,.52,1);
+}
+/* Vertical bars (podium, round chart) are lit from the left instead. */
+.k-seg--v {
+  background-color: var(--c);
+  background-image:
+    linear-gradient(90deg,
+      rgba(255,255,255,.32) 0%,
+      rgba(255,255,255,.12) 18%,
+      rgba(255,255,255,0)   48%,
+      rgba(0,0,0,0)         56%,
+      rgba(0,0,0,.10)       76%,
+      rgba(0,0,0,.20)      100%);
+  transition: height .85s cubic-bezier(.34,1.42,.52,1);
+}
+
+/* A highlight that travels along the leading entry, so the winner of a ranked
+   chart keeps drawing the eye after the entrance animation is over.
+   Deliberately spends most of its cycle off the bar -- a sheen that is always
+   mid-sweep reads as a loading state. */
+@keyframes bar-sheen {
+  0%       { transform: translateX(-140%) skewX(-18deg) }
+  38%,100% { transform: translateX(760%)  skewX(-18deg) }
+}
+.k-sheen { position: relative; overflow: hidden; }
+.k-sheen::after {
+  content: ""; position: absolute; top: 0; bottom: 0; left: 0; width: 14%;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.55), transparent);
+  animation: bar-sheen 4.6s cubic-bezier(.5,0,.5,1) infinite;
+}
+/* Report clones are wrapped in .kv-live by the report generator. Killing the
+   sheen there means an export can never catch one frozen mid-bar, and the
+   overflow:hidden that the sheen needs never reaches html2canvas's faulty
+   border-radius clipping. */
+.kv-live .k-sheen { overflow: visible }
+.kv-live .k-sheen::after { display: none }
+
+/* Numbers that sit on top of a filled bar. Flat text on a bright fill loses
+   its edges; this keeps it legible on gold as well as on red. */
+.k-seg-label {
+  position: relative;
+  color: rgba(0,0,0,.78);
+  text-shadow: 0 1px 0 rgba(255,255,255,.25);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .k-seg, .k-seg--v { transition: none !important }
+  .k-sheen::after   { animation: none !important; opacity: 0 !important }
+}
+
+/* The dashed ring behind the donut. Slow enough to read as an instrument
+   turning rather than as something spinning. */
+@keyframes donut-ring-turn { to { transform: rotate(360deg) } }
+.donut-ring { transform-origin: 80px 80px; animation: donut-ring-turn 62s linear infinite; }
+@media (prefers-reduced-motion: reduce) { .donut-ring { animation: none !important } }
+
+/* No cursor exists in an export, so the tracked highlight has no meaning there. */
+.k846-v2 .panel::before, .k846-v2 .chart-card::before,
+.kv-live .panel::before, .kv-live .chart-card::before { display: none !important }

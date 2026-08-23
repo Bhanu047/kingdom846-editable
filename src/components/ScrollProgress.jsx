@@ -26,6 +26,7 @@ export default function ScrollProgress() {
   return (
     <div
       className="fixed top-0 left-0 z-50 h-[2px] transition-[width] duration-100 ease-out"
+      data-html2canvas-ignore="true"
       style={{
         width: `${progress}%`,
         background: 'linear-gradient(90deg, #D4AF37, #E8C766, #D4AF37)',

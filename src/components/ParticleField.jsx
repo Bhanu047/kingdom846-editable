@@ -142,6 +142,7 @@ export default function ParticleField() {
     <canvas
       ref={canvasRef}
       className="fixed inset-0 pointer-events-none"
+      data-html2canvas-ignore="true"
       style={{ zIndex: 0 }}
     />
   )

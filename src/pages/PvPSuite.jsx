@@ -262,14 +262,14 @@ function VictoryPodium({ top3 }) {
             <div key={i} className="relative w-28" style={{ height: ROW_H }}>
               <div className="absolute inset-x-0 flex flex-col items-center" style={{ bottom: h + 8, opacity: reveal ? 1 : 0, transition: `bottom .8s cubic-bezier(.16,1,.3,1) ${delay}, opacity .5s ease ${delay}` }}>
                 <div className="text-lg">{MEDALS[i]}</div>
-                <div className="mt-1 flex h-3 w-20 overflow-hidden rounded-full border border-gold/15 shadow-[inset_0_1px_2px_rgba(0,0,0,.5)]">
-                  <div style={{ width: `${c.composition.infantry * 100}%`, background: `linear-gradient(180deg, rgba(255,255,255,.4), ${TROOP_COLORS.infantry})` }} />
-                  <div style={{ width: `${c.composition.cavalry * 100}%`, background: `linear-gradient(180deg, rgba(255,255,255,.4), ${TROOP_COLORS.cavalry})` }} />
-                  <div style={{ width: `${c.composition.archers * 100}%`, background: `linear-gradient(180deg, rgba(255,255,255,.4), ${TROOP_COLORS.archers})` }} />
+                <div className="k-track mt-1 flex h-3 w-20 overflow-hidden rounded-full border border-gold/15">
+                  <div className="k-seg" style={{ width: `${c.composition.infantry * 100}%`, '--c': TROOP_COLORS.infantry }} />
+                  <div className="k-seg" style={{ width: `${c.composition.cavalry * 100}%`, '--c': TROOP_COLORS.cavalry }} />
+                  <div className="k-seg" style={{ width: `${c.composition.archers * 100}%`, '--c': TROOP_COLORS.archers }} />
                 </div>
                 <div className="mt-1 font-mono text-[10px] text-parchment/60">{Math.round(c.composition.infantry * 100)}/{Math.round(c.composition.cavalry * 100)}/{Math.round(c.composition.archers * 100)}</div>
               </div>
-              <div className={`absolute inset-x-0 bottom-0 flex items-end justify-center rounded-t-lg border-x border-t ${i === 0 ? 'border-gold/50 bg-gradient-to-t from-gold/[.2] to-gold/[.05]' : 'border-gold/15 bg-gradient-to-t from-white/[.06] to-white/[.02]'}`} style={{ height: `${h}px`, transition: `height .8s cubic-bezier(.16,1,.3,1) ${delay}`, boxShadow: i === 0 ? '0 0 18px rgba(226,181,48,.3)' : 'none' }}>
+              <div className={`absolute inset-x-0 bottom-0 flex items-end justify-center rounded-t-lg border-x border-t ${i === 0 ? 'k-sheen border-gold/50 bg-gradient-to-t from-gold/[.28] via-gold/[.12] to-gold/[.04]' : 'border-gold/15 bg-gradient-to-t from-white/[.08] to-white/[.02]'}`} style={{ height: `${h}px`, transition: `height .8s cubic-bezier(.16,1,.3,1) ${delay}`, boxShadow: i === 0 ? '0 0 18px rgba(226,181,48,.3)' : 'none' }}>
                 <div className="pb-2 font-mono text-sm font-black text-gold-bright">{c.margin >= 0 ? '+' : ''}{fmt(c.margin)}</div>
               </div>
             </div>

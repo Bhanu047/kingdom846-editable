@@ -30,18 +30,31 @@ function CalculatePrompt({label}){return <div className="mt-5 flex flex-col item
   <div className="text-xs text-parchment/45">Click <b className="text-gold-bright">{label}</b> above to run the analysis.</div>
 </div>}
 
+// A flat stroke colour per segment was what made this donut read as a pie
+// chart from a spreadsheet. Each segment now runs through its own SVG gradient
+// -- lit on the outer edge, falling to a deeper shade -- and a slow counter
+// ring turns behind it so the graphic is never completely still.
+//
+// Gradients rather than CSS filters on purpose: html2canvas rasterises an SVG
+// wholesale, so gradients survive into the downloadable report while a CSS
+// filter on the same element would be dropped.
 function Donut({ratio,title='Optimal Distribution',center='Best Formation'}){
   const reveal=useReveal()
+  const gid=useId()
   const a=Math.round(ratio.infantry*100),b=Math.round(ratio.cavalry*100),c=Math.max(0,100-a-b)
   const R=68,C=2*Math.PI*R
-  const segs=[{key:'infantry',pct:a,color:'#5D90E8'},{key:'cavalry',pct:b,color:'#E0B23B'},{key:'archers',pct:c,color:'#D76158'}]
+  const segs=[{key:'infantry',pct:a,color:'#5D90E8',lit:'#9FBEF4'},{key:'cavalry',pct:b,color:'#E0B23B',lit:'#F5D888'},{key:'archers',pct:c,color:'#D76158',lit:'#F0A197'}]
   let acc=0
   return <div className="chart-card rounded-2xl p-4">
     <div className="text-center font-display text-lg font-bold text-parchment">{title}</div>
     <div className="relative mx-auto mt-4 h-48 w-48">
       <svg viewBox="0 0 160 160" className="h-full w-full -rotate-90">
+        <defs>
+          {segs.map(s=><linearGradient key={s.key} id={`${gid}-${s.key}`} x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stopColor={s.lit}/><stop offset="55%" stopColor={s.color}/><stop offset="100%" stopColor={s.color} stopOpacity=".72"/></linearGradient>)}
+        </defs>
         <circle cx="80" cy="80" r={R} fill="none" stroke="rgba(255,255,255,.06)" strokeWidth="15"/>
-        {segs.map(s=>{const len=(s.pct/100)*C,start=acc;acc+=len;return <circle key={s.key} cx="80" cy="80" r={R} fill="none" stroke={s.color} strokeWidth="15" strokeLinecap="round" strokeDasharray={reveal?`${len} ${C-len}`:`0 ${C}`} strokeDashoffset={-start} style={{transition:'stroke-dasharray .9s cubic-bezier(.34,1.56,.64,1)',transitionDelay:`${segs.indexOf(s)*140}ms`}}/>})}
+        <circle cx="80" cy="80" r={R+11} fill="none" stroke="rgba(226,199,125,.14)" strokeWidth="1" strokeDasharray="3 9" className="donut-ring"/>
+        {segs.map(s=>{const len=(s.pct/100)*C,start=acc;acc+=len;return <circle key={s.key} cx="80" cy="80" r={R} fill="none" stroke={`url(#${gid}-${s.key})`} strokeWidth="15" strokeLinecap="round" strokeDasharray={reveal?`${len} ${C-len}`:`0 ${C}`} strokeDashoffset={-start} style={{transition:'stroke-dasharray .9s cubic-bezier(.34,1.56,.64,1)',transitionDelay:`${segs.indexOf(s)*140}ms`}}/>})}
       </svg>
       <div className="absolute inset-0 grid place-items-center">
         <div className="grid h-28 w-28 place-items-center rounded-full border border-gold/15 bg-[#07101e] text-center">

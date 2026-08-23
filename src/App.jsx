@@ -1,5 +1,6 @@
 import { useState, useMemo, lazy, Suspense, useEffect } from 'react'
 import { trackPage, trackAction, installOutboundTracking } from './lib/analytics'
+import { installSurfaceTracking } from './lib/surface'
 import Sidebar from './components/Sidebar'
 import Icon from './components/Icon'
 import ErrorBoundary from './components/ErrorBoundary'
@@ -7,6 +8,7 @@ import { ToastProvider } from './components/Toast'
 import { PageSkeleton } from './components/Skeleton'
 import SplashScreen from './components/SplashScreen'
 import ParticleField from './components/ParticleField'
+import Aurora from './components/Aurora'
 import ScrollProgress from './components/ScrollProgress'
 import ChatAssistant from './components/ChatAssistant'
 import { AuthProvider, useAuth } from './context/AuthContext'
@@ -106,6 +108,7 @@ function Shell() {
 
   // One delegated listener for the whole app, attached once.
   useEffect(() => { installOutboundTracking() }, [])
+  useEffect(() => installSurfaceTracking(), [])
 
   // A hash that matches no route silently falls through to the dashboard, so a
   // dead link from Discord looks like a normal visit. Record it instead.
@@ -171,6 +174,7 @@ function Shell() {
   return (
     <>
       {showSplash && <SplashScreen onEnter={() => setShowSplash(false)} />}
+      <Aurora />
       <ParticleField />
       <ScrollProgress />
       <ChatAssistant />

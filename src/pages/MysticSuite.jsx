@@ -143,19 +143,24 @@ export function CompositionChart({ items, total }) {
                 {i < 3 ? MEDALS[i] : <span className="text-[8px]">#{i + 1}</span>}
               </span>
 
-              {/* The bar IS the composition: segment widths are the split. */}
-              <div className="flex h-7 min-w-0 flex-1 overflow-hidden rounded-md border border-gold/10">
+              {/* The bar IS the composition: segment widths are the split.
+                  Segments take their colour through --c so .k-seg can build the
+                  lit-top/shaded-bottom gradient from it -- a flat fill was what
+                  made these read as flat. Only the top-ranked row carries the
+                  travelling sheen, so it marks the winner rather than turning
+                  the whole chart into a light show. */}
+              <div className={`k-track flex h-7 min-w-0 flex-1 overflow-hidden rounded-md border border-gold/10 ${i === 0 ? 'k-sheen' : ''}`}>
                 {parts.map((p) => (
                   <div
                     key={p.key}
-                    className="flex items-center justify-center overflow-hidden transition-[width] duration-700"
+                    className="k-seg flex items-center justify-center overflow-hidden"
                     style={{
                       width: reveal ? `${p.v}%` : '0%',
-                      background: TROOP_COLORS[p.key],
-                      transitionDelay: `${i * 60}ms`,
+                      '--c': TROOP_COLORS[p.key],
+                      transitionDelay: `${i * 70}ms`,
                     }}
                   >
-                    {p.v >= 9 && <span className="font-mono text-[10px] font-bold tabular-nums text-black/70">{Math.round(p.v)}</span>}
+                    {p.v >= 9 && <span className="k-seg-label font-mono text-[10px] font-bold tabular-nums">{Math.round(p.v)}</span>}
                   </div>
                 ))}
               </div>
@@ -185,7 +190,7 @@ function ArmyCard({ side, label, border, glow, align, reveal, accent }) {
         {TROOPS.map((t, i) => (
           <div key={t.key} className={`flex items-center gap-2 ${align === 'text-right' ? 'flex-row-reverse' : ''}`}>
             <Icon name={t.icon} size={12} style={{ color: TROOP_COLORS[t.key] }} />
-            <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-black/40 shadow-[inset_0_1px_2px_rgba(0,0,0,.5)]"><div className="h-full rounded-full" style={{ width: reveal ? `${total > 0 ? Math.max(0, side[t.key]) / total * 100 : 0}%` : '0%', background: `linear-gradient(180deg, rgba(255,255,255,.4), ${TROOP_COLORS[t.key]} 35%, ${TROOP_COLORS[t.key]})`, transition: `width 1s cubic-bezier(.16,1,.3,1) ${i * 100}ms`, boxShadow: `0 0 7px ${TROOP_COLORS[t.key]}aa` }} /></div>
+            <div className="k-track h-2.5 flex-1 overflow-hidden rounded-full"><div className="k-seg h-full rounded-full" style={{ width: reveal ? `${total > 0 ? Math.max(0, side[t.key]) / total * 100 : 0}%` : '0%', '--c': TROOP_COLORS[t.key], transitionDelay: `${i * 110}ms` }} /></div>
             <span className="w-[62px] shrink-0 font-mono text-[9px] tabular-nums text-parchment/55 sm:w-24 sm:text-[10px]" style={{ textAlign: align === 'text-right' ? 'left' : 'right' }}>{fmt(side[t.key])} <span className="text-parchment/35">({total > 0 ? Math.round(Math.max(0, side[t.key]) / total * 100) : 0}%)</span></span>
           </div>
         ))}

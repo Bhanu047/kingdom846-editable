@@ -168,7 +168,15 @@ function StatRadar({ yourStats, enemyStats, yourLabel = 'YOUR ARMY', enemyLabel 
   const R = 72, CX = 140, CY = 116
   const angleFor = (i) => -Math.PI / 2 + i * (2 * Math.PI / AXES.length)
   const maxes = AXES.map((a) => Math.max(1, yourStats[a.key], enemyStats[a.key]))
-  const pt = (i, val, max) => [CX + R * Math.min(1, val / max) * Math.cos(angleFor(i)), CY + R * Math.min(1, val / max) * Math.sin(angleFor(i))]
+  // clamp exists so a data polygon can never overshoot the outer grid ring.
+  // The axis labels reuse this function to sit OUTSIDE that ring, and were
+  // silently clamped with everything else -- pt(i, 1.42, 1) resolved to 1.0,
+  // parking every label exactly on the ring where a maxed polygon sits. That
+  // is why ATK, LET and TROOPS were printed on top of the shape.
+  const pt = (i, val, max, clamp = true) => {
+    const k = clamp ? Math.min(1, val / max) : val / max
+    return [CX + R * k * Math.cos(angleFor(i)), CY + R * k * Math.sin(angleFor(i))]
+  }
   const poly = (stats) => AXES.map((a, i) => pt(i, stats[a.key], maxes[i])).map(([x, y]) => `${x},${y}`).join(' ')
   const gridPoly = (scale) => AXES.map((a, i) => pt(i, scale, 1)).map(([x, y]) => `${x},${y}`).join(' ')
   const VB_W = 280, VB_H = 250
@@ -192,7 +200,7 @@ function StatRadar({ yourStats, enemyStats, yourLabel = 'YOUR ARMY', enemyLabel 
         </svg>
         {/* Plain HTML labels, not SVG <text> — html2canvas 1.4.1 renders SVG
             text (and the whole SVG along with it) blank in exported reports. */}
-        {AXES.map((a, i) => { const [x, y] = pt(i, 1.42, 1); return <div key={a.key} className="absolute -translate-x-1/2 -translate-y-1/2 whitespace-nowrap text-[11px] font-extrabold text-parchment" style={{ left: `${x / VB_W * 100}%`, top: `${y / VB_H * 100}%` }}>{a.label}</div> })}
+        {AXES.map((a, i) => { const [x, y] = pt(i, 1.34, 1, false); return <div key={a.key} className="absolute -translate-x-1/2 -translate-y-1/2 whitespace-nowrap text-[11px] font-extrabold text-parchment" style={{ left: `${x / VB_W * 100}%`, top: `${y / VB_H * 100}%` }}>{a.label}</div> })}
       </div>
       <div className="mt-1 flex justify-center gap-4 text-[10px]"><span className="text-[#7f9ed6]">● {yourLabel}</span><span className="text-[#c8655a]">● {enemyLabel}</span></div>
     </div>

@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Kingdom 846 — Welcome Screen Gallery</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;800&family=Montserrat:wght@400;500;600;700&display=swap">
+<style>
+  :root{
+    --ink:#070c17; --ink-2:#0b1222; --panel:#0e1626;
+    --gold:#D9B44A; --gold-lit:#F3DC96; --gold-dim:rgba(217,180,74,.28);
+    --text:#EFE6CF; --muted:rgba(239,230,207,.55); --faint:rgba(239,230,207,.34);
+    --live:#5BC98C; --dead:#C8655A;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--ink); color:var(--text);
+    font-family:Montserrat,system-ui,-apple-system,"Segoe UI",Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1320px;margin:0 auto;padding:40px 22px 80px}
+
+  header{border-bottom:1px solid var(--gold-dim);padding-bottom:24px;margin-bottom:8px}
+  .eyebrow{
+    font-size:10px;font-weight:700;letter-spacing:.3em;text-transform:uppercase;
+    color:var(--gold);opacity:.8;
+  }
+  h1{
+    font-family:Cinzel,Georgia,serif;font-weight:800;
+    font-size:clamp(1.8rem,3.2vw,2.6rem);line-height:1.1;margin:.35em 0 .25em;
+  }
+  .lede{max-width:64ch;font-size:14px;line-height:1.72;color:var(--muted);margin:0}
+  .lede b{color:var(--text);font-weight:600}
+
+  h2{
+    font-family:Cinzel,Georgia,serif;font-weight:700;
+    font-size:1.15rem;letter-spacing:.02em;margin:52px 0 4px;
+  }
+  .sub{font-size:12.5px;color:var(--faint);margin:0 0 20px;line-height:1.6;max-width:70ch}
+
+  .grid{display:grid;gap:20px;grid-template-columns:repeat(auto-fill,minmax(300px,1fr))}
+
+  .card{
+    background:var(--panel);border:1px solid rgba(217,180,74,.16);border-radius:12px;
+    overflow:hidden;display:flex;flex-direction:column;
+    transition:border-color .2s ease, transform .2s ease;
+  }
+  .card:hover{border-color:rgba(217,180,74,.45);transform:translateY(-2px)}
+  .shot{
+    display:block;width:100%;aspect-ratio:16/9;object-fit:cover;
+    background:#05080f;border-bottom:1px solid rgba(217,180,74,.14);
+  }
+  .shot.missing{
+    display:grid;place-items:center;color:var(--faint);font-size:11px;letter-spacing:.18em;
+    text-transform:uppercase;
+  }
+  .body{padding:14px 15px 15px;display:flex;flex-direction:column;gap:7px;flex:1}
+  .name{font-family:Cinzel,Georgia,serif;font-weight:700;font-size:15px;line-height:1.25}
+  .idx{color:var(--gold);font-weight:600;margin-right:.4em}
+  .desc{font-size:12px;line-height:1.6;color:var(--muted);margin:0;flex:1}
+  .row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:4px}
+
+  .tag{
+    font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+    padding:3px 7px;border-radius:999px;border:1px solid currentColor;
+  }
+  .tag.live{color:var(--live)}
+  .tag.rejected{color:var(--dead)}
+  .tag.neutral{color:var(--faint)}
+
+  .open{
+    display:inline-block;font-size:11px;font-weight:700;letter-spacing:.14em;
+    text-transform:uppercase;text-decoration:none;padding:8px 13px;border-radius:8px;
+    color:#160f02;background:linear-gradient(180deg,var(--gold-lit),var(--gold));
+    border:1px solid rgba(255,246,218,.5);
+  }
+  .open:hover{filter:brightness(1.08)}
+  .open.ghost{
+    background:none;color:var(--gold);border-color:var(--gold-dim);
+  }
+
+  .note{
+    margin-top:44px;border:1px solid rgba(217,180,74,.18);border-left:3px solid var(--gold);
+    border-radius:8px;padding:16px 18px;background:rgba(217,180,74,.04);
+  }
+  .note p{margin:0 0 8px;font-size:13px;line-height:1.7;color:var(--muted)}
+  .note p:last-child{margin-bottom:0}
+  .note b{color:var(--text)}
+  code{
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;
+    background:rgba(255,255,255,.06);padding:1px 5px;border-radius:4px;color:var(--gold-lit);
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow">Kingdom 846</div>
+    <h1>Welcome Screen Gallery</h1>
+    <p class="lede">
+      Every entrance built or supplied so far, in one place — <b>four</b> from earlier in this
+      project and <b>ten</b> from the sets you sent. Nothing here is live. The site still opens on
+      <b>The Approach</b> until you pick. Open any of them full screen, tell me which one you want and
+      what you want changed about it, and I will edit it before it goes anywhere near the entrance.
+    </p>
+  </header>
+
+  <h2>Previously built</h2>
+  <p class="sub">
+    The four earlier concepts, each at its last iteration. Two of these you already turned down —
+    they are kept here so the record is complete, not because I am re-proposing them.
+  </p>
+  <div class="grid" id="built"></div>
+
+  <h2>The ten sets you supplied</h2>
+  <p class="sub">
+    All ten share your copy exactly — ONE CROWN · FOUR ALLIANCES / KINGDOM 846 /
+    Where legends are forged in fire and crowned in gold / ENTER THE REALM — and the same
+    eight-second cinematic sequence. What differs is the room, its light and its live motion.
+    Each opens with the theme switcher on, so you can flip between all ten without coming back here.
+  </p>
+  <div class="grid" id="sets"></div>
+
+  <div class="note">
+    <p><b>Nothing is committed.</b> The entrance is still the previous screen. Choosing one is a
+    single change in <code>src/data/realmArt.js</code> and <code>CONFIG.theme</code>, and it also
+    re-skins the home hero and the About banner so the whole site sits in the same room.</p>
+    <p>Sound is part of every one of these. Use headphones or turn the volume up — the score is
+    synthesised in the browser, there are no audio files.</p>
+  </div>
+
+</div>
+
+<script>
+// Data kept here rather than hand-written into the markup: fourteen cards is
+// exactly the point where copy-pasted markup starts drifting out of step.
+const BUILT = [
+  {
+    id:'approach', name:'The Approach',
+    tag:{cls:'live', text:'Currently live'},
+    desc:'The hall itself is the film — a slow camera push through light shafts onto the crest, ' +
+         'with the gold wordmark building letter by letter. Uses the crest and hall you sent.'
+  },
+  {
+    id:'gates-openwork', name:'Openwork Gates',
+    tag:{cls:'rejected', text:'You turned this down'},
+    desc:'Pierced gates that swing open onto the hall. You said the previous one was a hundred ' +
+         'times better.'
+  },
+  {
+    id:'gates-solid', name:'The Gates',
+    tag:{cls:'rejected', text:'You turned this down'},
+    desc:'Solid gates parting on the realm. Your note was that the gates looked worst.'
+  },
+  {
+    id:'original', name:'The Original',
+    tag:{cls:'neutral', text:'First version'},
+    desc:'The first entrance: crest fade-in over the royal ground with an ember field. Where this ' +
+         'started, before any of the rebuilds.'
+  },
+];
+
+const SETS = [
+  ['sapphire',  'Sapphire Hall',   'The most balanced flagship. Regal, cold-blue authority with warm gold detail.'],
+  ['coronation','Coronation Hall', 'Richest gold option; ceremonial, powerful and fire-lit.'],
+  ['moonlit',   'Moonlit Realm',   'Mysterious and legendary; reveals the kingdom beyond the palace.'],
+  ['embers',    'Ember Throne',    'Darkest and most forceful. A kingdom forged literally in fire.'],
+  ['cathedral', 'Ivory Cathedral', 'Sacred, luminous and prestigious; the most elegant option.'],
+  ['storm',     'Storm Fortress',  'Commanding, militaristic and dramatic; the kingdom under pressure. Adds procedural rain and lightning.'],
+  ['dragongate','Dragon Gate',     'Mythic eastern imperial power with a monumental entrance.'],
+  ['warcamp',   'Royal War Camp',  'Alliance, strategy and conquest; the broadest world-building option.'],
+  ['celestial', 'Celestial Palace','The rarest and most fantastical option; a kingdom above the world. Adds procedural aurora.'],
+  ['frost',     'Frozen Citadel',  'Cold, regal and untouchable; a kingdom that endures the deepest winter. Adds layered snowfall.'],
+];
+
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function card({ id, num, name, desc, href, tag, ghost }) {
+  const el = document.createElement('article');
+  el.className = 'card';
+  el.innerHTML =
+    '<a href="' + href + '" target="_blank" rel="noopener">' +
+      '<img class="shot" loading="lazy" alt="' + esc(name) + '" src="thumbs/' + id + '.jpg"' +
+      ' onerror="this.replaceWith(Object.assign(document.createElement(\'div\'),' +
+      '{className:\'shot missing\',textContent:\'preview unavailable\'}))">' +
+    '</a>' +
+    '<div class="body">' +
+      '<div class="name">' + (num ? '<span class="idx">' + num + '</span>' : '') + esc(name) + '</div>' +
+      '<p class="desc">' + esc(desc) + '</p>' +
+      '<div class="row">' +
+        (tag ? '<span class="tag ' + tag.cls + '">' + esc(tag.text) + '</span>' : '') +
+        '<a class="open' + (ghost ? ' ghost' : '') + '" href="' + href + '" target="_blank" rel="noopener">Open full screen</a>' +
+      '</div>' +
+    '</div>';
+  return el;
+}
+
+const built = document.getElementById('built');
+BUILT.forEach((b) => built.appendChild(card({
+  id: b.id, name: b.name, desc: b.desc, tag: b.tag,
+  href: 'archive/' + b.id + '/index.html',
+  ghost: b.tag && b.tag.cls === 'rejected',
+})));
+
+const sets = document.getElementById('sets');
+SETS.forEach(([id, name, desc], i) => sets.appendChild(card({
+  id, name, desc,
+  num: String(i + 1).padStart(2, '0'),
+  href: '../royal-welcome/index.html?preview=1&theme=' + id,
+})));
+</script>
+</body>
+</html>

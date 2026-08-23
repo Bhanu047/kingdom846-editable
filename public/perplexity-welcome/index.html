@@ -227,12 +227,12 @@ body {
     linear-gradient(180deg, rgba(255,255,255,.46) 0%, rgba(255,255,255,.06) 26%, rgba(255,255,255,0) 48%, rgba(0,0,0,0) 54%, rgba(0,0,0,.22) 100%),
     linear-gradient(96deg, #8A6A1C 0%, #D4AF37 18%, #F7E8B8 42%, #FFFDF2 52%, #E8C766 64%, #C9A238 84%, #8A6A1C 100%);
   background-size: auto, 230% auto;
-  box-shadow: 0 2px 0 rgba(255,255,255,.3) inset, 0 14px 36px -10px rgba(212,175,55,.8), 0 4px 12px rgba(0,0,0,.65);
+  box-shadow: 0 0 0 1px rgba(90,68,14,.9), 0 2px 0 rgba(255,255,255,.34) inset, 0 6px 14px -4px rgba(0,0,0,.7), 0 16px 30px -14px rgba(0,0,0,.85);
   animation: sheen 6s ease-in-out infinite;
   transition: box-shadow .35s ease, filter .35s ease;
 }
 @keyframes sheen { 0%,100% { background-position: 0 0, 0% center } 50% { background-position: 0 0, 100% center } }
-.enter:hover  { filter: brightness(1.08); box-shadow: 0 2px 0 rgba(255,255,255,.36) inset, 0 20px 50px -10px rgba(212,175,55,.95), 0 4px 12px rgba(0,0,0,.65); }
+.enter:hover  { filter: brightness(1.06); box-shadow: 0 0 0 1px rgba(120,92,20,.95), 0 2px 0 rgba(255,255,255,.42) inset, 0 10px 20px -5px rgba(0,0,0,.72), 0 22px 40px -18px rgba(0,0,0,.9); transform: translateY(-1px); }
 .enter:active { transform: translateY(1px) scale(.985); }
 .enter .ring  { width: 21px; height: 21px; border-radius: 50%; border: 2.5px solid rgba(21,15,2,.6); box-shadow: inset 0 1px 0 rgba(255,255,255,.4); }
 .enter:focus-visible { outline: 2px solid var(--gold-pale); outline-offset: 4px; }

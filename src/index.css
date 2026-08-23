@@ -2247,3 +2247,83 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
   .btn-ghost:active, summary:active, .tool-tile:active, .nav-item:active { transform: none !important; filter: none !important }
   .k-ripple { display: none !important }
 }
+
+/* ---- Display metal -------------------------------------------------------- */
+/* "KINGDOM 846" on the home hero read as dull, and the reason is tonal range.
+   .gradient-gold runs #B8941E to #F3E8CC -- all of it mid-gold, so on a bright
+   photograph the letters have nothing darker than the background to push
+   against and nothing brighter to catch the eye. Gold looks like gold because
+   of the DISTANCE between its shadow and its specular, not because of its hue.
+
+   This ramp runs from near-black bronze to near-white, with a hard specular
+   band across the middle third, a dark rim so the letters cut out of the photo
+   behind them, and a catch-light that travels. No glow -- a struck surface
+   reflects light, it does not emit it. */
+.gilt-display {
+  background-image: linear-gradient(176deg,
+    #2E2206 0%,
+    #6B5414 13%,
+    #A8842A 26%,
+    #E8C766 39%,
+    #FFF9E6 48%,
+    #FFFFFF 51%,
+    #F2DC9A 55%,
+    #C9A238 68%,
+    #7A5C13 84%,
+    #3A2B08 100%);
+  background-size: 100% 260%;
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent; color: transparent;
+  /* The rim is what separates metal type from coloured type on a busy image. */
+  filter:
+    drop-shadow(0 1px 0 rgba(0,0,0,.85))
+    drop-shadow(0 3px 10px rgba(0,0,0,.9))
+    drop-shadow(0 10px 26px rgba(0,0,0,.75));
+  animation: gilt-tilt 7.5s ease-in-out infinite;
+}
+/* Moving the ramp vertically reads as the light source moving across a raised
+   surface; moving it horizontally just looks like a swipe. */
+@keyframes gilt-tilt {
+  0%, 100% { background-position: 50% 12% }
+  50%      { background-position: 50% 88% }
+}
+@media (prefers-reduced-motion: reduce) {
+  .gilt-display { animation: none !important; background-position: 50% 50% }
+}
+
+/* ---- Home hero ------------------------------------------------------------ */
+/* The throne room is a dark photograph and the wordmark sat on the flattest
+   part of it. No amount of work on the type fixes that -- the type needs
+   something behind it. */
+
+/* Warm grade: lifts the left third where the copy sits, and deepens the right
+   so the throne still reads as the focal point. */
+.hero-grade {
+  pointer-events: none;
+  background:
+    radial-gradient(72% 96% at 6% 52%, rgba(255,214,140,.20), transparent 60%),
+    linear-gradient(90deg, rgba(6,9,18,.80) 0%, rgba(6,9,18,.42) 34%, rgba(6,9,18,.06) 62%, rgba(6,9,18,.30) 100%);
+}
+/* A bloom behind the throne on a long cycle. Slow enough to notice only if you
+   sit with it, which is the point -- a hero that pulses is a distraction. */
+.hero-bloom {
+  position: absolute; right: 26%; top: 34%;
+  width: 46%; aspect-ratio: 1; translate: 50% -50%;
+  border-radius: 50%; pointer-events: none;
+  background: radial-gradient(circle, rgba(255,222,150,.26), rgba(255,196,96,.07) 44%, transparent 70%);
+  animation: hero-bloom 12s ease-in-out infinite;
+}
+@keyframes hero-bloom { 0%,100% { opacity:.45; scale:1 } 50% { opacity:1; scale:1.14 } }
+/* Light raking from the high windows, drifting on a cycle that does not line
+   up with the bloom so the two never beat against each other. */
+.hero-rake {
+  pointer-events: none; mix-blend-mode: screen;
+  background: repeating-linear-gradient(76deg,
+    transparent 0 54px, rgba(255,232,176,.05) 54px 84px, transparent 84px 150px);
+  animation: hero-rake 29s ease-in-out infinite alternate;
+}
+@keyframes hero-rake { from { opacity:.5; translate:-2% 0 } to { opacity:1; translate:3% 1% } }
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-bloom, .hero-rake { animation: none !important }
+}

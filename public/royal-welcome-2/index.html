@@ -97,11 +97,11 @@ body.nogl #bg{display:none;}
 /* ===================== CONTENT ===================== */
 .content{position:relative;z-index:20;height:100%;
   display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:clamp(6px,1.1vh,16px);padding:clamp(26px,6vh,74px) 22px clamp(34px,7vh,86px);text-align:center;
+  gap:clamp(11px,1.9vh,24px);padding:clamp(26px,6vh,74px) 22px clamp(34px,7vh,86px);text-align:center;
   will-change:transform;transition:transform .9s cubic-bezier(.16,.72,.24,1);}
 
 .eyebrow{display:flex;align-items:center;gap:clamp(10px,1.6vw,22px);
-  font-weight:500;font-size:clamp(8.5px,1.05vw,14px);letter-spacing:var(--eyebrow-track);opacity:0;white-space:nowrap;
+  font-weight:500;font-size:clamp(10px,1.25vw,17px);letter-spacing:var(--eyebrow-track);opacity:0;white-space:nowrap;
   text-shadow:0 0 20px rgba(230,194,102,.4);}
 .eyebrow b{font-weight:var(--eyebrow-w);}
 .eyebrow s{text-decoration:none;display:block;width:clamp(24px,5vw,74px);height:1px;
@@ -256,7 +256,10 @@ body[data-theme="celestial"] .play .title span{animation:letterDrift 1.6s cubic-
 .play .impact{animation:flash 900ms ease-out 5.95s forwards;}
 @keyframes flash{0%{opacity:0}16%{opacity:1}100%{opacity:0}}
 
-.rule{display:flex;align-items:center;justify-content:center;gap:14px;width:min(520px,72vw);opacity:0;}
+/* The wordmark was landing 8px off the rule -- close enough that a descender
+   or a heavy face made them read as one object. This is breathing room. */
+.rule{display:flex;align-items:center;justify-content:center;gap:18px;width:min(560px,74vw);
+  opacity:0;margin-top:clamp(8px,1.6vh,20px);margin-bottom:clamp(2px,.6vh,8px);}
 .rule s{text-decoration:none;display:block;height:1px;flex:1;transform:scaleX(0);transform-origin:right center;
   background:linear-gradient(90deg,rgba(230,194,102,0),rgba(230,194,102,.9));}
 .rule s:last-child{background:linear-gradient(90deg,rgba(230,194,102,.9),rgba(230,194,102,0));transform-origin:left center;}
@@ -267,7 +270,7 @@ body[data-theme="celestial"] .play .title span{animation:letterDrift 1.6s cubic-
 @keyframes drawRule{to{transform:scaleX(1)}}
 
 .tagline{font-family:var(--tag-fam);font-style:var(--tag-style);font-weight:var(--tag-w);
-  font-size:clamp(14px,2vw,27px);letter-spacing:var(--tag-track);color:#ecdfc0;opacity:0;text-shadow:0 2px 18px rgba(0,0,0,.9);}
+  font-size:clamp(16px,2.3vw,31px);letter-spacing:var(--tag-track);color:#ecdfc0;opacity:0;text-shadow:0 2px 18px rgba(0,0,0,.9);}
 .play .tagline{animation:taglineIn 1.2s cubic-bezier(.22,.61,.36,1) 6.5s forwards;}
 @keyframes taglineIn{from{opacity:0;transform:translateY(12px);filter:blur(7px)}
                      to{opacity:.96;transform:translateY(0);filter:blur(0)}}
@@ -287,7 +290,7 @@ body[data-theme="celestial"] .play .title span{animation:letterDrift 1.6s cubic-
      The button is the one thing on screen that must stay hittable. */
   flex-shrink:0;
   padding:clamp(13px,1.7vh,18px) clamp(28px,4.4vw,56px);
-  font-family:var(--cta-fam);font-weight:var(--cta-w);font-size:clamp(10.5px,1.1vw,15px);letter-spacing:var(--cta-track);
+  font-family:var(--cta-fam);font-weight:var(--cta-w);font-size:clamp(12px,1.3vw,17px);letter-spacing:var(--cta-track);
   color:#241a08;background:linear-gradient(180deg,#fff5d6 0%,var(--gold-1) 26%,var(--gold-2) 52%,var(--gold-3) 82%,#f3e2ab 100%);
   border:1px solid rgba(255,246,214,.7);border-radius:var(--cta-radius);cursor:pointer;overflow:hidden;opacity:0;
   box-shadow:0 0 0 1px rgba(111,76,19,.6), 0 16px 46px rgba(0,0,0,.7), 0 0 34px rgba(230,194,102,.22);
@@ -300,6 +303,11 @@ body[data-theme="celestial"] .play .title span{animation:letterDrift 1.6s cubic-
   background:linear-gradient(104deg,rgba(255,255,255,0),rgba(255,255,255,.8),rgba(255,255,255,0));
   animation:ctaSheen 5.5s ease-in-out 9s infinite;}
 @keyframes ctaSheen{0%,74%{left:-60%}100%{left:135%}}
+.cta{gap:clamp(9px,1vw,14px);}
+.cta-mark{width:clamp(15px,1.5vw,20px);height:auto;flex:0 0 auto;
+  color:#3a2a06;opacity:.85;transform:translateY(-1px);
+  transition:transform .35s cubic-bezier(.16,.72,.24,1), opacity .35s ease;}
+.cta:hover .cta-mark{transform:translateY(-2px) scale(1.06);opacity:1;}
 .cta:hover{transform:translateY(-2px) scale(1.025);filter:brightness(1.07);letter-spacing:.34em;}
 .cta:active{transform:translateY(0) scale(.99);}
 .crown-mini{color:var(--gold-2);font-size:13px;letter-spacing:.5em;opacity:0;margin-top:6px;text-shadow:0 0 16px rgba(230,194,102,.7);}
@@ -352,7 +360,7 @@ body.preview .hud.right button{font-size:8px;padding:8px 10px;}
    Ornaments carry U+FE0E so they render as typography, not as colour emoji. */
 body{
   --disp:'Cinzel',serif; --disp-w:800; --disp-track:.1em;
-  --disp-size:clamp(30px,6.6vw,92px);
+  --disp-size:clamp(38px,8vw,112px);
   --crest-h:clamp(190px,42vh,470px);
   --eyebrow-track:.34em; --eyebrow-w:500;
   --tag-fam:'Cormorant Garamond',serif; --tag-style:italic; --tag-w:300; --tag-track:.055em;
@@ -531,7 +539,7 @@ body[data-theme="sapphire"] .play .bar.top,body[data-theme="sapphire"] .play .ba
 /* CORONATION -- THE CROWNING -- the crest arrives ALONE and is left to hold in silence
    for three full seconds. No eyebrow; the crest is the announcement. Then
    the rest follows it in a rush, and the crown is set BEFORE the invitation. */
-body[data-theme="coronation"] .eyebrow{display:none;}
+body[data-theme="coronation"] .play .eyebrow{animation-delay:3.6s;}
 body[data-theme="coronation"] .play .crest-wrap{animation-delay:2.0s;}
 body[data-theme="coronation"] .play .rule{animation-delay:6.5s;}
 body[data-theme="coronation"] .play .tagline{animation-delay:6.9s;}
@@ -545,9 +553,9 @@ body[data-theme="coronation"] .play .bar.top,body[data-theme="coronation"] .play
 /* MOONLIT -- THE SLOW REVEAL -- inverted and almost empty. The line of poetry comes
    FIRST, before anything is shown, and the kingdom resolves behind it. No
    rule, no crown. Four beats over eleven seconds, the quietest of the nine. */
-body[data-theme="moonlit"] .eyebrow{display:none;}
 body[data-theme="moonlit"] .rule{display:none;}
 body[data-theme="moonlit"] .crown-mini{display:none;}
+body[data-theme="moonlit"] .play .eyebrow{animation-delay:1.4s;}
 body[data-theme="moonlit"] .play .crest-wrap{animation-delay:4.2s;}
 body[data-theme="moonlit"] .play .tagline{animation-delay:2.2s;}
 body[data-theme="moonlit"] .play .cta{animation-delay:9.2s;}
@@ -558,10 +566,10 @@ body[data-theme="moonlit"] .play .bar.top,body[data-theme="moonlit"] .play .bar.
 /* EMBERS -- THE FORGE -- shortest and most violent. Three beats, nothing else: the
    WORD burns in first, out of nothing, then the crest drops onto it, then
    the door. No eyebrow, no rule, no tagline, no crown. Six seconds. */
-body[data-theme="embers"] .eyebrow{display:none;}
 body[data-theme="embers"] .rule{display:none;}
 body[data-theme="embers"] .tagline{display:none;}
 body[data-theme="embers"] .crown-mini{display:none;}
+body[data-theme="embers"] .play .eyebrow{animation-delay:0.9s;}
 body[data-theme="embers"] .play .crest-wrap{animation-delay:3.4s;}
 body[data-theme="embers"] .play .cta{animation-delay:5.2s;}
 body[data-theme="embers"] .play .impact{animation-delay:3.4s;}
@@ -689,21 +697,21 @@ body[data-theme="celestial"] .play .title span{animation:letterStar 1.9s ease-ou
    in the set, tracking pulled in so the word sits like a struck medal, and the
    largest crest: this hall is about the crown, not the room. */
 body[data-theme="coronation"]{--disp:'Cinzel Decorative',serif;--disp-w:900;--disp-track:.035em;
-  --disp-size:clamp(27px,5.9vw,84px);--crest-h:clamp(200px,46vh,510px);
+  --disp-size:clamp(34px,7.2vw,102px);--crest-h:clamp(200px,46vh,510px);
   --cta-track:.34em;--orn:'\2767\FE0E';}
 
 /* 03 Moonlit Realm -- whispered, not announced. The thinnest weight, the
    widest tracking, the smallest wordmark and a reduced crest, so most of the
    frame is night. */
 body[data-theme="moonlit"]{--crest-shade:.30;--disp:'Cormorant Garamond',serif;--disp-w:300;--disp-track:.3em;
-  --disp-size:clamp(25px,5.4vw,74px);--crest-h:clamp(165px,37vh,410px);
+  --disp-size:clamp(32px,6.8vw,94px);--crest-h:clamp(165px,37vh,410px);
   --eyebrow-track:.5em;--eyebrow-w:400;--tag-w:300;--orn:'\2727\FE0E';}
 
 /* 04 Ember Throne -- no serifs, no grace, no restraint. A brutal condensed cut
    at nearly twice the baseline size with the crest cut back: here the WORD is
    the monument and the hall is only its furnace. */
 body[data-theme="embers"]{--disp:'Bebas Neue',sans-serif;--disp-w:400;--disp-track:.045em;
-  --disp-size:clamp(46px,10.4vw,146px);--crest-h:clamp(150px,32vh,350px);
+  --disp-size:clamp(54px,12vw,168px);--crest-h:clamp(150px,32vh,350px);
   --eyebrow-track:.42em;--cta-fam:'Bebas Neue',sans-serif;--cta-w:400;--cta-track:.26em;
   --cta-radius:0;--orn:'\25C6\FE0E';}
 
@@ -711,7 +719,7 @@ body[data-theme="embers"]{--disp:'Bebas Neue',sans-serif;--disp-w:400;--disp-tra
    small caps, generous tracking, the tallest crest, and a maltese cross for
    the ornament. */
 body[data-theme="cathedral"]{--crest-shade:.34;--disp:'Marcellus SC',serif;--disp-w:400;--disp-track:.17em;
-  --disp-size:clamp(28px,6.1vw,86px);--crest-h:clamp(205px,47vh,520px);
+  --disp-size:clamp(35px,7.4vw,104px);--crest-h:clamp(205px,47vh,520px);
   --eyebrow-track:.4em;--orn:'\2720\FE0E';}
 
 /* 06 Storm Fortress -- severe, not utilitarian.
@@ -727,7 +735,7 @@ body[data-theme="cathedral"]{--crest-shade:.34;--disp:'Marcellus SC',serif;--dis
    corners stay -- that part was right. The button keeps Cinzel, because
    Bodoni's hairlines vanish at 11px. */
 body[data-theme="storm"]{--crest-shade:.26;--disp:'Bodoni Moda',serif;--disp-w:900;--disp-track:.1em;
-  --disp-size:clamp(32px,7vw,98px);--crest-h:clamp(178px,38vh,420px);
+  --disp-size:clamp(40px,8.4vw,118px);--crest-h:clamp(178px,38vh,420px);
   --eyebrow-track:.36em;--eyebrow-w:600;
   --tag-fam:'Bodoni Moda',serif;--tag-style:italic;--tag-w:500;--tag-track:.03em;
   --cta-w:600;--cta-track:.26em;--cta-radius:0;--orn:'\2739\FE0E';}
@@ -735,31 +743,41 @@ body[data-theme="storm"]{--crest-shade:.26;--disp:'Bodoni Moda',serif;--disp-w:9
 /* 07 Dragon Gate -- monumental. A heavy flared display with brutal thick/thin
    contrast, the kind of letterform that belongs carved above an arch. */
 body[data-theme="dragongate"]{--disp:'Yeseva One',serif;--disp-w:400;--disp-track:.05em;
-  --disp-size:clamp(31px,6.8vw,94px);--crest-h:clamp(200px,45vh,490px);
+  --disp-size:clamp(39px,8.2vw,114px);--crest-h:clamp(200px,45vh,490px);
   --eyebrow-track:.38em;--orn:'\2756\FE0E';}
 
 /* 08 Royal War Camp -- a standard stitched in the field, not set in a print
    shop. Rugged, blackletter-adjacent, still readable at a glance. */
 body[data-theme="warcamp"]{--crest-shade:.62;--disp:'Grenze Gotisch',serif;--disp-w:700;--disp-track:.07em;
-  --disp-size:clamp(36px,8vw,112px);
+  --disp-size:clamp(44px,9.4vw,132px);
   --cta-fam:'Grenze Gotisch',serif;--cta-w:700;--cta-track:.22em;--orn:'\2748\FE0E';}
 
 /* 09 Celestial Palace -- weightless. The thinnest face in the set at the widest
    tracking, small against an enormous amount of nothing. */
 body[data-theme="celestial"]{--disp:'Italiana',serif;--disp-w:400;--disp-track:.38em;
-  --disp-size:clamp(23px,5vw,68px);--crest-h:clamp(165px,37vh,410px);
+  --disp-size:clamp(30px,6.4vw,88px);--crest-h:clamp(165px,37vh,410px);
   --eyebrow-track:.54em;--eyebrow-w:400;--cta-track:.38em;--orn:'\2735\FE0E';}
 
+/* This was a single enormous saturated radial covering most of the screen at
+   full opacity -- a coloured blob, which is exactly why it read as crude.
+   A real light burst is small, white at its core, and violent for a fraction of
+   a second: the colour lives in the falloff, not in the middle, and the whole
+   thing SCALES rather than just fading up. Three layers -- a white core, the
+   hall's colour around it, and a wide dim wash -- over a much tighter radius. */
 .flash{position:fixed;inset:0;z-index:60;pointer-events:none;opacity:0;
-  background:radial-gradient(78% 66% at var(--flash-pos), rgba(var(--acc),.94), rgba(var(--acc2),.40) 46%, rgba(0,0,0,0) 78%);}
+  transform-origin:var(--flash-pos);
+  background:
+    radial-gradient(26% 30% at var(--flash-pos), rgba(255,255,255,.98), rgba(255,255,255,0) 70%),
+    radial-gradient(46% 48% at var(--flash-pos), rgba(var(--acc),.72), rgba(var(--acc),0) 72%),
+    radial-gradient(96% 86% at var(--flash-pos), rgba(var(--acc2),.24), rgba(var(--acc2),0) 76%);}
 .entering .flash{animation:enterFlash 1.7s ease-out forwards;}
-@keyframes enterFlash{0%{opacity:0}38%{opacity:1}100%{opacity:0}}
+@keyframes enterFlash{0%{opacity:0;transform:scale(.42)}22%{opacity:1;transform:scale(.8)}100%{opacity:0;transform:scale(2.1)}}
 /* Storm does not bloom, it strikes: a double lightning pulse on the way out. */
 body[data-theme="storm"].entering .flash{animation:enterStrike 1.7s linear forwards;}
-@keyframes enterStrike{0%{opacity:0}4%{opacity:1}14%{opacity:.55}22%{opacity:.9}100%{opacity:0}}
+@keyframes enterStrike{0%{opacity:0;transform:scale(1.1)}4%{opacity:1;transform:scale(1)}14%{opacity:.45}22%{opacity:.92;transform:scale(1.25)}100%{opacity:0;transform:scale(2.4)}}
 /* Ember Throne flares rather than flashes -- it comes up out of the fire. */
 body[data-theme="embers"].entering .flash{animation:enterFlare 1.9s cubic-bezier(.3,0,.3,1) forwards;}
-@keyframes enterFlare{0%{opacity:0;transform:scale(.82)}30%{opacity:1}100%{opacity:0;transform:scale(1.18)}}
+@keyframes enterFlare{0%{opacity:0;transform:scale(.34)}26%{opacity:1;transform:scale(.72)}100%{opacity:0;transform:scale(2.3)}}
 .entering .content{animation:contentOut 1.6s cubic-bezier(.5,0,.2,1) forwards;}
 @keyframes contentOut{to{opacity:0;transform:scale(1.12);filter:blur(14px)}}
 
@@ -813,7 +831,7 @@ body[data-theme="embers"].entering .flash{animation:enterFlare 1.9s cubic-bezier
     <h1 class="title" id="title" aria-label="KINGDOM 846">KINGDOM 846</h1>
     <div class="rule"><s></s><i>&#10022;</i><s></s></div>
     <p class="tagline">Where legends are forged in fire and crowned in gold</p>
-    <button class="cta" id="enter">ENTER THE REALM</button>
+    <button class="cta" id="enter"><svg class="cta-mark" viewBox="0 0 24 20" aria-hidden="true" focusable="false"><path d="M2 16.5h20M3.2 14 1.6 4.6l5.4 3.6L12 1.6l5 6.6 5.4-3.6L20.8 14z" fill="currentColor" fill-opacity=".18" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/><circle cx="12" cy="10.4" r="1.35" fill="currentColor"/></svg><span>ENTER THE REALM</span></button>
     <div class="crown-mini">&#9819;</div>
   </div>
 

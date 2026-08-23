@@ -488,7 +488,13 @@ window.addEventListener('message', (e) => {
   if (e.origin !== location.origin) return;
   if (e.data && e.data.type === 'k846-enter-realm' && current) {
     const id = current;
-    if (MY_VOTE !== id) toast('Liked that one? Tap “Vote for this”.');
+    // The gate has closed to black by now. Leaving the viewer staring at a black
+    // rectangle is not an ending, so bring them back to the ballot -- which is
+    // also the moment they have most reason to vote for what they just watched.
+    setTimeout(() => {
+      if (current === id) closeTheatre();
+      if (MY_VOTE !== id) toast('That was ' + NAME_OF[id] + '. Vote for it?');
+    }, 900);
   }
 });
 

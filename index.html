@@ -14,6 +14,13 @@
   <meta name="twitter:title" content="Kingdom 846 — We Take What's Ours" />
   <meta name="twitter:description" content="The official portal of Kingdom 846 — alliances, events, guides, rankings, and kingdom management." />
   <meta name="twitter:image" content="./assets/hero-throne-room.webp" />
+  <!-- Critical paint. Without this the document is unstyled until the JS bundle
+       injects the CSS, and an unstyled document paints WHITE. Every hard
+       navigation into the site flashed white before the realm appeared -- most
+       visibly straight after ENTER THE REALM, which navigates here from the
+       welcome screen. The welcome screen was already fading to black correctly;
+       the white belonged to this page, arriving. -->
+  <style>html,body{background:#060810;color:#EFE6CF;margin:0}#root{background:#060810;min-height:100vh}</style>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;800;900&family=Cinzel+Decorative:wght@700;900&family=Spectral:wght@300;400;500;600;700&family=Montserrat:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />

@@ -715,21 +715,132 @@ app.get('/api/admin/analytics', auth, adminOnly, (req, res) => {
 // CSV of the daily aggregate, for anyone who would rather work in a spreadsheet.
 // Aggregates only -- there is no per-visitor export because there is no
 // per-visitor record to export.
+// The full export.
+//
+// This used to emit five columns of daily totals and nothing else, while the
+// dashboard beside it computed pages, tools, actions, entry pages, engagement,
+// referrers, devices, browsers, countries, campaigns, outbound links and 404s.
+// Downloading the data gave you a fraction of what looking at the screen did,
+// which is backwards -- the export is what you keep.
+//
+// It also read only analytics_events, which rollupAndPrune() empties past
+// RETENTION_DAYS. analytics_daily exists precisely so long-range history
+// survives that prune, and the export never touched it, so `?days=365` could
+// never return more than 90 days no matter what was asked for. Fixed by
+// reading events for the detailed window and the rollups for everything older.
 app.get('/api/admin/analytics/export', auth, adminOnly, (req, res) => {
   const days = Math.min(365, Math.max(1, Number(req.query.days) || 90))
   const since = utcDay(Date.now() - (days - 1) * 86400000)
-  const rows = db.prepare(`SELECT day,
+  const detailFrom = utcDay(Date.now() - RETENTION_DAYS * 86400000)
+  const q = (sql, ...a) => db.prepare(sql).all(...a)
+
+  // RFC4180: quote anything containing a comma, quote or newline, and double
+  // any embedded quotes. Page names and referrers are user-facing strings and
+  // a stray comma would silently shift every column after it.
+  const cell = (v) => {
+    if (v === null || v === undefined) return ''
+    const t = String(v)
+    return /[",\n\r]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t
+  }
+  const out = []
+  const comment = (k, v) => out.push(`# ${k},${cell(v)}`)
+  const section = (title, header, rows, map) => {
+    out.push('', `# ${title}`, header)
+    if (!rows.length) out.push('# (none in this window)')
+    for (const r of rows) out.push(map(r).map(cell).join(','))
+  }
+
+  comment('report', 'Kingdom 846 analytics export')
+  comment('generated', new Date().toISOString())
+  comment('window_days', days)
+  comment('window_from', since)
+  comment('window_to', utcDay())
+  comment('detail_retention_days', RETENTION_DAYS)
+  comment('note', `Days on or after ${detailFrom} come from event detail. Older days come from daily rollups, which store hits per page but not a per-day distinct-visitor count, so the visitors column is blank for those rows rather than guessed.`)
+
+  // ---- daily series ------------------------------------------------------
+  const recent = q(`SELECT day,
       COUNT(DISTINCT visitor) visitors,
-      SUM(CASE WHEN kind = 'page' THEN 1 ELSE 0 END) pageviews,
-      SUM(CASE WHEN kind = 'tool' THEN 1 ELSE 0 END) tool_opens,
+      SUM(CASE WHEN kind = 'page'   THEN 1 ELSE 0 END) pageviews,
+      SUM(CASE WHEN kind = 'tool'   THEN 1 ELSE 0 END) tool_opens,
       SUM(CASE WHEN kind = 'action' THEN 1 ELSE 0 END) actions
-    FROM analytics_events WHERE day >= ? GROUP BY day ORDER BY day`).all(since)
-  const csv = ['day,visitors,pageviews,tool_opens,actions']
-    .concat(rows.map((r) => [r.day, r.visitors, r.pageviews, r.tool_opens, r.actions].join(',')))
-    .join('\n')
+    FROM analytics_events WHERE day >= ? GROUP BY day`, since)
+  const older = q(`SELECT day,
+      SUM(CASE WHEN kind = 'page'   THEN hits ELSE 0 END) pageviews,
+      SUM(CASE WHEN kind = 'tool'   THEN hits ELSE 0 END) tool_opens,
+      SUM(CASE WHEN kind = 'action' THEN hits ELSE 0 END) actions
+    FROM analytics_daily WHERE day >= ? AND day < ? GROUP BY day`, since, detailFrom)
+  const daily = [...older.map((r) => ({ ...r, visitors: null, source: 'rollup' })),
+                 ...recent.map((r) => ({ ...r, source: 'detail' }))]
+    .sort((a, b) => a.day.localeCompare(b.day))
+  section('Daily totals', 'day,visitors,pageviews,tool_opens,actions,source',
+    daily, (r) => [r.day, r.visitors, r.pageviews, r.tool_opens, r.actions, r.source])
+
+  // ---- breakdowns, all over the detailed window --------------------------
+  const byKind = (kind, extra = '') => q(`SELECT name, COUNT(*) hits, COUNT(DISTINCT visitor) visitors
+    FROM analytics_events WHERE day >= ? AND kind = ? ${extra}
+    GROUP BY name ORDER BY hits DESC`, since, kind)
+  const nv = (r) => [r.name, r.hits, r.visitors]
+
+  section('Pages', 'page,hits,visitors', byKind('page'), nv)
+  section('Tools opened', 'tool,hits,visitors', byKind('tool'), nv)
+  section('Actions', 'action,hits,visitors',
+    byKind('action', "AND name NOT IN ('outbound','notfound')"), nv)
+  section('Outbound links', 'url,hits',
+    q(`SELECT detail name, COUNT(*) hits FROM analytics_events
+       WHERE day >= ? AND kind = 'action' AND name = 'outbound' AND detail IS NOT NULL
+       GROUP BY detail ORDER BY hits DESC`, since), (r) => [r.name, r.hits])
+  section('Not found', 'path,hits',
+    q(`SELECT detail name, COUNT(*) hits FROM analytics_events
+       WHERE day >= ? AND kind = 'action' AND name = 'notfound' AND detail IS NOT NULL
+       GROUP BY detail ORDER BY hits DESC`, since), (r) => [r.name, r.hits])
+
+  const dim = (col) => q(`SELECT ${col} name, COUNT(DISTINCT visitor) visitors
+    FROM analytics_events WHERE day >= ? AND ${col} IS NOT NULL
+    GROUP BY ${col} ORDER BY visitors DESC`, since)
+  section('Referrers', 'referrer,visitors', dim('referrer'), (r) => [r.name, r.visitors])
+  section('Countries', 'country,visitors', dim('country'), (r) => [r.name, r.visitors])
+  section('Campaigns', 'campaign,visitors', dim('campaign'), (r) => [r.name, r.visitors])
+  section('Devices', 'device,visitors', dim('device'), (r) => [r.name, r.visitors])
+  section('Browsers', 'browser,visitors', dim('browser'), (r) => [r.name, r.visitors])
+
+  // ---- when the kingdom is online ----------------------------------------
+  section('Activity by weekday and hour (UTC)', 'weekday,hour_utc,visitors',
+    q(`SELECT CAST(strftime('%w', ts / 1000, 'unixepoch') AS INTEGER) dow,
+         CAST(strftime('%H', ts / 1000, 'unixepoch') AS INTEGER) hour,
+         COUNT(DISTINCT visitor) visitors
+       FROM analytics_events WHERE day >= ? GROUP BY dow, hour ORDER BY dow, hour`, since),
+    (r) => [['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][r.dow], r.hour, r.visitors])
+
+  // ---- engagement, same visit definition the dashboard uses ---------------
+  const VISIT_GAP = 30 * 60 * 1000
+  const perVisit = q(`
+    WITH marked AS (
+      SELECT visitor, ts, kind,
+        CASE WHEN ts - LAG(ts) OVER (PARTITION BY visitor ORDER BY ts) > ${VISIT_GAP}
+              OR LAG(ts) OVER (PARTITION BY visitor ORDER BY ts) IS NULL
+             THEN 1 ELSE 0 END AS is_start
+      FROM analytics_events WHERE day >= ?
+    ),
+    visits AS (
+      SELECT visitor, ts, kind,
+        SUM(is_start) OVER (PARTITION BY visitor ORDER BY ts ROWS UNBOUNDED PRECEDING) AS vno
+      FROM marked
+    )
+    SELECT visitor, vno, SUM(CASE WHEN kind = 'page' THEN 1 ELSE 0 END) pages,
+      MAX(ts) - MIN(ts) dur FROM visits GROUP BY visitor, vno`, since)
+  const withPages = perVisit.filter((v) => v.pages > 0)
+  const durations = withPages.filter((v) => v.pages > 1).map((v) => v.dur).sort((a, b) => a - b)
+  section('Engagement', 'metric,value', [
+    ['visits', withPages.length],
+    ['bounce_rate_pct', withPages.length ? Math.round((withPages.filter((v) => v.pages === 1).length / withPages.length) * 100) : 0],
+    ['pages_per_visit', withPages.length ? Math.round((withPages.reduce((a, v) => a + v.pages, 0) / withPages.length) * 10) / 10 : 0],
+    ['median_visit_seconds', durations.length ? Math.round(durations[Math.floor(durations.length / 2)] / 1000) : 0],
+  ], (r) => r)
+
   res.setHeader('Content-Type', 'text/csv; charset=utf-8')
   res.setHeader('Content-Disposition', `attachment; filename="kingdom846-analytics-${utcDay()}.csv"`)
-  res.send(csv)
+  res.send(out.join('\n'))
 })
 
 app.get('/api/admin/leaders', auth, adminOnly, (_req, res) => {

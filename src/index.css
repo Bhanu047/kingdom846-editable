@@ -1455,6 +1455,34 @@ select.royal-select option {
 /* The one data triad, shared by every tool. */
 [data-suite] { --s-inf:#5D90E8; --s-cav:#E0B23B; --s-arc:#D76158; }
 
+/* Page chrome inside a suite. These override the site-wide .panel / .eyebrow
+   rules, but ONLY under [data-suite] -- everything outside Battle Lab keeps the
+   gold it has always had. This is what makes the whole tool page read as the
+   tile you clicked, rather than only its charts. */
+[data-suite] .panel {
+  border-color: var(--suite-faint);
+  box-shadow: inset 0 1px 0 var(--suite-faint), 0 10px 30px -18px rgba(0,0,0,.85);
+  background-image: linear-gradient(160deg, var(--suite-ink) 0%, transparent 46%);
+}
+[data-suite] .eyebrow { color: var(--suite); opacity: .85; }
+[data-suite] .gold-divider {
+  background: linear-gradient(90deg, transparent, var(--suite-soft), transparent);
+}
+/* The tool's primary action is the loudest control on the page, so it carries
+   the tool's colour. Dark ink on a bright fill clears contrast in all five. */
+[data-suite] .btn-primary {
+  background-image: linear-gradient(180deg,
+    color-mix(in srgb, var(--suite) 62%, white) 0%,
+    color-mix(in srgb, var(--suite) 88%, white) 32%,
+    var(--suite) 72%,
+    color-mix(in srgb, var(--suite) 74%, black) 100%);
+  border-color: color-mix(in srgb, var(--suite) 55%, black);
+  box-shadow: 0 8px 20px -8px var(--suite-soft), inset 0 1px 0 rgba(255,255,255,.3), inset 0 -1px 0 rgba(0,0,0,.22);
+}
+[data-suite] .btn-primary:hover {
+  box-shadow: 0 12px 28px -8px var(--suite-soft), inset 0 1px 0 rgba(255,255,255,.4), inset 0 -1px 0 rgba(0,0,0,.22);
+}
+
 /* Chart chrome inside a suite. */
 [data-suite] .chart-card {
   border: 1px solid var(--suite-faint);
@@ -1465,24 +1493,42 @@ select.royal-select option {
 }
 [data-suite] .chart-title { color: var(--suite); }
 
-/* ---- Motion --------------------------------------------------------------
-   The dashboard should ASSEMBLE when you press Calculate rather than appear.
-   Every effect below is transform/opacity/stroke -- no blur, so nothing here
-   is the halo that got rejected, and nothing costs a repaint of the page. */
-@keyframes draw-in { to { stroke-dashoffset: 0; } }
-@keyframes rise    { from { opacity:0; transform: translateY(10px) } to { opacity:1; transform:none } }
-@keyframes sweep   { from { transform: scaleX(0) } to { transform: scaleX(1) } }
+/* ---- Motion: SETTLE ------------------------------------------------------
+   Everything overshoots its target and springs back, so figures read as having
+   mass rather than being drawn on.
 
-.chart-rise { animation: rise .55s cubic-bezier(.16,1,.3,1) both; }
-.chart-sweep { transform-origin: left center; animation: sweep .85s cubic-bezier(.16,1,.3,1) both; }
-/* A hairline that races along the top of a panel as it lands -- the "official
-   instrument powering up" beat, and the one flourish per card. */
-.chart-card { position: relative; overflow: hidden; }
-.chart-card::after {
-  content:""; position:absolute; top:0; left:0; height:1px; width:100%;
-  background: linear-gradient(90deg, transparent, var(--suite), transparent);
-  transform-origin: left center; animation: sweep 1.1s cubic-bezier(.16,1,.3,1) both;
+   Chosen over a sequenced power-on for a usage reason, not a taste one. This is
+   a tool people run repeatedly -- set inputs, calculate, tweak, calculate again
+   -- and a sequence that gates the last element behind ~1.1s of delays is
+   charming once and irritating by the tenth run. Everything here moves at once
+   with only a small stagger, so the whole panel is settled in ~0.85s.
+
+   No blur, no halo, no drop-shadow anywhere: that was the "glow" that got
+   rejected, and the report renderer discards it regardless. Transform and
+   opacity only, which also means these stay cheap on a phone. */
+@keyframes settle-in   { from { opacity:0; transform: translateY(16px) scale(.975) } }
+@keyframes settle-pop  { from { opacity:0; transform: translateY(9px) scale(.9) } }
+@keyframes settle-grow { from { transform: scaleX(0) } }
+@keyframes edge-pass   { from { left:0; opacity:1 } to { left:100%; opacity:0 } }
+
+.chart-card {
+  position: relative; overflow: hidden;
+  animation: settle-in .7s cubic-bezier(.34,1.56,.64,1) both;
 }
+/* The one beat borrowed from the power-on option: a bright edge crosses the
+   card as it lands. An accent, not something you wait through -- it runs
+   alongside the content rather than gating it. */
+.chart-card::after {
+  content:""; position:absolute; top:0; bottom:0; width:2px; pointer-events:none;
+  background: linear-gradient(180deg, transparent, var(--suite), transparent);
+  animation: edge-pass .8s cubic-bezier(.65,0,.25,1) both;
+}
+.chart-rise { animation: settle-in .7s cubic-bezier(.34,1.56,.64,1) both; }
+.chart-pop  { display:inline-block; animation: settle-pop .6s cubic-bezier(.34,1.56,.64,1) both; }
+.chart-sweep { transform-origin: left center; animation: settle-grow .85s cubic-bezier(.34,1.56,.64,1) both; }
+
 @media (prefers-reduced-motion: reduce) {
-  .chart-rise, .chart-sweep, .chart-card::after { animation: none !important; }
+  .chart-card, .chart-card::after, .chart-rise, .chart-pop, .chart-sweep {
+    animation: none !important;
+  }
 }

@@ -415,7 +415,7 @@ export default function MysticSuite() {
   }
 
   return (
-    <div className="space-y-5">
+    <div data-suite="mystic" className="space-y-5">
       <section className="panel p-4 md:p-5">
         <div className="eyebrow">Mystic Trials</div>
         <h2 className="mt-1 font-display text-2xl font-bold text-parchment">Troop Composition Optimizer</h2>

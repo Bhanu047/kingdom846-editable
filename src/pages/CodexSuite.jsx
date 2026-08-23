@@ -98,7 +98,7 @@ export default function CodexSuite() {
 
   const [tab, setTab] = useState('theory')
   return (
-    <div className="space-y-5">
+    <div data-suite="codex" className="space-y-5">
       <section className="panel p-4 md:p-5">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>

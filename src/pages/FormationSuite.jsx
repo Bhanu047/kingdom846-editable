@@ -84,7 +84,7 @@ export default function FormationSuite() {
   }, [capacity, stats, targetType, minimums])
 
   return (
-    <div className="space-y-5">
+    <div data-suite="formation" className="space-y-5">
       <section className="panel p-5 md:p-6">
         <div className="eyebrow">Theorycrafting Input</div>
         <h3 className="mt-1 font-display text-xl font-bold text-parchment">Combat Report Stats</h3>

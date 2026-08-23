@@ -390,7 +390,7 @@ export default function PvPSuite() {
     .map((c) => ({ ...c, margin: c.survivalEdge * (sweepResult?.totalTroops || 0) })), [sweepResult])
 
   return (
-    <div className="space-y-5">
+    <div data-suite="pvp" className="space-y-5">
       <section className="panel p-4 md:p-5">
         <div className="eyebrow">Battles with Heroes</div>
         <h2 className="mt-1 font-display text-2xl font-bold text-parchment">PvP Battle Simulator</h2>

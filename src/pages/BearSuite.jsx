@@ -36,12 +36,12 @@ function Donut({ratio,title='Optimal Distribution',center='Best Formation'}){
   const R=68,C=2*Math.PI*R
   const segs=[{key:'infantry',pct:a,color:'#5D90E8'},{key:'cavalry',pct:b,color:'#E0B23B'},{key:'archers',pct:c,color:'#D76158'}]
   let acc=0
-  return <div className="chart-card chart-rise rounded-2xl p-4">
+  return <div className="chart-card rounded-2xl p-4">
     <div className="text-center font-display text-lg font-bold text-parchment">{title}</div>
     <div className="relative mx-auto mt-4 h-48 w-48">
       <svg viewBox="0 0 160 160" className="h-full w-full -rotate-90">
         <circle cx="80" cy="80" r={R} fill="none" stroke="rgba(255,255,255,.06)" strokeWidth="15"/>
-        {segs.map(s=>{const len=(s.pct/100)*C,start=acc;acc+=len;return <circle key={s.key} cx="80" cy="80" r={R} fill="none" stroke={s.color} strokeWidth="15" strokeLinecap="round" strokeDasharray={reveal?`${len} ${C-len}`:`0 ${C}`} strokeDashoffset={-start} style={{transition:'stroke-dasharray 1.1s cubic-bezier(.16,1,.3,1)',transitionDelay:`${segs.indexOf(s)*140}ms`}}/>})}
+        {segs.map(s=>{const len=(s.pct/100)*C,start=acc;acc+=len;return <circle key={s.key} cx="80" cy="80" r={R} fill="none" stroke={s.color} strokeWidth="15" strokeLinecap="round" strokeDasharray={reveal?`${len} ${C-len}`:`0 ${C}`} strokeDashoffset={-start} style={{transition:'stroke-dasharray .9s cubic-bezier(.34,1.56,.64,1)',transitionDelay:`${segs.indexOf(s)*140}ms`}}/>})}
       </svg>
       <div className="absolute inset-0 grid place-items-center">
         <div className="grid h-28 w-28 place-items-center rounded-full border border-gold/15 bg-[#07101e] text-center">
@@ -62,7 +62,7 @@ function Histogram({mean,optimal,sigma}){
   const x=v=>L+(v-min)/(max-min)*(W-L-R),y=v=>H-B-v/my*(H-T-B)
   const areaPath=pts=>{const s=smoothPath(pts.map(d=>({x:x(d.x),y:y(d.y)})));return`${s} L${x(pts[pts.length-1].x)},${base} L${x(pts[0].x)},${base} Z`}
   const linePath=pts=>smoothPath(pts.map(d=>({x:x(d.x),y:y(d.y)})))
-  return <div className="chart-card chart-rise rounded-2xl p-3 md:p-4">
+  return <div className="chart-card rounded-2xl p-3 md:p-4">
     <div className="flex flex-wrap justify-between gap-2"><div><div className="chart-title text-[9px] font-bold uppercase tracking-[.16em]">Current vs Optimal Damage Distribution</div><div className="font-display text-lg font-bold text-parchment">10,000-Hunt Projection</div></div><div className="text-[10px] text-parchment/50"><span className="text-[#7f9ed6]">● Current</span> &nbsp; <span className="text-gold-bright">● Optimal</span></div></div>
     <div className="relative mt-2">
       <svg viewBox={`0 0 ${W} ${H}`} className="w-full">
@@ -94,7 +94,7 @@ function Sensitivity({points,mean}){
   if(!points.length)return null
   const W=760,H=240,L=48,R=18,T=20,B=38,x=v=>L+(v+5)/10*(W-L-R),vals=points.flatMap(p=>[p.infantry,p.cavalry,p.archers]),lo=Math.min(...vals),hi=Math.max(...vals),y=v=>H-B-(v-lo)/Math.max(.001,hi-lo)*(H-T-B),path=k=>points.map((p,i)=>`${i?'L':'M'}${x(p.delta)},${y(p[k])}`).join(' ')
   const lines=[['infantry','#5D90E8',0],['cavalry','#E0B23B',120],['archers','#D76158',240]]
-  return <div className="chart-card chart-rise rounded-2xl p-4">
+  return <div className="chart-card rounded-2xl p-4">
     <div className="chart-title text-[9px] font-bold uppercase tracking-[.15em]">Formation Sensitivity</div>
     <div className="text-xs text-parchment/45">Actual projected impact as each troop share shifts ±5%.</div>
     <svg viewBox={`0 0 ${W} ${H}`} className="mt-2 w-full">
@@ -137,9 +137,12 @@ function RangeChart({p5,mean,p95}){
 function KpiCard({label,numeric,format,value,accent,delay}){
   const animated=useCountUp(numeric??0)
   const display=numeric!=null?format(animated):value
-  return <div className={`stagger-in rounded-2xl border p-4 ${accent?'border-gold/20 bg-gold/[.045]':'border-gold/10 bg-white/[.025]'}`} style={{animationDelay:`${delay}ms`}}>
+  return <div className="chart-rise rounded-2xl border p-4"
+    style={{animationDelay:`${delay}ms`,
+            borderColor:accent?'var(--suite-soft)':'var(--suite-faint)',
+            background:accent?'var(--suite-ink)':'rgba(255,255,255,.025)'}}>
     <div className="text-[9px] uppercase tracking-wider text-parchment/35">{label}</div>
-    <div className="mt-1 font-mono text-xl font-bold text-gold-bright">{display}</div>
+    <div className="chart-pop mt-1 font-mono text-xl font-bold" style={{color:'var(--suite)',animationDelay:`${delay+90}ms`}}>{display}</div>
   </div>
 }
 

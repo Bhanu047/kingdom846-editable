@@ -231,58 +231,99 @@ export function VsArmyCards({ yourSide, enemySide, yourLabel = 'YOUR FORCE', ene
   )
 }
 
-// OPTION C — "Clash Gauge": a semi-circle power gauge with a needle, like a
-// boss-fight HUD meter, needle leaning toward whichever side is stronger.
-// Styled as a jeweled instrument dial rather than flat colored arcs: metallic
-// gradient fills, tick marks around the rim, a diamond-tipped needle with a
-// glowing pivot jewel, and an ambient shine sweep across the margin readout.
+// BALANCE OF POWER — replaces the needle gauge.
+//
+// The gauge was a semicircular dial with a diamond needle and a glowing pivot,
+// and it was the wrong instrument twice over. A needle encodes ONE number on a
+// dial the reader has to interpret, when the actual question -- who is bigger
+// and by how much -- is a comparison of two quantities. And it leaned on
+// filter: drop-shadow for its glow, which is both the look that was rejected
+// and a property html2canvas discards, so it never survived into a report.
+//
+// This shows the comparison directly: two armies pushing against each other,
+// the boundary landing where the balance actually is. No glow anywhere -- the
+// depth is gradients and a lit edge, which is what metal looks like and what
+// exports correctly.
 export function ClashGauge({ yourTotal, enemyTotal, margin }) {
   const reveal = useReveal()
   const animatedMargin = useCountUp(margin)
-  const gid = useId()
-  const combined = Math.max(1, yourTotal + enemyTotal)
-  const yourShare = yourTotal / combined
-  const R = 92, CX = 130, CY = 118
-  const angle = Math.PI * (1 - yourShare)
-  const pt = (a, r = R) => [CX + r * Math.cos(a), CY - r * Math.sin(a)]
-  // Approximate arcs as polylines rather than SVG "A" (elliptical arc) path
-  // commands — html2canvas 1.4.1 doesn't rasterize arc commands (they render
-  // blank in exported reports), but a fine-enough polyline looks identical
-  // on screen and exports correctly.
-  const arc = (from, to, r = R) => { const steps = 32; return Array.from({ length: steps + 1 }, (_, i) => { const [x, y] = pt(from + (to - from) * (i / steps), r); return `${i ? 'L' : 'M'}${x},${y}` }).join(' ') }
-  const [nx, ny] = pt(angle)
-  const ticks = Array.from({ length: 9 }, (_, i) => Math.PI * (i / 8))
+  const ahead = margin >= 0
+  const pct = yourTotal > 0 ? (margin / yourTotal) * 100 : 0
+  // The boundary tracks the OUTCOME, not the headcount. The old gauge pointed
+  // its needle at yourTotal/(yourTotal+enemyTotal), which for 508,000 against
+  // 510,000 sat dead centre while the readout underneath said +15.5% -- the
+  // picture and the number telling different stories about the same battle.
+  // A margin of +15.5% moves the line 7.75% off centre, so an even fight is
+  // centred and the bar always agrees with the figure below it.
+  const boundary = Math.min(94, Math.max(6, 50 + pct / 2))
+
   return (
     <div className="rounded-2xl border border-gold/20 bg-[#07101e] p-4 md:p-5">
-      <div className="relative mx-auto w-full max-w-md">
-        <svg viewBox="0 0 260 140" className="w-full">
-          <defs>
-            <linearGradient id={`${gid}-y`} x1="0" y1="1" x2="1" y2="0"><stop offset="0%" stopColor="#4d6ea3"/><stop offset="100%" stopColor="#b7cdf0"/></linearGradient>
-            <linearGradient id={`${gid}-e`} x1="1" y1="1" x2="0" y2="0"><stop offset="0%" stopColor="#9c4238"/><stop offset="100%" stopColor="#eda296"/></linearGradient>
-          </defs>
-          <path d={arc(Math.PI, 0)} stroke="rgba(226,199,125,.16)" strokeWidth="20" fill="none" strokeLinecap="round" />
-          {ticks.map((a, i) => { const [ox, oy] = pt(a, R + 11), [ix, iy] = pt(a, R + 2); return <line key={i} x1={ix} y1={iy} x2={ox} y2={oy} stroke="rgba(226,199,125,.4)" strokeWidth="1.5" /> })}
-          <path d={arc(Math.PI, angle)} pathLength="1" strokeDasharray="1" strokeDashoffset={reveal ? 0 : 1} stroke={`url(#${gid}-y)`} strokeWidth="16" fill="none" strokeLinecap="round" style={{ transition: 'stroke-dashoffset 1.1s cubic-bezier(.16,1,.3,1)', filter: 'drop-shadow(0 0 7px #7f9ed690)' }} />
-          <path d={arc(angle, 0)} pathLength="1" strokeDasharray="1" strokeDashoffset={reveal ? 0 : 1} stroke={`url(#${gid}-e)`} strokeWidth="16" fill="none" strokeLinecap="round" style={{ transition: 'stroke-dashoffset 1.1s cubic-bezier(.16,1,.3,1) .15s', filter: 'drop-shadow(0 0 7px #c8655a90)' }} />
-          <g style={{ transformOrigin: `${CX}px ${CY}px`, opacity: reveal ? 1 : 0, transform: reveal ? 'scale(1)' : 'scale(.4)', transition: 'opacity .5s ease .9s, transform .5s cubic-bezier(.34,1.56,.64,1) .9s' }}>
-            <line x1={CX} y1={CY} x2={nx} y2={ny} stroke="#e8c558" strokeWidth="3" strokeLinecap="round" />
-            <rect x={nx - 5} y={ny - 5} width="10" height="10" fill="#f5d778" stroke="#a67f1f" strokeWidth="1" transform={`rotate(45 ${nx} ${ny})`} style={{ filter: 'drop-shadow(0 0 5px #f5d778aa)' }} />
-            <circle cx={CX} cy={CY} r="8" fill="#f5d778" stroke="#071224" strokeWidth="2" style={{ filter: 'drop-shadow(0 0 6px #f5d77899)' }} />
-            <circle cx={CX} cy={CY} r="3" fill="#fff6dd" />
-          </g>
-        </svg>
-        {/* Labels are plain HTML, not SVG <text> — html2canvas 1.4.1 renders
-            SVG text blank in exported reports (in fact it blanks the whole
-            SVG when text is present), so labels live outside the <svg>. */}
-        <div className="absolute bottom-[3%] left-[3%] text-[11px] font-bold tracking-wide text-[#9eb9ef]">YOUR FORCE</div>
-        <div className="absolute bottom-[3%] right-[3%] text-[11px] font-bold tracking-wide text-[#e08c80]">ENEMY</div>
-      </div>
-      <div className="badge-shine mx-auto mt-1 max-w-[240px] rounded-xl text-center">
-        <div className="flex items-baseline justify-center gap-2">
-          <span className="font-mono text-2xl font-black" style={{ color: margin >= 0 ? '#6ee7b7' : '#fca5a5' }}>{margin >= 0 ? '+' : ''}{fmt(animatedMargin)}</span>
-          <span className="font-mono text-sm font-bold" style={{ color: margin >= 0 ? '#6ee7b7' : '#fca5a5', opacity: .7 }}>({margin >= 0 ? '+' : ''}{(yourTotal > 0 ? margin / yourTotal * 100 : 0).toFixed(1)}%)</span>
+      <div className="mb-2.5 flex items-end justify-between gap-3">
+        <div className="text-left">
+          <div className="text-[10px] font-bold uppercase tracking-[.18em] text-[#9eb9ef]">Your Force</div>
+          <div className="font-mono text-lg font-black tabular-nums text-parchment sm:text-xl">{fmt(yourTotal)}</div>
         </div>
-        <div className="text-[10px] text-parchment/40">troop margin</div>
+        <div className="pb-1 text-center text-[9px] font-bold uppercase tracking-[.2em] text-parchment/30">Balance of Power<div className="mt-0.5 text-[8px] tracking-[.1em] text-parchment/25">projected outcome</div></div>
+        <div className="text-right">
+          <div className="text-[10px] font-bold uppercase tracking-[.18em] text-[#e08c80]">Enemy</div>
+          <div className="font-mono text-lg font-black tabular-nums text-parchment sm:text-xl">{fmt(enemyTotal)}</div>
+        </div>
+      </div>
+
+      {/* The scale above the bar. Ten divisions, the centre one full height,
+          so "even" is a mark you can see rather than a value you infer. */}
+      <div className="relative mb-1 flex h-3 items-end justify-between px-[1px]">
+        {Array.from({ length: 11 }, (_, i) => (
+          <span key={i} className={i === 5 ? 'w-px bg-gold/55' : 'w-px bg-gold/20'} style={{ height: i === 5 ? '12px' : i % 5 === 0 ? '8px' : '5px' }} />
+        ))}
+      </div>
+
+      {/* The two forces meet where the balance is. Each side sweeps in from its
+          own edge, so they collide at the boundary rather than one bar simply
+          growing across a track. */}
+      <div className="k-track relative flex h-11 overflow-hidden rounded-lg border border-gold/25 sm:h-14">
+        <div
+          className="k-seg relative"
+          style={{ width: reveal ? `${boundary}%` : '50%', '--c': '#5D82C4', transitionDuration: '1.05s' }}
+        />
+        <div
+          className="k-seg relative flex-1"
+          style={{ '--c': '#C05B50', transitionDuration: '1.05s' }}
+        />
+
+        {/* The blade that marks the boundary, carried on the same spring as the
+            bars so it never lands early. */}
+        <div
+          className="pointer-events-none absolute inset-y-0 z-10 w-[3px]"
+          style={{
+            left: reveal ? `${boundary}%` : '50%',
+            transform: 'translateX(-50%)',
+            transition: 'left 1.05s cubic-bezier(.34,1.42,.52,1)',
+            backgroundColor: '#FFF6DA',
+            backgroundImage: 'linear-gradient(180deg, rgba(255,246,218,.55), #FFF6DA 30%, #E8C766 70%, rgba(212,175,55,.5))',
+          }}
+        />
+      </div>
+
+      {/* The verdict. The percentage is the honest headline -- a raw troop
+          count means nothing without the army size it came from. */}
+      <div className="mt-3 flex items-center justify-center gap-3">
+        <span className="h-px flex-1 bg-gradient-to-r from-transparent to-gold/30" />
+        <div className="text-center">
+          <div className="flex items-baseline justify-center gap-2">
+            <span className="chart-pop font-mono text-2xl font-black tabular-nums sm:text-3xl" style={{ color: ahead ? '#7BE0A8' : '#F0A197' }}>
+              {ahead ? '+' : ''}{fmt(animatedMargin)}
+            </span>
+            <span className="font-mono text-sm font-bold tabular-nums" style={{ color: ahead ? '#7BE0A8' : '#F0A197', opacity: .72 }}>
+              {ahead ? '+' : ''}{pct.toFixed(1)}%
+            </span>
+          </div>
+          <div className="mt-0.5 text-[10px] uppercase tracking-[.14em] text-parchment/40">
+            {ahead ? 'troops ahead' : 'troops behind'}
+          </div>
+        </div>
+        <span className="h-px flex-1 bg-gradient-to-l from-transparent to-gold/30" />
       </div>
     </div>
   )

@@ -2176,3 +2176,74 @@ select.royal-select option {
   .page-enter { animation: none !important }
   .page-enter::before { display: none }
 }
+
+/* ============================================================================
+   INTERACTION
+   ----------------------------------------------------------------------------
+   "Any click, any use" -- the site responded to hover in places and to clicks
+   almost nowhere, so using it felt inert however good it looked standing still.
+   Every control now acknowledges being pressed, and every press throws a gilt
+   ripple from the point of contact.
+
+   All of it is transform and opacity only: no layout properties, so none of
+   this can cause a reflow however fast someone clicks.
+   ========================================================================= */
+
+/* ---- Press ---------------------------------------------------------------- */
+/* One rule covering every interactive thing rather than per-component states,
+   so a control added tomorrow inherits it. */
+button, [role="button"], a.btn-primary, a.btn-secondary, .btn-primary, .btn-secondary, .btn-ghost, .nav-item, summary {
+  transition:
+    transform .22s cubic-bezier(.34,1.4,.5,1),
+    filter .22s ease,
+    box-shadow .3s ease,
+    color .25s ease,
+    background-color .25s ease;
+}
+button:active, [role="button"]:active, .btn-primary:active,
+.btn-secondary:active, .btn-ghost:active, summary:active {
+  transform: scale(.965);
+  filter: brightness(.94);
+}
+/* Inputs get the same acknowledgement on focus -- typing into a field that
+   does nothing when you reach it is the same inertness in a different place. */
+input, select, textarea {
+  transition: border-color .25s ease, box-shadow .3s ease, background-color .25s ease;
+}
+input:focus-visible, select:focus-visible, textarea:focus-visible {
+  outline: none;
+  border-color: rgba(232,199,102,.65) !important;
+  box-shadow: 0 0 0 3px rgba(212,175,55,.14);
+}
+
+/* ---- Ripple --------------------------------------------------------------- */
+/* Thrown from the exact point of contact by installPressFeedback(). Absolute
+   inside a positioned host, removed on animation end, so nothing accumulates. */
+.k-ripple {
+  position: absolute; z-index: 3; pointer-events: none;
+  border-radius: 50%;
+  translate: -50% -50%;
+  background: radial-gradient(circle, rgba(255,246,218,.55), rgba(232,199,102,.24) 44%, transparent 70%);
+  animation: k-ripple .62s cubic-bezier(.22,1,.36,1) forwards;
+}
+@keyframes k-ripple {
+  from { width: 0; height: 0; opacity: .95 }
+  to   { width: var(--r); height: var(--r); opacity: 0 }
+}
+/* A ripple needs somewhere to live. Only applied where it is safe: a control
+   that already clips its own content keeps clipping it. */
+.k-ripple-host { position: relative; overflow: hidden; }
+
+/* ---- Tool tiles ----------------------------------------------------------- */
+/* These are the biggest click targets on the site, so the press wants to be
+   felt rather than just seen. */
+.tool-tile:active { transform: perspective(900px) scale(.985); transition: transform .1s ease; }
+
+/* ---- Nav ------------------------------------------------------------------ */
+.nav-item:active { transform: translateX(2px) scale(.98); }
+
+@media (prefers-reduced-motion: reduce) {
+  button:active, [role="button"]:active, .btn-primary:active, .btn-secondary:active,
+  .btn-ghost:active, summary:active, .tool-tile:active, .nav-item:active { transform: none !important; filter: none !important }
+  .k-ripple { display: none !important }
+}

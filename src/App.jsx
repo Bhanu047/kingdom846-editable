@@ -2,6 +2,7 @@ import { useState, useMemo, lazy, Suspense, useEffect } from 'react'
 import { trackPage, trackAction, installOutboundTracking } from './lib/analytics'
 import { installSurfaceTracking } from './lib/surface'
 import { installReveal } from './lib/reveal'
+import { installPressFeedback } from './lib/press'
 import Sidebar from './components/Sidebar'
 import Icon from './components/Icon'
 import ErrorBoundary from './components/ErrorBoundary'
@@ -111,6 +112,7 @@ function Shell() {
   useEffect(() => { installOutboundTracking() }, [])
   useEffect(() => installSurfaceTracking(), [])
   useEffect(() => installReveal(), [])
+  useEffect(() => installPressFeedback(), [])
 
   // A hash that matches no route silently falls through to the dashboard, so a
   // dead link from Discord looks like a normal visit. Record it instead.

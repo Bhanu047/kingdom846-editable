@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Kingdom 846 — One Crown · Four Alliances</title>
+<meta name="description" content="Kingdom 846 — one crown, four alliances. Where legends are forged in fire and crowned in gold. Enter the realm." />
+<meta name="theme-color" content="#05070f" />
+<link rel="canonical" href="https://kingdom846.com/" />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="Kingdom 846" />
+<meta property="og:url" content="https://kingdom846.com/" />
+<meta property="og:title" content="KINGDOM 846 — One Crown · Four Alliances" />
+<meta property="og:description" content="Where legends are forged in fire and crowned in gold." />
+<meta property="og:image" content="https://kingdom846.com/assets/og-image.jpg" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="KINGDOM 846 — One Crown · Four Alliances" />
+<meta name="twitter:description" content="Where legends are forged in fire and crowned in gold." />
+<meta name="twitter:image" content="https://kingdom846.com/assets/og-image.jpg" />
+<link rel="icon" href="assets/favicon-32.png" sizes="32x32" />
+<link rel="icon" href="assets/icon-512.png" sizes="512x512" />
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
+<link rel="preload" as="image" href="assets/crest.webp" fetchpriority="high" />
+<link rel="preload" as="image" href="assets/hall-sapphire.webp" fetchpriority="high" id="pre-bg" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;800&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300;1,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --gold-hi:#fff4d0; --gold-1:#f7e6ae; --gold-2:#e6c266; --gold-3:#b98a30;
+  --champagne:#efdfb4;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;background:#000;overflow:hidden;}
+body{font-family:'Cinzel',serif;color:var(--champagne);-webkit-font-smoothing:antialiased;}
+
+.stage{position:fixed;inset:0;overflow:hidden;background:#000;}
+
+/* ---- LIVE BACKGROUND (WebGL) ---- */
+#bg{position:absolute;inset:0;width:100%;height:100%;display:block;}
+/* still-image fallback if WebGL is unavailable */
+.fallback{position:absolute;inset:-4%;background:var(--bg-img) center 52%/cover no-repeat;display:none;}
+body.nogl .fallback{display:block;}
+body.nogl #bg{display:none;}
+
+/* Depth + drifting particles */
+#dust{position:absolute;inset:0;pointer-events:none;opacity:0;}
+.play #dust{animation:fadeIn 3.2s ease-out 2s forwards;}
+
+.vignette{position:absolute;inset:0;pointer-events:none;
+  background:
+    radial-gradient(115% 82% at 50% 46%, rgba(0,0,0,0) 36%, rgba(0,0,0,.52) 74%, rgba(0,0,0,.94) 100%),
+    linear-gradient(to top, rgba(0,0,0,.7), rgba(0,0,0,0) 44%);}
+
+.grain{position:absolute;inset:-100%;pointer-events:none;opacity:.045;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/></filter><rect width='140' height='140' filter='url(%23n)' opacity='.7'/></svg>");
+  animation:grainShift .5s steps(3) infinite;}
+@keyframes grainShift{0%{transform:translate(0,0)}33%{transform:translate(-3%,2%)}66%{transform:translate(2%,-3%)}100%{transform:translate(0,0)}}
+
+.bar{position:absolute;left:0;right:0;height:12vh;background:#000;z-index:35;pointer-events:none;}
+.bar.top{top:0;transform:translateY(-100%);}
+.bar.bot{bottom:0;transform:translateY(100%);}
+.play .bar.top{animation:barIn 1.4s cubic-bezier(.16,.72,.24,1) .2s forwards, barOutT 1.8s cubic-bezier(.16,.72,.24,1) 6.6s forwards;}
+.play .bar.bot{animation:barIn 1.4s cubic-bezier(.16,.72,.24,1) .2s forwards, barOutB 1.8s cubic-bezier(.16,.72,.24,1) 6.6s forwards;}
+@keyframes barIn{to{transform:translateY(0)}}
+@keyframes barOutT{to{transform:translateY(-100%)}}
+@keyframes barOutB{to{transform:translateY(100%)}}
+
+.blackout{position:absolute;inset:0;background:#000;z-index:30;pointer-events:none;}
+.play .blackout{animation:fadeOut 2s ease-out 1.2s forwards;}
+@keyframes fadeOut{to{opacity:0}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+
+/* ===================== CONTENT ===================== */
+.content{position:relative;z-index:20;height:100%;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:clamp(6px,1.1vh,16px);padding:clamp(26px,6vh,74px) 22px clamp(34px,7vh,86px);text-align:center;
+  will-change:transform;transition:transform .9s cubic-bezier(.16,.72,.24,1);}
+
+.eyebrow{display:flex;align-items:center;gap:clamp(10px,1.6vw,22px);
+  font-weight:500;font-size:clamp(8.5px,1.05vw,14px);letter-spacing:.36em;opacity:0;white-space:nowrap;
+  text-shadow:0 0 20px rgba(230,194,102,.4);}
+.eyebrow b{font-weight:500;}
+.eyebrow s{text-decoration:none;display:block;width:clamp(24px,5vw,74px);height:1px;
+  background:linear-gradient(90deg,rgba(230,194,102,0),rgba(230,194,102,.85));}
+.eyebrow s:last-child{background:linear-gradient(90deg,rgba(230,194,102,.85),rgba(230,194,102,0));}
+.eyebrow em{font-style:normal;color:var(--gold-2);}
+.play .eyebrow{animation:eyebrowIn 1.1s cubic-bezier(.22,.61,.36,1) 4.0s forwards;}
+@keyframes eyebrowIn{from{opacity:0;letter-spacing:.18em;filter:blur(5px)}to{opacity:.95;letter-spacing:.40em;filter:blur(0)}}
+
+.crest-stack{position:relative;display:flex;flex-direction:column;align-items:center;}
+.crest-wrap{position:relative;height:clamp(190px,42vh,470px);aspect-ratio:1024/1536;
+  opacity:0;transform:translateY(34px) scale(.86);filter:blur(20px);will-change:opacity,transform,filter;}
+.play .crest-wrap{animation:crestIn 1.7s cubic-bezier(.16,.74,.22,1) 2.4s forwards, crestFloat 8s ease-in-out 4.4s infinite;}
+@keyframes crestIn{from{opacity:0;transform:translateY(34px) scale(.86);filter:blur(20px)}
+                   to{opacity:1;transform:translateY(0) scale(1);filter:blur(0)}}
+@keyframes crestFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+.crest{width:100%;height:100%;object-fit:contain;display:block;
+  filter:drop-shadow(0 0 50px rgba(230,194,102,.26)) drop-shadow(0 22px 46px rgba(0,0,0,.8));}
+
+.sheen{position:absolute;inset:0;pointer-events:none;mix-blend-mode:screen;opacity:0;
+  background-image:linear-gradient(103deg,rgba(255,240,200,0) 39%,rgba(255,242,208,.18) 46%,
+    rgba(255,250,230,.66) 50%,rgba(255,242,208,.18) 54%,rgba(255,240,200,0) 61%);
+  background-size:320% 100%;background-repeat:no-repeat;background-position:-130% 0;
+  -webkit-mask:url('assets/crest.webp') center/contain no-repeat;mask:url('assets/crest.webp') center/contain no-repeat;}
+.play .sheen{animation:lightPass 1.7s cubic-bezier(.4,0,.25,1) 3.4s forwards, lightPass 2.1s cubic-bezier(.4,0,.25,1) 12s infinite;}
+@keyframes lightPass{0%{opacity:0;background-position:-130% 0}10%{opacity:1}88%{opacity:1}100%{opacity:0;background-position:230% 0}}
+
+.halo{position:absolute;left:50%;top:50%;width:190%;height:135%;transform:translate(-50%,-50%);opacity:0;pointer-events:none;
+  background:radial-gradient(closest-side, rgba(230,194,102,.20), rgba(230,194,102,0) 70%),
+             radial-gradient(closest-side, rgba(120,165,255,.12), rgba(120,165,255,0) 60%);}
+.play .halo{animation:fadeIn 2.2s ease-out 3.1s forwards, haloPulse 7s ease-in-out 5.4s infinite;}
+@keyframes haloPulse{0%,100%{opacity:1}50%{opacity:.55}}
+
+.reflection{height:clamp(48px,10vh,120px);aspect-ratio:1024/1536;margin-top:-4px;opacity:0;pointer-events:none;
+  -webkit-mask:linear-gradient(to bottom, rgba(0,0,0,.5), rgba(0,0,0,0) 78%);mask:linear-gradient(to bottom, rgba(0,0,0,.5), rgba(0,0,0,0) 78%);}
+.reflection img{width:100%;transform:scaleY(-1);filter:blur(3px) saturate(.8) brightness(.7);}
+.play .reflection{animation:fadeIn 2s ease-out 3.6s forwards, refWobble 7s ease-in-out 4s infinite;}
+@keyframes refWobble{0%,100%{transform:skewX(0deg) scaleY(1)}50%{transform:skewX(.5deg) scaleY(1.02)}}
+
+.title{display:flex;justify-content:center;flex-wrap:nowrap;position:relative;
+  margin-top:clamp(2px,1.2vh,16px);font-weight:800;font-size:clamp(30px,6.6vw,92px);letter-spacing:.1em;line-height:1;}
+.title span{display:inline-block;opacity:0;transform:translateY(22px) scale(.94);
+  background:linear-gradient(178deg,#fffaf0 0%,var(--gold-hi) 14%,var(--gold-1) 30%,var(--gold-2) 50%,var(--gold-3) 68%,#f5e6b5 86%,#c99f45 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 1px 0 rgba(255,246,219,.4)) drop-shadow(0 4px 14px rgba(0,0,0,.85)) drop-shadow(0 0 30px rgba(230,194,102,.26));}
+.title span.sp{width:.36em;}
+.play .title span{animation:letterIn .85s cubic-bezier(.16,.74,.22,1) forwards;}
+@keyframes letterIn{from{opacity:0;transform:translateY(22px) scale(.94);filter:blur(12px)}
+  to{opacity:1;transform:translateY(0) scale(1);
+     filter:drop-shadow(0 1px 0 rgba(255,246,219,.4)) drop-shadow(0 4px 14px rgba(0,0,0,.85)) drop-shadow(0 0 30px rgba(230,194,102,.26));}}
+.title::after{content:"";position:absolute;inset:-10% -4%;pointer-events:none;mix-blend-mode:screen;opacity:0;
+  background:linear-gradient(100deg,rgba(255,255,255,0) 42%,rgba(255,252,235,.65) 50%,rgba(255,255,255,0) 58%);
+  background-size:300% 100%;background-position:-120% 0;}
+.play .title::after{animation:titleSheen 1.6s ease-out 6.05s forwards, titleSheen 2.4s ease-in-out 13s infinite;}
+@keyframes titleSheen{0%{opacity:0;background-position:-120% 0}15%{opacity:.9}85%{opacity:.9}100%{opacity:0;background-position:220% 0}}
+
+.impact{position:absolute;inset:0;z-index:24;pointer-events:none;opacity:0;
+  background:radial-gradient(58% 42% at 50% 50%, rgba(255,240,200,.3), rgba(255,240,200,0) 70%);}
+.play .impact{animation:flash 900ms ease-out 5.95s forwards;}
+@keyframes flash{0%{opacity:0}16%{opacity:1}100%{opacity:0}}
+
+.rule{display:flex;align-items:center;justify-content:center;gap:14px;width:min(520px,72vw);opacity:0;}
+.rule s{text-decoration:none;display:block;height:1px;flex:1;transform:scaleX(0);transform-origin:right center;
+  background:linear-gradient(90deg,rgba(230,194,102,0),rgba(230,194,102,.9));}
+.rule s:last-child{background:linear-gradient(90deg,rgba(230,194,102,.9),rgba(230,194,102,0));transform-origin:left center;}
+.rule i{font-style:normal;color:var(--gold-2);font-size:12px;text-shadow:0 0 14px rgba(230,194,102,.75);}
+.play .rule{animation:fadeIn .8s ease-out 6.2s forwards;}
+.play .rule s{animation:drawRule 1.1s cubic-bezier(.16,.74,.22,1) 6.2s forwards;}
+@keyframes drawRule{to{transform:scaleX(1)}}
+
+.tagline{font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:300;
+  font-size:clamp(14px,2vw,27px);letter-spacing:.055em;color:#ecdfc0;opacity:0;text-shadow:0 2px 18px rgba(0,0,0,.9);}
+.play .tagline{animation:taglineIn 1.2s cubic-bezier(.22,.61,.36,1) 6.5s forwards;}
+@keyframes taglineIn{from{opacity:0;transform:translateY(12px);filter:blur(7px);letter-spacing:.02em}
+                     to{opacity:.96;transform:translateY(0);filter:blur(0);letter-spacing:.055em}}
+
+.cta{position:relative;margin-top:clamp(10px,2.4vh,30px);
+  padding:clamp(13px,1.7vh,18px) clamp(28px,4.4vw,56px);
+  font-family:'Cinzel',serif;font-weight:600;font-size:clamp(10.5px,1.1vw,15px);letter-spacing:.3em;
+  color:#241a08;background:linear-gradient(180deg,#fff5d6 0%,var(--gold-1) 26%,var(--gold-2) 52%,var(--gold-3) 82%,#f3e2ab 100%);
+  border:1px solid rgba(255,246,214,.7);border-radius:2px;cursor:pointer;overflow:hidden;opacity:0;
+  box-shadow:0 0 0 1px rgba(111,76,19,.6), 0 16px 46px rgba(0,0,0,.7), 0 0 34px rgba(230,194,102,.22);
+  transition:transform .35s cubic-bezier(.16,.72,.24,1), filter .35s ease, letter-spacing .35s ease;}
+.play .cta{animation:ctaIn 1s cubic-bezier(.16,.74,.22,1) 7.4s forwards, ctaGlow 4.5s ease-in-out 8.6s infinite;}
+@keyframes ctaIn{from{opacity:0;transform:translateY(16px);filter:blur(8px)}to{opacity:1;transform:translateY(0);filter:blur(0)}}
+@keyframes ctaGlow{0%,100%{box-shadow:0 0 0 1px rgba(111,76,19,.6),0 16px 46px rgba(0,0,0,.7),0 0 26px rgba(230,194,102,.2)}
+                   50%{box-shadow:0 0 0 1px rgba(111,76,19,.6),0 16px 46px rgba(0,0,0,.7),0 0 58px rgba(230,194,102,.48)}}
+.cta::after{content:"";position:absolute;top:0;left:-60%;width:42%;height:100%;transform:skewX(-18deg);
+  background:linear-gradient(104deg,rgba(255,255,255,0),rgba(255,255,255,.8),rgba(255,255,255,0));
+  animation:ctaSheen 5.5s ease-in-out 9s infinite;}
+@keyframes ctaSheen{0%,74%{left:-60%}100%{left:135%}}
+.cta:hover{transform:translateY(-2px) scale(1.025);filter:brightness(1.07);letter-spacing:.34em;}
+.cta:active{transform:translateY(0) scale(.99);}
+.crown-mini{color:var(--gold-2);font-size:13px;letter-spacing:.5em;opacity:0;margin-top:6px;text-shadow:0 0 16px rgba(230,194,102,.7);}
+.play .crown-mini{animation:fadeIn 1s ease-out 7.6s forwards;}
+
+.frame{position:absolute;inset:clamp(14px,2.4vw,36px);pointer-events:none;opacity:0;z-index:18;}
+.play .frame{animation:fadeIn 1.8s ease-out 4.6s forwards;}
+.frame i{position:absolute;width:clamp(40px,5.4vw,82px);height:clamp(40px,5.4vw,82px);border:1px solid rgba(230,194,102,.42);}
+.frame i::before{content:"";position:absolute;width:7px;height:7px;background:var(--gold-2);border-radius:50%;box-shadow:0 0 12px rgba(230,194,102,.9);}
+.frame i:nth-child(1){top:0;left:0;border-right:0;border-bottom:0}.frame i:nth-child(1)::before{top:-4px;left:-4px}
+.frame i:nth-child(2){top:0;right:0;border-left:0;border-bottom:0}.frame i:nth-child(2)::before{top:-4px;right:-4px}
+.frame i:nth-child(3){bottom:0;left:0;border-right:0;border-top:0}.frame i:nth-child(3)::before{bottom:-4px;left:-4px}
+.frame i:nth-child(4){bottom:0;right:0;border-left:0;border-top:0}.frame i:nth-child(4)::before{bottom:-4px;right:-4px}
+
+.hud{position:absolute;z-index:32;top:clamp(16px,3vw,38px);display:flex;gap:9px;opacity:0;}
+.hud.left{left:clamp(16px,3vw,38px);}
+.hud.right{right:clamp(16px,3vw,38px);}
+.play .hud{animation:fadeIn 1s ease-out 4.6s forwards;}
+.hud button{background:rgba(8,12,24,.5);border:1px solid rgba(230,194,102,.4);color:var(--champagne);
+  font-family:'Cinzel',serif;font-size:9.5px;letter-spacing:.22em;padding:9px 15px;border-radius:2px;
+  cursor:pointer;backdrop-filter:blur(8px);transition:.3s ease;}
+.hud button:hover{background:rgba(230,194,102,.16);border-color:rgba(230,194,102,.85);}
+.hud button.on{background:rgba(230,194,102,.28);border-color:rgba(230,194,102,.95);color:#fff6dc;}
+.hud button:focus-visible,.cta:focus-visible,.gate:focus-visible{outline:2px solid rgba(255,238,190,.9);outline-offset:3px;}
+.hud .theme{display:none;}
+body.preview .hud .theme{display:inline-block;}
+body.preview .hud.right{max-width:min(680px,70vw);flex-wrap:wrap;justify-content:flex-end;}
+body.preview .hud.right button{font-size:8px;padding:8px 10px;}
+#skip{opacity:0;transition:opacity .5s ease;}
+.play #skip{opacity:1;}
+.stage.done #skip{opacity:0;pointer-events:none;}
+
+.flash{position:fixed;inset:0;z-index:60;pointer-events:none;opacity:0;
+  background:radial-gradient(72% 60% at 50% 50%, rgba(255,246,220,.97), rgba(255,222,150,.4) 45%, rgba(0,0,0,0) 78%);}
+.entering .flash{animation:enterFlash 1.7s ease-out forwards;}
+@keyframes enterFlash{0%{opacity:0}38%{opacity:1}100%{opacity:0}}
+.entering .content{animation:contentOut 1.6s cubic-bezier(.5,0,.2,1) forwards;}
+@keyframes contentOut{to{opacity:0;transform:scale(1.12);filter:blur(14px)}}
+
+.gate{position:fixed;inset:0;z-index:80;background:#000;cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;transition:opacity 1s ease;}
+.gate.hide{opacity:0;pointer-events:none;}
+.gate h1{font-size:clamp(10px,1.25vw,15px);font-weight:500;letter-spacing:.44em;animation:gatePulse 3.2s ease-in-out infinite;}
+.gate p{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:14px;color:rgba(239,223,180,.4);}
+@keyframes gatePulse{0%,100%{opacity:.35}50%{opacity:1}}
+
+@media (max-width:720px){
+  .title{letter-spacing:.06em}.eyebrow{letter-spacing:.22em;font-size:8.5px}.eyebrow s{width:20px}
+  .crest-wrap{height:32vh}.reflection{display:none}.bar{height:8vh}
+  .hud.right{flex-direction:column;align-items:flex-end;max-height:82vh;overflow:auto}
+}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms !important;animation-delay:0ms !important;}}
+</style>
+</head>
+<body data-theme="sapphire">
+
+<div class="stage" id="stage">
+  <canvas id="bg"></canvas>
+  <div class="fallback"></div>
+  <canvas id="dust"></canvas>
+  <div class="vignette"></div>
+  <div class="grain"></div>
+  <div class="impact"></div>
+  <div class="blackout"></div>
+
+  <div class="bar top"></div>
+  <div class="bar bot"></div>
+  <div class="frame"><i></i><i></i><i></i><i></i></div>
+
+  <div class="hud left"><button id="replay" type="button">REPLAY</button><button id="skip" type="button">SKIP INTRO</button></div>
+  <div class="hud right">
+    <button class="theme on" data-theme="sapphire">SAPPHIRE HALL</button>
+    <button class="theme" data-theme="coronation">CORONATION</button>
+    <button class="theme" data-theme="moonlit">MOONLIT REALM</button>
+    <button class="theme" data-theme="embers">EMBER THRONE</button>
+    <button class="theme" data-theme="cathedral">IVORY CATHEDRAL</button>
+    <button class="theme" data-theme="storm">STORM FORTRESS</button>
+    <button class="theme" data-theme="dragongate">DRAGON GATE</button>
+    <button class="theme" data-theme="warcamp">ROYAL WAR CAMP</button>
+    <button class="theme" data-theme="celestial">CELESTIAL PALACE</button>
+    <button class="theme" data-theme="frost">FROZEN CITADEL</button>
+    <button id="sound">SOUND ON</button>
+  </div>
+
+  <div class="content" id="content">
+    <div class="eyebrow"><s></s><b>ONE CROWN</b> <em>&#10022;</em> <b>FOUR ALLIANCES</b><s></s></div>
+
+    <div class="crest-stack">
+      <div class="crest-wrap">
+        <div class="halo"></div>
+        <picture><source srcset="assets/crest.webp" type="image/webp"><img class="crest" src="assets/crest.png" width="1024" height="1536" alt="Kingdom 846 crest" fetchpriority="high" /></picture>
+        <div class="sheen"></div>
+      </div>
+      <div class="reflection" aria-hidden="true"><picture><source srcset="assets/crest.webp" type="image/webp"><img src="assets/crest.png" alt="" /></picture></div>
+    </div>
+
+    <h1 class="title" id="title" aria-label="KINGDOM 846">KINGDOM 846</h1>
+    <div class="rule"><s></s><i>&#10022;</i><s></s></div>
+    <p class="tagline">Where legends are forged in fire and crowned in gold</p>
+    <button class="cta" id="enter">ENTER THE REALM</button>
+    <div class="crown-mini">&#9819;</div>
+  </div>
+
+  <div class="flash"></div>
+</div>
+
+<div class="gate" id="gate" role="button" tabindex="0" aria-label="Enter Kingdom 846">
+  <h1>KINGDOM 846</h1>
+  <p>click to begin</p>
+</div>
+
+<noscript>
+  <style>.gate{display:none}.stage{background:#05070f}.content .eyebrow,.content .title span,.content .tagline,.content .cta,.content .crest-wrap,.content .rule{opacity:1!important;filter:none!important;transform:none!important}.blackout,.bar{display:none}.fallback{display:block!important}</style>
+</noscript>
+
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebSite","name":"Kingdom 846","url":"https://kingdom846.com/","description":"One crown, four alliances. Where legends are forged in fire and crowned in gold."}
+</script>
+
+<!-- ============ LIVE BACKGROUND SHADER ============ -->
+<script id="vs" type="x-shader/x-vertex">
+attribute vec2 aPos;
+void main(){ gl_Position = vec4(aPos, 0.0, 1.0); }
+</script>
+
+<script id="fs" type="x-shader/x-fragment">
+#ifdef GL_FRAGMENT_PRECISION_HIGH
+precision highp float;
+#else
+precision mediump float;
+#endif
+
+uniform sampler2D uTex;
+uniform vec2  uRes;
+uniform vec2  uTexRes;
+uniform vec2  uMouse;
+uniform float uTime;
+uniform float uExposure;   // 0 = black, 1 = fully lit
+uniform float uBlur;       // 1 = soft dream blur (opening)
+uniform float uZoom;       // camera push
+uniform float uFire;       // strength of flame animation
+uniform float uMist;       // ground mist amount
+uniform float uRain;       // rain curtain strength
+uniform float uStorm;      // lightning strength
+uniform float uAurora;     // celestial aurora strength
+uniform float uSnow;       // drifting snowfall / frost sparkle strength
+uniform vec3  uRayCol;     // colour of the light shafts
+uniform float uRayAmt;
+
+float hash(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453123); }
+
+float noise(vec2 p){
+  vec2 i = floor(p), f = fract(p);
+  vec2 u = f * f * (3.0 - 2.0 * f);
+  return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), u.x),
+             mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), u.x), u.y);
+}
+
+float fbm(vec2 p){
+  float v = 0.0, a = 0.5;
+  for (int i = 0; i < 5; i++){
+    v += a * noise(p);
+    p *= 2.03;
+    a *= 0.5;
+  }
+  return v;
+}
+
+/* cover-fit the texture to the viewport */
+vec2 coverUV(vec2 uv){
+  float ta = uTexRes.x / uTexRes.y;
+  float sa = uRes.x / uRes.y;
+  if (sa > ta) uv.y = (uv.y - 0.5) * (ta / sa) + 0.5;
+  else         uv.x = (uv.x - 0.5) * (sa / ta) + 0.5;
+  return uv;
+}
+
+vec3 grab(vec2 uv){ return texture2D(uTex, clamp(uv, 0.001, 0.999)).rgb; }
+
+/* soft blur used during the opening reveal */
+vec3 grabBlur(vec2 uv, float r){
+  if (r < 0.001) return grab(uv);
+  vec3 c = vec3(0.0);
+  c += grab(uv + vec2( r,  0.0));
+  c += grab(uv + vec2(-r,  0.0));
+  c += grab(uv + vec2(0.0,  r));
+  c += grab(uv + vec2(0.0, -r));
+  c += grab(uv + vec2( r,  r) * 0.7);
+  c += grab(uv + vec2(-r,  r) * 0.7);
+  c += grab(uv + vec2( r, -r) * 0.7);
+  c += grab(uv + vec2(-r, -r) * 0.7);
+  return c / 8.0;
+}
+
+/* how "flame-like" a pixel is: warm + bright */
+float warmMask(vec3 c){
+  float l = dot(c, vec3(0.299, 0.587, 0.114));
+  float warm = clamp((c.r - c.b) * 1.9, 0.0, 1.0);
+  return warm * smoothstep(0.18, 0.72, l);
+}
+
+void main(){
+  vec2 frag = gl_FragCoord.xy / uRes;
+  float t = uTime;
+
+  /* --- living camera: slow push + breathing drift + parallax --- */
+  vec2 uv = coverUV(frag);
+  vec2 drift = vec2(sin(t * 0.045) * 0.004, cos(t * 0.037) * 0.003);
+  uv = (uv - 0.5) / uZoom + 0.5 + drift + uMouse * 0.012;
+
+  /* --- atmospheric warp: haze breathing through the hall --- */
+  vec2 w = vec2(fbm(uv * 3.1 + vec2(t * 0.035, -t * 0.05)),
+                fbm(uv * 3.4 + 7.3 + vec2(-t * 0.04, t * 0.033))) - 0.5;
+  vec2 uvw = uv + w * 0.0035;
+
+  /* --- heat shimmer rising off the flames --- */
+  vec3 probe = grab(uvw);
+  float wm = warmMask(probe);
+  float below = warmMask(grab(uvw - vec2(0.0, 0.06)));
+  float heat = max(wm, below * 0.9);
+  float shimmer = sin(uv.x * 190.0 + t * 5.0) * 0.5 + fbm(vec2(uv.x * 24.0, uv.y * 12.0 - t * 1.6)) - 0.5;
+  uvw += vec2(shimmer * 0.0022, abs(shimmer) * 0.0016) * heat * uFire;
+
+  /* --- base plate --- */
+  vec3 col = grabBlur(uvw, uBlur * 0.010);
+
+  /* subtle chromatic separation towards the edges (anamorphic feel) */
+  float edge = length(frag - 0.5);
+  float ca = 0.0016 * edge * edge;
+  col.r = grabBlur(uvw + vec2(ca, 0.0), uBlur * 0.010).r;
+  col.b = grabBlur(uvw - vec2(ca, 0.0), uBlur * 0.010).b;
+
+  /* --- LIVE FIRE: flicker + bloom on every warm pixel --- */
+  float m = warmMask(col);
+  float flick = fbm(vec2(uv.x * 7.0, uv.y * 3.0 - t * 2.4)) * 0.9
+              + fbm(vec2(uv.x * 21.0, -t * 5.2)) * 0.5
+              + sin(t * 11.0 + uv.x * 30.0) * 0.10;
+  flick = (flick - 0.72);
+  col += vec3(1.0, 0.52, 0.16) * m * flick * 0.85 * uFire;
+
+  /* warm bloom bleeding into the air around the flames */
+  float bloom = 0.0;
+#ifdef LOW_TIER
+  for (int i = 0; i < 4; i++){
+    float a = float(i) * 1.5707963;
+    bloom += warmMask(grab(uvw + vec2(cos(a), sin(a)) * 0.022));
+  }
+  bloom /= 4.0;
+#else
+  for (int i = 0; i < 8; i++){
+    float a = float(i) * 0.7853981;
+    bloom += warmMask(grab(uvw + vec2(cos(a), sin(a)) * 0.022));
+  }
+  bloom /= 8.0;
+#endif
+  col += vec3(1.0, 0.55, 0.20) * bloom * (0.22 + 0.16 * flick) * uFire;
+
+  /* --- LIVE GOD RAYS drifting across the hall --- */
+  float shafts = fbm(vec2(uv.x * 5.0 - t * 0.035, uv.y * 0.8 + t * 0.02));
+  shafts = pow(max(shafts - 0.34, 0.0), 1.6) * 3.2;
+  shafts *= smoothstep(0.05, 0.85, 1.0 - frag.y) * (0.65 + 0.35 * sin(t * 0.4));
+  col += uRayCol * shafts * uRayAmt;
+
+  /* --- LIVE GROUND MIST rolling forward --- */
+  float mist = fbm(vec2(uv.x * 2.3 - t * 0.025, uv.y * 5.0 + t * 0.05));
+  mist *= smoothstep(0.42, 0.0, frag.y) * uMist;
+  col = mix(col, col * 0.75 + vec3(0.36, 0.44, 0.60) * 0.55, clamp(mist * 0.55, 0.0, 0.55));
+
+  /* --- STORM PROFILE: diagonal rain + intermittent lightning --- */
+  vec2 rp = frag * vec2(uRes.x / max(uRes.y, 1.0), 1.0);
+  rp.x += rp.y * 0.32;
+  float rainCell = hash(vec2(floor(rp.x * 180.0), floor((rp.y + t * 1.8) * 90.0)));
+  float rainLine = smoothstep(0.945, 1.0, rainCell) * smoothstep(0.0, 0.16, fract((rp.y + t * 1.8) * 90.0));
+  col += vec3(0.48, 0.64, 0.82) * rainLine * uRain * 0.7;
+  float strike = pow(max(sin(t * 0.43 - 1.1), 0.0), 40.0) + 0.5 * pow(max(sin(t * 1.17 + 2.5), 0.0), 80.0);
+  col += vec3(0.66, 0.78, 1.0) * strike * uStorm;
+
+  /* --- CELESTIAL PROFILE: living violet-blue aurora ribbons --- */
+  float ribbon = sin(uv.x * 8.0 + fbm(vec2(uv.x * 2.0 - t * 0.025, t * 0.035)) * 5.0 + t * 0.12);
+  ribbon = pow(max(ribbon * 0.5 + 0.5 - uv.y * 0.22, 0.0), 3.0);
+  ribbon *= smoothstep(0.32, 0.95, frag.y) * uAurora;
+  col += mix(vec3(0.12,0.48,0.82), vec3(0.52,0.20,0.82), fbm(uv * 2.0 + t * 0.02)) * ribbon * 0.55;
+
+  /* --- FROST PROFILE: four depth layers of wind-drifted snow with bokeh + ice sparkle --- */
+  if (uSnow > 0.001) {
+    float aspect = uRes.x / max(uRes.y, 1.0);
+    float snow = 0.0;
+    for (int i = 0; i < 4; i++) {
+      float fi = float(i);
+      /* far layers: dense, tiny and sharp. near layers: sparse, large and out of focus. */
+      float sc     = 132.0 / (1.0 + fi * 0.62);        // cell scale
+      float rad    = 0.100 + fi * 0.026;               // flake radius in cell units
+      float fall   = 0.030 + fi * 0.024;               // screens per second
+      float sway   = 0.05 + fi * 0.033;
+      float dens   = 0.9885 - fi * 0.0022;
+      float bright = (0.62 - fi * 0.115) * (1.0 - fi * 0.16);
+
+      vec2 sp = frag * vec2(aspect, 1.0) * sc;
+      sp.x += (0.09 + fi * 0.05) * t * sc;             // steady lateral wind
+      sp.y += fall * t * sc;
+
+      vec2 cell = floor(sp);
+      vec2 f = fract(sp);
+      float r1 = hash(cell + fi * 41.3);
+      if (r1 > dens) {
+        float r2 = hash(cell + fi * 17.9 + 5.1);
+        float r3 = hash(cell + fi * 63.7 + 11.3);
+        vec2 c = vec2(0.5 + (r2 - 0.5) * 0.45, 0.5 + (r3 - 0.5) * 0.45);
+        c.x += sin(t * (0.5 + r2 * 0.9) + r3 * 6.283) * sway;   // per-flake sway
+        vec2 d = f - c;
+        d.y /= 1.0 + fall * 9.0;                        // vertical motion blur
+        float rr = rad * (0.60 + r2 * 0.70);
+        float g = exp(-dot(d, d) / (rr * rr));          // soft bokeh falloff
+        snow += g * bright * (0.55 + r3 * 0.65);
+      }
+    }
+    col += vec3(0.80, 0.89, 1.0) * snow * uSnow;
+
+    /* frozen air haze so the flakes sit inside the room instead of on top of it */
+    float haze = fbm(vec2(uv.x * 2.4 + t * 0.012, uv.y * 1.6 - t * 0.008));
+    col += vec3(0.36, 0.52, 0.74) * haze * 0.055 * uSnow;
+
+    float sparkle = pow(max(hash(floor(frag * 300.0) + floor(t * 3.0)), 0.0), 60.0);
+    col += vec3(0.72, 0.88, 1.0) * sparkle * uSnow * 0.9;
+    col = mix(col, col * vec3(0.88, 0.97, 1.10), 0.26 * uSnow);
+  }
+
+  /* --- dark-to-light cinematic reveal --- */
+  float lum = dot(col, vec3(0.299, 0.587, 0.114));
+  col = mix(vec3(lum) * 0.35, col, clamp(uExposure * 1.15, 0.0, 1.0));
+  col *= mix(0.12, 1.0, uExposure);
+  col = pow(max(col, 0.0), vec3(mix(1.35, 1.0, uExposure)));
+
+  /* filmic contrast + gentle vignette (the CSS layer adds the rest) */
+  col = (col - 0.5) * 1.06 + 0.5;
+  col *= 1.0 - 0.35 * edge * edge;
+
+  gl_FragColor = vec4(max(col, 0.0), 1.0);
+}
+</script>
+
+<script>
+/* ===== themes ===== */
+const CONFIG = {
+  theme: 'sapphire',          // 'sapphire' | 'coronation' | 'moonlit'
+  enterUrl: '/',              // only used when opened standalone (chooser / ?preview=1);
+                              // inside the app's splash iframe the handoff is a postMessage
+  skipIntroOnReturn: true,    // returning visitors in the same tab get the fast open
+  showThemeSwitcher: false    // always on when the URL has ?preview=1
+};
+
+const THEMES = {
+  sapphire:   {label:'SAPPHIRE HALL',    src:'assets/hall-sapphire.webp',   ray:[0.58,0.74,1.00], rayAmt:.85, fire:.85, mist:.55, rain:0,   storm:0,   aurora:0},
+  coronation: {label:'CORONATION',        src:'assets/hall-coronation.webp', ray:[1.00,0.84,0.58], rayAmt:.45, fire:1.35,mist:.40, rain:0,   storm:0,   aurora:0},
+  moonlit:    {label:'MOONLIT REALM',     src:'assets/hall-moonlit.webp',    ray:[0.72,0.84,1.00], rayAmt:.70, fire:.55, mist:.85, rain:0,   storm:0,   aurora:0},
+  embers:     {label:'EMBER THRONE',      src:'assets/hall-embers.webp',     ray:[1.00,0.42,0.12], rayAmt:.20, fire:1.80,mist:.62, rain:0,   storm:0,   aurora:0},
+  cathedral:  {label:'IVORY CATHEDRAL',   src:'assets/hall-cathedral.webp',  ray:[1.00,0.88,0.58], rayAmt:1.05,fire:.38, mist:.42, rain:0,   storm:0,   aurora:0},
+  storm:      {label:'STORM FORTRESS',    src:'assets/hall-storm.webp',      ray:[0.48,0.65,1.00], rayAmt:.35, fire:.82, mist:1.00, rain:1.0, storm:.9,  aurora:0},
+  dragongate: {label:'DRAGON GATE',       src:'assets/hall-dragongate.webp', ray:[1.00,0.62,0.24], rayAmt:.30, fire:1.55,mist:1.12, rain:0,   storm:0,   aurora:0},
+  warcamp:    {label:'ROYAL WAR CAMP',    src:'assets/hall-warcamp.webp',    ray:[1.00,0.55,0.20], rayAmt:.48, fire:1.45,mist:.72, rain:0,   storm:0,   aurora:0},
+  celestial:  {label:'CELESTIAL PALACE',  src:'assets/hall-celestial.webp',   ray:[0.45,0.68,1.00], rayAmt:.62, fire:.24, mist:.52, rain:0,   storm:0,   aurora:1.0, snow:0},
+  frost:      {label:'FROZEN CITADEL',    src:'assets/hall-frost.webp',      ray:[0.66,0.82,1.00], rayAmt:.95, fire:.45, mist:.95, rain:0,   storm:0,   aurora:.35, snow:1.05}
+};
+Object.values(THEMES).forEach(t => { if (t.snow === undefined) t.snow = 0; });
+
+const PARAMS = new URLSearchParams(location.search);
+const PREVIEW = PARAMS.has('preview');
+if (THEMES[PARAMS.get('theme')]) CONFIG.theme = PARAMS.get('theme');
+if (!THEMES[CONFIG.theme]) CONFIG.theme = 'sapphire';
+document.body.dataset.theme = CONFIG.theme;
+document.documentElement.style.setProperty('--bg-img', `url('${THEMES[CONFIG.theme].src}')`);
+const preBg = document.getElementById('pre-bg'); if (preBg) preBg.href = THEMES[CONFIG.theme].src;
+if (PREVIEW || CONFIG.showThemeSwitcher) document.body.classList.add('preview');
+document.querySelectorAll('.theme').forEach(b => b.classList.toggle('on', b.dataset.theme === CONFIG.theme));
+
+/* device tier — keeps phones and weak GPUs smooth */
+const LOW_TIER = matchMedia('(max-width:820px)').matches
+  || (navigator.hardwareConcurrency || 8) <= 4
+  || matchMedia('(prefers-reduced-motion:reduce)').matches;
+
+/* ===== title letters ===== */
+(function(){
+  const el = document.getElementById('title');
+  el.textContent = '';
+  [...'KINGDOM 846'].forEach((ch,i)=>{
+    const s=document.createElement('span');
+    if(ch===' '){s.className='sp';s.innerHTML='&nbsp;';} else s.textContent=ch;
+    s.style.animationDelay=(4.85+i*0.075)+'s';
+    el.appendChild(s);
+  });
+})();
+
+/* ===== WebGL live background ===== */
+const BG = (function(){
+  const canvas = document.getElementById('bg');
+  const gl = canvas.getContext('webgl', {antialias:false, alpha:false, powerPreference:'high-performance'});
+  if (!gl){ document.body.classList.add('nogl'); return {setTheme(){}, reveal(){}, push(){}, skip(){}}; }
+
+  function compile(type, src){
+    const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s);
+    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) console.error(gl.getShaderInfoLog(s));
+    return s;
+  }
+  const prog = gl.createProgram();
+  gl.attachShader(prog, compile(gl.VERTEX_SHADER,   document.getElementById('vs').textContent));
+  const fsSrc = (LOW_TIER ? '#define LOW_TIER 1\n' : '') + document.getElementById('fs').textContent;
+  gl.attachShader(prog, compile(gl.FRAGMENT_SHADER, fsSrc));
+  gl.linkProgram(prog);
+  if (!gl.getProgramParameter(prog, gl.LINK_STATUS)) console.error(gl.getProgramInfoLog(prog));
+  gl.useProgram(prog);
+
+  const buf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 3,-1, -1,3]), gl.STATIC_DRAW);
+  const loc = gl.getAttribLocation(prog, 'aPos');
+  gl.enableVertexAttribArray(loc);
+  gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+
+  const U = n => gl.getUniformLocation(prog, n);
+  const u = {res:U('uRes'),texRes:U('uTexRes'),mouse:U('uMouse'),time:U('uTime'),exp:U('uExposure'),
+             blur:U('uBlur'),zoom:U('uZoom'),fire:U('uFire'),mist:U('uMist'),rain:U('uRain'),storm:U('uStorm'),
+             aurora:U('uAurora'),snow:U('uSnow'),ray:U('uRayCol'),rayAmt:U('uRayAmt')};
+
+  const tex = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, tex);
+  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, 1, 1, 0, gl.RGB, gl.UNSIGNED_BYTE, new Uint8Array([0,0,0]));
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+
+  let texRes = [1,1], theme = THEMES.sapphire;
+  const cache = {};
+
+  function useImage(img){
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, img);
+    texRes = [img.naturalWidth, img.naturalHeight];
+  }
+
+  function setTheme(name){
+    theme = THEMES[name];
+    document.documentElement.style.setProperty('--bg-img', `url('${theme.src}')`);
+    if (cache[name]) { useImage(cache[name]); return; }
+    const img = new Image();
+    img.onload = () => { cache[name] = img; useImage(img); };
+    img.src = theme.src;
+  }
+  setTheme(CONFIG.theme);
+
+  const dpr = Math.min(devicePixelRatio || 1, LOW_TIER ? 1.2 : 1.75);
+  function resize(){
+    canvas.width  = Math.floor(innerWidth  * dpr);
+    canvas.height = Math.floor(innerHeight * dpr);
+    gl.viewport(0, 0, canvas.width, canvas.height);
+  }
+  resize(); addEventListener('resize', resize);
+
+  let mx = 0, my = 0, tmx = 0, tmy = 0;
+  addEventListener('pointermove', e => {
+    tmx = (e.clientX / innerWidth  - 0.5) * 2;
+    tmy = (e.clientY / innerHeight - 0.5) * 2;
+  });
+
+  let t0 = performance.now() / 1000;
+  let zoomTarget = 1.0, zoom = 1.14, pushing = false;
+
+  function reveal(){ t0 = performance.now() / 1000; zoom = 1.14; zoomTarget = 1.0; pushing = false; }
+  function skip(sec){ t0 -= sec; zoom = 1.0; }
+  function push(){ pushing = true; zoomTarget = 1.5; }
+
+  (function frame(){
+    const now = performance.now() / 1000;
+    const el  = now - t0;
+
+    // matches the DOM timeline: black until 1.2s, fully lit by 3.6s
+    const exposure = Math.min(Math.max((el - 1.2) / 2.4, 0), 1);
+    const blur = 1 - exposure;
+
+    zoom += (zoomTarget - zoom) * (pushing ? 0.05 : 0.012);
+    mx += (tmx - mx) * 0.05; my += (tmy - my) * 0.05;
+
+    gl.uniform2f(u.res, canvas.width, canvas.height);
+    gl.uniform2f(u.texRes, texRes[0], texRes[1]);
+    gl.uniform2f(u.mouse, mx, my);
+    gl.uniform1f(u.time, now - t0 + 40.0);
+    gl.uniform1f(u.exp, exposure);
+    gl.uniform1f(u.blur, blur);
+    gl.uniform1f(u.zoom, zoom);
+    gl.uniform1f(u.fire, theme.fire);
+    gl.uniform1f(u.mist, theme.mist);
+    gl.uniform1f(u.rain, theme.rain);
+    gl.uniform1f(u.storm, theme.storm);
+    gl.uniform1f(u.aurora, theme.aurora);
+    gl.uniform1f(u.snow, theme.snow);
+    gl.uniform3f(u.ray, theme.ray[0], theme.ray[1], theme.ray[2]);
+    gl.uniform1f(u.rayAmt, theme.rayAmt);
+
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+    requestAnimationFrame(frame);
+  })();
+
+  return {setTheme, reveal, push, skip};
+})();
+
+/* ===== embers + dust ===== */
+(function(){
+  const c = document.getElementById('dust'), ctx = c.getContext('2d');
+  const dpr = Math.min(devicePixelRatio || 1, 2);
+  let w, h, dust = [], embers = [];
+  function resize(){
+    w = c.width = innerWidth * dpr; h = c.height = innerHeight * dpr;
+    c.style.width = innerWidth + 'px'; c.style.height = innerHeight + 'px';
+    const n = Math.round(innerWidth * innerHeight / 24000);
+    dust = Array.from({length:n}, () => ({x:Math.random()*w,y:Math.random()*h,
+      r:(Math.random()*1.4+.35)*dpr,s:(Math.random()*.2+.04)*dpr,d:Math.random()*6.28,a:Math.random()*.4+.1}));
+    embers = Array.from({length:Math.round(n/3)}, () => ({x:Math.random()*w,y:h*(0.55+Math.random()*0.5),
+      r:(Math.random()*1.6+.6)*dpr,s:(Math.random()*.5+.18)*dpr,d:Math.random()*6.28,a:Math.random()*.55+.25,life:Math.random()}));
+  }
+  resize(); addEventListener('resize', resize);
+  function glow(p, col, t, boost){
+    const tw = p.a * (0.6 + 0.4*Math.sin(t/850 + p.d*5)) * boost;
+    const g = ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,p.r*4.5);
+    g.addColorStop(0, col.replace('A', tw)); g.addColorStop(1, col.replace('A', 0));
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(p.x,p.y,p.r*4.5,0,6.2832); ctx.fill();
+  }
+  (function loop(t){
+    ctx.clearRect(0,0,w,h);
+    for (const p of dust){
+      p.y -= p.s; p.x += Math.sin(t/2800 + p.d)*.2*dpr;
+      if (p.y < -10){ p.y = h+10; p.x = Math.random()*w; }
+      glow(p,'rgba(255,234,186,A)',t,1);
+    }
+    for (const p of embers){
+      p.y -= p.s; p.x += Math.sin(t/1500 + p.d)*.45*dpr; p.life -= .0016;
+      if (p.y < h*0.12 || p.life <= 0){
+        p.y = h*(0.9+Math.random()*0.15);
+        p.x = (Math.random()<.5 ? Math.random()*w*.28 : w - Math.random()*w*.28);
+        p.life = 1;
+      }
+      glow(p,'rgba(255,168,72,A)',t,Math.max(p.life,0));
+    }
+    requestAnimationFrame(loop);
+  })(0);
+})();
+
+/* ===== content parallax ===== */
+(function(){
+  const el = document.getElementById('content');
+  addEventListener('pointermove', e => {
+    const x = (e.clientX/innerWidth - .5) * 2, y = (e.clientY/innerHeight - .5) * 2;
+    el.style.transform = `translate3d(${x*9}px, ${y*5}px, 0)`;
+  });
+})();
+
+/* ===== cinematic score ===== */
+const Score = (() => {
+  let ac, master, on = true;
+  const T = () => ac.currentTime;
+  function init(){
+    if (ac) return;
+    ac = new (window.AudioContext || window.webkitAudioContext)();
+    master = ac.createGain(); master.gain.value = .9;
+    const comp = ac.createDynamicsCompressor();
+    master.connect(comp); comp.connect(ac.destination);
+  }
+  function noiseBuf(sec){
+    const len = sec*ac.sampleRate, b = ac.createBuffer(1,len,ac.sampleRate), d = b.getChannelData(0);
+    for (let i=0;i<len;i++) d[i] = Math.random()*2-1;
+    return b;
+  }
+  function subBass(){
+    const f = ac.createBiquadFilter(); f.type='lowpass'; f.frequency.value=180;
+    const g = ac.createGain(); g.gain.setValueAtTime(.0001,T());
+    g.gain.exponentialRampToValueAtTime(.26, T()+3.5);
+    [34,51].forEach(hz=>{const o=ac.createOscillator();o.type='sine';o.frequency.value=hz;o.connect(f);o.start();});
+    const lfo=ac.createOscillator(), lg=ac.createGain(); lfo.frequency.value=.07; lg.gain.value=.06;
+    lfo.connect(lg); lg.connect(g.gain); lfo.start();
+    f.connect(g); g.connect(master);
+  }
+  function hallAir(){
+    const s=ac.createBufferSource(); s.buffer=noiseBuf(5); s.loop=true;
+    const f=ac.createBiquadFilter(); f.type='bandpass'; f.frequency.value=380; f.Q.value=.55;
+    const g=ac.createGain(); g.gain.setValueAtTime(.0001,T()); g.gain.exponentialRampToValueAtTime(.03,T()+4.5);
+    s.connect(f); f.connect(g); g.connect(master); s.start();
+  }
+  function torchCrackle(){
+    const s=ac.createBufferSource(); s.buffer=noiseBuf(3); s.loop=true;
+    const f=ac.createBiquadFilter(); f.type='highpass'; f.frequency.value=2400;
+    const g=ac.createGain(); g.gain.value=.0001;
+    s.connect(f); f.connect(g); g.connect(master); s.start();
+    (function crack(){
+      if (!ac) return;
+      const t=T()+Math.random()*1.4+.25;
+      g.gain.setValueAtTime(.0001,t);
+      g.gain.exponentialRampToValueAtTime(.012+Math.random()*.01,t+.01);
+      g.gain.exponentialRampToValueAtTime(.0001,t+.09);
+      setTimeout(crack, 500+Math.random()*1500);
+    })();
+  }
+  function pad(at, freqs, vol, dur){
+    const t=T()+at;
+    freqs.forEach((hz,i)=>{
+      const o=ac.createOscillator(), g=ac.createGain(), f=ac.createBiquadFilter();
+      o.type = i%2 ? 'triangle':'sine'; o.frequency.value=hz; o.detune.value=Math.random()*10-5;
+      f.type='lowpass'; f.frequency.value=2200;
+      g.gain.setValueAtTime(.0001,t);
+      g.gain.exponentialRampToValueAtTime(vol,t+dur*.35);
+      g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+      o.connect(f); f.connect(g); g.connect(master); o.start(t); o.stop(t+dur+.1);
+    });
+  }
+  function shimmer(at){
+    const t=T()+at;
+    [1568,2093,2637,3136].forEach((hz,i)=>{
+      const o=ac.createOscillator(), g=ac.createGain(); o.type='sine'; o.frequency.value=hz;
+      const s=t+i*.1;
+      g.gain.setValueAtTime(.0001,s); g.gain.exponentialRampToValueAtTime(.045,s+.13);
+      g.gain.exponentialRampToValueAtTime(.0001,s+1.7);
+      o.connect(g); g.connect(master); o.start(s); o.stop(s+1.9);
+    });
+  }
+  function impact(at){
+    const t=T()+at;
+    const o=ac.createOscillator(), g=ac.createGain(); o.type='sine';
+    o.frequency.setValueAtTime(130,t); o.frequency.exponentialRampToValueAtTime(36,t+.8);
+    g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(.55,t+.05);
+    g.gain.exponentialRampToValueAtTime(.0001,t+2.8);
+    o.connect(g); g.connect(master); o.start(t); o.stop(t+2.9);
+    const s=ac.createBufferSource(); s.buffer=noiseBuf(2);
+    const f=ac.createBiquadFilter(); f.type='bandpass'; f.frequency.value=900;
+    const ng=ac.createGain();
+    ng.gain.setValueAtTime(.0001,Math.max(t-1.1,T()));
+    ng.gain.exponentialRampToValueAtTime(.06,t);
+    ng.gain.exponentialRampToValueAtTime(.0001,t+.6);
+    s.connect(f); f.connect(ng); ng.connect(master); s.start(Math.max(t-1.1,T())); s.stop(t+.7);
+    pad(at,[98,196,293.66,392,587.33],.085,4.2);
+  }
+  return {
+    start(){
+      init(); if (ac.state==='suspended') ac.resume();
+      subBass(); hallAir(); torchCrackle();
+      pad(1.2,[130.81,196,261.63],.05,4);
+      shimmer(3.4);
+      pad(4.0,[174.61,261.63,349.23],.045,3);
+      impact(6.0);
+      pad(6.6,[146.83,220,293.66,440],.04,6);
+    },
+    fanfare(){ if(!ac) return; pad(0,[261.63,392,523.25,783.99],.09,2.6); impact(.05); },
+    toggle(){ init(); on=!on; master.gain.linearRampToValueAtTime(on?.9:.0001, T()+.4); return on; }
+  };
+})();
+
+/* ===== sequence ===== */
+const stage = document.getElementById('stage');
+const gate  = document.getElementById('gate');
+const INTRO_LENGTH = 8.6; // seconds until the screen is fully composed
+
+function run(withAudio){
+  stage.classList.remove('play','done');
+  void stage.offsetWidth;
+  stage.classList.add('play');
+  BG.reveal();
+  if (withAudio) Score.start();
+}
+
+/* jump straight to the composed frame, keeping every looping animation alive */
+function skipIntro(){
+  stage.getAnimations({subtree:true}).forEach(a => {
+    try { if (a.effect && a.playState !== 'finished') a.currentTime = INTRO_LENGTH * 1000; } catch(_){}
+  });
+  BG.skip(INTRO_LENGTH);
+  stage.classList.add('done');
+}
+
+function begin(){
+  if (gate.classList.contains('hide')) return;
+  gate.classList.add('hide');
+  const seen = CONFIG.skipIntroOnReturn && sessionStorage.getItem('k846_intro') === '1';
+  run(!seen);
+  if (seen) requestAnimationFrame(skipIntro);
+  try { sessionStorage.setItem('k846_intro','1'); } catch(_){}
+}
+
+gate.addEventListener('click', begin);
+gate.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); begin(); } });
+document.getElementById('skip').addEventListener('click', e => { e.stopPropagation(); skipIntro(); });
+document.getElementById('replay').addEventListener('click', e => { e.stopPropagation(); run(false); });
+document.getElementById('sound').addEventListener('click', e => {
+  e.stopPropagation();
+  e.currentTarget.textContent = Score.toggle() ? 'SOUND ON' : 'SOUND OFF';
+});
+document.querySelectorAll('.theme').forEach(b => b.addEventListener('click', e => {
+  e.stopPropagation();
+  document.body.dataset.theme = CONFIG.theme = b.dataset.theme;
+  document.querySelectorAll('.theme').forEach(x => x.classList.toggle('on', x === b));
+  BG.setTheme(b.dataset.theme);
+  run(false);
+}));
+document.getElementById('enter').addEventListener('click', () => {
+  Score.fanfare();
+  BG.push();
+  document.body.classList.add('entering');
+  // This screen runs inside the app's splash iframe, and the app opens when it
+  // receives k846-enter-realm on the parent window -- so the handoff is a
+  // postMessage, not a navigation. Same origin is asserted explicitly rather
+  // than using '*': the message unlocks the site.
+  // enterUrl is still honoured when the page is opened standalone (no parent),
+  // which is how the chooser and ?preview=1 are used.
+  const inFrame = window.parent && window.parent !== window;
+  if (inFrame) {
+    setTimeout(() => {
+      try { window.parent.postMessage({ type: 'k846-enter-realm' }, window.location.origin); } catch (e) {}
+    }, 1400);
+  } else if (CONFIG.enterUrl) {
+    setTimeout(() => { location.href = CONFIG.enterUrl; }, 1500);
+  }
+});
+</script>
+</body>
+</html>

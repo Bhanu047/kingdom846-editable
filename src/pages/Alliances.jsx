@@ -27,8 +27,13 @@ export default function Alliances() {
   return (
     <div className="space-y-6">
       <Panel glow className="aurora-border gold-corners relative overflow-hidden">
-        <div className="absolute inset-0 z-0 opacity-30"><img src="./assets/hero-council.webp" alt="" className="h-full w-full object-cover drift-slow" loading="lazy" /></div>
-        <div className="relative z-10"><Embers count={10} /><div className="eyebrow text-glow">The Council</div><h1 className="mt-1 font-display text-3xl font-bold gradient-gold glow-pulse">Alliances of 846</h1><p className="mt-2 text-sm text-parchment/60">The four pillars of Kingdom 846 — the alliances and the council that hold the realm together.</p></div>
+        {/* The artwork used to sit at opacity-30 with nothing over it. That is
+            the worst of both: the scene is too faint to read as a picture, and
+            the copy still has bright candlelight behind it. Full opacity plus a
+            directional scrim gives the artwork back AND makes the copy land. */}
+        <div className="absolute inset-0 z-0"><img src="./assets/hero-council.webp" alt="" className="h-full w-full object-cover" loading="lazy" /></div>
+        <div className="hero-overlay pointer-events-none absolute inset-0 z-0" />
+        <div className="relative z-10 max-w-2xl"><Embers count={10} /><div className="eyebrow text-glow">The Council</div><h1 className="mt-1 font-display text-3xl font-bold gradient-gold glow-pulse">Alliances of 846</h1><p className="mt-2 text-sm text-parchment/80 text-glow">The four pillars of Kingdom 846 — the alliances and the council that hold the realm together.</p></div>
       </Panel>
 
       <div className="grid gap-4 lg:grid-cols-2">
@@ -38,6 +43,13 @@ export default function Alliances() {
             <button key={a.slug} onClick={() => setActive(a)} className="royal-grid-card group overflow-hidden text-left cursor-pointer flex flex-col">
               <div className="relative h-28">
                 <ArtImage src={a.art} alt={a.name} className="h-full w-full" />
+                {/* Two layers, and they do different jobs. The alliance tint
+                    identifies the card; it is a colour wash and adds no
+                    darkness, so on bright artwork the name and motto sat on
+                    fire and were unreadable. The scrim under it is what makes
+                    the copy land -- heavy on the left where the text is,
+                    clearing to nothing on the right so the art still shows. */}
+                <div className="absolute inset-0 bg-gradient-to-r from-ink/95 via-ink/60 to-transparent" />
                 <div className={`absolute inset-0 bg-gradient-to-r ${c.grad}`} />
                 <div className="absolute inset-y-0 left-0 flex items-center gap-3 p-4"><RankBadge rank={a.rank} /><div><div className="flex items-center gap-2"><span className={`font-display text-lg font-bold ${c.text}`}>{a.tag}</span><span className="text-sm font-semibold text-parchment">{a.name}</span></div><div className="text-[11px] text-parchment/70">{a.tagline}</div></div></div>
                 <div className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-ink/60 px-2 py-1 text-[10px] text-parchment/70"><Icon name="clock" size={11} /> Event Times</div>

@@ -8,6 +8,7 @@ import { apiJson } from '../lib/api'
 import { useAuth } from '../context/AuthContext'
 import { useSiteData } from '../context/SiteDataContext'
 import { useEgg, EggToast } from '../lib/useEgg'
+import { hallImage } from '../data/realmArt'
 
 const colorMap = {
   gold: 'text-gold', silver: 'text-slate-200', crimson: 'text-rose-300',
@@ -95,8 +96,9 @@ export default function Dashboard({ onNavigate }) {
 
       <Panel glow className="hero-frame relative overflow-hidden p-0 gold-corners">
         <div className="relative h-64 md:h-96 hero-shimmer">
-          <ArtImage src="./assets/royal-hall.jpg" alt="Kingdom 846" className="h-full w-full hall-breathe" />
-          <div className="hero-overlay absolute inset-0" />
+          <ArtImage src={hallImage} alt="Kingdom 846" className="h-full w-full hall-breathe" />
+          {/* No hero-overlay here: hero-grade below is this hero's scrim, and
+              stacking both is what crushed the hall to near-black. */}
           {/* Grade, bloom and rake, matching the welcome screen so the entrance
               and the home page read as one room. The hall already carries its
               own lighting, so these only deepen the extremes and hold the

@@ -163,8 +163,11 @@
 .page-enter { animation: page-in .45s cubic-bezier(0.16,1,0.3,1) both; }
 @keyframes page-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 
-/* Hero title glow pulse */
-.glow-pulse { text-shadow: 0 0 24px rgba(212,175,55,.35), 0 2px 8px rgba(0,0,0,.6); }
+/* Was a gold glow pulse. Gold light bleeding off gold letters is exactly what
+   made these headings mush on bright artwork, and glow has been rejected
+   repeatedly. A struck object casts a shadow, it does not emit -- so this is
+   now a cast shadow, which also does the legibility work the glow never did. */
+.glow-pulse { text-shadow: 0 1px 2px rgba(0,0,0,.8), 0 3px 14px rgba(0,0,0,.55); }
 
 /* Subtle parallax drift for hero art */
 .drift-slow { animation: drift 14s ease-in-out infinite alternate; }
@@ -818,12 +821,14 @@
   50% { background-position: 100% 50%; }
 }
 
-/* Glowing text shadow */
+/* Same change as .glow-pulse: a shadow that seats the text on the art instead
+   of a halo that dissolves into it. Eyebrows sit directly on hero images on
+   half the pages in the site, and the halo was making them illegible. */
 .text-glow {
-  text-shadow: 0 0 10px rgba(212,175,55,.4), 0 0 20px rgba(212,175,55,.2);
+  text-shadow: 0 1px 2px rgba(0,0,0,.75), 0 2px 10px rgba(0,0,0,.5);
 }
 .text-glow-strong {
-  text-shadow: 0 0 8px rgba(232,199,102,.5), 0 0 16px rgba(212,175,55,.3), 0 0 32px rgba(212,175,55,.15);
+  text-shadow: 0 1px 2px rgba(0,0,0,.85), 0 2px 6px rgba(0,0,0,.7), 0 4px 20px rgba(0,0,0,.5);
 }
 
 /* Loading shimmer */
@@ -1011,12 +1016,18 @@ body {
 
 /* Richer gold gradient with more stops */
 .gradient-gold {
-  background: linear-gradient(135deg, #B8941E 0%, #E8C766 20%, #F3E8CC 40%, #E8C766 55%, #D4AF37 75%, #B8941E 100%);
+  /* Darkest stops lifted. This ramp bottomed out at #B8941E, and a heading is
+     only as legible as its darkest letter -- on the banner scrims those stops
+     disappeared into the ground. The gold reads no less like metal for
+     starting higher; the tonal RANGE is what sells metal, not the floor. */
+  background: linear-gradient(135deg, #D9B44A 0%, #F0D488 20%, #FFF8E6 40%, #F0D488 55%, #E2BC4E 75%, #D9B44A 100%);
   background-size: 200% auto;
   -webkit-background-clip: text; background-clip: text;
   -webkit-text-fill-color: transparent;
   animation: gradient-flow 6s linear infinite;
-  filter: drop-shadow(0 1px 2px rgba(212,175,55,.2));
+  /* A cast shadow, not the old gold drop-shadow: gold light around gold
+     letters is what smeared them on artwork. */
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.55));
 }
 
 /* Luxury button */
@@ -1089,12 +1100,25 @@ aside {
   background: linear-gradient(90deg, #D4AF37, #E8C766, transparent);
 }
 
-/* Luxury hero overlay */
+/* The legibility scrim under banner copy.
+   This was neutralised to a no-op when the home hero moved to hero-grade --
+   and that quietly broke five OTHER pages that still relied on it. Events,
+   News, Transfer and both Apply banners set gold headings straight onto bright
+   artwork with nothing behind them, so the copy became unreadable. The scrim
+   is back; the home hero simply stopped asking for it.
+
+   Directional, not a flat wash: heavy where the copy sits, clearing to almost
+   nothing on the far side so the artwork's subject is still visible. A banner
+   that hides its own picture is not a fix. */
 .hero-overlay {
-  /* Neutralised: hero-grade replaced this, and stacking both crushed the hall
-     to near-black. Kept as a no-op rather than deleted because other pages
-     still reference the class. */
-  background: none;
+  background:
+    linear-gradient(100deg,
+      rgba(6,11,22,.94) 0%,
+      rgba(6,11,22,.86) 26%,
+      rgba(6,11,22,.58) 52%,
+      rgba(6,11,22,.26) 76%,
+      rgba(6,11,22,.14) 100%),
+    linear-gradient(180deg, rgba(6,11,22,.42) 0%, transparent 38%, rgba(6,11,22,.5) 100%);
 }
 
 /* Premium header */
@@ -2174,22 +2198,37 @@ select.royal-select option {
 }
 
 /* ---- Display scale ------------------------------------------------------- */
-/* Headings were set at Tailwind's text-2xl/3xl -- correct for an admin tool,
-   timid for a royal portal. These are the sizes that make a page feel
-   commissioned rather than assembled. Fluid, so they never overflow a phone. */
-.page-enter h1,
+/* Pulled back. This started as clamp(2.1rem, 5.2vw, 3.9rem) on every h1, and
+   at that size it stopped reading as grand and started reading as shouting --
+   a 3.9rem banner heading crowded its own artwork and pushed the content it
+   was introducing off the first screen. Worse, a blanket element selector
+   overrode the size every component had chosen for itself, so headings that
+   were meant to be modest section labels got the full display treatment too.
+   Now: a real step up from Tailwind's default, not a takeover, and opt-out
+   below for the headings that were never display type. */
+/* :where() so this contributes ZERO specificity. That matters more than the
+   numbers do. As a plain `.page-enter h1` this out-specified every Tailwind
+   text-* class in the app, so a heading a component had deliberately set to
+   text-3xl was silently re-sized to nearly twice that -- which is what made
+   the whole site look shouted. Wrapped in :where(), it is a floor for headings
+   that never chose a size, and any explicit class simply wins.
+   (`font-size: revert` is NOT the fix here -- it reverts past the author
+   origin entirely and lands on the browser's 2em/1.5em defaults, throwing the
+   Tailwind class away too. Measured: every h1 came back 32px.) */
+:where(.page-enter h1),
 .page-enter .display-1 {
-  font-size: clamp(2.1rem, 5.2vw, 3.9rem);
-  line-height: 1.02;
+  font-size: clamp(1.7rem, 3.1vw, 2.5rem);
+  line-height: 1.08;
   letter-spacing: -.005em;
   text-wrap: balance;
 }
-.page-enter h2,
+:where(.page-enter h2),
 .page-enter .display-2 {
-  font-size: clamp(1.5rem, 3vw, 2.35rem);
-  line-height: 1.1;
+  font-size: clamp(1.2rem, 1.9vw, 1.55rem);
+  line-height: 1.2;
   text-wrap: balance;
 }
+:where(.page-enter h1, .page-enter h2) { text-wrap: balance }
 /* Eyebrows carry the formality: wide tracking is what reads as engraved. */
 .eyebrow {
   letter-spacing: .30em !important;

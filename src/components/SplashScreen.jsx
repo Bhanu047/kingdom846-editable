@@ -25,7 +25,7 @@ export default function SplashScreen({ onEnter }) {
     <section className={`perplexity-welcome-shell ${opening ? 'is-opening' : ''}`}>
       <iframe
         title="Kingdom 846 Royal Welcome"
-        src="/perplexity-welcome/index.html"
+        src="/royal-welcome/index.html"
         className="perplexity-welcome-frame"
         allow="autoplay"
       />

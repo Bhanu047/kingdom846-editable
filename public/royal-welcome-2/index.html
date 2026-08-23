@@ -373,6 +373,135 @@ body[data-theme="celestial"] {--acc:154,198,255;--acc2:170,124,255;}
 /* 01 Sapphire Hall -- Roman inscriptional capitals. The state portrait, and
    the baseline the other eight are read against. Nothing to change. */
 
+/* ================= NINE MOTION LANGUAGES =================
+   Seven of the nine beats were byte-identical on every hall: the eyebrow, the
+   halo, the impact flash, the rule, the tagline, the button and the crown all
+   ran the same keyframe at the same second for the same duration. Only the
+   crest and the wordmark ever differed. Seven identical events against two
+   varied ones is why the set still read as one screen -- the sameness
+   outnumbered the difference seven to two.
+   Each hall now has ONE motion language of its own and every beat speaks it,
+   with its own rhythm underneath. The impact stays near 5.95s on all nine
+   because the score's strike lands there and picture and sound have to agree;
+   everything else moves. */
+
+/* SAPPHIRE -- COMPOSED DESCENT -- everything settles downward into place, calm, no overshoot. */
+@keyframes sapphireArrive{from{opacity:0;transform:translateY(16px);filter:blur(8px)}to{opacity:1;transform:none;filter:blur(0)}}
+@keyframes sapphireCta{from{opacity:0;transform:translateY(16px);filter:blur(8px)}to{opacity:1;transform:none;filter:blur(0)}}
+@keyframes sapphireFlash{0%{opacity:0}18%{opacity:1}100%{opacity:0}}
+body[data-theme="sapphire"] .play .halo{animation:fadeIn 2.2s ease-out 3.1s forwards, haloPulse 7s ease-in-out 5.4s infinite;}
+body[data-theme="sapphire"] .play .eyebrow{animation:sapphireArrive 1.1s cubic-bezier(.16,.74,.22,1) 4.0s forwards;}
+body[data-theme="sapphire"] .play .impact{animation:sapphireFlash .9s ease-out 5.95s forwards;}
+body[data-theme="sapphire"] .play .rule{animation:sapphireArrive .8s cubic-bezier(.16,.74,.22,1) 6.2s forwards;}
+body[data-theme="sapphire"] .play .rule s{animation:drawRule .8s cubic-bezier(.16,.74,.22,1) 6.2s forwards;}
+body[data-theme="sapphire"] .play .tagline{animation:sapphireArrive 1.2s cubic-bezier(.16,.74,.22,1) 6.5s forwards;}
+body[data-theme="sapphire"] .play .cta{animation:sapphireCta 1s cubic-bezier(.16,.74,.22,1) 7.4s forwards, ctaGlow 4.5s ease-in-out 8.6s infinite;}
+body[data-theme="sapphire"] .play .crown-mini{animation:sapphireArrive 1s cubic-bezier(.16,.74,.22,1) 7.6s forwards;}
+
+/* CORONATION -- STRUCK -- weight and a short overshoot, as if each piece is set down. */
+@keyframes coronationArrive{0%{opacity:0;transform:translateY(-22px) scale(1.06);filter:blur(10px)}64%{opacity:1;transform:translateY(3px) scale(.995);filter:blur(0)}100%{opacity:1;transform:none}}
+@keyframes coronationCta{0%{opacity:0;transform:translateY(-18px) scale(1.08)}62%{opacity:1;transform:translateY(2px) scale(.99)}100%{opacity:1;transform:none}}
+@keyframes coronationFlash{0%{opacity:0}10%{opacity:1}42%{opacity:.45}56%{opacity:.8}100%{opacity:0}}
+body[data-theme="coronation"] .play .halo{animation:fadeIn 2.2s ease-out 2.9s forwards, haloPulse 7s ease-in-out 5.199999999999999s infinite;}
+body[data-theme="coronation"] .play .eyebrow{animation:coronationArrive .9s cubic-bezier(.2,1.05,.26,1) 3.7s forwards;}
+body[data-theme="coronation"] .play .impact{animation:coronationFlash 1.5s ease-out 5.95s forwards;}
+body[data-theme="coronation"] .play .rule{animation:coronationArrive .7s cubic-bezier(.2,1.05,.26,1) 6.35s forwards;}
+body[data-theme="coronation"] .play .rule s{animation:drawRule .7s cubic-bezier(.2,1.05,.26,1) 6.35s forwards;}
+body[data-theme="coronation"] .play .tagline{animation:coronationArrive 1s cubic-bezier(.2,1.05,.26,1) 6.75s forwards;}
+body[data-theme="coronation"] .play .cta{animation:coronationCta .85s cubic-bezier(.2,1.05,.26,1) 7.5s forwards, ctaGlow 4.5s ease-in-out 8.7s infinite;}
+body[data-theme="coronation"] .play .crown-mini{animation:coronationArrive .8s cubic-bezier(.2,1.05,.26,1) 7.9s forwards;}
+
+/* MOONLIT -- DISSOLVE -- nothing travels; everything resolves out of blur, slowly. */
+@keyframes moonlitArrive{from{opacity:0;filter:blur(18px)}to{opacity:1;filter:blur(0)}}
+@keyframes moonlitCta{from{opacity:0;filter:blur(16px)}to{opacity:1;filter:blur(0)}}
+@keyframes moonlitFlash{0%{opacity:0}30%{opacity:.6}100%{opacity:0}}
+body[data-theme="moonlit"] .play .halo{animation:fadeIn 2.2s ease-out 2.6s forwards, haloPulse 7s ease-in-out 4.9s infinite;}
+body[data-theme="moonlit"] .play .eyebrow{animation:moonlitArrive 2s ease-out 3.6s forwards;}
+body[data-theme="moonlit"] .play .impact{animation:moonlitFlash 1.9s ease-out 5.95s forwards;}
+body[data-theme="moonlit"] .play .rule{animation:moonlitArrive 1.6s ease-out 6.0s forwards;}
+body[data-theme="moonlit"] .play .rule s{animation:drawRule 1.6s ease-out 6.0s forwards;}
+body[data-theme="moonlit"] .play .tagline{animation:moonlitArrive 2.2s ease-out 6.3s forwards;}
+body[data-theme="moonlit"] .play .cta{animation:moonlitCta 1.8s ease-out 7.2s forwards, ctaGlow 4.5s ease-in-out 8.4s infinite;}
+body[data-theme="moonlit"] .play .crown-mini{animation:moonlitArrive 1.8s ease-out 7.7s forwards;}
+
+/* EMBERS -- IGNITE -- nothing moves. Everything comes up from dark to hot. */
+@keyframes embersArrive{0%{opacity:0;filter:brightness(.1) blur(2px)}30%{opacity:1;filter:brightness(.5) blur(0)}62%{filter:brightness(1.9)}100%{opacity:1;filter:brightness(1)}}
+@keyframes embersCta{0%{opacity:0;filter:brightness(.15)}28%{opacity:1;filter:brightness(.6)}60%{filter:brightness(2.1)}100%{opacity:1;filter:brightness(1)}}
+@keyframes embersFlash{0%{opacity:0}8%{opacity:1}30%{opacity:.7}100%{opacity:0}}
+body[data-theme="embers"] .play .halo{animation:fadeIn 2.2s ease-out 2.8s forwards, haloPulse 7s ease-in-out 5.1s infinite;}
+body[data-theme="embers"] .play .eyebrow{animation:embersArrive 1.4s cubic-bezier(.3,.4,.2,1) 3.9s forwards;}
+body[data-theme="embers"] .play .impact{animation:embersFlash 1.6s ease-out 5.95s forwards;}
+body[data-theme="embers"] .play .rule{animation:embersArrive 1s cubic-bezier(.3,.4,.2,1) 6.15s forwards;}
+body[data-theme="embers"] .play .rule s{animation:drawRule 1s cubic-bezier(.3,.4,.2,1) 6.15s forwards;}
+body[data-theme="embers"] .play .tagline{animation:embersArrive 1.3s cubic-bezier(.3,.4,.2,1) 6.4s forwards;}
+body[data-theme="embers"] .play .cta{animation:embersCta 1.2s cubic-bezier(.3,.4,.2,1) 7.1s forwards, ctaGlow 4.5s ease-in-out 8.299999999999999s infinite;}
+body[data-theme="embers"] .play .crown-mini{animation:embersArrive 1s cubic-bezier(.3,.4,.2,1) 7.35s forwards;}
+
+/* CATHEDRAL -- BLOOM -- everything opens outward from light, slowly and reverently. */
+@keyframes cathedralArrive{from{opacity:0;transform:scale(.9);filter:blur(12px) brightness(2.2)}to{opacity:1;transform:none;filter:blur(0) brightness(1)}}
+@keyframes cathedralCta{from{opacity:0;transform:scale(.88);filter:blur(12px) brightness(2)}to{opacity:1;transform:none;filter:blur(0) brightness(1)}}
+@keyframes cathedralFlash{0%{opacity:0}34%{opacity:.85}100%{opacity:0}}
+body[data-theme="cathedral"] .play .halo{animation:fadeIn 2.2s ease-out 2.5s forwards, haloPulse 7s ease-in-out 4.8s infinite;}
+body[data-theme="cathedral"] .play .eyebrow{animation:cathedralArrive 1.8s cubic-bezier(.2,.7,.24,1) 4.2s forwards;}
+body[data-theme="cathedral"] .play .impact{animation:cathedralFlash 2.2s ease-out 5.95s forwards;}
+body[data-theme="cathedral"] .play .rule{animation:cathedralArrive 1.5s cubic-bezier(.2,.7,.24,1) 6.5s forwards;}
+body[data-theme="cathedral"] .play .rule s{animation:drawRule 1.5s cubic-bezier(.2,.7,.24,1) 6.5s forwards;}
+body[data-theme="cathedral"] .play .tagline{animation:cathedralArrive 2s cubic-bezier(.2,.7,.24,1) 6.9s forwards;}
+body[data-theme="cathedral"] .play .cta{animation:cathedralCta 1.7s cubic-bezier(.2,.7,.24,1) 7.7s forwards, ctaGlow 4.5s ease-in-out 8.9s infinite;}
+body[data-theme="cathedral"] .play .crown-mini{animation:cathedralArrive 1.6s cubic-bezier(.2,.7,.24,1) 8.1s forwards;}
+
+/* STORM -- STRIKE -- no easing in. It is dark, then it is simply there, blown out. */
+@keyframes stormArrive{0%{opacity:0;filter:brightness(5)}5%{opacity:1;filter:brightness(4)}22%{opacity:1;filter:brightness(1)}30%{opacity:.78}100%{opacity:1;filter:brightness(1)}}
+@keyframes stormCta{0%{opacity:0;filter:brightness(4.5)}6%{opacity:1;filter:brightness(3.4)}24%{opacity:1;filter:brightness(1)}100%{opacity:1}}
+@keyframes stormFlash{0%{opacity:0}3%{opacity:1}9%{opacity:.1}15%{opacity:.95}100%{opacity:0}}
+body[data-theme="storm"] .play .halo{animation:fadeIn 2.2s ease-out 2.45s forwards, haloPulse 7s ease-in-out 4.75s infinite;}
+body[data-theme="storm"] .play .eyebrow{animation:stormArrive .5s cubic-bezier(.1,.9,.2,1) 4.3s forwards;}
+body[data-theme="storm"] .play .impact{animation:stormFlash 1.1s ease-out 5.95s forwards;}
+body[data-theme="storm"] .play .rule{animation:stormArrive .35s cubic-bezier(.1,.9,.2,1) 6.05s forwards;}
+body[data-theme="storm"] .play .rule s{animation:drawRule .35s cubic-bezier(.1,.9,.2,1) 6.05s forwards;}
+body[data-theme="storm"] .play .tagline{animation:stormArrive .6s cubic-bezier(.1,.9,.2,1) 6.25s forwards;}
+body[data-theme="storm"] .play .cta{animation:stormCta .5s cubic-bezier(.1,.9,.2,1) 7.0s forwards, ctaGlow 4.5s ease-in-out 8.2s infinite;}
+body[data-theme="storm"] .play .crown-mini{animation:stormArrive .4s cubic-bezier(.1,.9,.2,1) 7.2s forwards;}
+
+/* DRAGONGATE -- APPROACH -- everything comes forward out of depth, processionally. */
+@keyframes dragongateArrive{from{opacity:0;transform:scale(1.5);filter:blur(14px)}to{opacity:1;transform:none;filter:blur(0)}}
+@keyframes dragongateCta{from{opacity:0;transform:scale(1.4);filter:blur(12px)}to{opacity:1;transform:none;filter:blur(0)}}
+@keyframes dragongateFlash{0%{opacity:0}22%{opacity:.9}100%{opacity:0}}
+body[data-theme="dragongate"] .play .halo{animation:fadeIn 2.2s ease-out 2.7s forwards, haloPulse 7s ease-in-out 5.0s infinite;}
+body[data-theme="dragongate"] .play .eyebrow{animation:dragongateArrive 1.5s cubic-bezier(.22,.68,.24,1) 4.1s forwards;}
+body[data-theme="dragongate"] .play .impact{animation:dragongateFlash 1.7s ease-out 5.95s forwards;}
+body[data-theme="dragongate"] .play .rule{animation:dragongateArrive 1.2s cubic-bezier(.22,.68,.24,1) 6.3s forwards;}
+body[data-theme="dragongate"] .play .rule s{animation:drawRule 1.2s cubic-bezier(.22,.68,.24,1) 6.3s forwards;}
+body[data-theme="dragongate"] .play .tagline{animation:dragongateArrive 1.6s cubic-bezier(.22,.68,.24,1) 6.7s forwards;}
+body[data-theme="dragongate"] .play .cta{animation:dragongateCta 1.4s cubic-bezier(.22,.68,.24,1) 7.6s forwards, ctaGlow 4.5s ease-in-out 8.799999999999999s infinite;}
+body[data-theme="dragongate"] .play .crown-mini{animation:dragongateArrive 1.3s cubic-bezier(.22,.68,.24,1) 8.0s forwards;}
+
+/* WARCAMP -- RAISE -- everything comes up from below, in a marching rhythm. */
+@keyframes warcampArrive{from{opacity:0;transform:translateY(42px);filter:blur(9px)}to{opacity:1;transform:none;filter:blur(0)}}
+@keyframes warcampCta{from{opacity:0;transform:translateY(38px);filter:blur(9px)}to{opacity:1;transform:none;filter:blur(0)}}
+@keyframes warcampFlash{0%{opacity:0}14%{opacity:.9}48%{opacity:.3}62%{opacity:.6}100%{opacity:0}}
+body[data-theme="warcamp"] .play .halo{animation:fadeIn 2.2s ease-out 2.75s forwards, haloPulse 7s ease-in-out 5.05s infinite;}
+body[data-theme="warcamp"] .play .eyebrow{animation:warcampArrive 1s cubic-bezier(.16,.8,.24,1) 3.8s forwards;}
+body[data-theme="warcamp"] .play .impact{animation:warcampFlash 1.4s ease-out 5.95s forwards;}
+body[data-theme="warcamp"] .play .rule{animation:warcampArrive .8s cubic-bezier(.16,.8,.24,1) 6.1s forwards;}
+body[data-theme="warcamp"] .play .rule s{animation:drawRule .8s cubic-bezier(.16,.8,.24,1) 6.1s forwards;}
+body[data-theme="warcamp"] .play .tagline{animation:warcampArrive 1.1s cubic-bezier(.16,.8,.24,1) 6.45s forwards;}
+body[data-theme="warcamp"] .play .cta{animation:warcampCta .95s cubic-bezier(.16,.8,.24,1) 7.25s forwards, ctaGlow 4.5s ease-in-out 8.45s infinite;}
+body[data-theme="warcamp"] .play .crown-mini{animation:warcampArrive .9s cubic-bezier(.16,.8,.24,1) 7.5s forwards;}
+
+/* CELESTIAL -- DRIFT -- everything floats up weightlessly, nothing lands hard. */
+@keyframes celestialArrive{from{opacity:0;transform:translateY(30px);filter:blur(12px)}to{opacity:1;transform:none;filter:blur(0)}}
+@keyframes celestialCta{from{opacity:0;transform:translateY(26px);filter:blur(11px)}to{opacity:1;transform:none;filter:blur(0)}}
+@keyframes celestialFlash{0%{opacity:0}40%{opacity:.5}100%{opacity:0}}
+body[data-theme="celestial"] .play .halo{animation:fadeIn 2.2s ease-out 2.4s forwards, haloPulse 7s ease-in-out 4.699999999999999s infinite;}
+body[data-theme="celestial"] .play .eyebrow{animation:celestialArrive 2.2s cubic-bezier(.24,.6,.26,1) 3.5s forwards;}
+body[data-theme="celestial"] .play .impact{animation:celestialFlash 2.4s ease-out 5.95s forwards;}
+body[data-theme="celestial"] .play .rule{animation:celestialArrive 1.8s cubic-bezier(.24,.6,.26,1) 6.6s forwards;}
+body[data-theme="celestial"] .play .rule s{animation:drawRule 1.8s cubic-bezier(.24,.6,.26,1) 6.6s forwards;}
+body[data-theme="celestial"] .play .tagline{animation:celestialArrive 2.4s cubic-bezier(.24,.6,.26,1) 7.0s forwards;}
+body[data-theme="celestial"] .play .cta{animation:celestialCta 2s cubic-bezier(.24,.6,.26,1) 7.8s forwards, ctaGlow 4.5s ease-in-out 9.0s infinite;}
+body[data-theme="celestial"] .play .crown-mini{animation:celestialArrive 2s cubic-bezier(.24,.6,.26,1) 8.2s forwards;}
+
 /* ================= HOW THE WORDMARK ARRIVES =================
    Every hall spelled KINGDOM 846 out letter by letter, left to right, with a
    light pass over it afterwards. Nine times. That single piece of choreography

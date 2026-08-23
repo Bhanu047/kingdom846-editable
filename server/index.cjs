@@ -137,6 +137,45 @@ db.exec(`
   );
 `)
 
+// --- Welcome-screen vote ---
+// A friendly poll, not a secure ballot, and the schema says so honestly.
+//
+// `token` is a random id the voting page keeps in the voter's own localStorage.
+// It is the dedup key, so one browser is one vote and a voter can change their
+// mind without stuffing the box. Someone determined can clear their storage and
+// vote twice -- that is a deliberate trade, because a real one-person-one-vote
+// scheme would mean accounts, and this has to work for friends opening a link.
+//
+// `fingerprint` is HMAC(ip|user-agent) with NO day component, so unlike the
+// analytics `visitor` pseudonym it stays stable over time. That is the whole
+// point here: it is what lets the poll owner see that eleven votes came from
+// one device. It is still a one-way hash -- no raw IP is ever written to disk.
+db.exec(`
+  CREATE TABLE IF NOT EXISTS welcome_votes (
+    token TEXT PRIMARY KEY,
+    theme TEXT NOT NULL,
+    voter_name TEXT,
+    fingerprint TEXT,
+    created_at INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_wv_theme ON welcome_votes(theme);
+  CREATE INDEX IF NOT EXISTS idx_wv_fp ON welcome_votes(fingerprint);
+`)
+
+// The ballot. Ids match ?theme= on /royal-welcome-2/, which is what the voting
+// page actually loads, so a vote can never name a screen nobody can watch.
+const VOTE_THEMES = [
+  'sapphire', 'coronation', 'moonlit', 'embers', 'cathedral',
+  'storm', 'dragongate', 'warcamp', 'celestial',
+]
+
+// Stable pseudonym -- deliberately NOT day-rotating, see above.
+function voterFingerprint(req) {
+  const raw = `${clientIp(req)}|${req.headers['user-agent'] || ''}|welcome-vote`
+  return crypto.createHmac('sha256', SECRET).update(raw).digest('base64url').slice(0, 22)
+}
+
 // Columns added after the table shipped; the live database already exists.
 const aeCols = db.prepare('PRAGMA table_info(analytics_events)').all()
 if (!aeCols.some((c) => c.name === 'country')) db.exec('ALTER TABLE analytics_events ADD COLUMN country TEXT')
@@ -841,6 +880,72 @@ app.get('/api/admin/analytics/export', auth, adminOnly, (req, res) => {
   res.setHeader('Content-Type', 'text/csv; charset=utf-8')
   res.setHeader('Content-Disposition', `attachment; filename="kingdom846-analytics-${utcDay()}.csv"`)
   res.send(out.join('\n'))
+})
+
+// --- Welcome-screen vote ---
+// Open endpoints on purpose: the whole point is a link that friends outside the
+// site can open and vote on without an account.
+
+function voteResults() {
+  const rows = db.prepare('SELECT theme, COUNT(*) AS votes FROM welcome_votes GROUP BY theme').all()
+  const byTheme = Object.fromEntries(rows.map((r) => [r.theme, r.votes]))
+  const total = rows.reduce((n, r) => n + r.votes, 0)
+  return {
+    total,
+    // every candidate is listed, including the ones on zero, so the bar chart
+    // does not silently drop a screen nobody has picked yet
+    tallies: VOTE_THEMES.map((t) => ({
+      theme: t,
+      votes: byTheme[t] || 0,
+      pct: total ? Math.round(((byTheme[t] || 0) / total) * 1000) / 10 : 0,
+    })).sort((a, b) => b.votes - a.votes || a.theme.localeCompare(b.theme)),
+    voters: db.prepare(
+      `SELECT voter_name AS name, theme, updated_at
+         FROM welcome_votes
+        WHERE voter_name IS NOT NULL AND voter_name <> ''
+        ORDER BY updated_at DESC LIMIT 200`
+    ).all(),
+    // How many distinct devices sit behind those votes. If this is far below
+    // `total`, someone is voting from one phone over and over.
+    devices: db.prepare('SELECT COUNT(DISTINCT fingerprint) AS n FROM welcome_votes').get().n,
+  }
+}
+
+app.post('/api/vote', (req, res) => {
+  const { token, theme, name } = req.body || {}
+  if (typeof token !== 'string' || !/^[A-Za-z0-9_-]{8,64}$/.test(token)) {
+    return res.status(400).json({ error: 'bad token' })
+  }
+  if (!VOTE_THEMES.includes(theme)) return res.status(400).json({ error: 'unknown screen' })
+  const clean = typeof name === 'string' ? name.trim().slice(0, 32) : ''
+  const now = Date.now()
+  // One row per browser token. Voting again updates the existing row rather
+  // than adding one, so changing your mind never inflates the count.
+  db.prepare(`
+    INSERT INTO welcome_votes (token, theme, voter_name, fingerprint, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?)
+    ON CONFLICT(token) DO UPDATE SET
+      theme = excluded.theme,
+      voter_name = excluded.voter_name,
+      updated_at = excluded.updated_at
+  `).run(token, theme, clean || null, voterFingerprint(req), now, now)
+  res.json({ ok: true, yourVote: theme, ...voteResults() })
+})
+
+app.get('/api/vote/results', (_req, res) => res.json(voteResults()))
+
+// Owner's audit view: which fingerprints carry more than one vote. Kept behind
+// admin auth because it is the one view that could de-anonymise a voter.
+app.get('/api/vote/audit', auth, adminOnly, (_req, res) => {
+  res.json({
+    ...voteResults(),
+    duplicates: db.prepare(`
+      SELECT fingerprint, COUNT(*) AS votes, GROUP_CONCAT(theme) AS themes
+        FROM welcome_votes
+       GROUP BY fingerprint HAVING COUNT(*) > 1
+       ORDER BY votes DESC
+    `).all(),
+  })
 })
 
 app.get('/api/admin/leaders', auth, adminOnly, (_req, res) => {

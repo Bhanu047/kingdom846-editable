@@ -50,7 +50,7 @@ html,body{height:100%;width:100%;overflow:hidden} body{background:var(--bg);colo
   background:linear-gradient(135deg,#6B5414 0%,#9C7A24 12%,#D4AF37 28%,#E8C766 42%,#F3E8CC 50%,#E8C766 58%,#D4AF37 72%,#9C7A24 88%,#6B5414 100%);background-size:200% auto;
   -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
   animation:ch-rise .78s cubic-bezier(.2,1,.3,1) both, gold-flow 5s linear infinite;
-  animation-delay:calc(.35s + var(--i) * 55ms), 0s}
+  animation-delay:calc(.62s + var(--i) * 42ms), 0s}
 @keyframes ch-rise{
   from{opacity:0;transform:translateY(.55em) rotateX(-72deg) scale(.94)}
   to  {opacity:1;transform:none}}
@@ -60,10 +60,83 @@ html,body{height:100%;width:100%;overflow:hidden} body{background:var(--bg);colo
   .title{animation:none!important}
   .title span.ch{animation:none!important;opacity:1!important;transform:none!important;filter:none!important}
 }
+
+/* ===== STAGED ARRIVAL ==================================================== */
+/* The screen used to present itself complete, with every element already in
+   place and only ambient loops running. Now it ARRIVES: the hall lifts out of
+   black, a shaft of light opens, the crest drops in and rings, and the wordmark
+   assembles under it. It reads as a curtain going up rather than a page load.
+   Timings are cumulative and deliberately tight -- the whole sequence is done
+   in ~1.9s, and the hall is already visible by ~0.3s -- a visitor should never
+   sit looking at a black rectangle wondering whether it loaded. */
+
+/* 1 -- the hall, from black */
+.bg-photo{animation:bg-zoom 20s ease-in-out infinite alternate, hall-in 1.35s cubic-bezier(.22,1,.36,1) both}
+@keyframes hall-in{from{opacity:0;transform:scale(1.14)}to{opacity:1;transform:scale(1)}}
+
+/* 2 -- the shaft of light widens as if the doors opened */
+.bg-rays{animation:rays-rotate 60s linear infinite, shaft-open 1.9s cubic-bezier(.22,1,.36,1) .1s both}
+@keyframes shaft-open{from{opacity:0;transform:scaleX(.35)}to{opacity:1;transform:scaleX(1)}}
+
+/* 3 -- the crest descends and settles, with a ring that flares outward on
+       impact. The overshoot is what gives it weight; without it the crest
+       just appears at a smaller size. */
+.crest-wrap{animation:crest-descend 1.25s cubic-bezier(.2,1.25,.3,1) .22s both}
+@keyframes crest-descend{
+  0%{opacity:0;transform:translateY(-46px) scale(.72)}
+  62%{opacity:1;transform:translateY(6px) scale(1.05)}
+  100%{opacity:1;transform:none}}
+.crest-flare{position:absolute;left:50%;top:50%;width:22vh;height:22vh;max-width:230px;max-height:230px;
+  translate:-50% -50%;border-radius:50%;pointer-events:none;z-index:1;
+  border:1px solid rgba(232,199,102,.75);
+  animation:crest-flare 1.4s cubic-bezier(.16,1,.3,1) .8s both}
+@keyframes crest-flare{
+  0%{opacity:0;scale:.3}
+  22%{opacity:.95}
+  100%{opacity:0;scale:2.5}}
+
+/* 4-7 -- the wordmark block, then the rule, then the promise, then the door.
+   Each waits for the crest to land rather than racing it. */
+.eyebrow{animation:rise-in .8s cubic-bezier(.22,1,.36,1) .82s both}
+.divider{animation:rule-draw .9s cubic-bezier(.22,1,.36,1) 1.28s both}
+.tagline{animation:rise-in .8s cubic-bezier(.22,1,.36,1) 1.42s both}
+.enter-btn{animation:btn-shimmer 4s linear infinite, door-in .9s cubic-bezier(.2,1.3,.3,1) 1.58s both}
+.loading-dots{animation:rise-in .7s ease 1.9s both}
+@keyframes rise-in{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@keyframes rule-draw{from{opacity:0;transform:scaleX(0)}to{opacity:1;transform:scaleX(1)}}
+@keyframes door-in{
+  0%{opacity:0;transform:translateY(20px) scale(.94)}
+  70%{opacity:1;transform:translateY(-3px) scale(1.02)}
+  100%{opacity:1;transform:none}}
+
+/* The frame draws itself in rather than being present from frame one. */
+.gold-frame{animation:frame-glow 4s ease-in-out infinite, frame-in 1.5s cubic-bezier(.22,1,.36,1) .3s both}
+@keyframes frame-in{from{opacity:0;clip-path:inset(46% 46% 46% 46%)}to{opacity:1;clip-path:inset(0 0 0 0)}}
+.corner-orn{animation:ornament-glow 5s ease-in-out infinite, orn-in 1s cubic-bezier(.2,1.3,.3,1) 1.05s both}
+@keyframes orn-in{from{opacity:0;scale:.4;rotate:-18deg}to{opacity:.85;scale:1;rotate:0deg}}
+
+/* The enter control leans toward the pointer before it is reached. */
+.enter-btn{will-change:transform}
+.enter-wrap{position:relative;display:inline-block;
+  transform:translate3d(calc(var(--mgx,0) * 1px), calc(var(--mgy,0) * 1px), 0);
+  transition:transform .5s cubic-bezier(.16,1,.3,1)}
+.enter-wrap.near{transition:transform .18s cubic-bezier(.22,1,.36,1)}
+
+/* A vignette keeps the eye in the centre where the crest is. Pure CSS, over
+   the photo but under the content. */
+.vignette{position:fixed;inset:0;z-index:4;pointer-events:none;
+  background:radial-gradient(120% 85% at 50% 42%, transparent 34%, rgba(3,5,12,.55) 76%, rgba(2,3,8,.88) 100%)}
+
+@media(prefers-reduced-motion:reduce){
+  .bg-photo,.bg-rays,.crest-wrap,.eyebrow,.divider,.tagline,.enter-btn,
+  .loading-dots,.gold-frame,.corner-orn{animation:none!important;opacity:1!important;
+    transform:none!important;clip-path:none!important;scale:1!important;rotate:0deg!important}
+  .crest-flare{display:none}
+}
 </style></head><body>
-<div class="bg-photo"></div><div class="aurora" aria-hidden="true"><i class="a1"></i><i class="a2"></i><i class="a3"></i></div><div class="bg-overlay"></div><div class="bg-rays"></div><div class="gold-frame"></div>
+<div class="bg-photo"></div><div class="aurora" aria-hidden="true"><i class="a1"></i><i class="a2"></i><i class="a3"></i></div><div class="bg-overlay"></div><div class="bg-rays"></div><div class="vignette" aria-hidden="true"></div><div class="gold-frame"></div>
 <div class="corner-orn tl"><svg viewBox="0 0 100 100" fill="none" stroke="#D4AF37" stroke-width="1.5"><path d="M0,35 Q0,0 35,0 M0,20 Q0,0 20,0" stroke-width="2"/><path d="M8,8 Q8,28 28,28 Q28,8 8,8" stroke-width="1"/><circle cx="12" cy="12" r="3" fill="#D4AF37" opacity=".5"/><circle cx="12" cy="12" r="1.5" fill="#E8C766"/></svg></div><div class="corner-orn tr"><svg viewBox="0 0 100 100" fill="none" stroke="#D4AF37" stroke-width="1.5"><path d="M0,35 Q0,0 35,0 M0,20 Q0,0 20,0" stroke-width="2"/><path d="M8,8 Q8,28 28,28 Q28,8 8,8" stroke-width="1"/><circle cx="12" cy="12" r="3" fill="#D4AF37" opacity=".5"/><circle cx="12" cy="12" r="1.5" fill="#E8C766"/></svg></div><div class="corner-orn bl"><svg viewBox="0 0 100 100" fill="none" stroke="#D4AF37" stroke-width="1.5"><path d="M0,35 Q0,0 35,0 M0,20 Q0,0 20,0" stroke-width="2"/><path d="M8,8 Q8,28 28,28 Q28,8 8,8" stroke-width="1"/><circle cx="12" cy="12" r="3" fill="#D4AF37" opacity=".5"/><circle cx="12" cy="12" r="1.5" fill="#E8C766"/></svg></div><div class="corner-orn br"><svg viewBox="0 0 100 100" fill="none" stroke="#D4AF37" stroke-width="1.5"><path d="M0,35 Q0,0 35,0 M0,20 Q0,0 20,0" stroke-width="2"/><path d="M8,8 Q8,28 28,28 Q28,8 8,8" stroke-width="1"/><circle cx="12" cy="12" r="3" fill="#D4AF37" opacity=".5"/><circle cx="12" cy="12" r="1.5" fill="#E8C766"/></svg></div>
 <div id="embers" style="position:fixed;inset:0;pointer-events:none;z-index:3;"></div>
-<div class="welcome"><div class="crest-wrap"><div class="crest-ring"></div><div class="crest-halo"></div><img class="crest-img" src="/assets/crest-846.png" alt="Kingdom 846 Royal Crest"></div><div class="title-block"><div class="eyebrow">One Crown · Four Alliances</div><h1 class="title">KINGDOM 846</h1><div class="divider"><span class="divider-line"></span><span class="divider-ornament">✦ ◆ ✦</span><span class="divider-line"></span></div><p class="tagline">Where legends are forged in fire and crowned in gold</p></div><button class="enter-btn" onclick="enterRealm()">Enter the Realm</button><div class="loading-dots"><span></span><span></span><span></span></div></div>
+<div class="welcome"><div class="crest-wrap"><div class="crest-flare" aria-hidden="true"></div><div class="crest-ring"></div><div class="crest-halo"></div><img class="crest-img" src="/assets/crest-846.png" alt="Kingdom 846 Royal Crest"></div><div class="title-block"><div class="eyebrow">One Crown · Four Alliances</div><h1 class="title">KINGDOM 846</h1><div class="divider"><span class="divider-line"></span><span class="divider-ornament">✦ ◆ ✦</span><span class="divider-line"></span></div><p class="tagline">Where legends are forged in fire and crowned in gold</p></div><span class="enter-wrap"><button class="enter-btn" onclick="enterRealm()">Enter the Realm</button></span><div class="loading-dots"><span></span><span></span><span></span></div></div>
 <audio autoplay id="fanfareAudio"><source src="/assets/fanfare.wav" type="audio/wav"></audio>
-<script>(function(){var t=document.querySelector('.title');if(!t)return;var s=t.textContent;t.textContent='';for(var i=0;i<s.length;i++){var c=document.createElement('span');c.className='ch';c.style.setProperty('--i',i);c.textContent=s[i];t.appendChild(c)}t.setAttribute('aria-label',s)})();const ec=document.getElementById('embers');for(let i=0;i<30;i++){const e=document.createElement('div');e.className='ember';const size=2+Math.random()*4;e.style.width=size+'px';e.style.height=size+'px';e.style.left=Math.random()*100+'%';e.style.bottom='-10px';e.style.background=Math.random()>.3?'#E8C766':'#D4AF37';e.style.boxShadow=`0 0 ${4+size}px rgba(212,175,55,.5)`;e.style.animation=`ember-rise ${8+Math.random()*14}s linear infinite`;e.style.animationDelay=Math.random()*12+'s';e.style.setProperty('--drift',(Math.random()*120-60)+'px');e.style.setProperty('--max-op',(.4+Math.random()*.5));ec.appendChild(e)}const fanfareAudio=document.getElementById('fanfareAudio');if(fanfareAudio){fanfareAudio.volume=.7;fanfareAudio.play().catch(()=>{const playOnInteract=()=>{fanfareAudio.play().catch(()=>{});['mousemove','touchstart','touchmove','keydown','click','scroll','pointermove'].forEach(ev=>document.removeEventListener(ev,playOnInteract))};['mousemove','touchstart','touchmove','keydown','click','scroll','pointermove'].forEach(ev=>document.addEventListener(ev,playOnInteract,{passive:true,once:true}))})}function enterRealm(){document.body.style.transition='opacity .8s ease, filter .8s ease';document.body.style.opacity='0';document.body.style.filter='blur(8px)';setTimeout(()=>{window.parent.postMessage({type:'k846-enter-realm'},window.location.origin)},800)}</script></body></html>
+<script>(function(){var t=document.querySelector('.title');if(!t)return;var s=t.textContent;t.textContent='';for(var i=0;i<s.length;i++){var c=document.createElement('span');c.className='ch';c.style.setProperty('--i',i);c.textContent=s[i];t.appendChild(c)}t.setAttribute('aria-label',s)})();(function(){var w=document.querySelector('.enter-wrap');if(!w||matchMedia('(prefers-reduced-motion: reduce)').matches||matchMedia('(hover: none)').matches)return;var f=0,px=0,py=0;addEventListener('pointermove',function(e){px=e.clientX;py=e.clientY;if(f)return;f=requestAnimationFrame(function(){f=0;var r=w.getBoundingClientRect();var dx=px-(r.left+r.width/2),dy=py-(r.top+r.height/2),d=Math.hypot(dx,dy),reach=110+r.width/2;if(d<reach){var k=(1-d/reach)*0.3;w.classList.add('near');w.style.setProperty('--mgx',(dx*k).toFixed(2));w.style.setProperty('--mgy',(dy*k).toFixed(2))}else{w.classList.remove('near');w.style.setProperty('--mgx','0');w.style.setProperty('--mgy','0')}})},{passive:true})})();const ec=document.getElementById('embers');for(let i=0;i<30;i++){const e=document.createElement('div');e.className='ember';const size=2+Math.random()*4;e.style.width=size+'px';e.style.height=size+'px';e.style.left=Math.random()*100+'%';e.style.bottom='-10px';e.style.background=Math.random()>.3?'#E8C766':'#D4AF37';e.style.boxShadow=`0 0 ${4+size}px rgba(212,175,55,.5)`;e.style.animation=`ember-rise ${8+Math.random()*14}s linear infinite`;e.style.animationDelay=Math.random()*12+'s';e.style.setProperty('--drift',(Math.random()*120-60)+'px');e.style.setProperty('--max-op',(.4+Math.random()*.5));ec.appendChild(e)}const fanfareAudio=document.getElementById('fanfareAudio');if(fanfareAudio){fanfareAudio.volume=.7;fanfareAudio.play().catch(()=>{const playOnInteract=()=>{fanfareAudio.play().catch(()=>{});['mousemove','touchstart','touchmove','keydown','click','scroll','pointermove'].forEach(ev=>document.removeEventListener(ev,playOnInteract))};['mousemove','touchstart','touchmove','keydown','click','scroll','pointermove'].forEach(ev=>document.addEventListener(ev,playOnInteract,{passive:true,once:true}))})}function enterRealm(){document.body.style.transition='opacity .8s ease, filter .8s ease';document.body.style.opacity='0';document.body.style.filter='blur(8px)';setTimeout(()=>{window.parent.postMessage({type:'k846-enter-realm'},window.location.origin)},800)}</script></body></html>

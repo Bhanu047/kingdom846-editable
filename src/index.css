@@ -1819,3 +1819,190 @@ select.royal-select option {
 /* No cursor exists in an export, so the tracked highlight has no meaning there. */
 .k846-v2 .panel::before, .k846-v2 .chart-card::before,
 .kv-live .panel::before, .kv-live .chart-card::before { display: none !important }
+
+/* ============================================================================
+   ROYAL MATERIAL LAYER
+   ----------------------------------------------------------------------------
+   What made the site read as "dark website" rather than "luxurious" was not the
+   palette -- it was that gold appeared only as a flat 1px line at 20% opacity.
+   Real gilding has a RAMP across it: deep bronze in the shadow of the bevel,
+   mid gold on the face, and a near-white catch where the light hits. A single
+   flat stroke can never look like metal no matter how correct its hue is.
+
+   So every framed surface now carries a gradient ring instead of a border,
+   drawn with the padding-box/border-box double-background technique -- the only
+   way to get a gradient border that still follows border-radius (border-image
+   squares the corners off).
+
+   IMPORTANT: no inset box-shadows on anything that can appear in a downloaded
+   report. html2canvas 1.4.1 renders an inset shadow by flooding the ENTIRE
+   element with the shadow colour rather than banding its edge, so an innocent
+   `inset 0 -1px 0 rgba(0,0,0,.35)` would export as a 35% black sheet over the
+   panel. Bevels are therefore built into the ring gradient, and elevation uses
+   outer shadows only.
+   ========================================================================= */
+
+:root {
+  /* The gilding ramp, defined once. Ordered as light travels across a bevel:
+     catch-light, face, shadow, face, catch-light. */
+  --gilt: linear-gradient(145deg,
+    rgba(243,232,204,.62) 0%,
+    rgba(212,175,55,.46) 16%,
+    rgba(107,84,20,.28) 44%,
+    rgba(212,175,55,.44) 72%,
+    rgba(255,246,218,.58) 100%);
+  --gilt-strong: linear-gradient(145deg,
+    rgba(255,246,218,.95) 0%,
+    rgba(232,199,102,.85) 18%,
+    rgba(156,122,36,.55) 46%,
+    rgba(212,175,55,.82) 74%,
+    rgba(255,246,218,.92) 100%);
+  /* Elevation. Three stacked shadows read as depth; one reads as a drop shadow. */
+  --lift-1: 0 1px 2px rgba(0,0,0,.45), 0 6px 14px -8px rgba(0,0,0,.7), 0 20px 44px -26px rgba(0,0,0,.85);
+  --lift-2: 0 2px 4px rgba(0,0,0,.5), 0 14px 28px -12px rgba(0,0,0,.8), 0 40px 80px -34px rgba(0,0,0,.95);
+}
+
+.panel {
+  border: 1px solid transparent;
+  border-radius: 14px;
+  background-image:
+    linear-gradient(158deg, rgba(27,33,58,.97) 0%, rgba(19,24,44,.98) 55%, rgba(24,29,52,.97) 100%),
+    var(--gilt);
+  background-origin: padding-box, border-box;
+  background-clip: padding-box, border-box;
+  box-shadow: var(--lift-1);
+  transition: box-shadow .5s cubic-bezier(.16,1,.3,1), transform .5s cubic-bezier(.16,1,.3,1);
+}
+.panel:hover { box-shadow: var(--lift-2); }
+
+/* Featured panels get the brighter ramp and a warm halo, so importance is
+   carried by the material rather than by a louder colour. */
+.panel-glow {
+  background-image:
+    linear-gradient(158deg, rgba(30,36,64,.97) 0%, rgba(21,26,48,.98) 55%, rgba(27,32,56,.97) 100%),
+    var(--gilt-strong);
+  box-shadow: var(--lift-2), 0 0 46px -18px rgba(212,175,55,.42);
+}
+
+/* Suites keep the same gilding structure but in their own metal, so a Mystic
+   panel is violet-gilt and a PvP panel is red-gilt rather than all five
+   sharing one gold frame. */
+[data-suite] .panel {
+  background-image:
+    linear-gradient(158deg, rgba(27,33,58,.97) 0%, rgba(19,24,44,.98) 55%, rgba(24,29,52,.97) 100%),
+    linear-gradient(145deg,
+      color-mix(in srgb, var(--suite) 62%, white) 0%,
+      var(--suite-soft) 18%,
+      rgba(107,84,20,.22) 46%,
+      var(--suite-soft) 74%,
+      color-mix(in srgb, var(--suite) 55%, white) 100%);
+}
+
+/* ---- Gilt rules ---------------------------------------------------------- */
+/* A single hairline reads as a border. A pair with a breath between them reads
+   as bookbinding, which is the whole difference in tone. */
+.gilt-rule {
+  height: 3px; border: 0; position: relative;
+  background:
+    linear-gradient(90deg, transparent, rgba(212,175,55,.55) 22%, rgba(255,246,218,.85) 50%, rgba(212,175,55,.55) 78%, transparent) top/100% 1px no-repeat,
+    linear-gradient(90deg, transparent, rgba(212,175,55,.28) 30%, rgba(212,175,55,.45) 50%, rgba(212,175,55,.28) 70%, transparent) bottom/100% 1px no-repeat;
+}
+
+/* ---- Gilt text ----------------------------------------------------------- */
+/* Headings in leaf rather than paint: the ramp runs across the glyphs and a
+   catch-light travels along them every few seconds. */
+.gilt-text {
+  background: linear-gradient(96deg,
+    #8A6A1C 0%, #C9A238 14%, #F0DFA6 28%, #FFF8E4 38%,
+    #E8C766 50%, #C9A238 64%, #F0DFA6 80%, #A8842A 100%);
+  background-size: 260% auto;
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent; color: transparent;
+  animation: gilt-travel 9s ease-in-out infinite;
+}
+@keyframes gilt-travel { 0%,100% { background-position: 0% center } 50% { background-position: 100% center } }
+
+/* ---- Interaction --------------------------------------------------------- */
+/* Tilt. Rotation comes from --rx/--ry set by the shared pointer tracker, so a
+   page full of cards still costs one listener and one rAF.
+   perspective lives on the element itself so no parent markup has to change. */
+.tilt {
+  transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) translateZ(0);
+  transition: transform .45s cubic-bezier(.16,1,.3,1);
+  transform-style: preserve-3d;
+}
+.tilt:hover { transition: transform .12s linear; }
+
+/* Magnetic controls: the button leans toward the cursor before it is reached. */
+.magnetic {
+  transform: translate3d(calc(var(--mgx, 0) * 1px), calc(var(--mgy, 0) * 1px), 0);
+  transition: transform .5s cubic-bezier(.16,1,.3,1);
+}
+.magnetic:hover { transition: transform .18s cubic-bezier(.22,1,.36,1); }
+
+/* A struck-metal press: the surface dips and the catch-light slides. */
+.magnetic:active { transform: translate3d(0,1px,0) scale(.985); transition: transform .08s ease; }
+
+@media (prefers-reduced-motion: reduce) {
+  .gilt-text { animation: none !important }
+  .tilt, .magnetic { transform: none !important; transition: none !important }
+}
+
+/* ---- Battle Lab tool tiles ------------------------------------------------ */
+/* The tiles are the front door of the Battle Lab, so they carry the fullest
+   version of the material: a gilt ring, real elevation, and a tilt that
+   responds before the click. Each keeps its own accent, so the ring is amber on
+   Bear and violet on Mystic rather than five identical gold frames. */
+.tool-tile {
+  border: 1px solid transparent;
+  background-image: linear-gradient(#06101f, #06101f), var(--gilt);
+  background-origin: padding-box, border-box;
+  background-clip: padding-box, border-box;
+  box-shadow: var(--lift-1);
+  transition: box-shadow .5s cubic-bezier(.16,1,.3,1), transform .45s cubic-bezier(.16,1,.3,1);
+}
+.tool-tile:hover { box-shadow: var(--lift-2), 0 0 60px -26px rgba(212,175,55,.55); }
+/* A catch-light that crosses the tile as the pointer enters, like turning a
+   gilded object toward a window. */
+.tool-tile::after {
+  content: ""; position: absolute; inset: 0; z-index: 2; pointer-events: none;
+  border-radius: inherit;
+  background: linear-gradient(105deg, transparent 38%, rgba(255,246,218,.16) 48%, transparent 58%);
+  background-size: 260% 100%;
+  background-position: 190% center;
+  transition: background-position 1.05s cubic-bezier(.22,1,.36,1);
+}
+.tool-tile:hover::after { background-position: -60% center; }
+
+@media (prefers-reduced-motion: reduce) {
+  .tool-tile::after { transition: none !important }
+}
+
+/* ---- Primary action ------------------------------------------------------- */
+/* Struck gold rather than a gold rectangle: a vertical ramp for the face, a
+   darker rim, and a catch-light that crosses on hover. It also leans toward the
+   cursor before you reach it (see MAGNET in surface.js), which is the single
+   cheapest thing that makes an interface feel expensive.
+   The inset shadows here are safe -- report clones strip buttons entirely. */
+.btn-primary {
+  position: relative; overflow: hidden;
+  transform: translate3d(calc(var(--mgx, 0) * 1px), calc(var(--mgy, 0) * 1px), 0);
+  transition: transform .5s cubic-bezier(.16,1,.3,1), box-shadow .4s ease, filter .3s ease;
+}
+.btn-primary:hover { transition: transform .18s cubic-bezier(.22,1,.36,1), box-shadow .4s ease, filter .3s ease; }
+.btn-primary:active { transform: translate3d(0,1px,0) scale(.985); transition: transform .08s ease; }
+
+/* ---- Gilt scrollbar ------------------------------------------------------- */
+/* The scrollbar is on screen the entire time someone reads a long page; leaving
+   it as the browser default undoes a lot of the rest of this. */
+* { scrollbar-width: thin; scrollbar-color: rgba(212,175,55,.42) transparent; }
+::-webkit-scrollbar { width: 10px; height: 10px }
+::-webkit-scrollbar-track { background: rgba(6,10,20,.6) }
+::-webkit-scrollbar-thumb {
+  border-radius: 8px; border: 2px solid transparent; background-clip: padding-box;
+  background-color: rgba(212,175,55,.38);
+}
+::-webkit-scrollbar-thumb:hover { background-color: rgba(232,199,102,.62) }
+
+/* ---- Selection ----------------------------------------------------------- */
+::selection { background: rgba(212,175,55,.30); color: #FFF6DA }

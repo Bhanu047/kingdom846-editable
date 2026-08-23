@@ -30,7 +30,7 @@ function readRequestedTool() {
 
 function ToolCard({ tool, onOpen }) {
   return (
-    <button type="button" onClick={() => onOpen(tool.id)} className="group relative isolate min-h-[290px] overflow-hidden rounded-[24px] border border-gold/25 bg-ink text-left shadow-[0_18px_60px_rgba(0,0,0,.34)] transition duration-300 hover:-translate-y-1 hover:border-gold/60 hover:shadow-[0_22px_70px_rgba(212,175,55,.13)] md:min-h-[350px]">
+    <button type="button" onClick={() => onOpen(tool.id)} className="tilt tool-tile group relative isolate min-h-[290px] overflow-hidden rounded-[24px] bg-ink text-left md:min-h-[350px]">
       <img src={tool.image} alt="" style={tool.imagePosition ? { objectPosition: tool.imagePosition } : undefined} className="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-[1.035]" />
       <div className={`absolute inset-0 bg-gradient-to-t ${tool.accent}`} />
       <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/25 to-black/5" />
@@ -38,7 +38,7 @@ function ToolCard({ tool, onOpen }) {
         <div className="grid h-12 w-12 place-items-center rounded-2xl border border-gold/35 bg-black/45 text-gold-bright shadow-lg backdrop-blur"><Icon name={tool.icon} size={23} /></div>
       </div>
       <div className="absolute inset-x-0 bottom-0 p-5 md:p-7">
-        <h2 className="font-display text-3xl font-bold uppercase tracking-[0.04em] text-parchment drop-shadow md:text-4xl">{tool.title}</h2>
+        <h2 className="gilt-text font-display text-3xl font-bold uppercase tracking-[0.04em] drop-shadow md:text-4xl">{tool.title}</h2>
         <p className="mt-2 max-w-md text-sm leading-relaxed text-parchment/80 drop-shadow md:text-[15px]">{tool.description}</p>
         <div className="mt-4 inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.16em] text-gold-bright">Enter tool <span className="transition group-hover:translate-x-1">→</span></div>
       </div>

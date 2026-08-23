@@ -2504,3 +2504,66 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
    Inside a full-bleed hero that is a third dark layer on the same pixels, so
    the hero opts out and does its own grading. */
 .hero-frame .relative > .pointer-events-none.absolute.inset-0.bg-gradient-to-t { display: none }
+
+/* ---- Page header --------------------------------------------------------- */
+/* The shared banner at the top of every page. The first pass at unifying these
+   made them consistent by stripping the motion and ornament out of all nine,
+   which is how you get a site that matches and is boring. These rules put the
+   richness back into the one shared component, so every page gets it and no
+   page has to fork the layout to be interesting. */
+
+/* A bloom sized for a banner rather than a full hero -- the hero-bloom used on
+   the home page is 46% of a 24rem block and would swallow a header band. */
+.ph-bloom {
+  position: absolute; right: 18%; top: 46%;
+  width: 30%; aspect-ratio: 1; translate: 50% -50%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,222,150,.22), rgba(255,196,96,.06) 46%, transparent 70%);
+  animation: hero-bloom 14s ease-in-out infinite;
+}
+
+/* Weighted to the copy side and lighter than a flat wash, so the picture is
+   still a picture. Deliberately NOT hero-overlay: that one is tuned to sit
+   under body copy on a bright plate, and at this height it flattened the whole
+   band to near-black. */
+.ph-scrim {
+  background:
+    linear-gradient(96deg,
+      rgba(5,9,18,.84) 0%,
+      rgba(5,9,18,.66) 32%,
+      rgba(5,9,18,.34) 58%,
+      rgba(5,9,18,.12) 82%,
+      rgba(5,9,18,.04) 100%),
+    linear-gradient(180deg, rgba(5,9,18,.34) 0%, transparent 34%, rgba(5,9,18,.42) 100%);
+}
+
+/* The engraved rule beside the eyebrow. Small, but it is the mark that says a
+   person set this rather than a template printed it. */
+.ph-rule {
+  display: block; width: 26px; height: 1px; flex: none;
+  background: linear-gradient(90deg, transparent, rgba(232,199,102,.85));
+}
+@media (min-width: 768px) { .ph-rule { width: 38px } }
+
+/* The copy arrives rather than being there. One move, on the block, so the
+   eyebrow / title / subtitle stay locked together as a unit. */
+.ph-copy { animation: ph-rise .75s cubic-bezier(.16,1,.3,1) both .06s }
+@keyframes ph-rise {
+  from { opacity: 0; transform: translateY(14px) }
+  to   { opacity: 1; transform: none }
+}
+
+/* A gilt hairline along the foot of the band, so it ends on an edge rather
+   than just stopping. */
+.page-header::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 1px;
+  pointer-events: none; z-index: 2;
+  background: linear-gradient(90deg,
+    transparent, rgba(212,175,55,.15) 12%, rgba(255,246,218,.55) 50%,
+    rgba(212,175,55,.15) 88%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ph-bloom { animation: none !important }
+  .ph-copy  { animation: none !important }
+}

@@ -42,10 +42,9 @@
 @font-face{font-family:'Cormorant Garamond';font-style:italic;font-weight:300 600;font-display:swap;src:url('assets/fonts/CormorantGaramond-300-italic.woff2') format('woff2');}
 @font-face{font-family:'Bebas Neue';font-weight:400;font-display:swap;src:url('assets/fonts/BebasNeue-400.woff2') format('woff2');}
 @font-face{font-family:'Marcellus SC';font-weight:400;font-display:swap;src:url('assets/fonts/MarcellusSC-400.woff2') format('woff2');}
-@font-face{font-family:'Bodoni Moda';font-weight:400 900;font-display:swap;src:url('assets/fonts/BodoniModa.woff2') format('woff2');}
-@font-face{font-family:'Bodoni Moda';font-style:italic;font-weight:400 900;font-display:swap;src:url('assets/fonts/BodoniModa-italic.woff2') format('woff2');}
+@font-face{font-family:'Playfair Display';font-weight:400 900;font-display:swap;src:url('assets/fonts/PlayfairDisplay.woff2') format('woff2');}
+@font-face{font-family:'Bevan';font-weight:400;font-display:swap;src:url('assets/fonts/Bevan.woff2') format('woff2');}
 @font-face{font-family:'Yeseva One';font-weight:400;font-display:swap;src:url('assets/fonts/YesevaOne-400.woff2') format('woff2');}
-@font-face{font-family:'Grenze Gotisch';font-weight:700;font-display:swap;src:url('assets/fonts/GrenzeGotisch-700.woff2') format('woff2');}
 @font-face{font-family:'Italiana';font-weight:400;font-display:swap;src:url('assets/fonts/Italiana-400.woff2') format('woff2');}
 </style>
 <style>
@@ -112,7 +111,8 @@ body.nogl #bg{display:none;}
 .play .eyebrow{animation:eyebrowIn 1.1s cubic-bezier(.22,.61,.36,1) 4.0s forwards;}
 @keyframes eyebrowIn{from{opacity:0;letter-spacing:.18em;filter:blur(5px)}to{opacity:.95;letter-spacing:.40em;filter:blur(0)}}
 
-.crest-stack{position:relative;display:flex;flex-direction:column;align-items:center;min-height:0;}
+.crest-stack{position:relative;display:flex;flex-direction:column;align-items:center;min-height:0;
+  margin-bottom:clamp(14px,3.2vh,44px);}
 .crest-wrap{position:relative;height:var(--crest-h);aspect-ratio:1024/1536;
   opacity:0;transform:translateY(34px) scale(.86);filter:blur(20px);will-change:opacity,transform,filter;}
 .play .crest-wrap{animation:crestIn 1.7s cubic-bezier(.16,.74,.22,1) 2.4s forwards, crestFloat 8s ease-in-out 4.4s infinite;}
@@ -139,7 +139,11 @@ body.nogl #bg{display:none;}
 @keyframes haloPulse{0%,100%{opacity:1}50%{opacity:.55}}
 
 .title{display:flex;justify-content:center;flex-wrap:nowrap;position:relative;
-  margin-top:clamp(2px,1.2vh,16px);line-height:1;
+  /* The crest image carries its own KINGDOM 846 ribbon along its foot, so a
+     gap that measures fine still READS as touching -- the wordmark lands
+     immediately under that ribbon and the two run together. This is space
+     for the crest to end before the name begins. */
+  margin-top:clamp(16px,3.6vh,46px);line-height:1;
   font-family:var(--disp);font-weight:var(--disp-w);
   font-size:var(--disp-size);letter-spacing:var(--disp-track);}
 .title span{display:inline-block;opacity:0;transform:translateY(22px) scale(.94);
@@ -379,6 +383,51 @@ body[data-theme="celestial"] {--acc:154,198,255;--acc2:170,124,255;}
 
 /* 01 Sapphire Hall -- Roman inscriptional capitals. The state portrait, and
    the baseline the other eight are read against. Nothing to change. */
+
+/* ================= NINE BORDERS =================
+   The corner marks were one gilt L with a dot, identical on every hall -- the
+   last piece of furniture the nine still shared. Each frame now belongs to its
+   room: some are heavier, some are hairlines, one is only dots, one runs the
+   full height like window mullions. */
+
+/* Coronation -- doubled and heavy, the way a state document is ruled. */
+body[data-theme="coronation"] .frame i{border-width:2px;width:clamp(52px,6.6vw,102px);height:clamp(52px,6.6vw,102px);
+  box-shadow:inset 0 0 0 5px rgba(0,0,0,0), 0 0 0 0 transparent;}
+body[data-theme="coronation"] .frame i::before{width:10px;height:10px;}
+
+/* Moonlit -- a hairline that barely commits, and no dot at all. */
+body[data-theme="moonlit"] .frame i{border-color:rgba(196,222,255,.30);width:clamp(64px,8vw,128px);height:clamp(64px,8vw,128px);}
+body[data-theme="moonlit"] .frame i::before{display:none;}
+
+/* Ember Throne -- short heavy brackets, squared off, no ornament. */
+body[data-theme="embers"] .frame i{border-width:3px;border-color:rgba(255,150,64,.5);
+  width:clamp(26px,3vw,44px);height:clamp(26px,3vw,44px);}
+body[data-theme="embers"] .frame i::before{display:none;}
+
+/* Cathedral -- verticals only, running tall like window mullions. */
+body[data-theme="cathedral"] .frame i{width:clamp(14px,1.4vw,22px);height:clamp(110px,16vw,240px);
+  border-top:0!important;border-bottom:0!important;border-color:rgba(255,246,220,.34);}
+body[data-theme="cathedral"] .frame i::before{width:5px;height:5px;}
+
+/* Storm -- sharp little ticks. Nothing decorative, as everywhere in this hall. */
+body[data-theme="storm"] .frame i{width:clamp(18px,2vw,30px);height:clamp(18px,2vw,30px);
+  border-width:2px;border-color:rgba(214,232,255,.55);}
+body[data-theme="storm"] .frame i::before{width:4px;height:4px;border-radius:0;}
+
+/* Dragon Gate -- solid corner blocks, monumental. */
+body[data-theme="dragongate"] .frame i{width:clamp(30px,3.6vw,56px);height:clamp(30px,3.6vw,56px);
+  border-width:4px;border-color:rgba(255,176,88,.45);}
+body[data-theme="dragongate"] .frame i::before{width:9px;height:9px;border-radius:2px;}
+
+/* War Camp -- rope: a thick line with a heavy stud where it is pinned down. */
+body[data-theme="warcamp"] .frame i{border-width:3px;border-color:rgba(255,190,104,.40);
+  width:clamp(44px,5vw,76px);height:clamp(44px,5vw,76px);}
+body[data-theme="warcamp"] .frame i::before{width:12px;height:12px;box-shadow:0 0 16px rgba(255,190,104,.9);}
+
+/* Celestial -- no lines at all. Four points of light, and nothing joining them. */
+body[data-theme="celestial"] .frame i{border:0;width:10px;height:10px;}
+body[data-theme="celestial"] .frame i::before{width:6px;height:6px;
+  box-shadow:0 0 18px rgba(154,198,255,1), 0 0 40px rgba(170,124,255,.7);}
 
 /* ================= NINE MOTION LANGUAGES =================
    Seven of the nine beats were byte-identical on every hall: the eyebrow, the
@@ -733,10 +782,10 @@ body[data-theme="cathedral"]{--crest-lift:.55;--disp:'Marcellus SC',serif;--disp
    didone in the set, so it cannot be mistaken for the other eight. The square
    corners stay -- that part was right. The button keeps Cinzel, because
    Bodoni's hairlines vanish at 11px. */
-body[data-theme="storm"]{--crest-lift:.30;--disp:'Bodoni Moda',serif;--disp-w:900;--disp-track:.1em;
+body[data-theme="storm"]{--crest-lift:.30;--disp:'Playfair Display',serif;--disp-w:900;--disp-track:.09em;
   --disp-size:clamp(40px,min(8.4vw,8.6vh),82px);--crest-h:clamp(178px,38vh,420px);
   --eyebrow-track:.36em;--eyebrow-w:600;
-  --tag-fam:'Bodoni Moda',serif;--tag-style:italic;--tag-w:500;--tag-track:.03em;
+  --tag-fam:'Playfair Display',serif;--tag-style:italic;--tag-w:500;--tag-track:.03em;
   --cta-w:600;--cta-track:.26em;--cta-radius:0;--orn:'\2739\FE0E';}
 
 /* 07 Dragon Gate -- monumental. A heavy flared display with brutal thick/thin
@@ -747,9 +796,9 @@ body[data-theme="dragongate"]{--disp:'Yeseva One',serif;--disp-w:400;--disp-trac
 
 /* 08 Royal War Camp -- a standard stitched in the field, not set in a print
    shop. Rugged, blackletter-adjacent, still readable at a glance. */
-body[data-theme="warcamp"]{--crest-lift:.72;--disp:'Grenze Gotisch',serif;--disp-w:700;--disp-track:.07em;
+body[data-theme="warcamp"]{--crest-lift:.72;--disp:'Bevan',serif;--disp-w:400;--disp-track:.085em;
   --disp-size:clamp(44px,min(9.4vw,9.9vh),100px);
-  --cta-fam:'Grenze Gotisch',serif;--cta-w:700;--cta-track:.22em;--orn:'\2748\FE0E';}
+  --cta-fam:'Cinzel',serif;--cta-w:600;--cta-track:.24em;--orn:'\2748\FE0E';}
 
 /* 09 Celestial Palace -- weightless. The thinnest face in the set at the widest
    tracking, small against an enormous amount of nothing. */
@@ -1037,7 +1086,7 @@ const THEMES = {
   moonlit:    {label:'MOONLIT REALM',     src:'assets/hall-moonlit.webp',    ray:[0.72,0.84,1.00], rayAmt:.70, fire:.55, mist:.85, rain:0,   storm:0,   aurora:0},
   embers:     {label:'EMBER THRONE',      src:'assets/hall-embers.webp',     ray:[1.00,0.42,0.12], rayAmt:.20, fire:1.80,mist:.62, rain:0,   storm:0,   aurora:0},
   cathedral:  {label:'IVORY CATHEDRAL',   src:'assets/hall-cathedral.webp',  ray:[1.00,0.88,0.58], rayAmt:1.05,fire:.38, mist:.42, rain:0,   storm:0,   aurora:0},
-  storm:      {label:'STORM FORTRESS',    src:'assets/hall-storm.webp',      ray:[0.48,0.65,1.00], rayAmt:.35, fire:.82, mist:1.00, rain:1.0, storm:.9,  aurora:0},
+  storm:      {label:'STORM FORTRESS',    src:'assets/hall-storm.webp',      ray:[0.48,0.65,1.00], rayAmt:.35, fire:.82, mist:1.00, rain:0,   storm:.22,  aurora:0},
   dragongate: {label:'DRAGON GATE',       src:'assets/hall-dragongate.webp', ray:[1.00,0.62,0.24], rayAmt:.30, fire:1.55,mist:1.12, rain:0,   storm:0,   aurora:0},
   warcamp:    {label:'ROYAL WAR CAMP',    src:'assets/hall-warcamp.webp',    ray:[1.00,0.55,0.20], rayAmt:.48, fire:1.45,mist:.72, rain:0,   storm:0,   aurora:0},
   celestial:  {label:'CELESTIAL PALACE',  src:'assets/hall-celestial.webp',   ray:[0.45,0.68,1.00], rayAmt:.62, fire:.24, mist:.52, rain:0,   storm:0,   aurora:1.0}
@@ -1170,9 +1219,11 @@ const BG = (function(){
   });
 
   let t0 = performance.now() / 1000;
-  let zoomTarget = 1.0, zoom = 1.14, pushing = false;
+  // The scene used to open at 1.14 and ease back to 1.0 -- a slow crop-out on
+  // load. It starts at its true framing now; only ENTER still pushes in.
+  let zoomTarget = 1.0, zoom = 1.0, pushing = false;
 
-  function reveal(){ t0 = performance.now() / 1000; zoom = 1.14; zoomTarget = 1.0; pushing = false; }
+  function reveal(){ t0 = performance.now() / 1000; zoom = 1.0; zoomTarget = 1.0; pushing = false; }
   function skip(sec){ t0 -= sec; zoom = 1.0; }
   function push(){ pushing = true; zoomTarget = 1.5; }
 
@@ -1387,6 +1438,32 @@ const Score = (() => {
       o.connect(g); g.connect(master); o.start(t); o.stop(t+d+.1);
     });
   }
+  // War drum. Bigger and harder than the generic struck skin: a deeper shell
+  // with a longer tail, a rim crack on the front so it carries, and a touch of
+  // pitch bend so successive hits do not sound like the same sample twice.
+  function warDrum(at, vol, deep){
+    const t=T()+at, f0 = deep ? 46 : 62;
+    const o=ac.createOscillator(), g=ac.createGain(), lp=ac.createBiquadFilter();
+    o.type='sine'; lp.type='lowpass'; lp.frequency.value=deep?260:420;
+    o.frequency.setValueAtTime(f0*2.4,t);
+    o.frequency.exponentialRampToValueAtTime(f0,t+.09);
+    o.frequency.exponentialRampToValueAtTime(f0*.72,t+.55);
+    g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(vol,t+.008);
+    g.gain.exponentialRampToValueAtTime(vol*.3,t+.22);
+    g.gain.exponentialRampToValueAtTime(.0001,t+1.1);
+    o.connect(lp); lp.connect(g); g.connect(master); o.start(t); o.stop(t+1.2);
+    const n=ac.createBufferSource(); n.buffer=noiseBuf(.5);
+    const bp=ac.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=deep?190:320; bp.Q.value=.8;
+    const ng=ac.createGain();
+    ng.gain.setValueAtTime(vol*.7,t); ng.gain.exponentialRampToValueAtTime(.0001,t+.16);
+    n.connect(bp); bp.connect(ng); ng.connect(master); n.start(t); n.stop(t+.2);
+    const c=ac.createBufferSource(); c.buffer=noiseBuf(.2);
+    const hp=ac.createBiquadFilter(); hp.type='highpass'; hp.frequency.value=2600;
+    const cg=ac.createGain();
+    cg.gain.setValueAtTime(vol*.34,t); cg.gain.exponentialRampToValueAtTime(.0001,t+.05);
+    c.connect(hp); hp.connect(cg); cg.connect(master); c.start(t); c.stop(t+.08);
+  }
+
   // A struck skin -- pitch drops fast, body is filtered noise.
   function drum(at, hz, vol){
     const t=T()+at;
@@ -1488,13 +1565,17 @@ const Score = (() => {
       brass(5.5,[261.63,392,523.25],.08,4.4);
     },
     // Almost nothing: air, a far-off bell, one low breath.
+    // Moonlit and Celestial were the same recipe -- air, wind, pads, bells -- and
+    // sounded like it. They are now opposites. This one keeps everything LOW:
+    // a drone with real weight under it, dark gongs instead of bells, and not a
+    // single bright tone anywhere.
     moonlit(){
-      hallAir(); wind(.05);
-      pad(.8,[110,164.81,220],.036,7);
-      bell(3.3,880,.05); bell(5.7,1174.7,.042);
-      pad(4.9,[130.81,196,246.94],.03,6);
-      impact(6.7); bell(6.85,1318.5,.06);
-      pad(7.3,[98,146.83,220,293.66],.033,7);
+      hallAir(); subBass();
+      pad(.8,[73.42,110,146.83],.045,9);
+      gong(3.2,73.42,.07);
+      pad(5.2,[87.31,130.81,164.81],.036,8);
+      impact(6.7); gong(6.8,98,.09);
+      pad(7.3,[65.41,98,130.81,164.81],.04,9);
     },
     // A forge. Low, dirty, and struck.
     embers(){
@@ -1537,24 +1618,40 @@ const Score = (() => {
       pad(7.6,[110,164.81,220,329.63],.04,6);
     },
     // A camp before a march: drums, wind, a horn.
+    // Battle drums. This was a polite four-on-the-floor on the generic drum; it
+    // is now an actual march -- a struck cadence with accents on the beat and
+    // doubles between them, building until the horns answer it.
     warcamp(){
       subBass(); hallAir(); torchCrackle(); wind(.04);
-      drum(0.95,70,.3); drum(1.45,70,.22); drum(1.95,58,.34);
-      drum(2.95,70,.3); drum(3.45,70,.22); drum(3.95,58,.36);
+      // slow roll opening
+      warDrum(0.70,.42,true);
+      warDrum(1.30,.26); warDrum(1.55,.20);
+      warDrum(1.90,.44,true);
+      // the cadence tightens
+      warDrum(2.50,.30); warDrum(2.75,.22);
+      warDrum(3.10,.48,true);
+      warDrum(3.60,.30); warDrum(3.80,.24); warDrum(4.00,.24);
       brass(4.25,[146.83,220,293.66],.055,2.4);
-      drum(4.95,70,.32); drum(5.45,70,.26);
-      impact(5.95); drum(5.95,52,.55);
+      warDrum(4.40,.50,true);
+      warDrum(4.90,.32); warDrum(5.10,.26); warDrum(5.30,.30); warDrum(5.50,.34);
+      warDrum(5.70,.38); warDrum(5.82,.42);
+      // and the whole camp comes down on the beat
+      impact(5.95); warDrum(5.95,.85,true); warDrum(6.02,.34);
       brass(6.25,[174.61,261.63,349.23],.06,4.2);
+      warDrum(6.90,.34,true); warDrum(7.50,.28,true);
     },
     // Above the world. Bells, no bass, nothing struck hard.
+    // ...and this one keeps everything HIGH. No sub, no drone, nothing below the
+    // stave. Where Moonlit is a dark room at night, this is open sky.
     celestial(){
-      hallAir(); wind(.055);
-      pad(.6,[261.63,392,523.25],.03,7);
+      hallAir(); wind(.055); shimmer(1.0);
+      pad(.6,[523.25,783.99,1046.5],.024,8);
       arpeggio(5.3,[783.99,987.77,1174.66,1567.98],.05,.42);
-      pad(7.1,[293.66,440,587.33],.028,6);
+      shimmer(6.4);
+      pad(7.1,[587.33,880,1174.66],.022,7);
       impact(9.1);
       arpeggio(9.2,[1046.5,1318.51,1567.98,2093],.055,.3);
-      pad(9.8,[329.63,493.88,659.25,987.77],.03,7);
+      pad(9.8,[659.25,987.77,1318.51,1975.5],.024,8);
     },
   };
 

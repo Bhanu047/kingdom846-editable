@@ -101,7 +101,7 @@ body.nogl #bg{display:none;}
   will-change:transform;transition:transform .9s cubic-bezier(.16,.72,.24,1);}
 
 .eyebrow{display:flex;align-items:center;gap:clamp(10px,1.6vw,22px);
-  font-weight:500;font-size:clamp(10px,1.25vw,17px);letter-spacing:var(--eyebrow-track);opacity:0;white-space:nowrap;
+  font-weight:500;font-size:clamp(10px,min(1.25vw,1.6vh),15px);letter-spacing:var(--eyebrow-track);opacity:0;white-space:nowrap;
   text-shadow:0 0 20px rgba(230,194,102,.4);}
 .eyebrow b{font-weight:var(--eyebrow-w);}
 .eyebrow s{text-decoration:none;display:block;width:clamp(24px,5vw,74px);height:1px;
@@ -269,7 +269,7 @@ body[data-theme="celestial"] .play .title span{animation:letterDrift 1.6s cubic-
 @keyframes drawRule{to{transform:scaleX(1)}}
 
 .tagline{font-family:var(--tag-fam);font-style:var(--tag-style);font-weight:var(--tag-w);
-  font-size:clamp(16px,2.3vw,31px);letter-spacing:var(--tag-track);color:#ecdfc0;opacity:0;text-shadow:0 2px 18px rgba(0,0,0,.9);}
+  font-size:clamp(16px,min(2.3vw,2.9vh),26px);letter-spacing:var(--tag-track);color:#ecdfc0;opacity:0;text-shadow:0 2px 18px rgba(0,0,0,.9);}
 .play .tagline{animation:taglineIn 1.2s cubic-bezier(.22,.61,.36,1) 6.5s forwards;}
 @keyframes taglineIn{from{opacity:0;transform:translateY(12px);filter:blur(7px)}
                      to{opacity:.96;transform:translateY(0);filter:blur(0)}}
@@ -289,7 +289,7 @@ body[data-theme="celestial"] .play .title span{animation:letterDrift 1.6s cubic-
      The button is the one thing on screen that must stay hittable. */
   flex-shrink:0;
   padding:clamp(13px,1.7vh,18px) clamp(28px,4.4vw,56px);
-  font-family:var(--cta-fam);font-weight:var(--cta-w);font-size:clamp(12px,1.3vw,17px);letter-spacing:var(--cta-track);
+  font-family:var(--cta-fam);font-weight:var(--cta-w);font-size:clamp(12px,min(1.3vw,1.6vh),15px);letter-spacing:var(--cta-track);
   color:#241a08;background:linear-gradient(180deg,#fff5d6 0%,var(--gold-1) 26%,var(--gold-2) 52%,var(--gold-3) 82%,#f3e2ab 100%);
   border:1px solid rgba(255,246,214,.7);border-radius:var(--cta-radius);cursor:pointer;overflow:hidden;opacity:0;
   box-shadow:0 0 0 1px rgba(111,76,19,.6), 0 16px 46px rgba(0,0,0,.7), 0 0 34px rgba(230,194,102,.22);
@@ -359,7 +359,7 @@ body.preview .hud.right button{font-size:8px;padding:8px 10px;}
    Ornaments carry U+FE0E so they render as typography, not as colour emoji. */
 body{
   --disp:'Cinzel',serif; --disp-w:800; --disp-track:.1em;
-  --disp-size:clamp(38px,8vw,112px);
+  --disp-size:clamp(38px,min(8vw,8.6vh),80px);
   --crest-h:clamp(190px,42vh,470px);
   --eyebrow-track:.34em; --eyebrow-w:500;
   --tag-fam:'Cormorant Garamond',serif; --tag-style:italic; --tag-w:300; --tag-track:.055em;
@@ -696,21 +696,21 @@ body[data-theme="celestial"] .play .title span{animation:letterStar 1.9s ease-ou
    in the set, tracking pulled in so the word sits like a struck medal, and the
    largest crest: this hall is about the crown, not the room. */
 body[data-theme="coronation"]{--disp:'Cinzel Decorative',serif;--disp-w:900;--disp-track:.035em;
-  --disp-size:clamp(34px,7.2vw,102px);--crest-h:clamp(200px,46vh,510px);
+  --disp-size:clamp(34px,min(7.2vw,8.1vh),78px);--crest-h:clamp(200px,46vh,510px);
   --cta-track:.34em;--orn:'\2767\FE0E';}
 
 /* 03 Moonlit Realm -- whispered, not announced. The thinnest weight, the
    widest tracking, the smallest wordmark and a reduced crest, so most of the
    frame is night. */
 body[data-theme="moonlit"]{--crest-lift:.35;--disp:'Cormorant Garamond',serif;--disp-w:300;--disp-track:.3em;
-  --disp-size:clamp(32px,6.8vw,94px);--crest-h:clamp(165px,37vh,410px);
+  --disp-size:clamp(32px,min(6.8vw,7.8vh),72px);--crest-h:clamp(165px,37vh,410px);
   --eyebrow-track:.5em;--eyebrow-w:400;--tag-w:300;--orn:'\2727\FE0E';}
 
 /* 04 Ember Throne -- no serifs, no grace, no restraint. A brutal condensed cut
    at nearly twice the baseline size with the crest cut back: here the WORD is
    the monument and the hall is only its furnace. */
 body[data-theme="embers"]{--disp:'Bebas Neue',sans-serif;--disp-w:400;--disp-track:.045em;
-  --disp-size:clamp(54px,12vw,168px);--crest-h:clamp(150px,32vh,350px);
+  --disp-size:clamp(54px,min(12vw,13vh),138px);--crest-h:clamp(150px,32vh,350px);
   --eyebrow-track:.42em;--cta-fam:'Bebas Neue',sans-serif;--cta-w:400;--cta-track:.26em;
   --cta-radius:0;--orn:'\25C6\FE0E';}
 
@@ -718,7 +718,7 @@ body[data-theme="embers"]{--disp:'Bebas Neue',sans-serif;--disp-w:400;--disp-tra
    small caps, generous tracking, the tallest crest, and a maltese cross for
    the ornament. */
 body[data-theme="cathedral"]{--crest-lift:.55;--disp:'Marcellus SC',serif;--disp-w:400;--disp-track:.17em;
-  --disp-size:clamp(35px,7.4vw,104px);--crest-h:clamp(205px,47vh,520px);
+  --disp-size:clamp(35px,min(7.4vw,8.1vh),78px);--crest-h:clamp(205px,47vh,520px);
   --eyebrow-track:.4em;--orn:'\2720\FE0E';}
 
 /* 06 Storm Fortress -- severe, not utilitarian.
@@ -734,7 +734,7 @@ body[data-theme="cathedral"]{--crest-lift:.55;--disp:'Marcellus SC',serif;--disp
    corners stay -- that part was right. The button keeps Cinzel, because
    Bodoni's hairlines vanish at 11px. */
 body[data-theme="storm"]{--crest-lift:.30;--disp:'Bodoni Moda',serif;--disp-w:900;--disp-track:.1em;
-  --disp-size:clamp(40px,8.4vw,118px);--crest-h:clamp(178px,38vh,420px);
+  --disp-size:clamp(40px,min(8.4vw,8.6vh),82px);--crest-h:clamp(178px,38vh,420px);
   --eyebrow-track:.36em;--eyebrow-w:600;
   --tag-fam:'Bodoni Moda',serif;--tag-style:italic;--tag-w:500;--tag-track:.03em;
   --cta-w:600;--cta-track:.26em;--cta-radius:0;--orn:'\2739\FE0E';}
@@ -742,19 +742,19 @@ body[data-theme="storm"]{--crest-lift:.30;--disp:'Bodoni Moda',serif;--disp-w:90
 /* 07 Dragon Gate -- monumental. A heavy flared display with brutal thick/thin
    contrast, the kind of letterform that belongs carved above an arch. */
 body[data-theme="dragongate"]{--disp:'Yeseva One',serif;--disp-w:400;--disp-track:.05em;
-  --disp-size:clamp(39px,8.2vw,114px);--crest-h:clamp(200px,45vh,490px);
+  --disp-size:clamp(39px,min(8.2vw,8.6vh),86px);--crest-h:clamp(200px,45vh,490px);
   --eyebrow-track:.38em;--orn:'\2756\FE0E';}
 
 /* 08 Royal War Camp -- a standard stitched in the field, not set in a print
    shop. Rugged, blackletter-adjacent, still readable at a glance. */
 body[data-theme="warcamp"]{--crest-lift:.72;--disp:'Grenze Gotisch',serif;--disp-w:700;--disp-track:.07em;
-  --disp-size:clamp(44px,9.4vw,132px);
+  --disp-size:clamp(44px,min(9.4vw,9.9vh),100px);
   --cta-fam:'Grenze Gotisch',serif;--cta-w:700;--cta-track:.22em;--orn:'\2748\FE0E';}
 
 /* 09 Celestial Palace -- weightless. The thinnest face in the set at the widest
    tracking, small against an enormous amount of nothing. */
 body[data-theme="celestial"]{--disp:'Italiana',serif;--disp-w:400;--disp-track:.38em;
-  --disp-size:clamp(30px,6.4vw,88px);--crest-h:clamp(165px,37vh,410px);
+  --disp-size:clamp(30px,min(6.4vw,7.4vh),68px);--crest-h:clamp(165px,37vh,410px);
   --eyebrow-track:.54em;--eyebrow-w:400;--cta-track:.38em;--orn:'\2735\FE0E';}
 
 /* This was a single enormous saturated radial covering most of the screen at
@@ -1162,9 +1162,11 @@ const BG = (function(){
   resize(); addEventListener('resize', resize);
 
   let mx = 0, my = 0, tmx = 0, tmy = 0;
+  // halved: enough for the hall to have depth, not enough to feel like the
+  // room is being dragged around
   addEventListener('pointermove', e => {
-    tmx = (e.clientX / innerWidth  - 0.5) * 2;
-    tmy = (e.clientY / innerHeight - 0.5) * 2;
+    tmx = (e.clientX / innerWidth  - 0.5) * 1.0;
+    tmy = (e.clientY / innerHeight - 0.5) * 1.0;
   });
 
   let t0 = performance.now() / 1000;
@@ -1248,14 +1250,11 @@ const BG = (function(){
   })(0);
 })();
 
-/* ===== content parallax ===== */
-(function(){
-  const el = document.getElementById('content');
-  addEventListener('pointermove', e => {
-    const x = (e.clientX/innerWidth - .5) * 2, y = (e.clientY/innerHeight - .5) * 2;
-    el.style.transform = `translate3d(${x*9}px, ${y*5}px, 0)`;
-  });
-})();
+/* The whole copy block used to slide up to 9px sideways and 5px vertically as
+   the pointer moved -- crest, wordmark, tagline and button together. Depth in
+   the ROOM is a good effect; the type sliding around under the cursor just
+   makes the words feel unmoored, and on a desktop it is the first thing you
+   notice. The room still has its parallax. The words hold still. */
 
 /* ===== cinematic score ===== */
 const Score = (() => {

@@ -763,33 +763,20 @@ body[data-theme="celestial"]{--disp:'Italiana',serif;--disp-w:400;--disp-track:.
    a second: the colour lives in the falloff, not in the middle, and the whole
    thing SCALES rather than just fading up. Three layers -- a white core, the
    hall's colour around it, and a wide dim wash -- over a much tighter radius. */
-/* No white anywhere. A white core over a blue hall reads as a burst; over
-   Coronation, Ember Throne, Cathedral, Dragon Gate and War Camp -- the five
-   warm halls -- white on gold is just a white screen, which is what was
-   reported. The burst is now made only of the hall's own light. */
-.flash{position:fixed;inset:0;z-index:60;pointer-events:none;opacity:0;
-  transform-origin:var(--flash-pos);
-  background:
-    radial-gradient(22% 26% at var(--flash-pos), rgba(var(--acc),.95), rgba(var(--acc),0) 72%),
-    radial-gradient(48% 50% at var(--flash-pos), rgba(var(--acc2),.52), rgba(var(--acc2),0) 74%),
-    radial-gradient(100% 92% at var(--flash-pos), rgba(var(--acc2),.16), rgba(var(--acc2),0) 78%);}
+/* THE EXIT ONLY DARKENS.
+   There was still a .flash here -- a bloom in the hall's own colour. It was
+   recoloured, rescaled and softened over several rounds, but a bloom is a
+   brightening, and a brightening is a flash however carefully it is done. It
+   showed worst on the warm halls, where gold light over a gold room has the
+   least to hide behind. Measured on whole-screen average the rise was still
+   +7 on Coronation, +9 on Cathedral, +12 on Storm -- and an average understates
+   a bloom that is concentrated in one part of the frame.
+   Deleted, not tuned. The gate now does what The Approach does: the room
+   pushes past, the content is pulled through it, and the screen closes to the
+   site's own ground. Nothing on screen ever becomes brighter than it was. */
+.entering .blackout{z-index:55;animation:gateVeil 1.05s cubic-bezier(.4,0,.6,1) .2s forwards;}
+@keyframes gateVeil{from{opacity:0}to{opacity:1}}
 
-/* And the exit no longer ENDS on light. It used to bloom, clear, and leave you
-   staring at an empty room for half a second before the page cut -- a bright
-   hand-off into a dark site, which is the wrong way round. The screen now
-   closes to black behind the burst, so the gate takes you into darkness and
-   the site opens out of it. That is what makes it feel like going THROUGH the
-   door rather than being flashed at. */
-.entering .blackout{z-index:55;animation:veilClose 1.1s cubic-bezier(.42,0,.58,1) .28s forwards;}
-@keyframes veilClose{from{opacity:0}to{opacity:1}}
-.entering .flash{animation:enterFlash 1.7s ease-out forwards;}
-@keyframes enterFlash{0%{opacity:0;transform:scale(.4)}20%{opacity:.86;transform:scale(.76)}100%{opacity:0;transform:scale(1.9)}}
-/* Storm does not bloom, it strikes: a double lightning pulse on the way out. */
-body[data-theme="storm"].entering .flash{animation:enterStrike 1.7s linear forwards;}
-@keyframes enterStrike{0%{opacity:0;transform:scale(1.05)}4%{opacity:.9;transform:scale(.95)}14%{opacity:.32}22%{opacity:.82;transform:scale(1.2)}100%{opacity:0;transform:scale(2.2)}}
-/* Ember Throne flares rather than flashes -- it comes up out of the fire. */
-body[data-theme="embers"].entering .flash{animation:enterFlare 1.9s cubic-bezier(.3,0,.3,1) forwards;}
-@keyframes enterFlare{0%{opacity:0;transform:scale(.32)}24%{opacity:.88;transform:scale(.68)}100%{opacity:0;transform:scale(2.1)}}
 .entering .content{animation:contentOut 1.6s cubic-bezier(.5,0,.2,1) forwards;}
 @keyframes contentOut{to{opacity:0;transform:scale(1.34);filter:blur(20px)}}
 
@@ -847,7 +834,6 @@ body[data-theme="embers"].entering .flash{animation:enterFlare 1.9s cubic-bezier
     <div class="crown-mini">&#9819;</div>
   </div>
 
-  <div class="flash"></div>
 </div>
 
 <noscript>

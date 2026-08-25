@@ -380,15 +380,17 @@ body[data-theme="celestial"] .play .title span{animation:letterDrift 1.6s cubic-
 .hud button:focus-visible,.cta:focus-visible,.gate:focus-visible{outline:2px solid rgba(255,238,190,.9);outline-offset:3px;}
 .hud .theme{display:none;}
 body.preview .hud .theme{display:inline-block;}
-/* REPLAY is a reviewing tool -- it exists to watch the film again while judging
-   the nine, which is a thing we do and a visitor never does. It was on the
-   public screen only because it was never gated, the same way the hall buttons
-   above are. SKIP INTRO stays: eight seconds is worth sitting through once and
-   not twice, and it is the only control a returning visitor actually wants.
-   SOUND stays too -- it is the mute switch, and someone in a quiet room needs
-   a way out that is not closing the tab. */
-.hud #replay{display:none;}
-body.preview .hud #replay{display:inline-block;}
+/* None of the HUD controls belong on the public screen. They are reviewing
+   tools -- REPLAY to watch the film again, SKIP to get past it, SOUND to check
+   the mix -- and they were only ever visible because they were never gated, the
+   same way the nine hall buttons above once were. A visitor arriving at a front
+   door should see the door, not the controls we judged it with.
+   They all still exist under ?preview=1, which is where they are used.
+   The trade: with SOUND gone there is no mute control, so the audio has to be
+   something a visitor is happy to be given unasked -- it is short, it ends with
+   the film, and the browser holds it until they interact with the page anyway. */
+.hud button{display:none;}
+body.preview .hud button{display:inline-block;}
 body.preview .hud.right{max-width:min(680px,70vw);flex-wrap:wrap;justify-content:flex-end;}
 body.preview .hud.right button{font-size:8px;padding:8px 10px;}
 #skip{opacity:0;transition:opacity .5s ease;}

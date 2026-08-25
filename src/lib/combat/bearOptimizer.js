@@ -204,9 +204,13 @@ function continuousOptimalFormation(stats = {}, tier = 'TG5-TG7', tg = 0, leadHe
 // here, but it disagreed with Frakinator by a point, which is worse. Archers
 // absorb the remainder so the three still total 100.
 //
-// [OPEN] This case cannot distinguish "round Cavalry" from "floor Cavalry" --
-// 26.1310 floors and rounds alike. If a report ever lands with a Cavalry
-// fraction above .5, that settles it.
+// A second measurement settles Cavalry. With INF 180.5/166.5, CAV 180.5/155.5,
+// ARC 180.5/155.5 the exact optimum is 3.2463 / 26.8548 / 69.8989 and
+// Frakinator shows 3/27/70: Infantry floors again (3.2463 -> 3) and Cavalry
+// ROUNDS (26.8548 -> 27, not 26). Archers take the remainder.
+//
+// The rule is therefore fully determined and matches this function as written:
+// floor Infantry, round Cavalry, Archers absorb what is left.
 function projectContinuousRatio(ratio = {}) {
   const rawInf = Math.max(0, number(ratio.infantry)) * 100
   const rawCav = Math.max(0, number(ratio.cavalry)) * 100

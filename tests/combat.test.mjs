@@ -119,6 +119,23 @@ test('bear formation reproduces the reference calculator', () => {
   assert.ok(Math.abs(r.continuousRatio.archers * 100 - 70.9703) < 0.001)
 })
 
+// [VALIDATED] Second Frakinator measurement, 2026-08-25. This is the case that
+// determines Cavalry: at 26.8548 the reference tool shows 27, so Cavalry rounds
+// while Infantry floors. Together with the case above the projection rule is
+// fully pinned -- floor Infantry, round Cavalry, Archers take the remainder.
+test('bear formation matches the reference calculator on cavalry rounding', () => {
+  const r = optimizeBearFormation({
+    stats: bearStats([180.5, 166.5], [180.5, 155.5], [180.5, 155.5]),
+    tier: 'TG5-TG7',
+    capacity: 150000,
+  })
+  assert.deepEqual([r.whole.infantry, r.whole.cavalry, r.whole.archers], [3, 27, 70])
+  assert.ok(Math.abs(r.continuousRatio.infantry * 100 - 3.2463) < 0.001)
+  assert.ok(Math.abs(r.continuousRatio.cavalry * 100 - 26.8548) < 0.001)
+  // The discriminating assertion: 26.8548 rounds up, it is not truncated.
+  assert.notEqual(r.whole.cavalry, 26, 'Cavalry was floored — it should round')
+})
+
 test('bear whole-percent split always totals 100, with Infantry floored', () => {
   const cases = [
     bearStats([100, 100], [100, 100], [100, 100]),

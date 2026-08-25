@@ -11,6 +11,7 @@ import { allocateCounts, percentAxis, simulateOutcomes, TROOP_TYPES } from '../s
 import { optimizeBearFormation } from '../src/lib/combat/bearOptimizer.js'
 import { armyFromSplit, optimizeTrialSplit } from '../src/lib/combat/mysticTrials.js'
 import { optimizePvpComposition } from '../src/lib/combat/pvpBattle.js'
+import { computeHuntImpact, HUNT_JOINER_HEROES } from '../src/lib/combat/huntImpact.js'
 
 const sum = (o) => TROOP_TYPES.reduce((t, k) => t + o[k], 0)
 const flatStats = Object.fromEntries(TROOP_TYPES.map((t) => [t, { attack: 120, lethality: 110, defense: 100, health: 100 }]))
@@ -214,4 +215,58 @@ test('the PvP search reaches an all-one-type split at any step', () => {
     const r = optimizePvpComposition({ totalTroops: 60000, yourStats: flatStats, enemyArmy: enemy, stepPercent })
     assert.ok(r.candidates.some((c) => c.split[0] === 100), `step ${stepPercent} never tries 100% infantry`)
   }
+})
+
+// ------------------------------------------------------------- hunt impact
+const huntStats = {
+  infantry: { attack: 577.3, lethality: 388.1, widget: '0', widgetStat: 'attack' },
+  cavalry: { attack: 577.3, lethality: 388.5, widget: '0', widgetStat: 'attack' },
+  archers: { attack: 577.3, lethality: 399.0, widget: '0', widgetStat: 'attack' },
+}
+const huntCounts = { infantry: 81750, cavalry: 24525, archers: 57225 }
+const joiner = (hero) => ({ hero, skillLevel: 5 })
+
+test('hunt efficiency is 100% exactly at the optimal ratio', () => {
+  const played = computeHuntImpact({
+    stats: huntStats, tier: 'TG5-TG7', ratio: { infantry: 0.5, cavalry: 0.15, archers: 0.35 },
+    troopCounts: huntCounts, capacity: 200000, participants: 20,
+  })
+  const atOptimum = computeHuntImpact({
+    stats: huntStats, tier: 'TG5-TG7', ratio: played.optimalRatio,
+    troopCounts: huntCounts, capacity: 200000, participants: 20,
+  })
+  assert.ok(Math.abs(atOptimum.efficiency - 100) < 1e-9,
+    `optimum scored ${atOptimum.efficiency} — efficiency is mis-normalised`)
+  assert.ok(played.efficiency < 100)
+})
+
+// Was: seven of the ten selectable joiners contribute nothing, and the caller
+// had no way to know — the control looked broken rather than unmodelled.
+test('hunt impact names the joiners that contributed nothing', () => {
+  const r = computeHuntImpact({
+    stats: huntStats, tier: 'TG5-TG7', ratio: { infantry: 0.5, cavalry: 0.15, archers: 0.35 },
+    troopCounts: huntCounts, capacity: 200000, participants: 20,
+    joiners: [joiner('Chenko'), joiner('Gordon'), joiner('Thrud'), joiner('Amane')],
+  })
+  assert.deepEqual(r.unmodeledJoiners, ['Gordon', 'Thrud'])
+
+  const modelled = computeHuntImpact({
+    stats: huntStats, tier: 'TG5-TG7', ratio: { infantry: 0.5, cavalry: 0.15, archers: 0.35 },
+    troopCounts: huntCounts, capacity: 200000, participants: 20,
+    joiners: [joiner('Chenko'), joiner('Amane')],
+  })
+  assert.deepEqual(modelled.unmodeledJoiners, [])
+})
+
+test('hunt impact flags a score computed from no player stats', () => {
+  assert.equal(computeHuntImpact({}).hasStats, false)
+  assert.equal(computeHuntImpact({
+    stats: huntStats, tier: 'TG5-TG7', ratio: { infantry: 0.5, cavalry: 0.15, archers: 0.35 },
+    troopCounts: huntCounts, capacity: 200000, participants: 20,
+  }).hasStats, true)
+})
+
+test('every selectable joiner is a known hero', () => {
+  assert.ok(HUNT_JOINER_HEROES.includes('None'))
+  assert.equal(new Set(HUNT_JOINER_HEROES).size, HUNT_JOINER_HEROES.length)
 })

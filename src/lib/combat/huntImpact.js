@@ -63,6 +63,16 @@ export function applyJoinerBonuses(stats = {}, joiners = []) {
 
 export function computeHuntImpact({ stats, tier, tg = 0, ratio, leadHeroes = {}, troopCounts = {}, capacity = 0, participants = 0, joiners = [] } = {}) {
   const normalizedJoiners = normalizeJoiners(joiners)
+  // Seven of the ten selectable joiners have no verified per-level values yet,
+  // so they contribute nothing. That is deliberate -- inventing coefficients
+  // would be worse -- but silently doing nothing looks like a broken control to
+  // whoever picked one. Name them so the UI can say "not yet modelled" instead.
+  const unmodeledJoiners = normalizedJoiners
+    .filter((slot) => slot.hero !== 'None' && !(JOINER_EFFECTS[slot.hero] || JOINER_EFFECTS.None).modeled)
+    .map((slot) => slot.hero)
+  // Same guard as the Bear card: with no attack/lethality figures the score is
+  // structural, not a reading of this player's rally.
+  const hasStats = TYPES.some((type) => number(stats?.[type]?.attack) > 0 || number(stats?.[type]?.lethality) > 0)
   const adjustedStats = applyJoinerBonuses(stats, normalizedJoiners)
   const totalTroops = TYPES.reduce((sum, type) => sum + Math.max(0, number(troopCounts?.[type])), 0)
   const actualScore = computeBearDamageScore({ stats: adjustedStats, tier, tg, ratio, leadHeroes })
@@ -88,6 +98,10 @@ export function computeHuntImpact({ stats, tier, tg = 0, ratio, leadHeroes = {},
     totalTroops,
     fillRate,
     perParticipant,
-    model: 'hunt-impact-v2-joiner-aware-relative-index',
+    // Selected joiners that carry no verified values and so changed nothing.
+    unmodeledJoiners,
+    // False when no attack/lethality figure was supplied.
+    hasStats,
+    model: 'hunt-impact-v3-reports-unmodelled-joiners',
   }
 }

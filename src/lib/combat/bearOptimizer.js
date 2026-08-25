@@ -183,34 +183,41 @@ function continuousOptimalFormation(stats = {}, tier = 'TG5-TG7', tg = 0, leadHe
   return Object.fromEntries(TYPES.map((type) => [type, squares[type] / denominator]))
 }
 
-// The analytical optimum is continuous; the card shows whole percents. The
-// projection down to 100 points has to be the NEAREST split, or the number on
-// screen is not the answer the model computed.
+// [VALIDATED against frakinator.streamlit.app, 2026-08-25]
 //
-// The previous version floored Infantry and rounded Cavalry. Because the
-// Infantry share is usually a fraction of a point, flooring it drove it to
-// zero or one below its true value in 217 of 450 sampled stat combinations --
-// a continuous 2.99/26.93/70.08 was displayed as 2/27/71, and 0.99/39.82/59.19
-// as 0/40/60. The damage cost of being one point out is negligible; being
-// visibly one point off the optimum every other time is not, because it is
-// what makes the card disagree with any other calculator a player checks.
+// The analytical optimum is continuous; the card shows whole percents. How you
+// project one onto the other is not a free choice -- it has to agree with the
+// reference calculator players check against, or the card is "wrong" to them
+// however defensible the arithmetic is.
 //
-// Largest remainder rounds every share to its nearest point and still totals
-// exactly 100. Ties break toward the earlier troop type so the same stats
-// always project the same way.
+// Measured, with leader stats INF 577.3/388.1, CAV 577.3/388.5, ARC 577.3/399.0
+// at TG5-TG7:
+//
+//   exact optimum      2.8987 / 26.1310 / 70.9703
+//   Frakinator         2 / 26 / 72
+//   floor INF          2 / 26 / 72   <- agrees
+//   nearest (largest   3 / 26 / 71   <- does NOT agree
+//     remainder)
+//
+// So Infantry is floored, not rounded: at 2.8987 the reference tool shows 2.
+// A nearest-value projection is tidier mathematically and was briefly used
+// here, but it disagreed with Frakinator by a point, which is worse. Archers
+// absorb the remainder so the three still total 100.
+//
+// [OPEN] This case cannot distinguish "round Cavalry" from "floor Cavalry" --
+// 26.1310 floors and rounds alike. If a report ever lands with a Cavalry
+// fraction above .5, that settles it.
 function projectContinuousRatio(ratio = {}) {
-  const raw = TYPES.map((type) => Math.max(0, number(ratio[type])))
-  const sum = raw.reduce((total, value) => total + value, 0)
-  const points = sum > 0 ? raw.map((value) => (value / sum) * 100) : TYPES.map(() => 100 / 3)
-
-  const whole = points.map((value) => Math.floor(value))
-  let left = 100 - whole.reduce((total, value) => total + value, 0)
-  const order = points
-    .map((value, i) => ({ i, remainder: value - Math.floor(value) }))
-    .sort((a, b) => b.remainder - a.remainder || a.i - b.i)
-  for (let k = 0; left > 0; k += 1, left -= 1) whole[order[k % order.length].i] += 1
-
-  return Object.fromEntries(TYPES.map((type, i) => [type, Math.max(MIN_FORMATION_PERCENT, whole[i])]))
+  const rawInf = Math.max(0, number(ratio.infantry)) * 100
+  const rawCav = Math.max(0, number(ratio.cavalry)) * 100
+  let infantry = Math.max(MIN_FORMATION_PERCENT, Math.min(100, Math.floor(rawInf + 1e-9)))
+  let cavalry = Math.max(MIN_FORMATION_PERCENT, Math.min(100 - infantry, Math.round(rawCav)))
+  let archers = 100 - infantry - cavalry
+  if (archers < MIN_FORMATION_PERCENT) {
+    cavalry = Math.max(MIN_FORMATION_PERCENT, cavalry + archers)
+    archers = 100 - infantry - cavalry
+  }
+  return { infantry, cavalry, archers }
 }
 
 export function optimizeBearFormation(input = {}) {
@@ -278,7 +285,7 @@ export function optimizeBearFormation(input = {}) {
     // False when no attack/lethality figure was supplied: the split below is
     // structural, not a recommendation derived from this player's stats.
     hasStats,
-    model: 'hunt-formation-lagrange-v8-nearest-projection',
+    model: 'hunt-formation-lagrange-v8-frakinator-validated',
   }
 }
 

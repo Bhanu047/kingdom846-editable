@@ -100,39 +100,42 @@ const bearStats = (i, c, a) => ({
   archers: { attack: a[0], lethality: a[1], widget: '0', widgetStat: 'attack' },
 })
 
-// Golden values, not a tolerance. A `<= 1` bound is satisfied by flooring too,
-// so it would not have caught the bug this test exists for: both splits below
-// were displayed one Infantry point low (2/27/71 and 0/40/59) before the fix.
-test('bear formation projects to the nearest split, not the floored one', () => {
-  const golden = [
-    { stats: bearStats([100, 100], [100, 100], [100, 100]), expect: [3, 27, 70] },
-    { stats: bearStats([122, 97.6], [228, 182.4], [180, 150]), expect: [1, 40, 59] },
-  ]
-  for (const { stats, expect } of golden) {
-    const r = optimizeBearFormation({ stats, tier: 'TG5-TG7', capacity: 150000 })
-    assert.deepEqual([r.whole.infantry, r.whole.cavalry, r.whole.archers], expect)
-  }
+// [VALIDATED] Ground truth from frakinator.streamlit.app, 2026-08-25. With
+// these leader stats the exact optimum is 2.8987/26.1310/70.9703 and the
+// reference tool displays 2/26/72 -- Infantry floored, not rounded. A nearest
+// projection gives 3/26/71 and was briefly shipped here; this test exists so
+// that mistake cannot be made twice.
+test('bear formation reproduces the reference calculator', () => {
+  const r = optimizeBearFormation({
+    stats: bearStats([577.3, 388.1], [577.3, 388.5], [577.3, 399.0]),
+    tier: 'TG5-TG7',
+    capacity: 150000,
+  })
+  assert.deepEqual([r.whole.infantry, r.whole.cavalry, r.whole.archers], [2, 26, 72])
+  // The continuous solution behind it, pinned so a change to the damage model
+  // shows up here as well as in the projected split.
+  assert.ok(Math.abs(r.continuousRatio.infantry * 100 - 2.8987) < 0.001)
+  assert.ok(Math.abs(r.continuousRatio.cavalry * 100 - 26.1310) < 0.001)
+  assert.ok(Math.abs(r.continuousRatio.archers * 100 - 70.9703) < 0.001)
 })
 
-test('bear whole-percent split totals 100 and rounds each share up or down', () => {
+test('bear whole-percent split always totals 100, with Infantry floored', () => {
   const cases = [
     bearStats([100, 100], [100, 100], [100, 100]),
     bearStats([150, 120], [160, 130], [180, 150]),
-    bearStats([122, 97.6], [228, 182.4], [180, 150]),
+    bearStats([577.3, 388.1], [577.3, 388.5], [577.3, 399.0]),
     bearStats([300, 280], [120, 100], [110, 90]),
     bearStats([120, 100], [130, 110], [260, 240]),
+    bearStats([1709.7, 1792.1], [1598.7, 1669.3], [1713.2, 1821.3]),
   ]
   for (const stats of cases) {
     const r = optimizeBearFormation({ stats, tier: 'TG5-TG7', capacity: 150000 })
     const whole = [r.whole.infantry, r.whole.cavalry, r.whole.archers]
     assert.equal(whole.reduce((x, y) => x + y, 0), 100, `does not total 100: ${whole}`)
-    // Largest remainder never moves a share further than to its own floor or
-    // ceiling; anything outside that is a different algorithm.
-    for (const type of ['infantry', 'cavalry', 'archers']) {
-      const exact = r.continuousRatio[type] * 100
-      assert.ok(r.whole[type] === Math.floor(exact) || r.whole[type] === Math.ceil(exact),
-        `${type} shown as ${r.whole[type]}, outside [${Math.floor(exact)}, ${Math.ceil(exact)}] for optimum ${exact.toFixed(2)}`)
-    }
+    // Archers absorb the remainder, so only Infantry and Cavalry track their
+    // own exact shares.
+    assert.equal(r.whole.infantry, Math.floor(r.continuousRatio.infantry * 100 + 1e-9),
+      `Infantry should be floored, got ${r.whole.infantry} for ${(r.continuousRatio.infantry * 100).toFixed(4)}`)
   }
 })
 

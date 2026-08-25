@@ -1728,7 +1728,10 @@ const Score = (() => {
   const now = () => (window.performance && performance.now) ? performance.now() : Date.now();
   const play = theme => (SCORES[theme] || SCORES.sapphire)();
   let pending = null, pendingAt = 0;
+  const watchers = [];
+  const notify = () => watchers.forEach(f => { try { f(); } catch(_){} });
   function flush(){
+    notify();
     if (!pending) return;
     const theme = pending; pending = null;
     skew = (now() - pendingAt) / 1000;
@@ -1752,13 +1755,41 @@ const Score = (() => {
       };
       const evs = ['pointerdown','touchstart','keydown','wheel'];
       const off = evs.map(e => {
-        const h = () => go();
+        // The sound button is excluded on purpose. It has its own handler that
+        // resumes and unmutes, and this one fires first -- on pointerdown, before
+        // the click lands -- so letting it through would make audio audible a
+        // moment before the button asked "is it audible?", and the button would
+        // answer yes and mute the sound the visitor just clicked to hear.
+        const h = ev => { const t = ev && ev.target;
+          if (t && t.closest && t.closest('#sound')) return;
+          go(); };
         window.addEventListener(e, h, { passive: true });
         return () => window.removeEventListener(e, h);
       });
       go();
     },
     get muted(){ return !on },
+
+    // Whether sound is actually coming out, which is not the same as whether it
+    // is switched on. It is only true when the browser has released the context
+    // AND nobody has muted it; the label on the button is driven from this, so
+    // it can never claim SOUND ON over silence.
+    audible(){ return !!(ac && ac.state === 'running' && on) },
+
+    // Turn sound on for real: unmute, and ask the browser again -- this runs off
+    // a click, so this is exactly the gesture it has been waiting for.
+    enable(){
+      init(); on = true;
+      master.gain.linearRampToValueAtTime(.9, T()+.15);
+      if (ac.state !== 'running') ac.resume().then(() => { flush(); notify(); }).catch(()=>{});
+      else notify();
+    },
+    mute(){
+      init(); on = false;
+      master.gain.linearRampToValueAtTime(.0001, T()+.4);
+      notify();
+    },
+    onchange(fn){ watchers.push(fn); },
     start(theme){
       init();
       if (ac.state === 'running') { skew = 0; play(theme); return; }
@@ -1830,12 +1861,27 @@ if (document.readyState === 'complete') begin();
 else window.addEventListener('load', begin, { once: true });
 document.getElementById('skip').addEventListener('click', e => { e.stopPropagation(); skipIntro(); });
 document.getElementById('replay').addEventListener('click', e => { e.stopPropagation(); Score.arm(); run(true); });
-document.getElementById('sound').addEventListener('click', e => {
+// The button said SOUND ON from the moment the page loaded, whatever the audio
+// was actually doing -- and since a browser holds audio until you interact, that
+// was usually a label over silence. Worse, it was wired as a plain toggle: the
+// state behind it started ON, so the click you made *because* you could not hear
+// anything flipped it to OFF and muted the thing you were trying to start. The
+// click did wake the audio; the volume it woke into was zero.
+//
+// The label now reads the real state -- released by the browser AND not muted --
+// and the click means "make sound happen": if there is nothing audible it
+// unmutes and asks the browser again, and only mutes when sound is genuinely
+// playing. It also re-labels itself when audio frees up on some other gesture,
+// so it never sits on the wrong word.
+const soundBtn = document.getElementById('sound');
+const syncSound = () => { soundBtn.textContent = Score.audible() ? 'SOUND ON' : 'SOUND OFF'; };
+soundBtn.addEventListener('click', e => {
   e.stopPropagation();
-  e.currentTarget.textContent = Score.toggle() ? 'SOUND ON' : 'SOUND OFF';
+  if (Score.audible()) Score.mute(); else Score.enable();
+  syncSound();
 });
-// The button is now a mute switch, not the way sound gets turned on.
-document.getElementById('sound').textContent = 'SOUND ON';
+Score.onchange(syncSound);
+syncSound();
 document.querySelectorAll('.theme').forEach(b => b.addEventListener('click', e => {
   e.stopPropagation();
   document.body.dataset.theme = CONFIG.theme = b.dataset.theme;

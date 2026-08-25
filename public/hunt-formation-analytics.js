@@ -9,15 +9,10 @@
   // blue, archers red) -- this file used a different mapping (infantry blue,
   // cavalry gold) that disagreed with every other troop-color chart on the site.
   const COLORS = { infantry: '#d9b94e', cavalry: '#7f9ed6', archers: '#c8655a' }
-  const WEIGHTS = { infantry: 1 / 3, cavalry: 1, archers: 4 / 3 }
-  const HERO = {
-    Alcar: { infantry: 2.80, cavalry: 1.10, archers: 1.10 },
-    Margot: { infantry: 1, cavalry: 1.50, archers: 1 },
-    Thrud: { infantry: 1.15, cavalry: 1.00, archers: 1.15 },
-    Rosa: { infantry: 1, cavalry: 1, archers: 1.30 },
-    Vivian: { infantry: 1, cavalry: 1, archers: 1.15 },
-    Yang: { infantry: 1, cavalry: 1, archers: 1.35 },
-  }
+  // Mirrors RATIO_WEIGHTS in src/lib/combat/bearOptimizer.js, which carries the
+  // measurements these came from: the Archer weight is 4.4/3 at every tier, and
+  // lead heroes do not enter the composition at all.
+  const WEIGHTS = { infantry: 1 / 3, cavalry: 1, archers: 4.4 / 3 }
 
   function section(title) {
     const h = [...document.querySelectorAll('h1,h2,h3,h4')].find(x => clean(x.textContent).toLowerCase() === title.toLowerCase())
@@ -68,22 +63,11 @@
     const lethality = Math.max(0, s.lethality) + (widgetStat === 'lethality' ? widget : 0)
     return (1 + attack / 100) * (1 + lethality / 100)
   }
-  function heroMultipliers(inputs) {
-    const out = { infantry: 1, cavalry: 1, archers: 1 }
-    TYPES.forEach(slot => {
-      const m = HERO[inputs[slot].hero] || { infantry: 1, cavalry: 1, archers: 1 }
-      TYPES.forEach(t => out[t] *= m[t])
-    })
-    return out
-  }
-  function coefficients(inputs, tier) {
-    const hm = heroMultipliers(inputs)
-    const postT6 = !/^T1-T6$/i.test(tier)
-    const arcMult = 1.1 * (postT6 ? 1.1 : 1)
+  function coefficients(inputs) {
     return {
-      infantry: attackFactor(inputs.infantry) * WEIGHTS.infantry * hm.infantry,
-      cavalry: attackFactor(inputs.cavalry) * WEIGHTS.cavalry * hm.cavalry,
-      archers: attackFactor(inputs.archers) * WEIGHTS.archers * arcMult * hm.archers,
+      infantry: attackFactor(inputs.infantry) * WEIGHTS.infantry,
+      cavalry: attackFactor(inputs.cavalry) * WEIGHTS.cavalry,
+      archers: attackFactor(inputs.archers) * WEIGHTS.archers,
     }
   }
   function normalize(r) {
@@ -160,7 +144,7 @@
     hideOldDonut(out)
 
     const opt = normalize({ infantry: pi / 100, cavalry: pc / 100, archers: pa / 100 })
-    const coeff = coefficients(inputs, tier)
+    const coeff = coefficients(inputs)
     const optScore = score(coeff, opt)
     const balancedScore = score(coeff, { infantry: 1/3, cavalry: 1/3, archers: 1/3 })
     const gain = balancedScore > 0 ? (optScore / balancedScore - 1) * 100 : 0

@@ -12,6 +12,8 @@ import { optimizeBearFormation } from '../src/lib/combat/bearOptimizer.js'
 import { armyFromSplit, optimizeTrialSplit } from '../src/lib/combat/mysticTrials.js'
 import { optimizePvpComposition } from '../src/lib/combat/pvpBattle.js'
 import { computeHuntImpact, HUNT_JOINER_HEROES } from '../src/lib/combat/huntImpact.js'
+import { runBattle } from '../src/lib/combat/kingshotCombat.js'
+import { skillModifier, simulatePvpBattle } from '../src/lib/combat/pvpBattle.js'
 
 const sum = (o) => TROOP_TYPES.reduce((t, k) => t + o[k], 0)
 const flatStats = Object.fromEntries(TROOP_TYPES.map((t) => [t, { attack: 120, lethality: 110, defense: 100, health: 100 }]))
@@ -269,4 +271,94 @@ test('hunt impact flags a score computed from no player stats', () => {
 test('every selectable joiner is a known hero', () => {
   assert.ok(HUNT_JOINER_HEROES.includes('None'))
   assert.equal(new Set(HUNT_JOINER_HEROES).size, HUNT_JOINER_HEROES.length)
+})
+
+// ------------------------------------------------- engine-wide invariants
+//
+// Mystic Trials and PvP have no reference calculator to check against, so
+// these pin properties that must hold whatever the true formula turns out to
+// be. A violation here is a bug even without external ground truth.
+
+const fullArmy = (n, atk = 120, leth = 110) => Object.fromEntries(TROOP_TYPES.map(
+  (t) => [t, { count: n, attack: atk, lethality: leth, defense: 100, health: 100, tier: 'T10' }]))
+const fullStats = (atk = 120, leth = 110) => Object.fromEntries(TROOP_TYPES.map(
+  (t) => [t, { attack: atk, lethality: leth, defense: 100, health: 100 }]))
+
+test('identical armies favour neither side', () => {
+  const r = runBattle(fullArmy(20000), fullArmy(20000))
+  assert.ok(Math.abs(r.survivalEdge) < 1e-9, `edge ${r.survivalEdge}`)
+  assert.ok(!r.attackerWins && !r.defenderWins, `outcome ${r.outcome}`)
+})
+
+test('survival edge never decreases as your army grows', () => {
+  let prev = -Infinity
+  for (const n of [5000, 10000, 20000, 40000, 80000]) {
+    const edge = runBattle(fullArmy(n), fullArmy(20000)).survivalEdge
+    assert.ok(edge >= prev - 1e-9, `${n} troops scored ${edge}, below ${prev}`)
+    prev = edge
+  }
+})
+
+test('survival edge never decreases as your attack grows', () => {
+  let prev = -Infinity
+  for (const atk of [50, 100, 200, 400, 800]) {
+    const edge = runBattle(fullArmy(20000, atk), fullArmy(20000)).survivalEdge
+    assert.ok(edge >= prev - 1e-9, `${atk}% attack scored ${edge}, below ${prev}`)
+    prev = edge
+  }
+})
+
+test('the optimizers return the best candidate they found', () => {
+  const enemyArmy = fullArmy(20000)
+  const m = optimizeTrialSplit({ totalTroops: 60000, yourStats: fullStats(), enemyArmy, stepPercent: 10 })
+  const clearing = m.candidates.filter((c) => c.clears)
+  const pool = clearing.length ? clearing : m.candidates
+  const trueBest = pool.reduce((best, c) => (c.survivalEdge > best.survivalEdge ? c : best), pool[0])
+  assert.ok(m.best.survivalEdge >= trueBest.survivalEdge - 1e-12)
+  assert.equal(Number(m.best.clears), Number(trueBest.clears))
+
+  const p = optimizePvpComposition({ totalTroops: 60000, yourStats: fullStats(), enemyArmy, stepPercent: 10 })
+  const pBest = p.candidates.reduce((best, c) => (c.survivalEdge > best.survivalEdge ? c : best), p.candidates[0])
+  assert.ok(p.best.survivalEdge >= pBest.survivalEdge - 1e-12)
+})
+
+test('bounds actually constrain both searches', () => {
+  const enemyArmy = fullArmy(20000)
+  const bounds = { minInfantry: 20, maxInfantry: 40, minCavalry: 0, maxCavalry: 100, minArchers: 0, maxArchers: 100 }
+  for (const [label, result] of [
+    ['mystic', optimizeTrialSplit({ totalTroops: 60000, yourStats: fullStats(), enemyArmy, stepPercent: 5, bounds })],
+    ['pvp', optimizePvpComposition({ totalTroops: 60000, yourStats: fullStats(), enemyArmy, stepPercent: 5, bounds })],
+  ]) {
+    assert.ok(result.candidates.length > 0, `${label} found nothing`)
+    for (const c of result.candidates) {
+      assert.ok(c.split[0] >= 20 && c.split[0] <= 40, `${label} produced infantry ${c.split[0]}, outside 20..40`)
+    }
+  }
+})
+
+test('skillModifier algebra holds', () => {
+  assert.equal(skillModifier({}), 1)
+  assert.ok(Math.abs(skillModifier({ damageUp: 100 }) - 2) < 1e-12)
+  // Raising your damage and cutting theirs by the same amount are inverses.
+  const up = skillModifier({ damageUp: 50 })
+  const down = skillModifier({ opponentDamageDown: 50 })
+  assert.ok(Math.abs(up * down - 1) < 1e-12, `${up} * ${down}`)
+  for (const v of [0, 50, 100, 500, -50]) assert.ok(skillModifier({ damageUp: v }) > 0)
+})
+
+test('losses reconcile with starting and remaining counts', () => {
+  const r = simulatePvpBattle({ attacker: fullArmy(30000), defender: fullArmy(25000) })
+  assert.equal(r.attackerLosses, r.startingAttacker - r.remainingAttacker)
+  assert.equal(r.defenderLosses, r.startingDefender - r.remainingDefender)
+  for (const rate of [r.attackerLossRate, r.defenderLossRate]) {
+    assert.ok(rate >= 0 && rate <= 1, `loss rate ${rate} outside [0,1]`)
+  }
+})
+
+test('the mystic optimizer is deterministic', () => {
+  const run = () => JSON.stringify(optimizeTrialSplit({
+    totalTroops: 40000, yourStats: fullStats(), enemyArmy: fullArmy(20000), stepPercent: 10,
+  }).best.split)
+  const first = run()
+  for (let i = 0; i < 3; i += 1) assert.equal(run(), first)
 })

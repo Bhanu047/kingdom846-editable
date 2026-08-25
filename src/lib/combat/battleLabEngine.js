@@ -1,3 +1,5 @@
+import { allocateCounts } from './kingshotCombat.js'
+
 const TYPES = ['infantry', 'cavalry', 'archers']
 
 export const TROOP_LABELS = {
@@ -402,9 +404,12 @@ export function optimizeMysticComposition({ yourArmy, opponentArmy, sparsity = 0
       const arc = Math.max(0, 1 - infClamped - cav)
       if (arc < minArc - 1e-9 || arc > maxArc + 1e-9) continue
       const composition = { infantry: infClamped, cavalry: cav, archers: arc }
+      // Allocated together, not rounded per type, so the candidate army is
+      // exactly the size of the one the player actually has.
+      const marched = allocateCounts(totalYourTroops, composition)
       const army = {}
       TYPES.forEach((type) => {
-        army[type] = { ...yours[type], count: Math.round(totalYourTroops * composition[type]) }
+        army[type] = { ...yours[type], count: marched[type] }
       })
       const result = simulateT10Battle({ attacker: army, defender: opponent, maxRounds })
       const margin = result.remainingA - result.remainingD
@@ -419,7 +424,8 @@ export function optimizeMysticComposition({ yourArmy, opponentArmy, sparsity = 0
   // just the optimum in isolation.
   const classicalComposition = { infantry: .5, cavalry: .25, archers: .25 }
   const classicalArmy = {}
-  TYPES.forEach((type) => { classicalArmy[type] = { ...yours[type], count: Math.round(totalYourTroops * classicalComposition[type]) } })
+  const classicalCounts = allocateCounts(totalYourTroops, classicalComposition)
+  TYPES.forEach((type) => { classicalArmy[type] = { ...yours[type], count: classicalCounts[type] } })
   const classicalResult = simulateT10Battle({ attacker: classicalArmy, defender: opponent, maxRounds })
   const classical = { composition: classicalComposition, result: classicalResult, margin: classicalResult.remainingA - classicalResult.remainingD }
 

@@ -20,7 +20,7 @@
 // commit an army, you are dividing a fixed one. So this module optimizes a
 // split and never asks the player about heroes or march size.
 
-import { TROOP_TYPES, runBattle, armyTotal, DEFAULT_TIER, NEAR_OPTIMAL_TOLERANCE, simulateOutcomes } from './kingshotCombat.js'
+import { TROOP_TYPES, runBattle, armyTotal, allocateCounts, percentAxis, DEFAULT_TIER, NEAR_OPTIMAL_TOLERANCE, simulateOutcomes } from './kingshotCombat.js'
 
 // [DOC] Each zone draws on a different pool of your bonuses, which is why the
 // same account reports ~180% in Knowledge Nexus and ~897% in Molten Fort.
@@ -63,8 +63,12 @@ const clampFraction = (v) => Math.min(1, Math.max(0, v))
 
 /** Builds an army of `total` troops split by fractions, all sharing per-type stats. */
 export function armyFromSplit(total, split, statsByType, tier = DEFAULT_TIER) {
+  // Allocated together rather than rounded per type: rounding each share on its
+  // own put 99 or 101 troops on the field when 100 were asked for, so the
+  // simulated army was not the one the player described.
+  const counts = allocateCounts(total, Object.fromEntries(TROOP_TYPES.map((type) => [type, clampFraction(num(split[type]))])))
   return Object.fromEntries(TROOP_TYPES.map((type) => [type, {
-    count: Math.round(Math.max(0, num(total)) * clampFraction(num(split[type]))),
+    count: counts[type],
     attack: num(statsByType?.[type]?.attack),
     lethality: num(statsByType?.[type]?.lethality),
     defense: num(statsByType?.[type]?.defense),
@@ -137,8 +141,10 @@ export function optimizeTrialSplit({
   }
 
   const candidates = []
-  for (let inf = 0; inf <= 100; inf += step) {
-    for (let cav = 0; inf + cav <= 100; cav += step) {
+  const axis = percentAxis(step)
+  for (const inf of axis) {
+    for (const cav of axis) {
+      if (inf + cav > 100 + 1e-9) continue
       const arc = 100 - inf - cav
       if (!within(inf, cav, arc)) continue
       candidates.push(evaluate(inf, cav, arc))

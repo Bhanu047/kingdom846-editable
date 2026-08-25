@@ -84,6 +84,9 @@ function normalizedTierGroup(tier = 'TG5-TG7', tg = 0) {
   if (value === 'TG3-TG4') return 'TG3-TG4'
   if (value === 'TG5-TG7') return 'TG5-TG7'
 
+  // Reached only when `tier` is not one of the labels above. An explicit label
+  // therefore always wins over `tg`, and `tg` acts purely as a fallback for
+  // callers that pass a raw tier number instead of a group name.
   const tgMatch = value.match(/^TG(\d+)(?:-TG(\d+))?$/)
   const tgLevel = tgMatch ? Number(tgMatch[1]) : Math.max(0, number(tg))
   if (tgLevel >= 5) return 'TG5-TG7'
@@ -95,6 +98,17 @@ function normalizedTierGroup(tier = 'TG5-TG7', tg = 0) {
   return 'T7-TG2'
 }
 
+// [UNCALIBRATED] This resolves to exactly two values -- 1.10 for T1-T6 and
+// 1.21 for everything above it. The four groups `normalizedTierGroup` parses
+// therefore produce only two distinct results: T7-TG2, TG3-TG4 and TG5-TG7 are
+// numerically identical, and so are the T7/T10/T11 labels that map onto them.
+// The tier selector consequently looks finer-grained in the UI than the model
+// actually is. Splitting those groups apart needs measured per-tier Bear damage
+// that we do not have, so they are deliberately left equal rather than given
+// invented coefficients. tests/combat.test.mjs pins the collapse ("bear tier
+// groups above T6 are still uncalibrated and identical") so it cannot be
+// mistaken for calibrated behaviour: if real per-tier data lands, that test
+// SHOULD fail and this note should go with it.
 function archerBearMultiplier(tier = 'TG5-TG7', tg = 0) {
   // Bear is Infantry, so Archers receive the natural 10% counter advantage.
   // Post-T6 / True-Gold troop families receive the additional 10% Archer factor
@@ -169,22 +183,34 @@ function continuousOptimalFormation(stats = {}, tier = 'TG5-TG7', tg = 0, leadHe
   return Object.fromEntries(TYPES.map((type) => [type, squares[type] / denominator]))
 }
 
-// Frakinator publishes the analytical Lagrange solution as fractions and then
-// presents a whole-percent 100-point composition. Keep the analytical optimum
-// intact and only quantize for display: conservative Infantry floor, nearest
-// Cavalry, Archer remainder. This is a projection of the continuous solution,
-// not a lookup table or a per-report override.
+// The analytical optimum is continuous; the card shows whole percents. The
+// projection down to 100 points has to be the NEAREST split, or the number on
+// screen is not the answer the model computed.
+//
+// The previous version floored Infantry and rounded Cavalry. Because the
+// Infantry share is usually a fraction of a point, flooring it drove it to
+// zero or one below its true value in 217 of 450 sampled stat combinations --
+// a continuous 2.99/26.93/70.08 was displayed as 2/27/71, and 0.99/39.82/59.19
+// as 0/40/60. The damage cost of being one point out is negligible; being
+// visibly one point off the optimum every other time is not, because it is
+// what makes the card disagree with any other calculator a player checks.
+//
+// Largest remainder rounds every share to its nearest point and still totals
+// exactly 100. Ties break toward the earlier troop type so the same stats
+// always project the same way.
 function projectContinuousRatio(ratio = {}) {
-  const rawInf = Math.max(0, number(ratio.infantry)) * 100
-  const rawCav = Math.max(0, number(ratio.cavalry)) * 100
-  let infantry = Math.max(MIN_FORMATION_PERCENT, Math.min(100, Math.floor(rawInf + 1e-9)))
-  let cavalry = Math.max(MIN_FORMATION_PERCENT, Math.min(100 - infantry, Math.round(rawCav)))
-  let archers = 100 - infantry - cavalry
-  if (archers < MIN_FORMATION_PERCENT) {
-    cavalry = Math.max(MIN_FORMATION_PERCENT, cavalry + archers)
-    archers = 100 - infantry - cavalry
-  }
-  return { infantry, cavalry, archers }
+  const raw = TYPES.map((type) => Math.max(0, number(ratio[type])))
+  const sum = raw.reduce((total, value) => total + value, 0)
+  const points = sum > 0 ? raw.map((value) => (value / sum) * 100) : TYPES.map(() => 100 / 3)
+
+  const whole = points.map((value) => Math.floor(value))
+  let left = 100 - whole.reduce((total, value) => total + value, 0)
+  const order = points
+    .map((value, i) => ({ i, remainder: value - Math.floor(value) }))
+    .sort((a, b) => b.remainder - a.remainder || a.i - b.i)
+  for (let k = 0; left > 0; k += 1, left -= 1) whole[order[k % order.length].i] += 1
+
+  return Object.fromEntries(TYPES.map((type, i) => [type, Math.max(MIN_FORMATION_PERCENT, whole[i])]))
 }
 
 export function optimizeBearFormation(input = {}) {
@@ -192,6 +218,13 @@ export function optimizeBearFormation(input = {}) {
   const tier = input.tier || 'TG5-TG7'
   const tg = Math.max(0, Math.min(10, Math.floor(number(input.tg))))
   const leadHeroes = input.leadHeroes || {}
+  // With every stat blank the coefficients collapse to the structural weights
+  // alone, and the model returns a confident-looking split derived from no
+  // player data at all. BearSuite guards this at the form (`validStats`), but
+  // the library was happy to answer `undefined`, so any other caller got a
+  // fabricated recommendation. The split is still returned -- callers that only
+  // want the shape keep working -- but it is now labelled.
+  const hasStats = TYPES.some((type) => number(input.stats?.[type]?.attack) > 0 || number(input.stats?.[type]?.lethality) > 0)
   const { factors, coefficients, arcMult, heroMult, heroEffects } = coefficientsFor(input.stats, tier, tg, leadHeroes)
   const continuousRatio = continuousOptimalFormation(input.stats, tier, tg, leadHeroes)
   const whole = projectContinuousRatio(continuousRatio)
@@ -242,7 +275,10 @@ export function optimizeBearFormation(input = {}) {
     optimizedScore,
     balancedScore,
     gainVsBalanced,
-    model: 'hunt-formation-lagrange-v7-specialist-heroes',
+    // False when no attack/lethality figure was supplied: the split below is
+    // structural, not a recommendation derived from this player's stats.
+    hasStats,
+    model: 'hunt-formation-lagrange-v8-nearest-projection',
   }
 }
 

@@ -380,6 +380,15 @@ body[data-theme="celestial"] .play .title span{animation:letterDrift 1.6s cubic-
 .hud button:focus-visible,.cta:focus-visible,.gate:focus-visible{outline:2px solid rgba(255,238,190,.9);outline-offset:3px;}
 .hud .theme{display:none;}
 body.preview .hud .theme{display:inline-block;}
+/* REPLAY is a reviewing tool -- it exists to watch the film again while judging
+   the nine, which is a thing we do and a visitor never does. It was on the
+   public screen only because it was never gated, the same way the hall buttons
+   above are. SKIP INTRO stays: eight seconds is worth sitting through once and
+   not twice, and it is the only control a returning visitor actually wants.
+   SOUND stays too -- it is the mute switch, and someone in a quiet room needs
+   a way out that is not closing the tab. */
+.hud #replay{display:none;}
+body.preview .hud #replay{display:inline-block;}
 body.preview .hud.right{max-width:min(680px,70vw);flex-wrap:wrap;justify-content:flex-end;}
 body.preview .hud.right button{font-size:8px;padding:8px 10px;}
 #skip{opacity:0;transition:opacity .5s ease;}
@@ -1355,6 +1364,22 @@ const BG = (function(){
 const Score = (() => {
   let ac, master, on = true;
   const T = () => ac.currentTime;
+
+  // How far the film is ahead of the score.
+  //
+  // A browser will not let a page start audio until the visitor has clicked,
+  // tapped or typed. Until then the AudioContext is suspended and its clock is
+  // frozen, so a beat queued for "three seconds from now" is queued against a
+  // now that never arrives -- and the instant audio unblocks, the entire score
+  // fires from bar one while the picture is already seconds down the timeline.
+  // The strike lands after the crest instead of on it, which is the one thing
+  // the scores are written not to do.
+  //
+  // So when audio starts late, the score starts late too: skew is the seconds
+  // of film already gone, every beat is pulled forward by it, and beats whose
+  // moment has passed are dropped rather than played out of place.
+  let skew = 0;
+  const cue = at => { const d = at - skew; return d < 0 ? null : T() + d; };
   function init(){
     if (ac) return;
     ac = new (window.AudioContext || window.webkitAudioContext)();
@@ -1397,7 +1422,7 @@ const Score = (() => {
     })();
   }
   function pad(at, freqs, vol, dur){
-    const t=T()+at;
+    const t=cue(at); if (t===null) return;
     freqs.forEach((hz,i)=>{
       const o=ac.createOscillator(), g=ac.createGain(), f=ac.createBiquadFilter();
       o.type = i%2 ? 'triangle':'sine'; o.frequency.value=hz; o.detune.value=Math.random()*10-5;
@@ -1441,7 +1466,7 @@ const Score = (() => {
 
   // Brass: stacked detuned saws through a sweeping lowpass. Ceremony.
   function brass(at, freqs, vol, dur){
-    const t=T()+at;
+    const t=cue(at); if (t===null) return;
     freqs.forEach((hz,i)=>{
       const o=ac.createOscillator(), g=ac.createGain(), f=ac.createBiquadFilter();
       o.type='sawtooth'; o.frequency.value=hz; o.detune.value=(i-1)*7;
@@ -1457,7 +1482,7 @@ const Score = (() => {
   }
   // Pipe organ: a root with its fifth and octaves, square-ish, no attack.
   function organ(at, root, vol, dur){
-    const t=T()+at;
+    const t=cue(at); if (t===null) return;
     [1,1.5,2,3,4].forEach((m,i)=>{
       const o=ac.createOscillator(), g=ac.createGain();
       o.type = i%2 ? 'square' : 'sine'; o.frequency.value=root*m; o.detune.value=Math.random()*6-3;
@@ -1471,7 +1496,7 @@ const Score = (() => {
   }
   // Gong: inharmonic partials with a long metallic decay.
   function gong(at, base, vol){
-    const t=T()+at;
+    const t=cue(at); if (t===null) return;
     [1,2.37,3.41,4.63,5.9,7.2].forEach((m,i)=>{
       const o=ac.createOscillator(), g=ac.createGain();
       o.type='sine'; o.frequency.value=base*m; o.detune.value=Math.random()*14-7;
@@ -1510,7 +1535,7 @@ const Score = (() => {
 
   // A struck skin -- pitch drops fast, body is filtered noise.
   function drum(at, hz, vol){
-    const t=T()+at;
+    const t=cue(at); if (t===null) return;
     const o=ac.createOscillator(), g=ac.createGain(); o.type='sine';
     o.frequency.setValueAtTime(hz,t); o.frequency.exponentialRampToValueAtTime(hz*.4,t+.28);
     g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(vol,t+.012);
@@ -1523,7 +1548,7 @@ const Score = (() => {
   }
   // A small struck bell.
   function bell(at, hz, vol){
-    const t=T()+at;
+    const t=cue(at); if (t===null) return;
     [1,2.76,5.4].forEach((m,i)=>{
       const o=ac.createOscillator(), g=ac.createGain(); o.type='sine'; o.frequency.value=hz*m;
       const v=vol/(1+i*2), d=4-i*.9;
@@ -1536,7 +1561,7 @@ const Score = (() => {
   // horizon -- distance is mostly high frequency being lost on the way, so a
   // far strike opens dark and stays dark, and only a near one gets the snap.
   function thunder(at, vol, near){
-    const t=T()+at;
+    const t=cue(at); if (t===null) return;
     const n=ac.createBufferSource(); n.buffer=noiseBuf(5);
     const f=ac.createBiquadFilter(); f.type='lowpass';
     f.frequency.setValueAtTime(near?2600:520,t);
@@ -1699,6 +1724,17 @@ const Score = (() => {
     },
   };
 
+  // Wall-clock, not the audio clock: the audio clock is exactly what stops.
+  const now = () => (window.performance && performance.now) ? performance.now() : Date.now();
+  const play = theme => (SCORES[theme] || SCORES.sapphire)();
+  let pending = null, pendingAt = 0;
+  function flush(){
+    if (!pending) return;
+    const theme = pending; pending = null;
+    skew = (now() - pendingAt) / 1000;
+    play(theme);
+  }
+
   return {
     // Browsers refuse to start audio without a user gesture. The old build met
     // that with a full-screen "click to begin" wall. This meets it invisibly:
@@ -1711,7 +1747,7 @@ const Score = (() => {
       if (ac.state === 'running') return;
       const go = () => {
         ac.resume().then(() => {
-          if (ac.state === 'running') off.forEach(f => f());
+          if (ac.state === 'running') { off.forEach(f => f()); flush(); }
         }).catch(() => {});
       };
       const evs = ['pointerdown','touchstart','keydown','wheel'];
@@ -1724,8 +1760,14 @@ const Score = (() => {
     },
     get muted(){ return !on },
     start(theme){
-      init(); if (ac.state!=='running') ac.resume().catch(()=>{});
-      (SCORES[theme] || SCORES.sapphire)();
+      init();
+      if (ac.state === 'running') { skew = 0; play(theme); return; }
+      // Held by the autoplay policy. Do not schedule against a frozen clock --
+      // hold the score and note when it should have begun, so whatever is left
+      // of it can be dropped into place if audio unblocks while the film runs.
+      pending = theme;
+      pendingAt = now();
+      ac.resume().catch(()=>{});
     },
     // Leaving sounds like the hall you are leaving.
     fanfare(theme){

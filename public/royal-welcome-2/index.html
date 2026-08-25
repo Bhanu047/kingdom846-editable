@@ -23,7 +23,50 @@
 <link rel="icon" href="assets/icon-512.png" sizes="512x512" />
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
 <link rel="preload" as="image" href="assets/crest.webp" fetchpriority="high" />
-<link rel="preload" as="image" href="assets/hall-sapphire.webp" fetchpriority="high" id="pre-bg" />
+<link rel="preload" as="image" fetchpriority="high" id="pre-bg" />
+<!-- The hall of the week.
+     There are nine of these rooms and only one of them was ever being shown.
+     Now the kingdom moves through them: one hall per week, in order, and after
+     Celestial Palace it comes back round to Sapphire and goes again. Nobody has
+     to remember to change it, and it never lands on a hall at random -- every
+     visitor in a given week walks into the same room, which is the whole point
+     of a front door.
+
+     The week turns at 00:00 UTC on Monday, the same moment the game resets its
+     weekly quests, so "this week's hall" means the same thing here as it does
+     in-game. Deriving it from the clock rather than storing it keeps this page
+     a static file with no server and no state to drift.
+
+     This runs in the head, before the preload above has an href, because that
+     preload is fetchpriority=high: if the hall were chosen further down the
+     page the browser would already have committed to fetching Sapphire, and
+     eight weeks out of nine that is a full-size hall image downloaded at top
+     priority and thrown away. The href is set the instant the element exists.
+
+     An explicit ?theme= still wins -- the gallery and the voting page both pass
+     one, and they must keep showing the hall they asked for.
+
+     The filenames follow assets/hall-<id>.webp for all nine; THEMES further
+     down is still the source of truth and re-points both the preload and the
+     background from its own src, so a name that ever stopped matching would
+     cost one wasted preload and show up the moment you loaded the page. -->
+<script>
+window.K846_HALLS = ['sapphire','coronation','moonlit','embers','cathedral',
+                     'storm','dragongate','warcamp','celestial'];
+/* Monday 24 Aug 2026, 00:00 UTC -- the week this rotation started, on Sapphire. */
+window.K846_CYCLE_START = Date.UTC(2026, 7, 24);
+window.K846_HALL = (function () {
+  var asked = new URLSearchParams(location.search).get('theme');
+  if (asked && window.K846_HALLS.indexOf(asked) !== -1) return asked;
+  var n = window.K846_HALLS.length;
+  var week = Math.floor((Date.now() - window.K846_CYCLE_START) / 604800000);
+  /* Double modulo: a device whose clock is set before the start date gives a
+     negative week, and -1 % 9 is -1 in JS, which would index nothing. */
+  return window.K846_HALLS[((week % n) + n) % n];
+})();
+document.getElementById('pre-bg').href = 'assets/hall-' + window.K846_HALL + '.webp';
+document.documentElement.style.setProperty('--bg-img', "url('assets/hall-" + window.K846_HALL + ".webp')");
+</script>
 <!-- Nine halls, nine voices -- and the faces ship with the build.
      These were on Google Fonts, which meant every visitor waited on a third
      party and, if it was slow or blocked, silently got the same fallback serif
@@ -1024,7 +1067,7 @@ void main(){
 <script>
 /* ===== themes ===== */
 const CONFIG = {
-  theme: 'sapphire',          // 'sapphire' | 'coronation' | 'moonlit'
+  theme: window.K846_HALL,    // the hall of the week -- chosen in the head, see there
   enterUrl: '/',              // only used when opened standalone (gallery / ?preview=1);
                               // inside the app's splash iframe the handoff is a postMessage
   skipIntroOnReturn: true,    // returning visitors in the same tab get the fast open
@@ -1049,6 +1092,7 @@ const PREVIEW = PARAMS.has('preview');
 const FORCE_INTRO = PREVIEW || PARAMS.has('fresh');
 if (THEMES[PARAMS.get('theme')]) CONFIG.theme = PARAMS.get('theme');
 if (!THEMES[CONFIG.theme]) CONFIG.theme = 'sapphire';
+if (PREVIEW) console.info('[k846] hall of the week:', CONFIG.theme);
 document.body.dataset.theme = CONFIG.theme;
 document.documentElement.style.setProperty('--bg-img', `url('${THEMES[CONFIG.theme].src}')`);
 const preBg = document.getElementById('pre-bg'); if (preBg) preBg.href = THEMES[CONFIG.theme].src;

@@ -1,4 +1,4 @@
-import { computeBearDamageScore, optimizeBearFormation } from './bearOptimizer.js'
+import { computeBearDamage, computeBearDamageScore, optimizeBearFormation } from './bearOptimizer.js'
 
 const TYPES = ['infantry', 'cavalry', 'archers']
 
@@ -75,11 +75,14 @@ export function computeHuntImpact({ stats, tier, tg = 0, ratio, leadHeroes = {},
   const hasStats = TYPES.some((type) => number(stats?.[type]?.attack) > 0 || number(stats?.[type]?.lethality) > 0)
   const adjustedStats = applyJoinerBonuses(stats, normalizedJoiners)
   const totalTroops = TYPES.reduce((sum, type) => sum + Math.max(0, number(troopCounts?.[type])), 0)
-  const actualScore = computeBearDamageScore({ stats: adjustedStats, tier, tg, ratio, leadHeroes })
+  const actualScore = computeBearDamageScore({ stats: adjustedStats, ratio })
   const optimal = optimizeBearFormation({ stats: adjustedStats, tier, tg, leadHeroes, capacity: Math.max(1, totalTroops) })
   const efficiency = optimal.optimizedScore > 0 ? actualScore / optimal.optimizedScore * 100 : 0
-  const impactIndex = totalTroops > 0 ? actualScore * Math.sqrt(totalTroops) : 0
-  const optimalImpactIndex = totalTroops > 0 ? optimal.optimizedScore * Math.sqrt(totalTroops) : 0
+  // Bear points, not an index: the coefficient in bearOptimizer is calibrated
+  // against the reference calculator's own damage plots, so these two figures
+  // are directly comparable with what it reports for the same rally.
+  const impactIndex = computeBearDamage({ stats: adjustedStats, ratio, totalTroops })
+  const optimalImpactIndex = computeBearDamage({ stats: adjustedStats, ratio: optimal.continuousRatio, totalTroops })
   const rallyCapacity = Math.max(0, number(capacity))
   const participantCount = Math.max(0, Math.floor(number(participants)))
   const fillRate = rallyCapacity > 0 ? totalTroops / rallyCapacity * 100 : 0
@@ -102,6 +105,6 @@ export function computeHuntImpact({ stats, tier, tg = 0, ratio, leadHeroes = {},
     unmodeledJoiners,
     // False when no attack/lethality figure was supplied.
     hasStats,
-    model: 'hunt-impact-v3-reports-unmodelled-joiners',
+    model: 'hunt-impact-v4-reference-calibrated-damage-with-joiner-reporting',
   }
 }

@@ -34,7 +34,7 @@
         // used to initiate the download.
         for (const g of dash.querySelectorAll('div')) {
           const text = clean(g.textContent)
-          if (text.includes('Projected Impact') && text.includes('Optimal Impact') && text.includes('Efficiency') && text.includes('Current Formation')) {
+          if (/Projected (?:Damage|Impact)/i.test(text) && /Optimal (?:Damage|Impact)/i.test(text) && text.includes('Efficiency') && text.includes('Current Formation')) {
             setStyle(g, 'display', 'grid')
             setStyle(g, 'gridTemplateColumns', 'repeat(5,minmax(0,1fr))')
             setStyle(g, 'width', '100%')

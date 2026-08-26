@@ -103,40 +103,35 @@ const bearStats = (i, c, a) => ({
   archers: { attack: a[0], lethality: a[1], widget: '0', widgetStat: 'attack' },
 })
 
-// [VALIDATED] Ground truth from frakinator.streamlit.app, 2026-08-25. With
-// these leader stats the exact optimum is 2.8987/26.1310/70.9703 and the
-// reference tool displays 2/26/72 -- Infantry floored, not rounded. A nearest
-// projection gives 3/26/71 and was briefly shipped here; this test exists so
-// that mistake cannot be made twice.
+// [VALIDATED] Frakinator observations recorded in research/bear-reference.md,
+// replayed against the calibrated model. These three pin the damage weights;
+// the archer weight of 4.4/3 is what reproduces them.
 test('bear formation reproduces the reference calculator', () => {
-  const r = optimizeBearFormation({
-    stats: bearStats([577.3, 388.1], [577.3, 388.5], [577.3, 399.0]),
-    tier: 'TG5-TG7',
-    capacity: 150000,
-  })
-  assert.deepEqual([r.whole.infantry, r.whole.cavalry, r.whole.archers], [2, 26, 72])
-  // The continuous solution behind it, pinned so a change to the damage model
-  // shows up here as well as in the projected split.
-  assert.ok(Math.abs(r.continuousRatio.infantry * 100 - 2.8987) < 0.001)
-  assert.ok(Math.abs(r.continuousRatio.cavalry * 100 - 26.1310) < 0.001)
-  assert.ok(Math.abs(r.continuousRatio.archers * 100 - 70.9703) < 0.001)
+  const cases = [
+    { stats: bearStats([250, 140], [310, 190], [180, 260]), expect: [2, 38, 60] },
+    { stats: bearStats([500, 500], [100, 100], [300, 50]), expect: [60, 7, 33] },
+    { stats: bearStats([0, 0], [0, 0], [0, 0]), expect: [3, 31, 66] },
+  ]
+  for (const { stats, expect } of cases) {
+    const r = optimizeBearFormation({ stats, tier: 'TG5-TG7', capacity: 150000 })
+    assert.deepEqual([r.whole.infantry, r.whole.cavalry, r.whole.archers], expect)
+  }
 })
 
-// [VALIDATED] Second Frakinator measurement, 2026-08-25. This is the case that
-// determines Cavalry: at 26.8548 the reference tool shows 27, so Cavalry rounds
-// while Infantry floors. Together with the case above the projection rule is
-// fully pinned -- floor Infantry, round Cavalry, Archers take the remainder.
-test('bear formation matches the reference calculator on cavalry rounding', () => {
+// The projection rule: Infantry floors, Cavalry rounds, Archers take what is
+// left. This case is chosen because its Cavalry fraction is .8265, which floors
+// and rounds differently -- 4 against 5 -- so it actually discriminates.
+test('bear formation floors Infantry and rounds Cavalry', () => {
   const r = optimizeBearFormation({
-    stats: bearStats([180.5, 166.5], [180.5, 155.5], [180.5, 155.5]),
+    stats: bearStats([100, 80], [125, 100], [300, 240]),
     tier: 'TG5-TG7',
     capacity: 150000,
   })
-  assert.deepEqual([r.whole.infantry, r.whole.cavalry, r.whole.archers], [3, 27, 70])
-  assert.ok(Math.abs(r.continuousRatio.infantry * 100 - 3.2463) < 0.001)
-  assert.ok(Math.abs(r.continuousRatio.cavalry * 100 - 26.8548) < 0.001)
-  // The discriminating assertion: 26.8548 rounds up, it is not truncated.
-  assert.notEqual(r.whole.cavalry, 26, 'Cavalry was floored — it should round')
+  const c = r.continuousRatio
+  assert.ok(Math.abs(c.infantry * 100 - 0.3432) < 0.001)
+  assert.ok(Math.abs(c.cavalry * 100 - 4.8265) < 0.001)
+  assert.deepEqual([r.whole.infantry, r.whole.cavalry, r.whole.archers], [0, 5, 95])
+  assert.notEqual(r.whole.cavalry, 4, 'Cavalry was floored — it should round')
 })
 
 test('bear whole-percent split always totals 100, with Infantry floored', () => {
@@ -175,15 +170,25 @@ test('bear flags a result computed from no player stats', () => {
   assert.equal(optimizeBearFormation({ stats: bearStats([150, 120], [160, 130], [180, 150]), capacity: 1000 }).hasStats, true)
 })
 
-// [UNCALIBRATED] Pins the known limitation rather than a verified mechanic:
-// the archer multiplier has only two values, so every tier above T6 behaves
-// identically. If real per-tier data ever lands, this test SHOULD fail.
-test('bear tier groups above T6 are still uncalibrated and identical', () => {
+// [VALIDATED] research/bear-reference.md: all four of the reference tool's tier
+// settings return the same split for the same stats. The model previously
+// multiplied the Archer coefficient by an extra 1.1 above T6; that is gone, and
+// this pins its absence.
+//
+// [OPEN] Two Frakinator runs on 2026-08-25 at TG5-TG7 returned 2/26/72 and
+// 3/27/70, which this tier-independent model does not reproduce and the
+// pre-calibration model did. See research/tier-contradiction.mjs — the two sets
+// of observations disagree and one decisive measurement would settle it.
+test('bear tier setting does not change the split', () => {
   const stats = bearStats([150, 120], [160, 130], [180, 150])
-  const score = (tier) => optimizeBearFormation({ stats, tier, capacity: 150000 }).optimizedScore
-  const above = ['T7-TG2', 'TG3-TG4', 'TG5-TG7'].map(score)
-  assert.ok(above.every((v) => v === above[0]), 'tiers above T6 now differ — update the [UNCALIBRATED] note')
-  assert.notEqual(score('T1-T6'), above[0], 'T1-T6 should still differ from the rest')
+  const split = (tier) => {
+    const r = optimizeBearFormation({ stats, tier, capacity: 150000 })
+    return [r.whole.infantry, r.whole.cavalry, r.whole.archers].join('/')
+  }
+  const base = split('T1-T6')
+  for (const tier of ['T7-TG2', 'TG3-TG4', 'TG5-TG7']) {
+    assert.equal(split(tier), base, `${tier} differs from T1-T6`)
+  }
 })
 
 // -------------------------------------------------------------------- mystic

@@ -2,7 +2,11 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- viewport-fit=cover: without it the page stops at the safe area, so on a
+       notched iPhone held sideways the entrance is letterboxed between two black
+       bars down the left and right. The welcome screen already asked for cover;
+       this page, which hosts it, did not. -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#06152b" />
   <meta name="description" content="The official portal of Kingdom 846 — alliances, events, guides, rankings, and kingdom management. We don't wait for glory. We take it." />
   <title>Kingdom 846 — We Take What's Ours</title>
@@ -20,13 +24,29 @@
        visibly straight after ENTER THE REALM, which navigates here from the
        welcome screen. The welcome screen was already fading to black correctly;
        the white belonged to this page, arriving. -->
-  <style>html,body{background:#060810;color:#EFE6CF;margin:0}#root{background:#060810;min-height:100vh}</style>
+  <style>html,body{background:#060810;color:#EFE6CF;margin:0}#root{background:#060810;min-height:100vh}
+  /* The welcome screen only exists once React has mounted and its iframe has
+     painted. Until then nothing covers this page, so the app underneath is what
+     a visitor can catch -- the dashboard appearing first and the entrance
+     arriving on top of it a moment later. This veil ships in the HTML itself, so
+     it is on screen from the first paint, before a line of JS has run, and it
+     comes down only when the entrance is actually ready to be seen.
+     The timeout below is a safety line: if the iframe never loads, the veil
+     must not strand the site behind a dark rectangle forever. */
+  #boot-veil{position:fixed;inset:0;background:#060810;z-index:10000;pointer-events:none}
+  #boot-veil.gone{display:none}</style>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;800;900&family=Cinzel+Decorative:wght@700;900&family=Spectral:wght@300;400;500;600;700&family=Montserrat:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <link rel="icon" type="image/png" href="./favicon.png" />
 </head>
 <body>
+  <div id="boot-veil" aria-hidden="true"></div>
+  <script>
+    // Never let the veil outlive its purpose, whatever happens to the iframe.
+    window.__k846DropVeil = () => { const v = document.getElementById('boot-veil'); if (v) v.classList.add('gone'); };
+    setTimeout(window.__k846DropVeil, 8000);
+  </script>
   <div id="root"></div>
   <script src="/battle-lab-fresh-session.js"></script>
   <script type="module" src="/src/main.jsx"></script>

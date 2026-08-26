@@ -23,7 +23,50 @@
 <link rel="icon" href="assets/icon-512.png" sizes="512x512" />
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
 <link rel="preload" as="image" href="assets/crest.webp" fetchpriority="high" />
-<link rel="preload" as="image" href="assets/hall-sapphire.webp" fetchpriority="high" id="pre-bg" />
+<link rel="preload" as="image" fetchpriority="high" id="pre-bg" />
+<!-- The hall of the week.
+     There are nine of these rooms and only one of them was ever being shown.
+     Now the kingdom moves through them: one hall per week, in order, and after
+     Celestial Palace it comes back round to Sapphire and goes again. Nobody has
+     to remember to change it, and it never lands on a hall at random -- every
+     visitor in a given week walks into the same room, which is the whole point
+     of a front door.
+
+     The week turns at 00:00 UTC on Monday, the same moment the game resets its
+     weekly quests, so "this week's hall" means the same thing here as it does
+     in-game. Deriving it from the clock rather than storing it keeps this page
+     a static file with no server and no state to drift.
+
+     This runs in the head, before the preload above has an href, because that
+     preload is fetchpriority=high: if the hall were chosen further down the
+     page the browser would already have committed to fetching Sapphire, and
+     eight weeks out of nine that is a full-size hall image downloaded at top
+     priority and thrown away. The href is set the instant the element exists.
+
+     An explicit ?theme= still wins -- the gallery and the voting page both pass
+     one, and they must keep showing the hall they asked for.
+
+     The filenames follow assets/hall-<id>.webp for all nine; THEMES further
+     down is still the source of truth and re-points both the preload and the
+     background from its own src, so a name that ever stopped matching would
+     cost one wasted preload and show up the moment you loaded the page. -->
+<script>
+window.K846_HALLS = ['sapphire','coronation','moonlit','embers','cathedral',
+                     'storm','dragongate','warcamp','celestial'];
+/* Monday 24 Aug 2026, 00:00 UTC -- the week this rotation started, on Sapphire. */
+window.K846_CYCLE_START = Date.UTC(2026, 7, 24);
+window.K846_HALL = (function () {
+  var asked = new URLSearchParams(location.search).get('theme');
+  if (asked && window.K846_HALLS.indexOf(asked) !== -1) return asked;
+  var n = window.K846_HALLS.length;
+  var week = Math.floor((Date.now() - window.K846_CYCLE_START) / 604800000);
+  /* Double modulo: a device whose clock is set before the start date gives a
+     negative week, and -1 % 9 is -1 in JS, which would index nothing. */
+  return window.K846_HALLS[((week % n) + n) % n];
+})();
+document.getElementById('pre-bg').href = 'assets/hall-' + window.K846_HALL + '.webp';
+document.documentElement.style.setProperty('--bg-img', "url('assets/hall-" + window.K846_HALL + ".webp')");
+</script>
 <!-- Nine halls, nine voices -- and the faces ship with the build.
      These were on Google Fonts, which meant every visitor waited on a third
      party and, if it was slow or blocked, silently got the same fallback serif
@@ -337,6 +380,17 @@ body[data-theme="celestial"] .play .title span{animation:letterDrift 1.6s cubic-
 .hud button:focus-visible,.cta:focus-visible,.gate:focus-visible{outline:2px solid rgba(255,238,190,.9);outline-offset:3px;}
 .hud .theme{display:none;}
 body.preview .hud .theme{display:inline-block;}
+/* None of the HUD controls belong on the public screen. They are reviewing
+   tools -- REPLAY to watch the film again, SKIP to get past it, SOUND to check
+   the mix -- and they were only ever visible because they were never gated, the
+   same way the nine hall buttons above once were. A visitor arriving at a front
+   door should see the door, not the controls we judged it with.
+   They all still exist under ?preview=1, which is where they are used.
+   The trade: with SOUND gone there is no mute control, so the audio has to be
+   something a visitor is happy to be given unasked -- it is short, it ends with
+   the film, and the browser holds it until they interact with the page anyway. */
+.hud button{display:none;}
+body.preview .hud button{display:inline-block;}
 body.preview .hud.right{max-width:min(680px,70vw);flex-wrap:wrap;justify-content:flex-end;}
 body.preview .hud.right button{font-size:8px;padding:8px 10px;}
 #skip{opacity:0;transition:opacity .5s ease;}
@@ -1073,7 +1127,7 @@ void main(){
 <script>
 /* ===== themes ===== */
 const CONFIG = {
-  theme: 'sapphire',          // 'sapphire' | 'coronation' | 'moonlit'
+  theme: window.K846_HALL,    // the hall of the week -- chosen in the head, see there
   enterUrl: '/',              // only used when opened standalone (gallery / ?preview=1);
                               // inside the app's splash iframe the handoff is a postMessage
   skipIntroOnReturn: true,    // returning visitors in the same tab get the fast open
@@ -1098,6 +1152,7 @@ const PREVIEW = PARAMS.has('preview');
 const FORCE_INTRO = PREVIEW || PARAMS.has('fresh');
 if (THEMES[PARAMS.get('theme')]) CONFIG.theme = PARAMS.get('theme');
 if (!THEMES[CONFIG.theme]) CONFIG.theme = 'sapphire';
+if (PREVIEW) console.info('[k846] hall of the week:', CONFIG.theme);
 document.body.dataset.theme = CONFIG.theme;
 document.documentElement.style.setProperty('--bg-img', `url('${THEMES[CONFIG.theme].src}')`);
 const preBg = document.getElementById('pre-bg'); if (preBg) preBg.href = THEMES[CONFIG.theme].src;
@@ -1311,6 +1366,22 @@ const BG = (function(){
 const Score = (() => {
   let ac, master, on = true;
   const T = () => ac.currentTime;
+
+  // How far the film is ahead of the score.
+  //
+  // A browser will not let a page start audio until the visitor has clicked,
+  // tapped or typed. Until then the AudioContext is suspended and its clock is
+  // frozen, so a beat queued for "three seconds from now" is queued against a
+  // now that never arrives -- and the instant audio unblocks, the entire score
+  // fires from bar one while the picture is already seconds down the timeline.
+  // The strike lands after the crest instead of on it, which is the one thing
+  // the scores are written not to do.
+  //
+  // So when audio starts late, the score starts late too: skew is the seconds
+  // of film already gone, every beat is pulled forward by it, and beats whose
+  // moment has passed are dropped rather than played out of place.
+  let skew = 0;
+  const cue = at => { const d = at - skew; return d < 0 ? null : T() + d; };
   function init(){
     if (ac) return;
     ac = new (window.AudioContext || window.webkitAudioContext)();
@@ -1353,7 +1424,7 @@ const Score = (() => {
     })();
   }
   function pad(at, freqs, vol, dur){
-    const t=T()+at;
+    const t=cue(at); if (t===null) return;
     freqs.forEach((hz,i)=>{
       const o=ac.createOscillator(), g=ac.createGain(), f=ac.createBiquadFilter();
       o.type = i%2 ? 'triangle':'sine'; o.frequency.value=hz; o.detune.value=Math.random()*10-5;
@@ -1397,7 +1468,7 @@ const Score = (() => {
 
   // Brass: stacked detuned saws through a sweeping lowpass. Ceremony.
   function brass(at, freqs, vol, dur){
-    const t=T()+at;
+    const t=cue(at); if (t===null) return;
     freqs.forEach((hz,i)=>{
       const o=ac.createOscillator(), g=ac.createGain(), f=ac.createBiquadFilter();
       o.type='sawtooth'; o.frequency.value=hz; o.detune.value=(i-1)*7;
@@ -1413,7 +1484,7 @@ const Score = (() => {
   }
   // Pipe organ: a root with its fifth and octaves, square-ish, no attack.
   function organ(at, root, vol, dur){
-    const t=T()+at;
+    const t=cue(at); if (t===null) return;
     [1,1.5,2,3,4].forEach((m,i)=>{
       const o=ac.createOscillator(), g=ac.createGain();
       o.type = i%2 ? 'square' : 'sine'; o.frequency.value=root*m; o.detune.value=Math.random()*6-3;
@@ -1427,7 +1498,7 @@ const Score = (() => {
   }
   // Gong: inharmonic partials with a long metallic decay.
   function gong(at, base, vol){
-    const t=T()+at;
+    const t=cue(at); if (t===null) return;
     [1,2.37,3.41,4.63,5.9,7.2].forEach((m,i)=>{
       const o=ac.createOscillator(), g=ac.createGain();
       o.type='sine'; o.frequency.value=base*m; o.detune.value=Math.random()*14-7;
@@ -1466,7 +1537,7 @@ const Score = (() => {
 
   // A struck skin -- pitch drops fast, body is filtered noise.
   function drum(at, hz, vol){
-    const t=T()+at;
+    const t=cue(at); if (t===null) return;
     const o=ac.createOscillator(), g=ac.createGain(); o.type='sine';
     o.frequency.setValueAtTime(hz,t); o.frequency.exponentialRampToValueAtTime(hz*.4,t+.28);
     g.gain.setValueAtTime(.0001,t); g.gain.exponentialRampToValueAtTime(vol,t+.012);
@@ -1479,7 +1550,7 @@ const Score = (() => {
   }
   // A small struck bell.
   function bell(at, hz, vol){
-    const t=T()+at;
+    const t=cue(at); if (t===null) return;
     [1,2.76,5.4].forEach((m,i)=>{
       const o=ac.createOscillator(), g=ac.createGain(); o.type='sine'; o.frequency.value=hz*m;
       const v=vol/(1+i*2), d=4-i*.9;
@@ -1492,7 +1563,7 @@ const Score = (() => {
   // horizon -- distance is mostly high frequency being lost on the way, so a
   // far strike opens dark and stays dark, and only a near one gets the snap.
   function thunder(at, vol, near){
-    const t=T()+at;
+    const t=cue(at); if (t===null) return;
     const n=ac.createBufferSource(); n.buffer=noiseBuf(5);
     const f=ac.createBiquadFilter(); f.type='lowpass';
     f.frequency.setValueAtTime(near?2600:520,t);
@@ -1655,6 +1726,20 @@ const Score = (() => {
     },
   };
 
+  // Wall-clock, not the audio clock: the audio clock is exactly what stops.
+  const now = () => (window.performance && performance.now) ? performance.now() : Date.now();
+  const play = theme => (SCORES[theme] || SCORES.sapphire)();
+  let pending = null, pendingAt = 0;
+  const watchers = [];
+  const notify = () => watchers.forEach(f => { try { f(); } catch(_){} });
+  function flush(){
+    notify();
+    if (!pending) return;
+    const theme = pending; pending = null;
+    skew = (now() - pendingAt) / 1000;
+    play(theme);
+  }
+
   return {
     // Browsers refuse to start audio without a user gesture. The old build met
     // that with a full-screen "click to begin" wall. This meets it invisibly:
@@ -1667,21 +1752,55 @@ const Score = (() => {
       if (ac.state === 'running') return;
       const go = () => {
         ac.resume().then(() => {
-          if (ac.state === 'running') off.forEach(f => f());
+          if (ac.state === 'running') { off.forEach(f => f()); flush(); }
         }).catch(() => {});
       };
       const evs = ['pointerdown','touchstart','keydown','wheel'];
       const off = evs.map(e => {
-        const h = () => go();
+        // The sound button is excluded on purpose. It has its own handler that
+        // resumes and unmutes, and this one fires first -- on pointerdown, before
+        // the click lands -- so letting it through would make audio audible a
+        // moment before the button asked "is it audible?", and the button would
+        // answer yes and mute the sound the visitor just clicked to hear.
+        const h = ev => { const t = ev && ev.target;
+          if (t && t.closest && t.closest('#sound')) return;
+          go(); };
         window.addEventListener(e, h, { passive: true });
         return () => window.removeEventListener(e, h);
       });
       go();
     },
     get muted(){ return !on },
+
+    // Whether sound is actually coming out, which is not the same as whether it
+    // is switched on. It is only true when the browser has released the context
+    // AND nobody has muted it; the label on the button is driven from this, so
+    // it can never claim SOUND ON over silence.
+    audible(){ return !!(ac && ac.state === 'running' && on) },
+
+    // Turn sound on for real: unmute, and ask the browser again -- this runs off
+    // a click, so this is exactly the gesture it has been waiting for.
+    enable(){
+      init(); on = true;
+      master.gain.linearRampToValueAtTime(.9, T()+.15);
+      if (ac.state !== 'running') ac.resume().then(() => { flush(); notify(); }).catch(()=>{});
+      else notify();
+    },
+    mute(){
+      init(); on = false;
+      master.gain.linearRampToValueAtTime(.0001, T()+.4);
+      notify();
+    },
+    onchange(fn){ watchers.push(fn); },
     start(theme){
-      init(); if (ac.state!=='running') ac.resume().catch(()=>{});
-      (SCORES[theme] || SCORES.sapphire)();
+      init();
+      if (ac.state === 'running') { skew = 0; play(theme); return; }
+      // Held by the autoplay policy. Do not schedule against a frozen clock --
+      // hold the score and note when it should have begun, so whatever is left
+      // of it can be dropped into place if audio unblocks while the film runs.
+      pending = theme;
+      pendingAt = now();
+      ac.resume().catch(()=>{});
     },
     // Leaving sounds like the hall you are leaving.
     fanfare(theme){
@@ -1744,12 +1863,27 @@ if (document.readyState === 'complete') begin();
 else window.addEventListener('load', begin, { once: true });
 document.getElementById('skip').addEventListener('click', e => { e.stopPropagation(); skipIntro(); });
 document.getElementById('replay').addEventListener('click', e => { e.stopPropagation(); Score.arm(); run(true); });
-document.getElementById('sound').addEventListener('click', e => {
+// The button said SOUND ON from the moment the page loaded, whatever the audio
+// was actually doing -- and since a browser holds audio until you interact, that
+// was usually a label over silence. Worse, it was wired as a plain toggle: the
+// state behind it started ON, so the click you made *because* you could not hear
+// anything flipped it to OFF and muted the thing you were trying to start. The
+// click did wake the audio; the volume it woke into was zero.
+//
+// The label now reads the real state -- released by the browser AND not muted --
+// and the click means "make sound happen": if there is nothing audible it
+// unmutes and asks the browser again, and only mutes when sound is genuinely
+// playing. It also re-labels itself when audio frees up on some other gesture,
+// so it never sits on the wrong word.
+const soundBtn = document.getElementById('sound');
+const syncSound = () => { soundBtn.textContent = Score.audible() ? 'SOUND ON' : 'SOUND OFF'; };
+soundBtn.addEventListener('click', e => {
   e.stopPropagation();
-  e.currentTarget.textContent = Score.toggle() ? 'SOUND ON' : 'SOUND OFF';
+  if (Score.audible()) Score.mute(); else Score.enable();
+  syncSound();
 });
-// The button is now a mute switch, not the way sound gets turned on.
-document.getElementById('sound').textContent = 'SOUND ON';
+Score.onchange(syncSound);
+syncSound();
 document.querySelectorAll('.theme').forEach(b => b.addEventListener('click', e => {
   e.stopPropagation();
   document.body.dataset.theme = CONFIG.theme = b.dataset.theme;

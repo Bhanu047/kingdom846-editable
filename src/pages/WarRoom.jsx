@@ -12,6 +12,12 @@ const STATUS_TONE = {
   'North Turret Garrison': 'blue', 'South Turret Garrison': 'blue', Undeployed: 'muted'
 }
 
+// How long a whale is on screen before its call, and how long the GO stays up
+// after it. LEAD doubles as the launch countdown: the rally starts at T-LEAD,
+// so the first whale is counted down exactly like every one after it.
+const LEAD = 3
+const HOLD = 1
+
 function parseTime(value) {
   const s = String(value || '').trim()
   if (!s) return 0
@@ -20,6 +26,74 @@ function parseTime(value) {
 }
 function formatClock(seconds) { const n = Math.max(0, Math.ceil(seconds)); return `${Math.floor(n / 60)}:${String(n % 60).padStart(2, '0')}` }
 function newId() { return `${Date.now()}-${Math.random().toString(36).slice(2, 7)}` }
+function clamp01(n) { return Math.min(1, Math.max(0, n)) }
+
+// The countdown escalates by colour as well as by number, so the state of the
+// call reads from across the room without anyone parsing a digit.
+function urgencyColor(remaining) {
+  if (remaining <= 0) return '#34D399'
+  if (remaining <= 1) return '#FB7185'
+  if (remaining <= 2) return '#F59E0B'
+  return '#D4AF37'
+}
+
+// The ring is the countdown as a shape. It empties over the lead-in and closes
+// on the call, which is legible in peripheral vision in a way that a number
+// changing once a second is not.
+function CountdownRing({ remaining, firing, burstKey, children }) {
+  const R = 86
+  const C = 2 * Math.PI * R
+  const left = clamp01(remaining / LEAD)
+  const color = urgencyColor(remaining)
+  return (
+    <div className="relative mx-auto grid h-[200px] w-[200px] place-items-center">
+      {/* The burst leaves from the number, not from the middle of the panel. */}
+      {firing && <span className="pointer-events-none absolute inset-0">
+        <span key={`s1-${burstKey}`} className="wr-shock" />
+        <span key={`s2-${burstKey}`} className="wr-shock" />
+        <span key={`s3-${burstKey}`} className="wr-shock" />
+      </span>}
+      <svg viewBox="0 0 200 200" className="absolute inset-0 h-full w-full -rotate-90">
+        <circle cx="100" cy="100" r={R} fill="none" strokeWidth="5" className="wr-ring-track" />
+        <circle
+          cx="100" cy="100" r={R} fill="none" strokeWidth="5" strokeLinecap="round"
+          className="wr-ring-sweep" stroke={color}
+          strokeDasharray={C} strokeDashoffset={C * left}
+        />
+      </svg>
+      <div className="relative z-10 text-center">{children}</div>
+    </div>
+  )
+}
+
+// Every call on one strip, with a playhead crossing it. Notches light as they
+// are passed, so the shape of the rally — bunched or spread — is visible.
+function RallyTimeline({ sequence, t }) {
+  const span = Math.max(LEAD, sequence[sequence.length - 1].offset + LEAD)
+  const pct = (x) => clamp01((x + LEAD) / span) * 100
+  return (
+    <div className="px-1 py-3">
+      <div className="wr-track">
+        <div className="wr-track-fill" style={{ width: `${pct(t)}%` }} />
+      </div>
+      <div className="relative h-0">
+        {sequence.map(w => (
+          <span
+            key={w.id}
+            className={`wr-notch ${t >= w.offset ? 'wr-notch-done' : ''}`}
+            style={{ left: `${pct(w.offset)}%`, marginTop: -8 }}
+            title={`${w.name} · +${w.offset}s`}
+          />
+        ))}
+        <span className="wr-playhead" style={{ left: `${pct(t)}%`, marginTop: -13 }} />
+      </div>
+      <div className="mt-4 flex justify-between text-[10px] uppercase tracking-[.14em] text-parchment/35">
+        <span>Launch</span>
+        <span>All marches land</span>
+      </div>
+    </div>
+  )
+}
 
 export default function WarRoom() {
   const { user, isAdmin } = useAuth()
@@ -28,18 +102,31 @@ export default function WarRoom() {
   useEffect(() => { try { const raw = localStorage.getItem(STORAGE_KEY); if (raw) setWhales(JSON.parse(raw)) } catch {} }, [])
   useEffect(() => () => clearInterval(timerRef.current), [])
   const sequence = useMemo(() => { const chosen = whales.filter(w => selected[w.id]).map(w => ({...w, marchSec: parseTime(w.march)})); if (!chosen.length) return []; const longest = Math.max(...chosen.map(w => w.marchSec)); return chosen.map(w => ({...w, offset: Math.max(0, longest-w.marchSec)})).sort((a,b)=>a.offset-b.offset||a.name.localeCompare(b.name)) }, [whales,selected])
-  const elapsed = running ? Math.max(0,(Date.now()-startRef.current)/1000):0
-  const active = running ? sequence.find(w=>elapsed>=w.offset-3&&elapsed<w.offset+1):null
-  const complete = running&&sequence.length>0&&elapsed>sequence[sequence.length-1].offset+1
+
+  // The mission clock runs from -LEAD, not from zero. Clamping it here used to
+  // hide the whole launch countdown and pin the first whale on GO for three
+  // seconds before the clock had started — a caller reading the screen called
+  // it three seconds early.
+  const t = running ? (Date.now() - startRef.current) / 1000 : 0
+  const activeAt = running ? sequence.find(w => t >= w.offset - LEAD && t < w.offset + HOLD) : null
+  // Whales on the same march time share a call. Showing only the first left the
+  // rest uncalled with nothing on screen to say so.
+  const activeGroup = activeAt ? sequence.filter(w => w.offset === activeAt.offset) : []
+  const complete = running && sequence.length > 0 && t > sequence[sequence.length - 1].offset + HOLD
   useEffect(()=>{if(complete){clearInterval(timerRef.current);setRunning(false)}},[complete])
   if(!isAdmin && user?.username?.toLowerCase()!=='shoni') return <div className="grid place-items-center py-20"><Panel glow className="max-w-lg text-center"><Icon name="shieldCheck" size={34} className="mx-auto text-gold mb-3"/><h1 className="font-display text-2xl font-bold text-parchment">Private War Room</h1><p className="mt-2 text-sm text-parchment/50">This command room is reserved for Sparta admin and Shoni.</p></Panel></div>
   function addWhale(){setWhales(p=>[...p,{id:newId(),name:'New Whale',march:'0:30',status:'Undeployed'}]);setSaved(false)}
   function updateWhale(id,field,value){setWhales(p=>p.map(w=>w.id===id?{...w,[field]:value}:w));setSaved(false)}
   function removeWhale(id){setWhales(p=>p.filter(w=>w.id!==id));setSelected(p=>{const n={...p};delete n[id];return n});setSaved(false)}
   function saveRoster(){localStorage.setItem(STORAGE_KEY,JSON.stringify(whales));setSaved(true);setTimeout(()=>setSaved(false),2500)}
-  function startRally(){if(!sequence.length)return;startRef.current=Date.now()+3000;setRunning(true);clearInterval(timerRef.current);timerRef.current=setInterval(()=>setTick(n=>n+1),100)}
+  function startRally(){if(!sequence.length)return;startRef.current=Date.now()+LEAD*1000;setRunning(true);clearInterval(timerRef.current);timerRef.current=setInterval(()=>setTick(n=>n+1),100)}
   function stopRally(){clearInterval(timerRef.current);setRunning(false)}
-  const remaining=active?active.offset-elapsed:null
+
+  const remaining = activeAt ? activeAt.offset - t : null
+  const firing = activeAt && remaining <= 0
+  const nextUp = running && !activeAt ? sequence.find(w => w.offset > t) : null
+  const color = activeAt ? urgencyColor(remaining) : '#D4AF37'
+
   return <div className="space-y-5">
     <Panel glow className="gold-corners overflow-hidden p-0">
       <div className="relative min-h-[250px] overflow-hidden">
@@ -54,6 +141,67 @@ export default function WarRoom() {
       </div>
     </Panel>
     {!running?<><Panel><div className="flex items-center justify-between gap-3 mb-4"><div><div className="eyebrow">Whale Roster</div><div className="text-xs text-parchment/40 mt-1">March time format: M:SS</div></div><button onClick={addWhale} className="btn-primary !py-1.5 !text-xs">+ Add Whale</button></div><div className="space-y-2">{whales.map(w=><div key={w.id} className="royal-plaque flex flex-wrap items-center gap-2"><input type="checkbox" checked={!!selected[w.id]} onChange={()=>setSelected(s=>({...s,[w.id]:!s[w.id]}))} className="h-4 w-4 accent-[#D4AF37]"/><input value={w.name} onChange={e=>updateWhale(w.id,'name',e.target.value)} className="min-w-32 flex-1 rounded-md border border-gold/20 bg-ink/60 px-2 py-1.5 text-sm text-parchment outline-none focus:border-gold/60"/><input value={w.march} onChange={e=>updateWhale(w.id,'march',e.target.value)} className="w-20 rounded-md border border-gold/20 bg-ink/60 px-2 py-1.5 text-sm font-mono text-parchment outline-none focus:border-gold/60"/><select value={w.status} onChange={e=>updateWhale(w.id,'status',e.target.value)} className="royal-select">{STATUS_OPTIONS.map(s=><option key={s} value={s}>{s}</option>)}</select><Pill tone={STATUS_TONE[w.status]||'muted'}>{w.status}</Pill><button onClick={()=>removeWhale(w.id)} className="rounded-md border border-rose-500/25 px-2 py-1 text-xs text-rose-300 hover:bg-rose-500/10">Delete</button></div>)}{!whales.length&&<div className="py-8 text-center text-sm text-parchment/40">No whales saved yet.</div>}</div><div className="mt-4 flex items-center justify-between gap-3 border-t border-gold/10 pt-4"><span className="text-xs text-parchment/45">{saved?'Roster saved on this device.':`${sequence.length} selected for rally`}</span><button onClick={saveRoster} className="rounded-lg border border-gold/30 px-3 py-1.5 text-xs font-semibold text-gold hover:bg-gold/10">Save Roster</button></div></Panel>
-    {sequence.length>0&&<Panel><div className="eyebrow mb-3">Synchronized Call Order</div><div className="space-y-2">{sequence.map((w,i)=><div key={w.id} className="royal-plaque flex items-center gap-3"><span className="grid h-8 w-8 place-items-center rounded-full border border-gold/30 text-xs font-bold text-gold">{i+1}</span><span className="flex-1 font-semibold text-parchment">{w.name}</span><span className="font-mono text-xs text-parchment/50">march {w.march}</span><span className="font-mono text-xs text-gold">call +{w.offset}s</span></div>)}</div></Panel>}<button onClick={startRally} disabled={!sequence.length} className="btn-primary w-full !py-4 !text-base disabled:opacity-30">Start Synced Rally {sequence.length?`(${sequence.length})`:''}</button></>:<><div className="flex items-center justify-between"><div className="font-mono text-sm text-gold">MISSION CLOCK +{elapsed.toFixed(1)}s</div><button onClick={stopRally} className="rounded-lg border border-rose-500/40 px-3 py-1.5 text-xs font-semibold text-rose-300">Abort</button></div><Panel glow className="gold-corners py-10 text-center">{active?<><div className="eyebrow mb-2">Now Calling</div><div className="font-display text-4xl font-bold text-parchment">{active.name}</div>{remaining>0?<div className="mt-3 font-mono text-7xl font-bold text-gold">{Math.ceil(remaining)}</div>:<div className="mt-3 font-mono text-6xl font-bold text-emerald-400 animate-pulse">GO</div>}</>:<><Icon name="crosshair" size={38} className="mx-auto text-gold/35"/><div className="mt-3 font-display text-2xl font-bold text-parchment">Standing By</div><div className="mt-1 text-sm text-parchment/45">Next call incoming…</div></>}</Panel><Panel><div className="eyebrow mb-3">Rally Queue</div><div className="space-y-2">{sequence.map(w=>{const callIn=w.offset-elapsed;return <div key={w.id} className={`royal-plaque flex items-center justify-between ${callIn<=0?'opacity-50':''}`}><span className="font-semibold text-parchment">{w.name}</span><span className="font-mono text-xs text-parchment/50">{callIn>0?`call in ${formatClock(callIn)}`:'called'}</span></div>})}</div></Panel></>}
+    {sequence.length>0&&<Panel><div className="eyebrow mb-3">Synchronized Call Order</div><div className="space-y-2">{sequence.map((w,i)=><div key={w.id} className="royal-plaque stagger-in flex items-center gap-3"><span className="grid h-8 w-8 place-items-center rounded-full border border-gold/30 text-xs font-bold text-gold">{i+1}</span><span className="flex-1 font-semibold text-parchment">{w.name}</span><span className="font-mono text-xs text-parchment/50">march {w.march}</span><span className="wr-nums font-mono text-xs text-gold">call +{w.offset}s</span></div>)}</div></Panel>}<button onClick={startRally} disabled={!sequence.length} className="btn-primary w-full !py-4 !text-base disabled:opacity-30">Start Synced Rally {sequence.length?`(${sequence.length})`:''}</button></>:<>
+
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2 font-mono text-sm text-gold">
+          <span className="wr-live-dot" />
+          <span className="wr-nums">MISSION CLOCK {t < 0 ? `T−${Math.abs(t).toFixed(1)}s` : `+${t.toFixed(1)}s`}</span>
+        </div>
+        <button onClick={stopRally} className="wr-abort rounded-lg border border-rose-500/40 px-3 py-1.5 text-xs font-semibold text-rose-300 hover:bg-rose-500/10">Abort</button>
+      </div>
+
+      <Panel glow className={`gold-corners relative overflow-hidden py-10 text-center ${activeAt && remaining > 0 && remaining <= LEAD ? 'wr-urgent' : ''}`}>
+        {firing && <span key={`flash-${activeAt.offset}`} className="wr-flash" />}
+        {activeAt ? <div className="relative z-10">
+          <div className="eyebrow mb-2">{t < 0 ? 'Launching' : 'Now Calling'}</div>
+          <div key={activeAt.offset} className="wr-in space-y-1">
+            {activeGroup.map(w => (
+              <div key={w.id} className={`font-display font-bold text-parchment ${activeGroup.length > 1 ? 'text-2xl' : 'text-4xl'}`}>{w.name}</div>
+            ))}
+          </div>
+          {activeGroup.length > 1 && <div className="mt-1 text-xs text-parchment/45">{activeGroup.length} whales call together</div>}
+          <div className="mt-4">
+            <CountdownRing remaining={remaining} firing={firing} burstKey={activeAt.offset}>
+              {remaining > 0
+                ? <div key={Math.ceil(remaining)} className="wr-digit wr-nums font-mono text-7xl font-bold" style={{ color }}>{Math.ceil(remaining)}</div>
+                : <div className="wr-go font-mono text-6xl font-bold text-emerald-400">GO</div>}
+            </CountdownRing>
+          </div>
+        </div> : <div className="relative z-10">
+          <div className="wr-radar mx-auto grid h-16 w-16 place-items-center"><Icon name="crosshair" size={38} className="relative z-10 text-gold/35"/></div>
+          <div className="mt-5 font-display text-2xl font-bold text-parchment">Standing By</div>
+          {nextUp
+            ? <div className="mt-1 text-sm text-parchment/55"><span className="text-parchment/80">{nextUp.name}</span> calls in <span className="wr-nums font-mono text-gold">{formatClock(nextUp.offset - t)}</span></div>
+            : <div className="mt-1 text-sm text-parchment/45">Next call incoming<span className="wr-dots" /></div>}
+        </div>}
+      </Panel>
+
+      <Panel>
+        <div className="eyebrow mb-1">Rally Timeline</div>
+        <RallyTimeline sequence={sequence} t={t} />
+      </Panel>
+
+      <Panel>
+        <div className="eyebrow mb-3">Rally Queue</div>
+        <div className="space-y-2">{sequence.map(w=>{
+          const callIn = w.offset - t
+          const called = callIn <= 0
+          const isNext = !called && activeAt?.offset === w.offset
+          // The meter runs from launch to this whale's call, so the wait is a
+          // shape on screen rather than a number the caller keeps subtracting.
+          const progress = clamp01((t + LEAD) / (w.offset + LEAD)) * 100
+          return <div key={w.id} className={`royal-plaque wr-row ${called?'wr-row-done':''} ${isNext?'wr-row-next':''}`}>
+            <div className="flex items-center justify-between gap-3">
+              <span className="wr-row-name font-semibold text-parchment">{w.name}</span>
+              <span className="wr-nums font-mono text-xs" style={{ color: called ? '#34D399' : isNext ? '#E8C766' : 'rgba(243,232,204,.5)' }}>
+                {called ? 'called' : `call in ${formatClock(callIn)}`}
+              </span>
+            </div>
+            <div className="wr-row-meter mt-2"><i style={{ width: `${progress}%` }} /></div>
+          </div>
+        })}</div>
+      </Panel>
+    </>}
   </div>
 }

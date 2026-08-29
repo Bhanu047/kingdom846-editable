@@ -2567,3 +2567,162 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
   .ph-bloom { animation: none !important }
   .ph-copy  { animation: none !important }
 }
+
+/* ---------------------------------------------------------------------------
+   War Room — the live rally call
+   ---------------------------------------------------------------------------
+   This screen is read at a glance, mid-battle, usually out of the corner of an
+   eye while the caller is typing in game chat. So the motion here is not
+   decoration: every animation below is carrying a piece of information that a
+   static number was making the reader work for — how close the next call is,
+   which one it is, and the moment it fires.
+--------------------------------------------------------------------------- */
+
+/* Numbers that change every tick must not shuffle their own width. */
+.wr-nums { font-variant-numeric: tabular-nums; }
+
+/* The mission clock's pulse is the proof the timer is alive. A frozen page and
+   a running one otherwise look identical. */
+.wr-live-dot {
+  width: 7px; height: 7px; border-radius: 999px; flex: none;
+  background: #E8C766; box-shadow: 0 0 0 0 rgba(232,199,102,.6);
+  animation: wr-live 1s ease-out infinite;
+}
+@keyframes wr-live {
+  0%   { box-shadow: 0 0 0 0 rgba(232,199,102,.55); opacity: 1 }
+  70%  { box-shadow: 0 0 0 7px rgba(232,199,102,0); opacity: .75 }
+  100% { box-shadow: 0 0 0 0 rgba(232,199,102,0); opacity: 1 }
+}
+
+/* The countdown ring. The stroke is driven from React on every tick; the
+   transition fills in the frames between ticks so it sweeps instead of
+   stepping. */
+.wr-ring-track { stroke: rgba(232,199,102,.12); }
+.wr-ring-sweep {
+  transition: stroke-dashoffset .12s linear, stroke .18s ease;
+  filter: drop-shadow(0 0 6px rgba(212,175,55,.45));
+}
+
+/* The digit itself is re-keyed each second, so this replays on every number. */
+.wr-digit { animation: wr-digit-in .34s cubic-bezier(.16,1,.3,1) both; }
+@keyframes wr-digit-in {
+  from { opacity: 0; transform: scale(1.4); filter: blur(3px) }
+  to   { opacity: 1; transform: none;       filter: none }
+}
+
+/* Inside the last three seconds the whole plate takes on a heartbeat, so the
+   caller feels the call coming without reading the number. */
+.wr-urgent { animation: wr-urgent-beat 1s ease-in-out infinite; }
+@keyframes wr-urgent-beat {
+  0%, 100% { box-shadow: inset 0 0 0 1px rgba(212,175,55,.22), 0 0 24px -12px rgba(212,175,55,.5) }
+  50%      { box-shadow: inset 0 0 0 1px rgba(232,199,102,.55), 0 0 46px -8px rgba(212,175,55,.75) }
+}
+
+/* GO. Three rings leave the centre a beat apart — the shape of a signal being
+   sent, and the one moment on this screen worth being loud about. */
+.wr-go { animation: wr-go-in .42s cubic-bezier(.34,1.56,.64,1) both; }
+@keyframes wr-go-in {
+  from { opacity: 0; transform: scale(.55) }
+  to   { opacity: 1; transform: none }
+}
+.wr-shock {
+  position: absolute; left: 50%; top: 50%; width: 190px; height: 190px;
+  margin: -95px 0 0 -95px; border-radius: 999px; pointer-events: none;
+  border: 2px solid rgba(52,211,153,.55);
+  animation: wr-shock-out 1.1s cubic-bezier(.16,1,.3,1) both;
+}
+.wr-shock:nth-child(2) { animation-delay: .16s }
+.wr-shock:nth-child(3) { animation-delay: .32s }
+@keyframes wr-shock-out {
+  from { transform: scale(.35); opacity: .7 }
+  to   { transform: scale(2.4); opacity: 0 }
+}
+.wr-flash {
+  position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(circle at 50% 50%, rgba(52,211,153,.22), transparent 62%);
+  animation: wr-flash-out .7s ease-out both;
+}
+@keyframes wr-flash-out { from { opacity: 1 } to { opacity: 0 } }
+
+/* Standing by is a waiting state, so it gets a radar sweep rather than a
+   spinner — the room is watching, not loading. */
+.wr-radar { position: relative; }
+.wr-radar::after {
+  content: ""; position: absolute; inset: -26px; border-radius: 999px;
+  background: conic-gradient(from 0deg, rgba(212,175,55,.28), transparent 26%);
+  animation: wr-sweep 2.6s linear infinite;
+}
+@keyframes wr-sweep { to { transform: rotate(360deg) } }
+.wr-dots::after {
+  content: "\2009\00B7\2009\00B7\2009\00B7";
+  display: inline-block; width: 0; overflow: hidden;
+  vertical-align: bottom; white-space: pre;
+  animation: wr-dots 1.4s steps(4, end) infinite;
+}
+@keyframes wr-dots { to { width: 1.7em } }
+
+/* The timeline is the whole operation in one strip: every call as a notch, and
+   a playhead crossing them. */
+.wr-track {
+  position: relative; height: 4px; border-radius: 999px; overflow: hidden;
+  background: linear-gradient(90deg, rgba(232,199,102,.1), rgba(232,199,102,.22));
+}
+.wr-track-fill {
+  position: absolute; inset: 0 auto 0 0; border-radius: 999px;
+  background: linear-gradient(90deg, rgba(212,175,55,.5), #E8C766);
+  transition: width .12s linear;
+}
+.wr-notch {
+  position: absolute; top: 50%; width: 2px; height: 12px;
+  transform: translateX(-50%);
+  border-radius: 1px; background: rgba(243,232,204,.35);
+  transition: background .3s ease, box-shadow .3s ease;
+}
+.wr-notch-done { background: #E8C766; box-shadow: 0 0 8px rgba(212,175,55,.8) }
+.wr-playhead {
+  position: absolute; top: 50%; width: 3px; height: 22px;
+  transform: translateX(-50%);
+  border-radius: 2px; background: #F3E8CC;
+  box-shadow: 0 0 10px rgba(243,232,204,.9);
+  transition: left .12s linear;
+}
+
+/* Each queued whale carries its own meter, so the wait is visible instead of
+   being a number the reader has to keep subtracting in their head. */
+.wr-row { transition: opacity .4s ease, transform .35s cubic-bezier(.16,1,.3,1), border-color .35s ease }
+.wr-row-next { transform: translateX(4px); border-color: rgba(232,199,102,.5) !important }
+.wr-row-done { opacity: .38 }
+.wr-row-done .wr-row-name { text-decoration: line-through; text-decoration-color: rgba(232,199,102,.5) }
+.wr-row-meter { height: 3px; border-radius: 999px; background: rgba(232,199,102,.12); overflow: hidden }
+.wr-row-meter > i {
+  display: block; height: 100%; border-radius: 999px;
+  background: linear-gradient(90deg, rgba(212,175,55,.45), #E8C766);
+  transition: width .12s linear;
+}
+
+/* Rows arrive in order when the rally starts, the same stagger the rest of the
+   site uses for a list appearing. */
+.wr-in { animation: wr-in .45s cubic-bezier(.16,1,.3,1) both }
+@keyframes wr-in {
+  from { opacity: 0; transform: translateY(10px) }
+  to   { opacity: 1; transform: none }
+}
+
+/* Abort should read as a live danger control while a rally is running. */
+.wr-abort { animation: wr-abort-glow 2.4s ease-in-out infinite }
+@keyframes wr-abort-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(244,63,94,0) }
+  50%      { box-shadow: 0 0 16px -4px rgba(244,63,94,.7) }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wr-live-dot, .wr-digit, .wr-urgent, .wr-go, .wr-shock, .wr-flash,
+  .wr-radar::after, .wr-dots::after, .wr-in, .wr-abort {
+    animation: none !important;
+  }
+  .wr-shock, .wr-flash { display: none }
+  .wr-dots::after { width: auto }
+  .wr-ring-sweep, .wr-track-fill, .wr-playhead, .wr-row, .wr-row-meter > i {
+    transition: none !important;
+  }
+}

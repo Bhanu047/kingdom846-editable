@@ -200,6 +200,13 @@ export function optimizeBearFormation(input = {}) {
   const tier = input.tier || 'TG5-TG7'
   const tg = Math.max(0, Math.min(10, Math.floor(number(input.tg))))
   const leadHeroes = input.leadHeroes || {}
+  // With every stat blank the coefficients collapse to the structural weights
+  // alone, and the model returns a confident-looking split derived from no
+  // player data at all. BearSuite guards this at the form (`validStats`), but
+  // the library was happy to answer `undefined`, so any other caller got a
+  // fabricated recommendation. The split is still returned -- callers that only
+  // want the shape keep working -- but it is now labelled.
+  const hasStats = TYPES.some((type) => number(input.stats?.[type]?.attack) > 0 || number(input.stats?.[type]?.lethality) > 0)
   const { factors, coefficients } = coefficientsFor(input.stats)
   const continuousRatio = continuousOptimalFormation(input.stats)
   const whole = projectContinuousRatio(continuousRatio)
@@ -246,6 +253,9 @@ export function optimizeBearFormation(input = {}) {
     optimizedScore,
     balancedScore,
     gainVsBalanced,
+    // False when no attack/lethality figure was supplied: the split below is
+    // structural, not a recommendation derived from this player's stats.
+    hasStats,
     model: 'hunt-formation-lagrange-v8-reference-calibrated',
   }
 }

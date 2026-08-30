@@ -399,7 +399,13 @@ export function simulateOutcomes(attackerArmy, defenderArmy, { trials = 400, att
     + num(attackerArmy?.[t]?.count) * 7 + num(defenderArmy?.[t]?.count) * 13
     + num(attackerArmy?.[t]?.attack) * 3 + num(defenderArmy?.[t]?.attack) * 5, 1)
   let seed = (Math.abs(Math.floor(fingerprint)) % 2147483647) || 1
-  const rng = () => { seed = (seed * 1103515245 + 12345) >>> 0; return seed / 4294967296 }
+  // Math.imul, not `*`. `seed` reaches 2^32, so seed * 1103515245 peaks near
+  // 4.7e18 -- 526x past 2^53 -- and float64 rounds the low bits away before
+  // `>>> 0` ever sees them. That quietly degraded this stream to 29 distinct
+  // low-10-bit values and a 419-draw cycle, shorter than the 300-400 trials
+  // callers ask for, so the later trials were replaying the earlier ones.
+  // imul does the multiply in exact int32 and restores the full period.
+  const rng = () => { seed = (Math.imul(seed, 1103515245) + 12345) >>> 0; return seed / 4294967296 }
 
   const edges = []
   let wins = 0
@@ -435,6 +441,54 @@ export function frontLine(army) {
 
 export function armyTotal(army) {
   return TROOP_TYPES.reduce((sum, type) => sum + Math.max(0, num(army?.[type]?.count)), 0)
+}
+
+/**
+ * The percentage points a split search walks, always including both ends.
+ *
+ * `for (v = 0; v <= 100; v += step)` silently drops 100 whenever the step does
+ * not divide it -- at step 7 the search stopped at 98 and at step 3 at 99, so
+ * an all-one-type split was unreachable and could never be recommended however
+ * good it was. Ending the axis on 100 explicitly closes that gap.
+ */
+export function percentAxis(stepPercent) {
+  const step = Math.min(50, Math.max(1, num(stepPercent, 5)))
+  const axis = []
+  for (let v = 0; v < 100 - 1e-9; v += step) axis.push(Math.round(v * 1e6) / 1e6)
+  axis.push(100)
+  return axis
+}
+
+/**
+ * Splits `total` across the three troop types by fraction, losing and
+ * inventing nothing.
+ *
+ * Rounding each type on its own drifts the army off the size that was asked
+ * for -- 100 troops split three ways rounds to 99, and 0.505/0.005/0.49 of
+ * 100 rounds to 101 -- so the march the model simulates is not the march the
+ * player said they were sending. Largest remainder keeps every count within
+ * one of its exact share and makes the three sum to `total` exactly.
+ *
+ * Fractions are normalised first, so a caller passing shares that do not add
+ * to 1 gets a proportional split rather than a silently over- or under-filled
+ * army.
+ */
+export function allocateCounts(total, fractions) {
+  const size = Math.max(0, Math.floor(num(total)))
+  const shares = TROOP_TYPES.map((type) => Math.max(0, num(fractions?.[type])))
+  const sum = shares.reduce((a, b) => a + b, 0)
+  if (size === 0 || sum <= 0) return Object.fromEntries(TROOP_TYPES.map((type) => [type, 0]))
+
+  const raw = shares.map((share) => (share / sum) * size)
+  const counts = raw.map((v) => Math.floor(v))
+  let left = size - counts.reduce((a, b) => a + b, 0)
+  // Ties go to the earlier troop type so the same input always allocates the
+  // same way; an unstable tie-break here would make battle results jitter.
+  const order = raw
+    .map((v, i) => ({ i, remainder: v - Math.floor(v) }))
+    .sort((a, b) => b.remainder - a.remainder || a.i - b.i)
+  for (let k = 0; left > 0; k += 1, left -= 1) counts[order[k % order.length].i] += 1
+  return Object.fromEntries(TROOP_TYPES.map((type, i) => [type, counts[i]]))
 }
 
 export function cloneArmy(army) {

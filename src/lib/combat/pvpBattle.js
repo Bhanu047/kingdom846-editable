@@ -11,7 +11,7 @@
 //   - Both compositions are given. The optimizer answers a narrower question:
 //     given a total you are willing to commit, how should it be split.
 
-import { TROOP_TYPES, runBattle, armyTotal, DEFAULT_TIER, NEAR_OPTIMAL_TOLERANCE, simulateOutcomes } from './kingshotCombat.js'
+import { TROOP_TYPES, runBattle, armyTotal, allocateCounts, percentAxis, DEFAULT_TIER, NEAR_OPTIMAL_TOLERANCE, simulateOutcomes } from './kingshotCombat.js'
 
 const num = (v, f = 0) => (Number.isFinite(Number(v)) ? Number(v) : f)
 
@@ -81,13 +81,16 @@ export function optimizePvpComposition({
   }
 
   const candidates = []
-  for (let inf = 0; inf <= 100; inf += step) {
-    for (let cav = 0; inf + cav <= 100; cav += step) {
+  const axis = percentAxis(step)
+  for (const inf of axis) {
+    for (const cav of axis) {
+      if (inf + cav > 100 + 1e-9) continue
       const arc = 100 - inf - cav
       if (!within(inf, cav, arc)) continue
       const composition = { infantry: inf / 100, cavalry: cav / 100, archers: arc / 100 }
+      const marched = allocateCounts(total, composition)
       const army = Object.fromEntries(TROOP_TYPES.map((type) => [type, {
-        count: Math.round(total * composition[type]),
+        count: marched[type],
         attack: num(yourStats?.[type]?.attack),
         lethality: num(yourStats?.[type]?.lethality),
         defense: num(yourStats?.[type]?.defense),
@@ -125,10 +128,11 @@ export function optimizePvpComposition({
     ? [Math.min(...near.map((c) => c.split[i])), Math.max(...near.map((c) => c.split[i]))]
     : [0, 0])
 
+  const bestMarch = best ? allocateCounts(total, best.composition) : null
   const distribution = best
     ? simulateOutcomes(
         Object.fromEntries(TROOP_TYPES.map((type) => [type, {
-          count: Math.round(total * best.composition[type]),
+          count: bestMarch[type],
           attack: num(yourStats?.[type]?.attack), lethality: num(yourStats?.[type]?.lethality),
           defense: num(yourStats?.[type]?.defense), health: num(yourStats?.[type]?.health),
           tier: yourStats?.[type]?.tier || yourTier,

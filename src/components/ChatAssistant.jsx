@@ -85,7 +85,7 @@ export default function ChatAssistant() {
       {/* Floating button */}
       <button
         onClick={() => setOpen(!open)}
-        className="fixed bottom-4 right-4 grid h-14 w-14 place-items-center rounded-full border border-gold/50 bg-ink-2 shadow-lg transition-all hover:scale-110 active:scale-95"
+        className="fab-safe fixed right-4 grid h-14 w-14 place-items-center rounded-full border border-gold/50 bg-ink-2 shadow-lg transition-all hover:scale-110 active:scale-95"
         style={{ boxShadow: '0 4px 30px rgba(212,175,55,.35)', zIndex: 9999 }}
         aria-label="Open chat"
       >
@@ -118,7 +118,7 @@ export default function ChatAssistant() {
       {/* Chat panel */}
       {open && (
         <div
-          className="fixed bottom-20 right-4 w-[calc(100vw-2rem)] max-w-sm overflow-hidden rounded-xl border border-gold/30 bg-ink shadow-2xl"
+          className="fab-panel-safe fixed right-4 w-[calc(100vw-2rem)] max-w-sm overflow-hidden rounded-xl border border-gold/30 bg-ink shadow-2xl"
           style={{ zIndex: 9999, animation: 'bounce-in .25s ease' }}
         >
           {/* Header */}
@@ -150,7 +150,7 @@ export default function ChatAssistant() {
           </div>
 
           {/* Messages */}
-          <div ref={scrollRef} className="max-h-[50vh] overflow-y-auto space-y-3 p-3 scroll-smooth">
+          <div ref={scrollRef} className="max-h-[50dvh] overflow-y-auto space-y-3 p-3 scroll-smooth">
             {messages.map((m, i) => (
               <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                 <div

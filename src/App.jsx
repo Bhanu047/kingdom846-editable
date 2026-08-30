@@ -183,7 +183,7 @@ function Shell() {
       <ParticleField />
       <ScrollProgress />
       <ChatAssistant />
-      <div className="flex h-screen overflow-hidden relative z-10">
+      <div className="app-shell flex overflow-hidden relative z-10">
         <div className="hidden md:flex">
           <Sidebar active={page} onNavigate={navigate} user={sidebarUser} onLogin={() => { setLoginMode('admin'); setLoginOpen(true) }} onSignOut={handleSignOut} isAdmin={isAdmin} />
         </div>
@@ -212,7 +212,7 @@ function Shell() {
             onLogin={() => { setLoginMode('leader'); setLoginOpen(true) }}
           />
 
-          <div className="flex-1 overflow-y-auto overflow-x-hidden overscroll-contain p-4 md:p-6" style={{ WebkitOverflowScrolling: 'touch' }}>
+          <div className="app-scroll flex-1 overflow-y-auto overflow-x-hidden overscroll-contain pt-4 md:pt-6" style={{ WebkitOverflowScrolling: 'touch' }}>
             <div key={page} className="page-enter mx-auto max-w-6xl">{render()}</div>
             <footer className="mt-12 pt-6 pb-4 relative">
               <div className="flex flex-col items-center gap-2 text-center">

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Icon from './Icon'
 
 // The live half of the War Room.
@@ -8,6 +8,11 @@ import Icon from './Icon'
 // into voice chat. They glance at this for a fraction of a second and need
 // three things back: WHO is next, HOW LONG until they call it, and whether
 // anything is due RIGHT NOW. Everything here serves that and little else.
+//
+// The console is deliberately silent. That puts the whole burden on the
+// visuals, which is why the state owns a COLOUR rather than a label: the
+// final seconds have to register in peripheral vision, from a phone lying
+// on the desk, without being read.
 //
 // What the old screen got wrong: between calls it said "Standing By / Next
 // call incoming...", which answers none of the three. The gap between calls
@@ -29,61 +34,6 @@ function clock(seconds) {
   return `${Math.floor(n / 60)}:${String(n % 60).padStart(2, '0')}`
 }
 
-/**
- * Audio cues, synthesised rather than loaded.
- *
- * The whole point of this screen is that the caller is NOT looking at it in
- * the final seconds -- they are looking at the game. A visual-only countdown
- * fails precisely when it matters, so the last three seconds tick audibly and
- * the call itself lands on a distinct rising tone.
- *
- * Built with an oscillator so there are no assets to ship, no network fetch
- * to fail mid-rally, and no licence to track. The context is created on the
- * first cue, which is safely after the user's click on Start.
- */
-function useCues() {
-  const ctxRef = useRef(null)
-  const firedRef = useRef(new Set())
-
-  useEffect(() => () => { try { ctxRef.current?.close() } catch {} }, [])
-
-  return (key, kind) => {
-    if (firedRef.current.has(key)) return
-    firedRef.current.add(key)
-    try {
-      const Ctx = window.AudioContext || window.webkitAudioContext
-      if (!Ctx) return
-      const ctx = ctxRef.current || (ctxRef.current = new Ctx())
-      if (ctx.state === 'suspended') ctx.resume()
-
-      const osc = ctx.createOscillator()
-      const gain = ctx.createGain()
-      const t = ctx.currentTime
-      osc.connect(gain); gain.connect(ctx.destination)
-
-      if (kind === 'go') {
-        osc.type = 'triangle'
-        osc.frequency.setValueAtTime(660, t)
-        osc.frequency.exponentialRampToValueAtTime(1320, t + 0.18)
-        gain.gain.setValueAtTime(0.0001, t)
-        gain.gain.exponentialRampToValueAtTime(0.32, t + 0.02)
-        gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.55)
-        osc.start(t); osc.stop(t + 0.6)
-      } else {
-        osc.type = 'square'
-        osc.frequency.setValueAtTime(880, t)
-        gain.gain.setValueAtTime(0.0001, t)
-        gain.gain.exponentialRampToValueAtTime(0.16, t + 0.01)
-        gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.12)
-        osc.start(t); osc.stop(t + 0.14)
-      }
-    } catch {
-      // A blocked or unavailable audio context must never take the rally
-      // down with it -- the visual countdown is still fully functional.
-    }
-  }
-}
-
 /** Keeps the phone awake for the length of the rally. */
 function useWakeLock(active) {
   useEffect(() => {
@@ -96,7 +46,6 @@ function useWakeLock(active) {
 
 export default function RallyConsole({ sequence, startAt, onAbort, onComplete }) {
   const [now, setNow] = useState(() => (Date.now() - startAt) / 1000)
-  const cue = useCues()
   useWakeLock(true)
 
   // rAF rather than an interval, gated to ~20fps. The playhead has to slide
@@ -135,15 +84,6 @@ export default function RallyConsole({ sequence, startAt, onAbort, onComplete })
     : t <= 3 ? 'CALL'
     : t <= 10 ? 'STANDBY'
     : 'HOLD'
-
-  // Cue the last three ticks and the call itself, each exactly once.
-  useEffect(() => {
-    if (!next) return
-    if (phase === 'CALL') cue(`${next.id}-${Math.ceil(t)}`, 'tick')
-    if (phase === 'LAUNCH') cue(`${next.id}-go`, 'go')
-  }, [next?.id, phase, Math.ceil(t ?? 0)]) // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => { if (now < 0) cue(`arm-${Math.ceil(-now)}`, 'tick') }, [Math.ceil(-now) , now < 0]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // The rally is not over at the last call -- it is over when the marches
   // land. The old screen closed itself one second after the final name, which
@@ -238,8 +178,11 @@ export default function RallyConsole({ sequence, startAt, onAbort, onComplete })
           <div className="mt-3 text-xs text-parchment/45">{meta.note}</div>
 
           {/* The one after this one. Knowing what is coming is what lets a
-              caller draw breath instead of being surprised twice a minute. */}
-          {sequence[nextIndex + 1] && (
+              caller draw breath instead of being surprised twice a minute.
+              Guarded on `next`: once everything is called findIndex returns
+              -1, and -1 + 1 wraps to sequence[0], which re-advertised the
+              FIRST whale at T-0:00 under "Sequence Complete". */}
+          {next && sequence[nextIndex + 1] && (
             <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-gold/15 bg-ink/60 px-3 py-1.5">
               <Icon name="chevron" size={12} className="text-gold/50" />
               <span className="font-mono text-[10px] uppercase tracking-[.14em] text-parchment/45">Then</span>

@@ -178,8 +178,11 @@ export default function RallyConsole({ sequence, startAt, onAbort, onComplete })
           <div className="mt-3 text-xs text-parchment/45">{meta.note}</div>
 
           {/* The one after this one. Knowing what is coming is what lets a
-              caller draw breath instead of being surprised twice a minute. */}
-          {sequence[nextIndex + 1] && (
+              caller draw breath instead of being surprised twice a minute.
+              Guarded on `next`: once everything is called findIndex returns
+              -1, and -1 + 1 wraps to sequence[0], which re-advertised the
+              FIRST whale at T-0:00 under "Sequence Complete". */}
+          {next && sequence[nextIndex + 1] && (
             <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-gold/15 bg-ink/60 px-3 py-1.5">
               <Icon name="chevron" size={12} className="text-gold/50" />
               <span className="font-mono text-[10px] uppercase tracking-[.14em] text-parchment/45">Then</span>

@@ -2745,3 +2745,65 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
 @media (prefers-reduced-motion: reduce) {
   .wr-console[data-phase="LAUNCH"] .wr-edge path { animation: none }
 }
+
+/* ---------------------------------------------------------------------------
+   THE MOBILE SHELL
+
+   The app is a fixed frame with its own scrolling pane inside it, so the
+   frame's height IS the visible screen -- and on iOS `100vh` is not that.
+   Safari resolves `vh` against the LARGE viewport, the height the page would
+   have with the URL bar hidden, whether or not the bar is actually showing.
+   A `100vh` frame therefore runs taller than the screen and its bottom edge --
+   the last of the scrolling pane, the footer, the final row of any list --
+   sits behind the toolbar with no way to reach it, because the document
+   itself does not scroll. `dvh` is the same measurement taken against what is
+   currently visible, and it re-resolves as the bar comes and goes.
+
+   The `vh` line stays as the fallback for browsers without `dvh` (Safari
+   before 15.4), where it is the best available answer.
+--------------------------------------------------------------------------- */
+.app-shell {
+  height: 100vh;
+  height: 100dvh;
+}
+
+/* index.html asks for `viewport-fit=cover`, which is what lets the background
+   run edge to edge behind the notch and the home indicator. That is a promise
+   to inset the CONTENT ourselves -- nothing did, so on any iPhone with a home
+   indicator the bottom of the scrolling pane sat underneath it. */
+.app-scroll {
+  padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+  padding-left: calc(1rem + env(safe-area-inset-left, 0px));
+  padding-right: calc(1rem + env(safe-area-inset-right, 0px));
+}
+@media (min-width: 768px) {
+  .app-scroll {
+    padding-bottom: calc(1.5rem + env(safe-area-inset-bottom, 0px));
+    padding-left: calc(1.5rem + env(safe-area-inset-left, 0px));
+    padding-right: calc(1.5rem + env(safe-area-inset-right, 0px));
+  }
+}
+
+/* Same promise at the top: in standalone/PWA mode there is no browser chrome
+   above the header, so without this the title sits under the status bar. */
+.royal-header {
+  padding-top: calc(0.75rem + env(safe-area-inset-top, 0px));
+}
+
+/* The mobile navigation toggle was a bare 20px icon -- a 20x20 target, and the
+   only way to reach any other page on a phone. The negative margin cancels the
+   padding for layout, so the button occupies exactly what it did before while
+   accepting a 44px touch. */
+.tap-target {
+  margin: -0.75rem;
+  padding: 0.75rem;
+}
+
+/* The chat button and its panel are `position: fixed`, so `viewport-fit=cover`
+   puts them over the home indicator rather than above it. Both get lifted by
+   the inset; the panel also gets a height cap so it cannot grow past the top
+   of the screen on a short phone. */
+.fab-safe { bottom: calc(1rem + env(safe-area-inset-bottom, 0px)); }
+/* Only the lift. The panel's height is already bounded by the message list's
+   own cap, and adding a max-height here would have clipped the input box. */
+.fab-panel-safe { bottom: calc(5rem + env(safe-area-inset-bottom, 0px)); }

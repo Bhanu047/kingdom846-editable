@@ -22,7 +22,7 @@ export default function AppHeader({
 }) {
   return (
     <header className="royal-header flex items-center gap-2 px-3 py-3 sm:gap-3 sm:px-4 md:px-6">
-      <button onClick={onOpenMobileNav} className="shrink-0 text-parchment/70 hover:text-parchment md:hidden"><Icon name="home" size={20} /></button>
+      <button onClick={onOpenMobileNav} aria-label="Open navigation" className="tap-target shrink-0 text-parchment/70 hover:text-parchment md:hidden"><Icon name="home" size={20} /></button>
       <img src="./assets/crest-846.png" alt="" className="crest-pulse h-8 w-8 hidden sm:block shrink-0" />
       <div className="min-w-0 flex-1">
         <div className="eyebrow hidden truncate sm:block">Kingdom 846 · {title}</div>

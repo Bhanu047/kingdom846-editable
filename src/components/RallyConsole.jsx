@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import Icon from './Icon'
+import { edgeGeometry } from '../lib/edgeTrace'
 
 // The live half of the War Room.
 //
@@ -29,6 +30,29 @@ const PHASES = {
   CLEAR:   { label: 'ALL CALLED', note: 'Every march is away.' },
 }
 
+// The ring's window, in seconds. Fixed rather than scaled to the gap between
+// calls: a constant drain rate is learnable, a variable one is not.
+const RING_WINDOW = 10
+
+/** The live padding-box size of an element, so the trace can be drawn 1:1. */
+function useBoxSize(ref) {
+  const [box, setBox] = useState(null)
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const read = () => setBox((b) =>
+      b && b.width === el.clientWidth && b.height === el.clientHeight
+        ? b
+        : { width: el.clientWidth, height: el.clientHeight })
+    read()
+    if (!window.ResizeObserver) { window.addEventListener('resize', read); return () => window.removeEventListener('resize', read) }
+    const ro = new ResizeObserver(read)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [ref])
+  return box
+}
+
 function clock(seconds) {
   const n = Math.max(0, Math.ceil(seconds))
   return `${Math.floor(n / 60)}:${String(n % 60).padStart(2, '0')}`
@@ -46,6 +70,8 @@ function useWakeLock(active) {
 
 export default function RallyConsole({ sequence, startAt, onAbort, onComplete }) {
   const [now, setNow] = useState(() => (Date.now() - startAt) / 1000)
+  const callPanel = useRef(null)
+  const callBox = useBoxSize(callPanel)
   useWakeLock(true)
 
   // rAF rather than an interval, gated to ~20fps. The playhead has to slide
@@ -105,6 +131,17 @@ export default function RallyConsole({ sequence, startAt, onAbort, onComplete })
   else if (t > 60) { readout = clock(t); readoutClass = 'text-[16vw] sm:text-[5.5rem]' }
   else readout = String(Math.ceil(t))
 
+  // Drawn only once a call is inside the window -- a ring sitting full through
+  // a two-minute HOLD would be noise, and worse, would stop meaning "soon".
+  const ringFrac = phase === 'LAUNCH' ? 1
+    : (next && t > 0 && t <= RING_WINDOW) ? t / RING_WINDOW
+    : null
+
+  const edge = useMemo(
+    () => (callBox ? edgeGeometry(callBox.width, callBox.height) : null),
+    [callBox],
+  )
+
   const meta = PHASES[phase]
 
   return (
@@ -156,10 +193,33 @@ export default function RallyConsole({ sequence, startAt, onAbort, onComplete })
 
       {/* THE CALL. One name, one number, one state -- identifiable by colour
           before a single word is read. */}
-      <div className="wr-console k-plate relative overflow-hidden py-9 text-center" data-phase={phase}>
+      <div ref={callPanel} className="wr-console k-plate relative overflow-hidden py-9 text-center" data-phase={phase}>
         <div className="wr-radar" />
         <div className="wr-rings" />
         <div className="wr-scan" />
+        {/* The approach trace. Rather than a ring around the numeral -- which
+            fought the radar rings and crowded the copy -- the panel's own edge
+            drains. It reads from the far corner of vision, needs no space of
+            its own, and leaves the numeral as large as it wants to be. */}
+        {ringFrac !== null && edge && (
+          <svg
+            className="wr-edge"
+            viewBox={`0 0 ${callBox.width} ${callBox.height}`}
+            width={callBox.width}
+            height={callBox.height}
+            aria-hidden="true"
+          >
+            {edge.arms.map((d) => (
+              <path
+                key={d}
+                d={d}
+                fill="none"
+                strokeDasharray={`${edge.length} ${edge.length}`}
+                strokeDashoffset={(edge.length * (1 - ringFrac)).toFixed(2)}
+              />
+            ))}
+          </svg>
+        )}
         {phase === 'LAUNCH' && <span key={next?.id} className="wr-burst" />}
 
         <div className="relative z-10">

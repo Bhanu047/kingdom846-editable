@@ -2706,3 +2706,42 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
    (Do NOT also apply .gold-corners here: it targets the same ::after and the
    two rules merge into a malformed hybrid bracket.) */
 .wr-console.k-plate::after { z-index: 2 }
+
+/* ------------------------------------------------------------
+   The approach trace.
+   ------------------------------------------------------------
+   The call panel's own edge drains as a call comes due.
+
+   It measures a FIXED ten seconds, not the gap to the next call.
+   That distinction is the whole point. Gaps vary -- eight seconds
+   here, twenty-two there -- so an edge scaled to the gap would sit
+   half-drawn at rates that mean something different every time,
+   which looks informative and is not. Pinned to ten, it always
+   drains at the same rate, so a caller learns what a quarter-edge
+   looks like and can act on it without reading the number.
+
+   Drawn on the border rather than around the numeral: it needs no
+   space of its own, does not fight the radar rings, and is visible
+   from the far corner of vision, which is the whole job in the last
+   seconds when the caller is looking at the game instead.
+   ------------------------------------------------------------ */
+/* The approach trace: the call panel's own border, draining. Drawn 1:1 in
+   pixels by the component, so nothing here rescales it. */
+.wr-edge {
+  position: absolute; inset: 0;
+  pointer-events: none; z-index: 3; overflow: visible;
+}
+.wr-edge path {
+  stroke: var(--wr);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 7px var(--wr-glow));
+}
+/* On the call itself the whole outline is lit and released, so the panel edge
+   reads as the thing that fired. */
+.wr-console[data-phase="LAUNCH"] .wr-edge path { animation: wr-edge-flash 620ms ease-out forwards }
+@keyframes wr-edge-flash { from { opacity: 1 } to { opacity: 0 } }
+
+@media (prefers-reduced-motion: reduce) {
+  .wr-console[data-phase="LAUNCH"] .wr-edge path { animation: none }
+}

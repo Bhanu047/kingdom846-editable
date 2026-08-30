@@ -4,6 +4,7 @@ import { installSurfaceTracking } from './lib/surface'
 import { installReveal } from './lib/reveal'
 import { installPressFeedback } from './lib/press'
 import Sidebar from './components/Sidebar'
+import AppHeader from './components/AppHeader'
 import Icon from './components/Icon'
 import ErrorBoundary from './components/ErrorBoundary'
 import { ToastProvider } from './components/Toast'
@@ -197,22 +198,19 @@ function Shell() {
         )}
 
         <main className="flex flex-1 flex-col overflow-hidden">
-          <header className="royal-header flex items-center gap-3 px-4 py-3 md:px-6">
-            <button onClick={() => setMobileNav(true)} className="text-parchment/70 hover:text-parchment md:hidden"><Icon name="home" size={20} /></button>
-            <img src="./assets/crest-846.png" alt="" className="crest-pulse h-8 w-8 hidden sm:block" />
-            <div className="flex-1">
-              <div className="eyebrow">Kingdom 846 · {titles[page] || 'Page'}</div>
-              <div className="font-display text-base font-bold text-gold-bright">{titles[page] || 'Page'}</div>
-            </div>
-            <div className="flex flex-col items-end mr-2">
-              <span className="text-[9px] uppercase tracking-wider text-gold/50">Kingdom Time</span>
-              <span className="font-mono text-xs font-semibold text-gold-bright tabular-nums">{estTime}</span>
-            </div>
-            {isAdmin && page !== 'admin' && <button onClick={() => navigate('admin')} className="hidden items-center gap-1.5 rounded-lg border border-gold/30 bg-gold/10 px-3 py-1.5 text-xs font-semibold text-gold sm:flex"><Icon name="sparkles" size={13} /> Edit Site</button>}
-            {isAdmin && page !== 'console' && <button onClick={() => navigate('console')} className="hidden items-center gap-1.5 rounded-lg border border-gold/30 bg-gold/10 px-3 py-1.5 text-xs font-semibold text-gold sm:flex" data-testid="button-master-console"><Icon name="crown" size={13} /> Master</button>}
-            <button onClick={() => setSearchOpen(true)} className="flex items-center gap-2 rounded-lg border border-gold/20 bg-ink/60 px-3 py-1.5 text-xs text-parchment/50 hover:text-parchment"><Icon name="search" size={14} /> <span className="hidden sm:inline">Search the realm…</span></button>
-            {user ? <button onClick={handleSignOut} className="flex items-center gap-1.5 rounded-lg border border-gold/20 px-3 py-1.5 text-xs text-parchment/70 hover:text-parchment hover:bg-white/5"><Icon name="logout" size={13} /> {sidebarUser?.name}</button> : <button onClick={() => { setLoginMode('leader'); setLoginOpen(true) }} className="btn-primary !py-1.5 !text-xs" data-testid="button-leader-login"><Icon name="shield" size={13} /> Login</button>}
-          </header>
+          <AppHeader
+            page={page}
+            title={titles[page] || 'Page'}
+            estTime={estTime}
+            isAdmin={isAdmin}
+            user={user}
+            sidebarUser={sidebarUser}
+            onNavigate={navigate}
+            onOpenMobileNav={() => setMobileNav(true)}
+            onOpenSearch={() => setSearchOpen(true)}
+            onSignOut={handleSignOut}
+            onLogin={() => { setLoginMode('leader'); setLoginOpen(true) }}
+          />
 
           <div className="flex-1 overflow-y-auto overflow-x-hidden overscroll-contain p-4 md:p-6" style={{ WebkitOverflowScrolling: 'touch' }}>
             <div key={page} className="page-enter mx-auto max-w-6xl">{render()}</div>

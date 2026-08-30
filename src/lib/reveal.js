@@ -20,8 +20,11 @@ const TARGETS = [
 
 // Anything inside these is excluded. Report clones are rasterised off-screen,
 // so an observer would never fire for them and every cloned block would export
-// stuck at its hidden start state.
-const EXCLUDE = '.kv-live, .k846-v2, .k846-cmd'
+// stuck at its hidden start state. The welcome overlay is excluded for a
+// different reason: it is a fixed, full-viewport <section> that is already the
+// first thing anyone sees. There is no scroll to reveal it on, and hiding it
+// to wait for one is how it ends up not appearing at all.
+const EXCLUDE = '.kv-live, .k846-v2, .k846-cmd, .royal-welcome-shell'
 
 export function installReveal() {
   if (typeof window === 'undefined') return () => {}
@@ -33,7 +36,7 @@ export function installReveal() {
     (entries) => {
       for (const e of entries) {
         if (!e.isIntersecting) continue
-        e.target.classList.add('is-in')
+        e.target.dataset.k846Rev = 'in'
         // One-shot. Re-animating on every scroll past is the thing that makes
         // scroll-driven sites tiring to read.
         observer.unobserve(e.target)
@@ -50,18 +53,60 @@ export function installReveal() {
     { rootMargin: '0px 0px -12% 0px', threshold: 0 },
   )
 
+  // The state lives in a data attribute, NOT a class.
+  //
+  // These targets are React-rendered: `<section className={...}>` and friends
+  // set className from props, so React owns that attribute and rewrites it on
+  // every re-render -- silently deleting whatever was added here. The failure
+  // is one-directional and invisible: an element that had been revealed loses
+  // `is-in`, falls back to the hidden start state, and simply never comes back,
+  // because scan() has already marked it seen and the observer has already
+  // unobserved it. That is how the whole welcome screen could end up rendered
+  // at opacity 0. React does not manage data attributes it did not set, so
+  // `data-k846-rev` survives the re-render that a class does not.
   const scan = () => {
     for (const el of document.querySelectorAll(TARGETS)) {
       if (el.dataset.k846Rev) continue
       if (el.closest(EXCLUDE)) continue
-      el.dataset.k846Rev = '1'
-      if (reduced) { el.classList.add('is-in'); continue }
+      if (reduced) { el.dataset.k846Rev = 'in'; continue }
       // Elements already in view on first paint still animate -- that is the
       // page's entrance -- but everything below the fold waits for the scroll.
-      el.classList.add('will-reveal')
+      el.dataset.k846Rev = 'wait'
       observer.observe(el)
     }
   }
+
+  // Safety net.
+  //
+  // The observer is the mechanism; it is not a guarantee. A target can be
+  // tagged and observed at a moment when no entry is ever delivered for it --
+  // lazily-mounted routes and Suspense boundaries make this easy to hit, and
+  // it reproduces intermittently: the same page leaves the Battle Lab hero
+  // invisible on one load and reveals it on the next. Because scan() marks an
+  // element seen and the observer only ever fires once, a miss is permanent.
+  //
+  // So anything still in the hidden start state while it is ON SCREEN gets
+  // revealed outright. A missed animation is a far better failure than content
+  // nobody can read.
+  const sweep = () => {
+    for (const el of document.querySelectorAll('[data-k846-rev="wait"]')) {
+      const r = el.getBoundingClientRect()
+      if (r.bottom > 0 && r.top < (window.innerHeight || 0)) {
+        el.dataset.k846Rev = 'in'
+        observer?.unobserve(el)
+      }
+    }
+  }
+
+  // Capture phase, on the document: the app scrolls an inner pane rather than
+  // the page, and scroll events from that pane do not bubble.
+  let sweepPending = 0
+  const onScroll = () => {
+    if (sweepPending) return
+    sweepPending = requestAnimationFrame(() => { sweepPending = 0; sweep() })
+  }
+  document.addEventListener('scroll', onScroll, { capture: true, passive: true })
+  const sweepTimer = setInterval(sweep, 800)
 
   scan()
 
@@ -77,6 +122,9 @@ export function installReveal() {
   const teardown = () => {
     observer?.disconnect()
     mo.disconnect()
+    clearInterval(sweepTimer)
+    document.removeEventListener('scroll', onScroll, { capture: true })
+    if (sweepPending) cancelAnimationFrame(sweepPending)
     delete window.__k846Reveal
   }
   window.__k846Reveal = teardown

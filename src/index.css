@@ -2147,37 +2147,36 @@ select.royal-select option {
 /* ---- Scroll reveal ------------------------------------------------------- */
 /* Driven by IntersectionObserver (src/lib/reveal.js), not animation-timeline:
    the old rule was behind @supports and never applied on most browsers. */
-.will-reveal {
+[data-k846-rev="wait"] {
   opacity: 0;
   transform: translateY(30px) scale(.985);
   transition:
     opacity .8s cubic-bezier(.16,1,.3,1),
     transform .95s cubic-bezier(.22,1,.28,1);
 }
-.will-reveal.is-in { opacity: 1; transform: none; }
+[data-k846-rev="in"] { opacity: 1; transform: none; }
 
 /* Children of a revealed block cascade rather than arriving as one slab. The
    delay is applied to the container's direct children, so it needs no per-item
    markup. Capped at 8 -- past that a stagger stops reading as choreography and
    starts reading as lag. */
-.will-reveal.is-in > * { animation: rev-child .7s cubic-bezier(.2,1,.3,1) both; }
-.will-reveal.is-in > :nth-child(1) { animation-delay: .04s }
-.will-reveal.is-in > :nth-child(2) { animation-delay: .10s }
-.will-reveal.is-in > :nth-child(3) { animation-delay: .16s }
-.will-reveal.is-in > :nth-child(4) { animation-delay: .22s }
-.will-reveal.is-in > :nth-child(5) { animation-delay: .28s }
-.will-reveal.is-in > :nth-child(6) { animation-delay: .33s }
-.will-reveal.is-in > :nth-child(7) { animation-delay: .37s }
-.will-reveal.is-in > :nth-child(n+8) { animation-delay: .40s }
+[data-k846-rev="in"] > * { animation: rev-child .7s cubic-bezier(.2,1,.3,1) both; }
+[data-k846-rev="in"] > :nth-child(1) { animation-delay: .04s }
+[data-k846-rev="in"] > :nth-child(2) { animation-delay: .10s }
+[data-k846-rev="in"] > :nth-child(3) { animation-delay: .16s }
+[data-k846-rev="in"] > :nth-child(4) { animation-delay: .22s }
+[data-k846-rev="in"] > :nth-child(5) { animation-delay: .28s }
+[data-k846-rev="in"] > :nth-child(6) { animation-delay: .33s }
+[data-k846-rev="in"] > :nth-child(7) { animation-delay: .37s }
+[data-k846-rev="in"] > :nth-child(n+8) { animation-delay: .40s }
 @keyframes rev-child { from { opacity: 0; transform: translateY(14px) } to { opacity: 1; transform: none } }
 
 /* An export has no viewport and no scroll, so nothing would ever reveal and
    every cloned block would rasterise at its hidden start state. */
-.kv-live .will-reveal, .k846-v2 .will-reveal,
-.kv-live [class*="will-reveal"], .k846-v2 [class*="will-reveal"] {
+.kv-live [data-k846-rev], .k846-v2 [data-k846-rev] {
   opacity: 1 !important; transform: none !important; transition: none !important;
 }
-.kv-live .will-reveal > *, .k846-v2 .will-reveal > * { animation: none !important; opacity: 1 !important; transform: none !important }
+.kv-live [data-k846-rev] > *, .k846-v2 [data-k846-rev] > * { animation: none !important; opacity: 1 !important; transform: none !important }
 
 /* ---- Page transition ----------------------------------------------------- */
 /* A route change used to be a 0.45s fade -- indistinguishable from a repaint.
@@ -2248,8 +2247,8 @@ select.royal-select option {
 [data-suite] h1, [data-suite] h2 { font-size: revert; line-height: revert; }
 
 @media (prefers-reduced-motion: reduce) {
-  .will-reveal { opacity: 1 !important; transform: none !important; transition: none !important }
-  .will-reveal.is-in > * { animation: none !important }
+  [data-k846-rev="wait"] { opacity: 1 !important; transform: none !important; transition: none !important }
+  [data-k846-rev="in"] > * { animation: none !important }
   .page-enter { animation: none !important }
   .page-enter::before { display: none }
 }

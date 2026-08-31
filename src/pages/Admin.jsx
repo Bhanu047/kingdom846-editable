@@ -5,6 +5,7 @@ import Icon from '../components/Icon'
 import { buildSchedule, AVATAR_OPTIONS } from '../data/kingdom'
 import { apiJson, apiFetch } from '../lib/api'
 import { RoyalSectionHeader } from '../components/VisualElements'
+import SyncReport from '../components/SyncReport'
 
 const SECTIONS = ['Alliances', 'Players', 'Events', 'Analytics']
 
@@ -630,6 +631,8 @@ function AdminAI() {
             Next auto-run: {new Date(agentStatus.next_run).toLocaleTimeString()}</span>
         )}
       </div>
+
+      <SyncReport report={agentStatus?.last_sync} />
 
       {/* AI Activity Log */}
       {agentStatus?.activity_log?.length > 0 && (

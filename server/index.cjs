@@ -1189,12 +1189,28 @@ async function fetchKingshotData() {
     })
   }
 
+  // How much of the result actually came off the network.
+  //
+  // Without this the sync is unfalsifiable: the seed list is pushed in first
+  // and the live fetch only ever ADDS, so "Synced 66 items" reads identically
+  // whether both sources returned fresh announcements or nothing at all. The
+  // failure mode is not an error -- it is a scrape that succeeds and matches
+  // nothing useful, which no try/catch can see.
+  const live = { news: [], guides: [], newsError: null, guidesError: null }
+  const seedNewsCount = news.length
+  const seedGuidesCount = guides.length
+
   // Try to fetch LIVE data to add new items not in seed
   try {
     const res = await fetch('https://kingshot.net/game-announcements', {
       headers: { 'User-Agent': 'Mozilla/5.0' },
       signal: AbortSignal.timeout(10000)
     })
+    // fetch does NOT throw on 4xx/5xx. Without this check a 403 from bot
+    // filtering, a rate limit, or a maintenance page is read as a document,
+    // the regex matches nothing in it, and the run reports success with zero
+    // live items -- indistinguishable from a site that simply had no news.
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
     const html = await res.text()
     // Extract titles from h2/h3 headings
     const titlePattern = /<h[23][^>]*>(?:<a[^>]*>)?([^<]{8,120})(?:<\/a>)?<\/h[23]>/gi
@@ -1216,7 +1232,11 @@ async function fetchKingshotData() {
         })
       }
     }
-  } catch (e) { console.error('Sync: live fetch kingshot.net failed:', e.message) }
+    live.news = news.slice(seedNewsCount).map((n) => n.title)
+  } catch (e) {
+    live.newsError = e.message
+    console.error('Sync: live fetch kingshot.net failed:', e.message)
+  }
 
   // Try to fetch live guides from kingshot.wiki
   try {
@@ -1224,6 +1244,7 @@ async function fetchKingshotData() {
       headers: { 'User-Agent': 'Mozilla/5.0' },
       signal: AbortSignal.timeout(10000)
     })
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
     const html = await res.text()
     // Extract guide titles from h3/h4 headings
     const headingPattern = /<h[34][^>]*>\s*<a[^>]*href="([^"]+)"[^>]*>([^<]{8,120})<\/a>\s*<\/h[34]>/gi
@@ -1248,9 +1269,21 @@ async function fetchKingshotData() {
         })
       }
     }
-  } catch (e) { console.error('Sync: live fetch kingshot.wiki failed:', e.message) }
+    live.guides = guides.slice(seedGuidesCount).map((g) => g.title)
+  } catch (e) {
+    live.guidesError = e.message
+    console.error('Sync: live fetch kingshot.wiki failed:', e.message)
+  }
 
-  return { news, guides }
+  // Printed in full so a run can be audited from the server log. The count
+  // alone has been a constant 66 for days, which is the symptom that started
+  // this: a real announcements feed does not hold perfectly still.
+  console.log(`Sync: kingshot.net -> ${live.newsError ? 'ERROR ' + live.newsError : live.news.length + ' live news'}`)
+  for (const t of live.news) console.log(`Sync:   news  | ${t}`)
+  console.log(`Sync: kingshot.wiki -> ${live.guidesError ? 'ERROR ' + live.guidesError : live.guides.length + ' live guides'}`)
+  for (const t of live.guides) console.log(`Sync:   guide | ${t}`)
+
+  return { news, guides, live, seedCount: seedNewsCount + seedGuidesCount }
 }
 
 // Sync endpoint (called by cron with secret key)
@@ -1361,14 +1394,15 @@ async function executeTool(toolName, args) {
   switch (toolName) {
     case 'sync_kingshot': {
       try {
-        const { news, guides } = await fetchKingshotData()
+        const { news, guides, live, seedCount } = await fetchKingshotData()
         const all = [...news, ...guides]
+        const report = recordSync({ news, guides, live, seedCount })
         db.prepare('DELETE FROM kingshot_sync').run()
         const stmt = db.prepare('INSERT OR REPLACE INTO kingshot_sync (id, type, title, category, date, excerpt, body, source, art, read_time, synced_at) VALUES (?,?,?,?,?,?,?,?,?,?,datetime(\'now\'))')
         for (const item of all) {
           stmt.run(item.id, item.type, item.title, item.category || null, item.date || null, item.excerpt || null, item.body || null, item.source || null, item.art || null, item.read_time || null)
         }
-        return `Sync complete! ${all.length} items (${news.length} news, ${guides.length} guides) updated successfully.`
+        return `Sync complete! ${all.length} items (${news.length} news, ${guides.length} guides) — ${report.live} came from the live sources, ${report.seed} are built in.${report.errors.length ? ' Errors: ' + report.errors.join('; ') : ''}`
       } catch (e) {
         return `Sync failed: ${e.message}`
       }
@@ -3343,6 +3377,28 @@ let lastAgentRun = null
 let agentInsights = []
 let agentLog = [] // Activity log
 let designBriefing = null // Latest design intelligence briefing
+let lastSyncReport = null // Where the last sync's items actually came from
+
+/**
+ * Records where a sync's items actually came from.
+ *
+ * Called by every path that writes kingshot_sync, so the admin panel reports
+ * the last sync that really happened rather than the last one that happened
+ * to go through the agent.
+ */
+function recordSync({ news, guides, live, seedCount }) {
+  const liveTitles = [...(live?.news || []), ...(live?.guides || [])]
+  lastSyncReport = {
+    at: new Date().toISOString(),
+    total: news.length + guides.length,
+    live: liveTitles.length,
+    seed: seedCount ?? 0,
+    liveTitles,
+    errors: [live?.newsError && `kingshot.net: ${live.newsError}`,
+             live?.guidesError && `kingshot.wiki: ${live.guidesError}`].filter(Boolean),
+  }
+  return lastSyncReport
+}
 const MAX_LOG = 20
 
 function logAction(action, detail) {
@@ -3455,7 +3511,7 @@ async function runAutonomousAgent() {
   console.log('[AI Agent] Running autonomous check...')
   try {
     // 1. Auto-sync Kingshot data
-    const { news, guides } = await fetchKingshotData()
+    const { news, guides, live, seedCount } = await fetchKingshotData()
     const all = [...news, ...guides]
     db.prepare('DELETE FROM kingshot_sync').run()
     const stmt = db.prepare('INSERT OR REPLACE INTO kingshot_sync (id, type, title, category, date, excerpt, body, source, art, read_time, synced_at) VALUES (?,?,?,?,?,?,?,?,?,?,datetime(\'now\'))')
@@ -3467,7 +3523,16 @@ async function runAutonomousAgent() {
     console.log(`[AI Agent] Synced ${all.length} items (skipping insights to save quota)`)
 
     lastAgentRun = new Date().toISOString()
-    logAction('Auto-sync', `Synced ${all.length} items`)
+
+    // Say where the items came from. "Synced 66 items" was true on every run
+    // for days and told nobody that 59 of those are hardcoded in this file and
+    // the other 7 never changed. A summary that cannot distinguish a working
+    // sync from a dead one is not a summary. The activity row is truncated in
+    // the UI, so this has to say it in a few words.
+    const liveCount = recordSync({ news, guides, live, seedCount }).live
+    logAction('Auto-sync', liveCount === 0
+      ? `${all.length} items · 0 live — sources gave nothing`
+      : `${all.length} items · ${liveCount} live · ${seedCount} built-in`)
 
     // 3. Run design scan only if explicitly requested (skip on auto-runs to save quota)
     // Design scan is triggered manually via admin panel
@@ -3488,6 +3553,7 @@ app.get('/api/ai/status', (_req, res) => {
     insights: agentInsights,
     activity_log: agentLog.slice(0, 10),
     design_briefing: designBriefing,
+    last_sync: lastSyncReport,
     next_run: lastAgentRun ? new Date(new Date(lastAgentRun).getTime() + AGENT_INTERVAL).toISOString() : null
   })
 })
@@ -3517,8 +3583,9 @@ app.post('/api/sync-kingshot', async (req, res) => {
   const key = req.query.key || req.headers['x-sync-key']
   if (key !== SYNC_KEY) return res.status(403).json({ error: 'Invalid sync key' })
   try {
-    const { news, guides } = await fetchKingshotData()
+    const { news, guides, live, seedCount } = await fetchKingshotData()
     const all = [...news, ...guides]
+    recordSync({ news, guides, live, seedCount })
     // Clear old synced data and insert fresh
     db.prepare('DELETE FROM kingshot_sync').run()
     const stmt = db.prepare('INSERT OR REPLACE INTO kingshot_sync (id, type, title, category, date, excerpt, body, source, art, read_time, synced_at) VALUES (?,?,?,?,?,?,?,?,?,?,datetime(\'now\'))')

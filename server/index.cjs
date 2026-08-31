@@ -1080,6 +1080,24 @@ function cleanText(s) {
 }
 
 // Assign category + image based on title keywords
+/** "kingshotmastery.com" from a full url, for crediting a guide's source. */
+function sourceHost(url) {
+  try { return new URL(url).hostname.replace(/^www\./, '') } catch { return 'the web' }
+}
+
+const GUIDE_ART = {
+  Beginner: './assets/guide-beginner.png',
+  Heroes: './assets/guide-heroes.png',
+  Combat: './assets/guide-combat.png',
+  Economy: './assets/guide-economy.png',
+  Events: './assets/guide-events.png',
+  Strategy: './assets/guide-strategy.png',
+}
+
+// Keyword guessing, kept only for LIVE-scraped guides where no category is
+// known. The seed list carries its own -- guessing from the title put every
+// Bear Trap guide under Heroes, because "Heroes" appears in the title and the
+// hero check runs before the bear check.
 function categorizeGuide(title) {
   const t = title.toLowerCase()
   if (t.includes('beginner') || t.includes('f2p') || t.includes('new player') || t.includes('first')) return { cat: 'Beginner', art: './assets/guide-beginner.png' }
@@ -1092,68 +1110,73 @@ function categorizeGuide(title) {
 
 // Clean seed data (pre-fetched from sources, verified clean)
 const SEED_GUIDES = [
-  'Kingshot Research Strategy: What to Focus on in the Academy',
-  'Active Giftcodes and How to Redeem',
-  'More Rewards in Bear Trap: Why Coordination Makes the Difference',
-  'Early Game Arena Guide for Kingshot',
-  'Best Hero Expedition Skills to Focus on Early',
-  'Bear Hunt Expert Guide',
-  'Kingshot Hero Lineup Guide: Solo, Rally & Garrison',
-  'Kingshot Masters Skill Priority Guide (F2P vs P2W)',
-  'T10 TG8 vs T11: Which One Should You Go For?',
-  'Bear Trap Damage Mechanics and Example Simulation',
-  'Kingshot Infantry Hero Guide: Zoe vs Alcar vs Others',
-  'Tempered Truegold Optimal Strategy',
-  'The Only Kingshot Hero Tier List You Actually Need',
-  'Best Packs to Buy for Low and Mid Spenders',
-  'Advanced Rally Guide',
-  'Complete F2P and Low Spender Guide for Kingshot',
-  'Joiner Hero Mechanics No One Told You About',
-  'Lethality, Attack, Defense & Health - What They Actually Do',
-  'Pets in Kingshot: Priority & Refinement Guide',
-  'How to Win Tri-Alliance Clash - Strategies & Tips',
-  'Tri-Alliance Clash Map',
-  "King's Castle Battle Guide: Tips to Win Every Time",
-  'The Smart Way to Upgrade Hero Gear in Kingshot',
-  'Complete Guide to Winning Swordland Showdown',
-  'Kingshot Troop Setup Guide: Best Formations for Every Event',
-  'Troop Training vs. Promotion: Which One is Better and When?',
-  'Events Calendar',
-  'Viking Vengeance Expert Guide',
-  'When to Replace Your Archer Hero in Kingshot',
-  'When to Replace Your Cavalry Hero in Kingshot',
-  'When to Replace Your Infantry Hero in Kingshot',
-  'What Items to Save for Future Events',
-  'How to Win the Alliance Championship in Kingshot',
-  'Where to Spend Your Gems in Kingshot (Without Regrets',
-  "Eternity's Reach Event Guide (F2P Friendly)",
-  'Governor Charms Upgrade Priority Guide',
-  'How to Build a Good March and Rally Lineup as F2P',
-  'Item Prioritization Guide: What to Focus on for Maximum Impact',
-  'Governor Gear Upgrade Priority Guide',
-  'Kingshot Farm Account Guide - Never Run Out of Resources Again',
-  'Batch Healing Guide: Save Time & Speedups',
-  'Simple Ways to Get More Gold in Kingshot Without Spending',
-  'Save Days on Building Upgrades with Double Time',
-  'Drill Camp Explained',
-  'How to Dismiss/Remove Troops in Kingshot',
-  'Secured Resources vs. Non-Secured Resources in Kingshot',
-  'Beginner\'s Guide to Kingshot',
-  'Troop Formation Guide',
-  'Rally Mechanics Guide',
+  { t: 'Bear Trap Guide 2026: Best Formations, Heroes & Rally Tips', u: 'https://kingshotmastery.com/guides/bear-hunt', c: 'Events' },
+  { t: 'Bear Hunt Expert Guide', u: 'https://kingshotguides.com/guide/bear-hunt-expert-guide/', c: 'Events' },
+  { t: 'Bear Trap Guide: Layout and Troop Formation', u: 'https://grindnstrat.com/kingshot-bear-trap-guide/', c: 'Events' },
+  { t: 'Bear Trap: Maximise Rally Damage and Rewards', u: 'https://www.kingshotguide.org/guide/bear-trap-kingshot', c: 'Events' },
+  { t: 'Bear Trap Strategy Guide', u: 'https://www.kingshotguide.com/guides/kingshot-bear-trap-strategy-guide', c: 'Events' },
+  { t: 'Bear Hunt & Rally Tips (2026)', u: 'https://www.ldshop.gg/blog/kingshot/bear-hunt.html', c: 'Events' },
+  { t: 'Event Calendar 2026: Weekly & 4-Week Cycle', u: 'https://kingshotmastery.com/guides/event-calendar', c: 'Events' },
+  { t: 'KvK Timeline and Event Schedule (2026)', u: 'https://boostbot.org/blog/kingshot-event-calendar/', c: 'Events' },
+  { t: 'Hero Tier List August 2026: Best by Generation', u: 'https://kingshotmastery.com/guides/kingshot-hero-tier-list', c: 'Heroes' },
+  { t: 'Hero Tier List: Best Heroes by Generation and Role', u: 'https://www.kingshotguide.com/guides/kingshot-hero-tier-list', c: 'Heroes' },
+  { t: 'Hero Tier List 2026: Best Heroes by Role', u: 'https://kingshothandbook.com/heroes/tier-list', c: 'Heroes' },
+  { t: 'Hero Tier List: Ranking of the Best Heroes (2026)', u: 'https://mobi.gg/en/tips/kingshot-hero-tier-list/', c: 'Heroes' },
+  { t: 'Hero Tier List (2026): Rally, Garrison & Bear Hunt', u: 'https://buffhub.com/blog/kingshot/kingshot-tier-list.html', c: 'Heroes' },
+  { t: 'Hero Tier List 2026 (Gen 1-Gen 7): Best Heroes Ranked', u: 'https://www.mone.gg/blog/kingshot/kingshot-hero-tier-list.html', c: 'Heroes' },
+  { t: 'Hero Lineup Guide: Solo, Rally & Garrison', u: 'https://kingshotguides.com/guide/kingshot-hero-lineup-guide-solo-rally-garrison/', c: 'Heroes' },
+  { t: 'Best Garrison Heroes: Wall Defense Guide 2026', u: 'https://kingshothandbook.com/guides/garrison-defense-heroes-guide', c: 'Heroes' },
+  { t: 'Hero Gear Guide: Everything You Need to Know', u: 'https://www.topuplive.com/news/kingshot-hero-gear-guide.html', c: 'Heroes' },
+  { t: 'Gear Guide 2026: Priority, Sets & Red Gear', u: 'https://kingshotmastery.com/guides/kingshot-gear-guide', c: 'Heroes' },
+  { t: 'Troop Formations 2026: Rally, Defense & PvP', u: 'https://kingshotmastery.com/guides/kingshot-troop-formations-guide', c: 'Combat' },
+  { t: 'Battle Mechanics: Stats, Triangle & Formations', u: 'https://kingshotmastery.com/guides/battle-mechanics-guide', c: 'Combat' },
+  { t: 'Troop Formation Guide', u: 'https://kingshot.net/wiki/troops/troop-formation-guide', c: 'Combat' },
+  { t: 'Troop Formations and Combat Mechanics', u: 'https://www.kingshotguide.com/guides/troop-formations-combat-mechanics', c: 'Combat' },
+  { t: 'Troop Setup Guide: Best Formations for Every Event', u: 'https://kingshotguides.com/guide/kingshot-troop-setup-guide-best-formations-for-every-event/', c: 'Combat' },
+  { t: 'Troop Formation Guide: Rallies, Garrisons and Bear Hunt', u: 'https://buffhub.com/blog/kingshot/kingshot-troop-formation-guide.html', c: 'Combat' },
+  { t: 'The Best Troops Formation Guide', u: 'https://www.ldshop.gg/blog/kingshot/troops-formation-guide.html', c: 'Combat' },
+  { t: 'Early Troops: What to Train First (and Skip)', u: 'https://kingshothandbook.com/guides/kingshot-early-troop-guide', c: 'Combat' },
+  { t: 'Arena Guide: Heroes & Formations', u: 'https://kingshotmastery.com/guides/kingshot-arena-guide', c: 'Combat' },
+  { t: 'Arena PvP: Strategy, Team Building & Rewards', u: 'https://kingshothandbook.com/guides/arena-pvp-guide', c: 'Combat' },
+  { t: 'Castle Battle Guide: Formations & Points', u: 'https://kingshotmastery.com/guides/kingshot-castle-battle-guide', c: 'Combat' },
+  { t: 'King\'s Castle Battle Guide: Tips to Win Every Time', u: 'https://kingshotguides.com/guide/kings-castle-battle-guide-tips-to-win-every-time/', c: 'Combat' },
+  { t: 'Kingdom of Power (KvK): Battle, Rewards & Recovery', u: 'https://kingshotmastery.com/guides/kingshot-kingdom-of-power-guide', c: 'Combat' },
+  { t: 'KvK Guide: How to Win Kingdom vs Kingdom', u: 'https://kingshotpro.com/guides/kvk.html', c: 'Combat' },
+  { t: 'KvK Event: Phases, Rewards and Strategy', u: 'https://www.kingshotguide.org/guide/kingshot-kvk-event', c: 'Combat' },
+  { t: 'KvK Prep, Scoring & Battle Strategy', u: 'https://wizardstower.com/guides/kingshot/kvk', c: 'Combat' },
+  { t: 'Kingdom vs Kingdom', u: 'https://kingshotwin.com/events/kingdom-vs-kingdom/', c: 'Combat' },
+  { t: 'Kingdom of Power: Phases, Rewards, Tips & Strategy', u: 'https://www.ldshop.gg/blog/kingshot/kingshot-kvk-guide.html', c: 'Combat' },
+  { t: 'Swordland Showdown: Complete Strategy Guide (2026)', u: 'https://kingshotmastery.com/guides/swordland-showdown', c: 'Combat' },
+  { t: 'Swordland Showdown: Ultimate Strategy Guide', u: 'https://www.kingshotguide.org/guide/kingshot-swordland-showdown', c: 'Combat' },
+  { t: 'Swordland Showdown Guide', u: 'https://www.kingshotguide.com/guides/kingshot-swordland-showdown-guide', c: 'Combat' },
+  { t: 'Complete Guide to Winning Swordland Showdown', u: 'https://kingshotguides.com/guide/complete-guide-to-winning-swordland-showdown/', c: 'Combat' },
+  { t: 'Tri-Alliance Clash: Stages & Temple Strategy', u: 'https://kingshotmastery.com/guides/tri-alliance-clash', c: 'Combat' },
+  { t: 'Tri-Alliance Clash Guide', u: 'https://www.kingshotguide.com/guides/kingshot-tri-alliance-clash-guide', c: 'Combat' },
+  { t: 'Truegold and Mithril: Complete Resource Mastery', u: 'https://kingshothandbook.com/guides/truegold-mithril-guide', c: 'Economy' },
+  { t: 'How to Farm Resources in Kingshot', u: 'https://boostbot.org/blog/kingshot-resource-farming/', c: 'Economy' },
+  { t: 'Resource Farming Mastery', u: 'https://www.ldshop.gg/blog/kingshot/resources-farming-guide.html', c: 'Economy' },
+  { t: 'Truegold Guide: Upgrades, Farming & Strategy', u: 'https://heaven-guardian.com/kingshot-truegold-guide-upgrades-farming-strategy', c: 'Economy' },
+  { t: 'T11 Truegold Troops: Unlock, Research Costs & Strategy', u: 'https://buffhub.com/blog/kingshot/kingshot-t11-truegold-troops.html', c: 'Economy' },
+  { t: 'Pets Guide 2026: Priority, Refinement & F2P', u: 'https://kingshotmastery.com/guides/kingshot-pet-guide', c: 'Strategy' },
+  { t: 'Mastery Guide: How to Unlock, Upgrade and Dominate', u: 'https://www.kingshotguide.org/guide/2026-kingshot-mastery-guide', c: 'Strategy' },
+  { t: 'Beginner Guide: Essential Tips for Your First 100 Days', u: 'https://kingshotoptimizer.com/guides/kingshot-beginner-tips/', c: 'Beginner' },
+  { t: 'Beginners Guide and Tips', u: 'https://gamingonphone.com/guides/kingshot-beginners-guide-and-tips/', c: 'Beginner' },
+  { t: 'Advanced Tips and Tricks to Progress Efficiently', u: 'https://www.bluestacks.com/blog/game-guides/kingshot/kgst-tips-tricks-en.html', c: 'Beginner' },
+  { t: 'Top 10 Pro Tips Every New Player Should Know', u: 'https://www.ldshop.gg/blog/kingshot/top-10-pro-tips-for-beginner.html', c: 'Beginner' },
+  { t: 'Guide to Get Started: Beginner\'s Guide', u: 'https://www.lootbar.com/blog/en/kingshot-guide-to-get-started-beginner-guide.html', c: 'Beginner' },
+  { t: 'Buildings: Complete Building List & Guide', u: 'https://www.kingshotguide.com/buildings', c: 'Beginner' },
+  { t: 'Upgrade Guide: Smart Upgrade Order', u: 'https://www.ldshop.gg/blog/kingshot/upgrade-guide.html', c: 'Beginner' },
 ]
 
 const SEED_NEWS = [
-  { title: 'Thanksgiving Feast in Autumn!', cat: 'EVENT', excerpt: 'Dear Governor, in this golden autumn season symbolizing harvest, the grand Thanksgiving celebration is being prepared with great passion.', source: 'https://kingshot.net/game-announcements', date: '2025-11-27' },
-  { title: 'Hotfix 11/24/2025 - Construction Queue Pack Optimization', cat: 'UPDATE', excerpt: 'Pack content upgraded with an all-new Newbie Booster Pack that provides better value.', source: 'https://kingshot.net/game-announcements', date: '2025-11-24' },
-  { title: 'Hotfix 11/18 - Fishing Tournament Optimization', cat: 'UPDATE', excerpt: 'Optimized the item description for Horn of the Tide. Guide progression improvements.', source: 'https://kingshot.net/game-announcements', date: '2025-11-18' },
-  { title: 'October 28, 2025 Update - New Content & Improvements', cat: 'UPDATE', excerpt: 'Update released from 6:00 to 9:00 UTC to improve your gaming experience with new features.', source: 'https://kingshot.net/game-announcements', date: '2025-10-28' },
-  { title: 'The Witch is Coming - Halloween Event', cat: 'EVENT', excerpt: 'Dear Governors, the Halloween Party is about to begin, with countless thrilling party adventures awaiting you.', source: 'https://kingshot.net/game-announcements', date: '2025-10-25' },
-  { title: 'Mystic Trial - A New Adventure Begins', cat: 'FEATURE', excerpt: 'A mysterious zone filled with endless challenges, where the desire for battle permeates the air.', source: 'https://kingshot.net/game-announcements', date: '2025-10-15' },
-  { title: 'Tri-Alliance Clash is Imminent', cat: 'PVP', excerpt: 'As the tides recede, the temple symbolizing maritime supremacy emerges. Three Alliances battle for control.', source: 'https://kingshot.net/game-announcements', date: '2025-10-10' },
-  { title: 'Mid-Autumn Festival - One Sky, One Moon', cat: 'EVENT', excerpt: "Let's light the wish lanterns and celebrate this special time of reunion together!", source: 'https://kingshot.net/game-announcements', date: '2025-09-29' },
-  { title: 'NEW: Hero Gear Optimizer Tool', cat: 'FEATURE', excerpt: 'Find out which Hero Gear to upgrade first. Enter your levels, Mastery, XP, Forge Hammers, and Mithril to get an upgrade order.', source: 'https://kingshot.com.br/en/news/', date: '2025-09-20' },
-  { title: 'What Is Kingshot? Complete Beginner\'s Guide', cat: 'GUIDE', excerpt: 'Discover what Kingshot is, how the game works, and the main mechanics for beginners.', source: 'https://kingshot.com.br/en/news/', date: '2025-09-15' },
+  { title: 'August 2026 Update: Duel of the Elites and Blizzard Brawl', cat: 'UPDATE', excerpt: 'Two headline features for Kingdom of Power, plus Alliance Notices, an R5/R4 chat channel, faster rally timers and clearer battlefield mail.', source: 'https://kingshotmastery.com/blog/kingshot-august-2026-update-patch-notes', date: '2026-08-24' },
+  { title: 'July 2026 Update: Prestige Merit Shop and Name Cards', cat: 'UPDATE', excerpt: 'The Prestige Merit Shop and a Name Card cosmetic system, followed by 27 optimisations across events, rewards, chat, heroes and navigation.', source: 'https://kingshotmastery.com/blog/kingshot-july-2026-update-patch-notes', date: '2026-07-08' },
+  { title: 'July 2026 Patch Notes: Prestige Merit Shop & More', cat: 'UPDATE', excerpt: 'An independent write-up of the July patch, covering the Merit Shop, Hero Roulette changes and Bear Hunt auto-registration.', source: 'https://www.u7buy.com/blog/kingshot-update-patch-notes/', date: '2026-07' },
+  { title: 'April 2026 Update: The Master System', cat: 'UPDATE', excerpt: 'A narrative-driven adventure sending Quinn into the Badlands, alongside changes to chat, rallies, pets, formations and teleporting.', source: 'https://kingshotmastery.com/blog/kingshot-update-master-system-april-2026', date: '2026-04' },
+  { title: '1st Anniversary Kingdom Festival: Events, Rewards & Dates', cat: 'EVENT', excerpt: 'Eight events running together from 17 to 23 March, with some activities extending to the 24th. Town Center 6 or higher required.', source: 'https://kingshotmastery.com/blog/kingshot-1st-anniversary-festival-2026', date: '2026-03-17' },
+  { title: '1st Anniversary Event Guide: How to Claim Every Reward', cat: 'EVENT', excerpt: 'A reward-by-reward walkthrough of the Kingdom Festival, including Royal Chef Gordon and the Starry Expanse town skin.', source: 'https://www.lootbar.com/blog/en/kingshot-1st-anniversary-event-guide.html', date: '2026-03' },
+  { title: 'Kingshot March Calendar', cat: 'EVENT', excerpt: 'The official Century Games calendar page for the March event cycle.', source: 'https://www.centurygames.com/kingshot-march-calendar/', date: '2026-03' },
+  { title: 'Patch Notes Breakdown: Key Changes, 4 March 2026', cat: 'UPDATE', excerpt: 'A video walkthrough of the March update and what actually changed for day-to-day play.', source: 'https://www.youtube.com/watch?v=LRTtZAg1kJc', date: '2026-03-04' },
 ]
 
 async function fetchKingshotData() {
@@ -1161,18 +1184,21 @@ async function fetchKingshotData() {
   const guides = []
 
   // Use seed data as the base (always clean, always available)
-  for (const t of SEED_GUIDES) {
-    const { cat, art } = categorizeGuide(t)
+  // Every guide carries its OWN url. They used to share one -- every single
+  // entry pointed at https://www.kingshot.wiki/guides -- so whichever guide a
+  // reader picked, the link took them to the same index page.
+  for (const g of SEED_GUIDES) {
+    const cat = g.c || categorizeGuide(g.t).cat
     guides.push({
       id: 'ks-guide-' + guides.length,
       type: 'guide',
-      title: t,
+      title: g.t,
       category: cat,
-      excerpt: t + ' — strategy guide from Kingshot Wiki.',
+      excerpt: `Guide from ${sourceHost(g.u)}.`,
       body: '',
-      source: 'https://www.kingshot.wiki/guides',
-      read_time: t.length > 40 ? '8 min' : t.length > 25 ? '5 min' : '3 min',
-      art
+      source: g.u,
+      read_time: g.t.length > 40 ? '8 min' : g.t.length > 25 ? '5 min' : '3 min',
+      art: GUIDE_ART[cat] || GUIDE_ART.Strategy
     })
   }
 
@@ -1212,25 +1238,36 @@ async function fetchKingshotData() {
     // live items -- indistinguishable from a site that simply had no news.
     if (!res.ok) throw new Error(`HTTP ${res.status}`)
     const html = await res.text()
-    // Extract titles from h2/h3 headings
-    const titlePattern = /<h[23][^>]*>(?:<a[^>]*>)?([^<]{8,120})(?:<\/a>)?<\/h[23]>/gi
+    // The heading must BE a link, and that link is what we keep.
+    //
+    // The old pattern made the anchor optional and then discarded it, writing
+    // the index page as every item's source. So a reader who picked the third
+    // announcement landed on the same list they started from -- and so did
+    // everyone else, whatever they clicked. An entry we cannot address
+    // individually is not worth listing, so a heading without an href is now
+    // skipped rather than pointed at the index.
+    const titlePattern = /<h[23][^>]*>\s*<a[^>]*href="([^"]+)"[^>]*>([^<]{8,120})<\/a>\s*<\/h[23]>/gi
     const existingTitles = new Set(news.map(n => n.title.toLowerCase()))
     let match
     while ((match = titlePattern.exec(html)) !== null && news.length < 25) {
-      const title = cleanText(match[1])
-      if (title.length > 8 && !existingTitles.has(title.toLowerCase())) {
-        existingTitles.add(title.toLowerCase())
-        news.push({
-          id: 'ks-news-live-' + news.length,
-          type: 'news',
-          title,
-          category: 'ANNOUNCEMENT',
-          date: new Date().toISOString().slice(0, 10),
-          excerpt: title + ' — latest from Kingshot.net.',
-          body: '',
-          source: 'https://kingshot.net/game-announcements'
-        })
-      }
+      const href = match[1]
+      const title = cleanText(match[2])
+      if (title.length < 9 || existingTitles.has(title.toLowerCase()) || href.startsWith('#')) continue
+      let url
+      try { url = new URL(href, 'https://kingshot.net/game-announcements').href } catch { continue }
+      existingTitles.add(title.toLowerCase())
+      news.push({
+        id: 'ks-news-live-' + news.length,
+        type: 'news',
+        title,
+        category: 'ANNOUNCEMENT',
+        // No date rather than today's. Stamping the sync date on a scraped
+        // headline told every reader the item was published today.
+        date: null,
+        excerpt: `Announcement from ${sourceHost(url)}.`,
+        body: '',
+        source: url
+      })
     }
     live.news = news.slice(seedNewsCount).map((n) => n.title)
   } catch (e) {
@@ -1254,6 +1291,8 @@ async function fetchKingshotData() {
       const url = match[1]
       const title = cleanText(match[2])
       if (title.length > 8 && !existingGuideTitles.has(title.toLowerCase()) && title !== 'Guides' && !url.includes('#')) {
+        let full
+        try { full = new URL(url, 'https://www.kingshot.wiki/guides').href } catch { continue }
         existingGuideTitles.add(title.toLowerCase())
         const { cat, art } = categorizeGuide(title)
         guides.push({
@@ -1261,9 +1300,9 @@ async function fetchKingshotData() {
           type: 'guide',
           title,
           category: cat,
-          excerpt: title + ' — strategy guide from Kingshot Wiki.',
+          excerpt: `Guide from ${sourceHost(full)}.`,
           body: '',
-          source: url.startsWith('http') ? url : 'https://www.kingshot.wiki' + url,
+          source: full,
           read_time: '5 min',
           art
         })

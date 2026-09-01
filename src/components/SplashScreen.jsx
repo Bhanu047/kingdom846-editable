@@ -92,7 +92,14 @@ export default function SplashScreen({ onEnter }) {
         onLoad={reveal}
       />
       <style>{`
-        .royal-welcome-shell{position:fixed;inset:0;z-index:9999;overflow:hidden;background:#060810;
+        /* height, not just inset:0. On iOS a fixed element is laid out against
+           the LAYOUT viewport, which with viewport-fit=cover is not the area
+           you can actually see -- so the entrance came up short of the bottom
+           of the screen. An explicit height wins over the bottom anchor when
+           both are set, and dvh is the height that tracks Safari's toolbars.
+           The vh line is the fallback for anything without dvh. */
+        .royal-welcome-shell{position:fixed;inset:0;height:100vh;height:100dvh;
+          z-index:9999;overflow:hidden;background:#060810;
           touch-action:none;overscroll-behavior:none}
         .royal-welcome-frame{position:absolute;inset:0;width:100%;height:100%;border:0;display:block;background:#060810;opacity:0}
         .royal-welcome-frame.is-ready{opacity:1}

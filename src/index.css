@@ -2881,4 +2881,12 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
   .hero-wordmark span,
   .hero-crest,
   .hero-rise { animation: none !important; opacity: 1 !important; filter: none !important; transform: none !important }
+  /* Found while checking that the live hall stops here: three decorative
+     sweeps on this same hero kept running for a reader who asked for stillness.
+     Pre-existing, and on the element being worked on, so they stop too.
+     All three live on PSEUDO-elements, which is why naming the element alone
+     did nothing -- an element rule never reaches its ::before. */
+  .hero-frame::before,
+  .hero-shimmer::after,
+  .btn-royal::before { animation: none !important }
 }

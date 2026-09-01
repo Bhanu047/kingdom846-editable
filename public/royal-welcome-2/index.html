@@ -1198,6 +1198,29 @@ const REVEAL = {
   });
 })();
 
+// Re-size on EVERY way the box can change, not just window 'resize'.
+//
+// Both canvases take their size from innerWidth/innerHeight and only listened
+// for 'resize'. On iOS that event is not dependable: Safari grows and shrinks
+// the visible area as its toolbars retract, and inside an iframe the event can
+// fail to arrive at all -- leaving a canvas sized for a viewport that no
+// longer exists and a strip of bare background where the hall should be.
+//
+// The ResizeObserver is the one that cannot be missed: it watches the root
+// element's own box, so it fires whenever this document is actually resized,
+// whatever the browser did or did not announce.
+function onViewportChange(fn) {
+  fn()
+  addEventListener('resize', fn)
+  addEventListener('orientationchange', fn)
+  addEventListener('pageshow', fn)
+  if (window.visualViewport) {
+    visualViewport.addEventListener('resize', fn)
+    visualViewport.addEventListener('scroll', fn)
+  }
+  if (window.ResizeObserver) new ResizeObserver(fn).observe(document.documentElement)
+}
+
 /* ===== WebGL live background ===== */
 const BG = (function(){
   const canvas = document.getElementById('bg');
@@ -1263,7 +1286,7 @@ const BG = (function(){
     canvas.height = Math.floor(innerHeight * dpr);
     gl.viewport(0, 0, canvas.width, canvas.height);
   }
-  resize(); addEventListener('resize', resize);
+  onViewportChange(resize);
 
   let mx = 0, my = 0, tmx = 0, tmy = 0;
   // halved: enough for the hall to have depth, not enough to feel like the
@@ -1329,7 +1352,7 @@ const BG = (function(){
     embers = Array.from({length:Math.round(n/3)}, () => ({x:Math.random()*w,y:h*(0.55+Math.random()*0.5),
       r:(Math.random()*1.6+.6)*dpr,s:(Math.random()*.5+.18)*dpr,d:Math.random()*6.28,a:Math.random()*.55+.25,life:Math.random()}));
   }
-  resize(); addEventListener('resize', resize);
+  onViewportChange(resize);
   function glow(p, col, t, boost){
     const tw = p.a * (0.6 + 0.4*Math.sin(t/850 + p.d*5)) * boost;
     const g = ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,p.r*4.5);

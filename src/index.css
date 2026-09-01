@@ -2806,3 +2806,79 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
 /* Only the lift. The panel's height is already bounded by the message list's
    own cap, and adding a max-height here would have clipped the input box. */
 .fab-panel-safe { bottom: calc(5rem + env(safe-area-inset-bottom, 0px)); }
+
+/* ---- Home hero entrance ---------------------------------------------------
+   The same choreography as the welcome screen -- crest settles then breathes,
+   eyebrow resolves out of blur, the wordmark rises letter by letter, tagline
+   and buttons last -- but at roughly a quarter of its length.
+
+   The entrance runs about six seconds because it plays once, with music, and
+   you are meant to sit through it. Home is a page you tap back into a dozen
+   times a session; the same pacing there would be a gate rather than a
+   flourish. The whole thing is done in ~1.6s.
+
+   Each letter carries its OWN gilt gradient rather than inheriting one from
+   the heading. `.gilt-display` paints a background and clips it to the
+   heading's text -- and a transformed child paints into its own layer, so
+   animating spans inside it drops the letters out of the clip and they
+   vanish. The welcome screen puts the gradient on the spans for the same
+   reason.
+--------------------------------------------------------------------------- */
+.hero-wordmark { display: flex; justify-content: center; flex-wrap: nowrap; line-height: 1 }
+.hero-wordmark span {
+  display: inline-block;
+  opacity: 0;
+  background-image: linear-gradient(176deg,
+    #2E2206 0%, #6B5414 13%, #A8842A 26%, #E8C766 39%, #FFF9E6 48%,
+    #FFFFFF 51%, #F2DC9A 55%, #C9A238 68%, #7A5C13 84%, #3A2B08 100%);
+  background-size: 100% 260%;
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent; color: transparent;
+  filter:
+    drop-shadow(0 1px 0 rgba(0,0,0,.85))
+    drop-shadow(0 3px 10px rgba(0,0,0,.9))
+    drop-shadow(0 10px 26px rgba(0,0,0,.75));
+  /* Rise into place, then keep the metal alive with the same slow tilt the
+     static wordmark already used. */
+  animation:
+    hero-letter-in .5s cubic-bezier(.16,.74,.22,1) calc(.25s + var(--i) * .035s) both,
+    gilt-tilt 7.5s ease-in-out calc(.8s + var(--i) * .035s) infinite;
+}
+/* A space cannot be clipped to a gradient and has no glyph to rise, so it is
+   drawn as width rather than a character. */
+.hero-wordmark span.sp { width: .3em }
+/* opacity and transform ONLY -- no filter.
+   The welcome screen's letters resolve out of blur, and copying that here was
+   the obvious move and the wrong one. Blur cannot be composited: it repaints
+   every frame, and these eleven letters animate while the page is mounting a
+   full-bleed hero image. Measured during that mount, the main thread stalls
+   hard enough that requestAnimationFrame skipped from 49ms to 658ms -- so a
+   filter animation would have been dropped frames on the exact devices that
+   can least afford them. The drop-shadow rim stays, it just never animates. */
+@keyframes hero-letter-in {
+  from { opacity: 0; transform: translateY(18px) scale(.95) }
+  to   { opacity: 1; transform: none }
+}
+
+/* The crest keeps its existing landing, then breathes -- the welcome screen's
+   crestFloat, which is what stops the hero looking like a frozen poster. */
+.hero-crest {
+  animation:
+    hero-crest-in 1.3s cubic-bezier(.2,1.2,.28,1) both,
+    hero-crest-float 8s ease-in-out 1.4s infinite;
+}
+@keyframes hero-crest-float { 0%, 100% { transform: none } 50% { transform: translateY(-7px) } }
+
+/* letter-spacing is set !important on .eyebrow, and !important beats an
+   animation -- so this resolves out of blur instead of opening its tracking. */
+.hero-rise { animation: hero-rise-in .6s cubic-bezier(.22,.61,.36,1) var(--d, 0s) both }
+@keyframes hero-rise-in {
+  from { opacity: 0; transform: translateY(12px) }
+  to   { opacity: 1; transform: none }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-wordmark span,
+  .hero-crest,
+  .hero-rise { animation: none !important; opacity: 1 !important; filter: none !important; transform: none !important }
+}

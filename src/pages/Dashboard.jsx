@@ -21,6 +21,8 @@ function useNow() {
   return now
 }
 
+const KINGDOM_NAME = 'KINGDOM 846'
+
 export default function Dashboard({ onNavigate }) {
   const { user } = useAuth()
   const { data } = useSiteData()
@@ -120,10 +122,27 @@ export default function Dashboard({ onNavigate }) {
               alt=""
               className="hero-crest mb-2.5 h-[4.5rem] w-auto sm:h-24 md:h-36"
             />
-            <div className="eyebrow text-glow">Royal Portal</div>
-            <h1 className="gilt-display mt-2 font-decorative text-[2.6rem] font-black leading-[1.05] tracking-[.03em] sm:text-5xl md:text-7xl">KINGDOM 846</h1>
-            <p className="mt-1.5 font-display text-sm tracking-[0.15em] text-gold md:text-base text-glow">One Crown. Four Alliances. Endless Glory.</p>
-            <div className="mt-5 flex flex-wrap justify-center gap-2">
+            <div className="eyebrow text-glow hero-rise" style={{ '--d': '.18s' }}>Royal Portal</div>
+            {/* Split per letter so the wordmark rises the way the welcome
+                screen's does. Each span carries its own gilt gradient -- see
+                .hero-wordmark in index.css for why it cannot inherit one. */}
+            <h1
+              aria-label={KINGDOM_NAME}
+              className="hero-wordmark mt-2 font-decorative text-[2.6rem] font-black leading-[1.05] tracking-[.03em] sm:text-5xl md:text-7xl"
+            >
+              {[...KINGDOM_NAME].map((ch, i) => (
+                <span
+                  key={i}
+                  aria-hidden="true"
+                  className={ch === ' ' ? 'sp' : undefined}
+                  style={{ '--i': i }}
+                >
+                  {ch === ' ' ? '\u00A0' : ch}
+                </span>
+              ))}
+            </h1>
+            <p className="mt-1.5 font-display text-sm tracking-[0.15em] text-gold md:text-base text-glow hero-rise" style={{ '--d': '.74s' }}>One Crown. Four Alliances. Endless Glory.</p>
+            <div className="mt-5 flex flex-wrap justify-center gap-2 hero-rise" style={{ '--d': '.88s' }}>
               <button onClick={() => onNavigate('alliances')} className="btn-primary btn-royal sparkle-btn"><Icon name="shield" size={14} /> View Alliances</button>
               <button onClick={() => onNavigate('about')} className="btn-secondary gold-border-hover"><Icon name="castle" size={14} /> Kingdom</button>
             </div>

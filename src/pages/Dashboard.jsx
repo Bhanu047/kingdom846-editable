@@ -103,7 +103,7 @@ export default function Dashboard({ onNavigate }) {
       )}
 
       <Panel glow className="hero-frame relative overflow-hidden p-0 gold-corners">
-        <div className="relative min-h-[19rem] md:h-96 hero-shimmer">
+        <div className="relative min-h-[19rem] md:h-96 hero-shimmer hero-measure">
           {/* The still plate stays underneath as the floor: it is what shows
               while the texture loads, and what remains if WebGL is absent or
               the context is lost. LiveHall paints the same image over it,
@@ -139,7 +139,7 @@ export default function Dashboard({ onNavigate }) {
                 .hero-wordmark in index.css for why it cannot inherit one. */}
             <h1
               aria-label={KINGDOM_NAME}
-              className="hero-wordmark mt-2 font-decorative text-[2.6rem] font-black leading-[1.05] tracking-[.03em] sm:text-5xl md:text-7xl"
+              className="hero-wordmark mt-2 font-decorative font-black leading-[1.05] tracking-[.03em]"
             >
               {[...KINGDOM_NAME].map((ch, i) => (
                 <span

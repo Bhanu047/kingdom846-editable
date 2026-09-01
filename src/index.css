@@ -2824,7 +2824,24 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
    vanish. The welcome screen puts the gradient on the spans for the same
    reason.
 --------------------------------------------------------------------------- */
-.hero-wordmark { display: flex; justify-content: center; flex-wrap: nowrap; line-height: 1 }
+/* Sized against the HERO, not the viewport.
+   At a fixed 72px the wordmark was 53% of a 1280px-wide hero but 65% at
+   1100px and 84% on a phone -- and the hall art puts its torches at roughly
+   15% and 85%, so at the narrow end the first and last glyph sat in the
+   flames. It was always centred; it was just too wide for the clear span
+   between the pillars. Container units tie it to the box it actually lives
+   in, which viewport units cannot do here: the hero is 76% of the window on
+   desktop and 92% on a phone, so no vw figure is right for both. */
+.hero-wordmark {
+  display: flex; justify-content: center; flex-wrap: nowrap; line-height: 1;
+  /* 6.4cqw puts the wordmark at ~44% of the hero. Measured from the art: the
+     clear span between the two torches is 52% of the hero on desktop, and at
+     7.6cqw the wordmark was exactly 52% -- filling that gap edge to edge with
+     the first and last glyph sitting in the flames. 44% leaves a margin.
+     The 2rem floor is what a phone gets, where the crop puts the torches at
+     6% and 92% and there is no collision to solve. */
+  font-size: clamp(2rem, 6.4cqw, 4.5rem);
+}
 .hero-wordmark span {
   display: inline-block;
   opacity: 0;
@@ -2890,3 +2907,9 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
   .hero-shimmer::after,
   .btn-royal::before { animation: none !important }
 }
+
+/* The hero panel measures itself so .hero-wordmark can size against it.
+   Declared on the inner wrapper, which is already position:relative and so is
+   already the containing block for the grade, bloom, rake and live canvas --
+   naming it a container therefore moves nothing. */
+.hero-measure { container-type: inline-size }

@@ -9,6 +9,7 @@ import { useAuth } from '../context/AuthContext'
 import { useSiteData } from '../context/SiteDataContext'
 import { useEgg, EggToast } from '../lib/useEgg'
 import { currentHall, hallImageFor } from '../data/realmArt'
+import LiveHall from '../components/LiveHall'
 
 const colorMap = {
   gold: 'text-gold', silver: 'text-slate-200', crimson: 'text-rose-300',
@@ -24,6 +25,11 @@ function useNow() {
 const KINGDOM_NAME = 'KINGDOM 846'
 
 export default function Dashboard({ onNavigate }) {
+  // Resolved per render, never at module scope -- see the note at the foot of
+  // src/data/realmArt.js. A bundle-load constant would freeze the hall for any
+  // tab left open across the Monday rollover. Held in one variable so the live
+  // shader and the plate beneath it are always the same room.
+  const hall = currentHall()
   const { user } = useAuth()
   const { data } = useSiteData()
   const [agentStatus, setAgentStatus] = useState(null)
@@ -98,7 +104,12 @@ export default function Dashboard({ onNavigate }) {
 
       <Panel glow className="hero-frame relative overflow-hidden p-0 gold-corners">
         <div className="relative min-h-[19rem] md:h-96 hero-shimmer">
-          <div className="absolute inset-0"><ArtImage src={hallImageFor(currentHall())} alt="Kingdom 846" className="h-full w-full hall-breathe" /></div>
+          {/* The still plate stays underneath as the floor: it is what shows
+              while the texture loads, and what remains if WebGL is absent or
+              the context is lost. LiveHall paints the same image over it,
+              burning. */}
+          <div className="absolute inset-0"><ArtImage src={hallImageFor(hall)} alt="Kingdom 846" className="h-full w-full hall-breathe" /></div>
+          <LiveHall src={hallImageFor(hall)} hall={hall} />
           {/* No hero-overlay here: hero-grade below is this hero's scrim, and
               stacking both is what crushed the hall to near-black. */}
           {/* Grade, bloom and rake, matching the welcome screen so the entrance

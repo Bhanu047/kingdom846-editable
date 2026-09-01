@@ -799,8 +799,17 @@ body[data-theme="celestial"] .play .title span{animation:letterStar 1.9s ease-ou
    in the set, tracking pulled in so the word sits like a struck medal, and the
    largest crest: this hall is about the crown, not the room. */
 body[data-theme="coronation"]{--disp:'Cinzel Decorative',serif;--disp-w:900;--disp-track:.035em;
-  --disp-size:clamp(34px,min(7.2vw,8.1vh),78px);--crest-h:clamp(200px,46vh,510px);
+  --disp-size:clamp(34px,min(7.2vw,8.1vh),78px);--crest-h:clamp(130px,28vh,320px);
   --cta-track:.34em;--orn:'\2767\FE0E';}
+/* The crest was the largest of the nine here -- 46vh -- on the reasoning above
+   that this hall is about the crown rather than the room. It was large enough
+   to sit on the room's one signature: a chandelier hanging in the top fifth of
+   the plate, of which only a sliver showed above the crown. Measured across the
+   nine halls, coronation is one of only two with any ceiling worth seeing (its
+   top band is 3.2x the brightness of its middle; storm is 2.2x; the other seven
+   are plainer at the top than in the middle), so this is a change for this hall
+   and not for the set. The crest is smaller and starts below the fixture. */
+body[data-theme="coronation"] .crest-stack{margin-top:12vh;}
 
 /* 03 Moonlit Realm -- whispered, not announced. The thinnest weight, the
    widest tracking, the smallest wordmark and a reduced crest, so most of the

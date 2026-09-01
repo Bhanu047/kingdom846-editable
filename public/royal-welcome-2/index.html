@@ -860,6 +860,25 @@ body[data-theme="celestial"]{--disp:'Italiana',serif;--disp-w:400;--disp-track:.
   --disp-size:clamp(30px,min(6.4vw,7.4vh),68px);--crest-h:clamp(165px,37vh,410px);
   --eyebrow-track:.54em;--eyebrow-w:400;--cta-track:.38em;--orn:'\2735\FE0E';}
 
+/* ---- SHORT VIEWPORTS (a phone held sideways) --------------------------------
+   Every hall sets --crest-h as clamp(190px, 42vh, 470px) or thereabouts. In a
+   390px-tall landscape window 42vh is 164px, BELOW that 190px floor, so the
+   crest was pinned at its minimum while the column it lives in had shrunk to
+   half the height it was designed for. The stack overflowed and the crest came
+   down across the wordmark -- measured at 97px of overlap, the crest's foot
+   sitting on top of KINGDOM 846.
+
+   The floors are the problem, not the vh figures, so this replaces them for
+   short windows and tightens the padding and gaps to buy the difference back.
+   body[data-theme] matches the specificity of the per-hall blocks and comes
+   after all of them, so it wins for every hall without repeating nine rules. */
+@media (max-height: 560px) {
+  body[data-theme] { --crest-h: clamp(84px, 24vh, 140px); }
+  .content { padding: 14px 18px 18px; gap: clamp(6px, 1.2vh, 12px); }
+  .title   { margin-top: clamp(8px, 1.6vh, 18px); }
+  .crest-stack { margin-bottom: clamp(6px, 1.4vh, 16px); }
+}
+
 /* This was a single enormous saturated radial covering most of the screen at
    full opacity -- a coloured blob, which is exactly why it read as crude.
    A real light burst is small, white at its core, and violent for a fraction of
@@ -1210,15 +1229,19 @@ const REVEAL = {
 // element's own box, so it fires whenever this document is actually resized,
 // whatever the browser did or did not announce.
 function onViewportChange(fn) {
-  fn()
-  addEventListener('resize', fn)
-  addEventListener('orientationchange', fn)
-  addEventListener('pageshow', fn)
-  if (window.visualViewport) {
-    visualViewport.addEventListener('resize', fn)
-    visualViewport.addEventListener('scroll', fn)
-  }
-  if (window.ResizeObserver) new ResizeObserver(fn).observe(document.documentElement)
+  // Every trigger runs three times: now, next frame, and once more a moment
+  // later. iOS hands back the OLD innerWidth/innerHeight for a beat after a
+  // rotation, so a single call sizes the canvas to the orientation just left --
+  // which is a hall drawn at the wrong width with bare ground beside it. The
+  // later passes catch the size once it has actually settled.
+  const settle = () => { fn(); requestAnimationFrame(fn); setTimeout(fn, 320) }
+  settle()
+  addEventListener('resize', settle)
+  addEventListener('orientationchange', settle)
+  addEventListener('pageshow', settle)
+  if (window.visualViewport) visualViewport.addEventListener('resize', settle)
+  // Fires with the box already correct, so it needs no settling.
+  if (window.ResizeObserver) new ResizeObserver(() => fn()).observe(document.documentElement)
 }
 
 /* ===== WebGL live background ===== */

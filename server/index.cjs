@@ -3669,6 +3669,13 @@ const isProduction = process.env.NODE_ENV === 'production'
     app.use(express.static(distPublic, {
       setHeaders: (res, filePath) => {
         if (filePath.endsWith('index.html')) res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate')
+        // The service worker is the one file that can never be served stale:
+        // a cached worker keeps serving the build it was shipped with, and no
+        // later deploy can dislodge it.
+        if (filePath.endsWith('sw.js')) res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate')
+        // Not every mime table knows .webmanifest, and a manifest served as
+        // text/plain is ignored, which silently makes the site uninstallable.
+        if (filePath.endsWith('.webmanifest')) res.setHeader('Content-Type', 'application/manifest+json')
       }
     }))
     // SPA fallback: any non-API GET returns index.html

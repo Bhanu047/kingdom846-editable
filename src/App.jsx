@@ -14,6 +14,7 @@ import ParticleField from './components/ParticleField'
 import Aurora from './components/Aurora'
 import ScrollProgress from './components/ScrollProgress'
 import ChatAssistant from './components/ChatAssistant'
+import InstallPrompt from './components/InstallPrompt'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { SiteDataProvider } from './context/SiteDataContext'
 import { nav, timeline, guides, news } from './data/kingdom'
@@ -183,6 +184,7 @@ function Shell() {
       <ParticleField />
       <ScrollProgress />
       <ChatAssistant />
+      {!showSplash && <InstallPrompt />}
       <div className="app-shell flex overflow-hidden relative z-10">
         <div className="hidden md:flex">
           <Sidebar active={page} onNavigate={navigate} user={sidebarUser} onLogin={() => { setLoginMode('admin'); setLoginOpen(true) }} onSignOut={handleSignOut} isAdmin={isAdmin} />

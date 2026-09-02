@@ -162,7 +162,55 @@ Before going fully live on a custom domain, also do:
 - Change all default passwords after first login.
 - Take regular **database backups**.
 
-## 6. Notes
+## 6. Installing it as an app
+
+The portal is a **PWA** (Progressive Web App), so it installs to a phone or
+desktop straight from the browser — no app store, no separate build, and no
+second codebase to maintain. Once installed it gets its own home-screen icon,
+opens full screen with no browser chrome, and still opens when the phone has
+no signal.
+
+**How members install it**
+
+| Platform | Steps |
+|---|---|
+| Android / Chrome / Edge | An "Install Kingdom 846" banner appears at the bottom — tap **Install**. (Or browser menu → *Install app*.) |
+| iPhone / iPad (Safari) | Safari has no install button, so the site shows the instructions instead: **Share** → **Add to Home Screen**. |
+| Desktop Chrome / Edge | Install icon in the address bar, or the banner. |
+
+Someone who taps **Not now** is not asked again for 30 days.
+
+**What's cached, and what is never cached**
+
+| Request | Behaviour |
+|---|---|
+| `/api/*` | **Never cached.** Rosters, applications, king status and every logged-in response always come from the server. |
+| Build assets (`/assets/*`) and `?v=`-versioned scripts | Cache first, refreshed in the background — their URL changes whenever the file does. |
+| Images, fonts, audio | Cache first. |
+| Unversioned scripts in `public/` | Network first, cache only as an offline fallback, so a deploy is never served stale. |
+| The page itself | Network first, with the cached copy as the offline answer. |
+
+**Deploying a new version.** Nothing extra to do — the running app checks for a
+new build hourly and on each launch, and shows a "**A new version is ready →
+Reload now**" banner when one is waiting. If you change the caching rules in
+`public/sw.js`, bump `CACHE_VERSION` at the top; every cache that doesn't match
+is deleted on activation.
+
+**Files involved**
+
+| Path | Purpose |
+|---|---|
+| `public/manifest.webmanifest` | App name, icons, colours, standalone display, home-screen shortcuts. |
+| `public/sw.js` | Service worker — offline support and caching rules. |
+| `public/app-icons/` | Generated app icons (192, 512, maskable 512, apple-touch). |
+| `src/lib/pwa.js` | Registration, install-prompt capture, update detection. |
+| `src/components/InstallPrompt.jsx` | The install and "new version ready" banners. |
+
+> **Note:** the service worker is deliberately disabled in dev (`npm run dev`)
+> so it can't interfere with hot reload. To test it, run `npm run build` then
+> `NODE_ENV=production node server/index.cjs`.
+
+## 7. Notes
 
 - The app uses **hash-based URL routing** — pages have shareable URLs and browser
   back/forward works.

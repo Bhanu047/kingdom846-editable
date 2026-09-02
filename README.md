@@ -180,6 +180,30 @@ no signal.
 
 Someone who taps **Not now** is not asked again for 30 days.
 
+**What changes when it runs as an app**
+
+Installing it was only half the job — a site in a frameless window still
+*behaves* like a site. When the portal detects it is running installed
+(`display-mode: standalone`), it switches into **app mode**, and the website in
+a browser tab is left exactly as it was:
+
+| | Website | Installed app |
+|---|---|---|
+| Opening it | The entrance — nine halls, ENTER THE REALM | A branded launch screen that clears itself in about a second. An app you already installed should not make you knock. |
+| Navigation | Hamburger → left drawer | Bottom tab bar: Home, Events, Ranks, Guides, More. "More" opens the full rail. |
+| Tapping the tab you're on | — | Scrolls that screen back to the top. |
+| Pull down at the top | Rubber-band / pull-to-refresh | Nothing — content stops where it stops. |
+| Double-tap | Zooms | Nothing. |
+| Tap and hold | Selects text, shows the callout | Nothing on chrome; guide text and governor IDs stay selectable. |
+| Tapping a button | Grey flash | No flash. |
+| Screen change | Fades up | Slides in from the side. |
+| Footer credits | Shown | Hidden — dead end under every screen in an app. |
+| Status bar / notch | n/a | Header and tab bar hold their own safe-area clearance. |
+
+**Seeing app mode without installing.** Add `?appmode=1` to the URL to enter it
+in a normal tab, `?appmode=0` to leave. It lasts for the session. Handy for
+checking a change to the tab bar without reinstalling on a phone each time.
+
 **What's cached, and what is never cached**
 
 | Request | Behaviour |
@@ -205,6 +229,10 @@ is deleted on activation.
 | `public/app-icons/` | Generated app icons (192, 512, maskable 512, apple-touch). |
 | `src/lib/pwa.js` | Registration, install-prompt capture, update detection. |
 | `src/components/InstallPrompt.jsx` | The install and "new version ready" banners. |
+| `src/lib/appMode.js` | Detects app mode and stamps `data-app-mode` on `<html>`. |
+| `src/components/AppLaunch.jsx` | The launch screen shown in app mode. |
+| `src/components/TabBar.jsx` | The bottom tab bar. |
+| `src/index.css` (APP MODE section) | The rules that turn off the browser behaviours. |
 
 > **Note:** the service worker is deliberately disabled in dev (`npm run dev`)
 > so it can't interfere with hot reload. To test it, run `npm run build` then

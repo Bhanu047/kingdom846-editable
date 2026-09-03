@@ -134,13 +134,13 @@ test.after(() => {
   try { fs.rmSync(workdir, { recursive: true, force: true }) } catch {}
 })
 
-test('the arena reset time defaults to a value flagged as unconfirmed', () => {
+test('the arena reset is seeded at the confirmed 00:00 UTC', () => {
   const arena = server.arenaReset()
   assert.equal(arena.time, '00:00')
   assert.equal(arena.enabled, true)
-  // Until Sparta saves it, the default must not present itself as checked —
-  // the console shows a warning off the back of this.
-  assert.equal(arena.confirmed, false)
+  // Confirmed by the kingdom's admin rather than assumed, so the console shows
+  // it as settled rather than warning about a guess.
+  assert.equal(arena.confirmed, true)
 })
 
 test('the arena reminder is kingdom-wide, on both leads, and never repeats', async () => {
@@ -193,4 +193,58 @@ test('turning the arena off for the kingdom silences it entirely', async () => {
 
   await server.runReminderTick()
   assert.equal(received.length, 0)
+})
+
+test('a 00:00 arena reset reminds at 23:50 and 23:55 the night before', async () => {
+  quietEverything()
+  db.prepare('DELETE FROM push_sent').run()
+  db.prepare('DELETE FROM push_subscriptions').run()
+  db.prepare('INSERT OR REPLACE INTO app_settings (key, value) VALUES (?,?)')
+    .run('arena_reset', JSON.stringify({ time: '00:00', enabled: true, confirmed: true }))
+  subscribe('ryo', 'midnight-device')
+  received.length = 0
+
+  // Midnight is the boundary that breaks this kind of code: the reminder fires
+  // on one date and the event it announces happens on the next, so the dedupe
+  // key and the clock disagree unless the key is taken from the target rather
+  // than from now. Both leads are driven at their real wall-clock minute.
+  const realDate = Date
+  const runAt = async (hh, mm) => {
+    const frozen = new realDate(realDate.UTC(2026, 8, 20, hh, mm, 0))
+    globalThis.Date = class extends realDate {
+      constructor(...args) { return args.length ? new realDate(...args) : new realDate(frozen) }
+      static now() { return frozen.getTime() }
+    }
+    try { await server.runReminderTick() } finally { globalThis.Date = realDate }
+  }
+
+  await runAt(23, 50)
+  assert.deepEqual(received, ['/push/midnight-device'], 'the ten-minute warning lands at 23:50')
+
+  await runAt(23, 55)
+  assert.equal(received.length, 2, 'the five-minute warning lands at 23:55 as a separate send')
+
+  // Each is claimed under the date of the reset it announces, not the date it
+  // was sent on, so re-running either minute cannot produce a third.
+  const keys = db.prepare("SELECT key FROM push_sent WHERE key LIKE '%arena%' ORDER BY key").all().map((r) => r.key)
+  assert.deepEqual(keys, ['2026-09-21|arena|10', '2026-09-21|arena|5'], 'both keyed to the 21st, the day the arena resets')
+
+  await runAt(23, 50)
+  await runAt(23, 55)
+  assert.equal(received.length, 2, 'neither minute sends twice')
+})
+
+test('no arena reminder fires at any other minute of the day', async () => {
+  db.prepare('DELETE FROM push_sent').run()
+  received.length = 0
+  const realDate = Date
+  for (const [hh, mm] of [[23, 49], [23, 51], [23, 54], [23, 56], [0, 0], [12, 0]]) {
+    const frozen = new realDate(realDate.UTC(2026, 8, 20, hh, mm, 0))
+    globalThis.Date = class extends realDate {
+      constructor(...args) { return args.length ? new realDate(...args) : new realDate(frozen) }
+      static now() { return frozen.getTime() }
+    }
+    try { await server.runReminderTick() } finally { globalThis.Date = realDate }
+  }
+  assert.equal(received.length, 0, 'only 23:50 and 23:55 count')
 })

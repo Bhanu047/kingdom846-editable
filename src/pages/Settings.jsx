@@ -4,6 +4,7 @@ import Icon from '../components/Icon'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../components/Toast'
 import ReminderSettings from '../components/ReminderSettings'
+import PageHeader from '../components/PageHeader'
 import { getNotificationPrefs, setNotificationPref } from '../lib/reminders'
 
 export default function Settings() {
@@ -43,11 +44,13 @@ export default function Settings() {
 
   return (
     <div className="space-y-6">
-      <Panel glow className="lift-glow gold-corners">
-        <div className="eyebrow text-glow">Account</div>
-        <h1 className="mt-1 font-display text-3xl font-bold gradient-gold glow-pulse">Settings</h1>
-        <p className="mt-2 text-sm text-parchment/60">Manage your profile, notifications, and preferences.</p>
-      </Panel>
+      <PageHeader
+        eyebrow="Your Seat in the Realm"
+        title="Settings"
+        subtitle="Your account, and what the kingdom is allowed to send you."
+        art="./assets/hero-throne-room.webp"
+        alt="The throne room of Kingdom 846"
+      />
 
       <ReminderSettings />
 
@@ -143,7 +146,6 @@ export default function Settings() {
         <SectionTitle eyebrow="About" title="Kingdom 846 Portal" icon="crown" />
         <div className="mt-3 space-y-2 text-sm text-parchment/60">
           <p>This portal is the official community hub for Kingdom 846 (One Crown, Four Alliances) in the game Kingshot.</p>
-          <p className="text-xs text-parchment/40">Built with React + Vite + Tailwind CSS · Express + SQLite backend</p>
         </div>
       </Panel>
     </div>

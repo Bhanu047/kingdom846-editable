@@ -5,6 +5,7 @@ import Icon from '../components/Icon'
 import { apiJson, apiFetch } from '../lib/api'
 import BackupPanel from '../components/BackupPanel'
 import ArenaResetPanel from '../components/ArenaResetPanel'
+import EventRepeatPanel from '../components/EventRepeatPanel'
 
 const KING_TYPES = ['High King', 'King', 'High Queen', 'Queen']
 const KING_ALLIANCES = [
@@ -131,6 +132,8 @@ export default function MasterConsole() {
       </Panel>
 
       {/* Change my credentials */}
+      <EventRepeatPanel />
+
       <ArenaResetPanel />
 
       <BackupPanel />

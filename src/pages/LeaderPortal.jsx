@@ -23,8 +23,6 @@ function getEventMeta(name) {
 const HOURS = Array.from({length: 24}, (_, i) => String(i).padStart(2, '0'))
 const MINUTES = ['00', '15', '30', '45']
 
-const DAY_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S']
-const FULL_DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
 
 export default function LeaderPortal() {
   const { user } = useAuth()
@@ -40,19 +38,6 @@ export default function LeaderPortal() {
       .catch(() => { if (active) setLoading(false) })
     return () => { active = false }
   }, [])
-
-  // Which days each event actually runs. This decides whether a phone buzzes,
-  // so it is set per alliance rather than assumed: an event with no days ticked
-  // is one nobody is reminded about, and a Bear Hunt marked every day would
-  // buzz the whole alliance six times a week for nothing.
-  function toggleDay(event, day) {
-    setSchedule(prev => prev.map(s => {
-      if (s.event !== event) return s
-      const days = Array.isArray(s.days) ? s.days : []
-      return { ...s, days: days.includes(day) ? days.filter(d => d !== day) : [...days, day].sort() }
-    }))
-    setSaved(false)
-  }
 
   function updateTime(event, time) {
     setSchedule(prev => prev.map(s => s.event === event ? { ...s, time } : s))
@@ -153,22 +138,6 @@ export default function LeaderPortal() {
                 </span>
               )}
 
-              <div className="flex w-full items-center gap-1.5 border-t border-gold/10 pt-2">
-                <span className="mr-1 text-[9px] font-bold uppercase tracking-wider text-parchment/35">Runs on</span>
-                {DAY_LABELS.map((label, day) => {
-                  const active = Array.isArray(s.days) && s.days.includes(day)
-                  return (
-                    <button
-                      key={day}
-                      type="button"
-                      onClick={() => toggleDay(s.event, day)}
-                      aria-pressed={active}
-                      title={FULL_DAYS[day]}
-                      className={`day-chip ${active ? 'is-on' : ''}`}
-                    >{label}</button>
-                  )
-                })}
-              </div>
             </div>
           )
         })}

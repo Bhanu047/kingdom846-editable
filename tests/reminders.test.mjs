@@ -102,21 +102,41 @@ test('a reminder reaches only the matching alliance, and only once', async () =>
   assert.equal(received.length, 1, 'the same reminder is never sent twice')
 })
 
-test('an event scheduled for another weekday stays silent', async () => {
+test('an event that does not run today stays silent, whatever the time says', async () => {
   quietEverything()
   db.prepare('DELETE FROM push_sent').run()
   received.length = 0
 
+  db.prepare('DELETE FROM push_subscriptions').run()
+
   const target = new Date(Date.now() + 10 * 60000)
-  scheduleAt('ryo', 'Bear Hunt -1', target, String((target.getUTCDay() + 3) % 7))
+  scheduleAt('ryo', 'Bear Hunt -1', target, '')
+  subscribe('ryo', 'silent-device')
+
+  // A time that matches, on a day the kingdom says the event does not run:
+  // three days from now, on a weekly rule.
+  const notToday = (target.getUTCDay() + 3) % 7
+  db.prepare('INSERT OR REPLACE INTO app_settings (key, value) VALUES (?,?)')
+    .run('event_repeat', JSON.stringify({ 'Bear Hunt -1': { type: 'weekdays', days: [notToday] } }))
 
   await server.runReminderTick()
-  assert.equal(received.length, 0)
+  assert.equal(received.length, 0, 'the hour matched but the day did not')
+
+  // And the same schedule does fire once the rule includes today.
+  db.prepare('DELETE FROM push_sent').run()
+  db.prepare('INSERT OR REPLACE INTO app_settings (key, value) VALUES (?,?)')
+    .run('event_repeat', JSON.stringify({ 'Bear Hunt -1': { type: 'weekdays', days: [target.getUTCDay()] } }))
+  await server.runReminderTick()
+  assert.equal(received.length, 1, 'the same time fires on a day the kingdom does run it')
+
+  db.prepare("DELETE FROM app_settings WHERE key='event_repeat'").run()
 })
 
 test('both the 10 and 5 minute reminders fire, as separate sends', async () => {
   quietEverything()
   db.prepare('DELETE FROM push_sent').run()
+  db.prepare('DELETE FROM push_subscriptions').run()
+  subscribe('ryo', 'both-leads-device')
   received.length = 0
 
   const now = Date.now()

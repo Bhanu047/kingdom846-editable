@@ -1566,6 +1566,151 @@ function two(n) { return String(n).padStart(2, '0') }
  * a reminder that fires at the wrong minute is worse than no reminder at all.
  * ------------------------------------------------------------------------- */
 
+
+/* ---- When an event actually happens ----------------------------------------
+ * The first version of this understood "which weekdays", which turns out to
+ * describe none of the kingdom's events:
+ *
+ *   Bear Hunt        every other day -- one day of cooldown after each
+ *   Swordland        every second Sunday
+ *   Tri-Alliance     once a month, the first Saturday
+ *   Vikings          Tuesdays and Thursdays
+ *
+ * Only the last of those is weekly, so a weekday list could not express the
+ * rest: "every other day" lands on a different weekday each time it runs.
+ *
+ * These are properties of the game, not of an alliance -- [ICE] cannot move
+ * Bear Hunt to a Tuesday, it can only choose what time it musters. So the
+ * pattern is kingdom-wide and set by Sparta, while the times stay with the
+ * leaders where they belong.
+ * ------------------------------------------------------------------------- */
+
+const DAY_MS = 86400000
+
+// The patterns as they stand today, confirmed against the calendar: 3 Sep 2026
+// is a Thursday, 5 Sep and 3 Oct are Saturdays, 6 and 20 Sep are Sundays.
+const REPEAT_DEFAULTS = {
+  'Bear Hunt -1': { type: 'interval', days: 2, anchor: '2026-09-03' },
+  'Bear Hunt-2': { type: 'interval', days: 2, anchor: '2026-09-03' },
+  'Vikings Vengeance Tuesday': { type: 'weekdays', days: [2] },
+  'Vikings Vengeance Thursday': { type: 'weekdays', days: [4] },
+  'Tri-Alliance Clash Legion-1': { type: 'monthly', weekday: 6, nth: 1 },
+  'Tri-Alliance Clash Legion-2': { type: 'monthly', weekday: 6, nth: 1 },
+  'Swordland Showdown Legion-1': { type: 'interval', days: 14, anchor: '2026-09-06' },
+  'Swordland Showdown Legion-2': { type: 'interval', days: 14, anchor: '2026-09-06' },
+}
+
+/** Midnight UTC of a date, so two dates can be compared as whole days. */
+function utcMidnight(date) {
+  return Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate())
+}
+
+/** The date of the nth given weekday in a month — the 1st Saturday, say. */
+function nthWeekdayOfMonth(year, month, weekday, nth) {
+  const first = new Date(Date.UTC(year, month, 1))
+  const offset = (weekday - first.getUTCDay() + 7) % 7
+  const day = 1 + offset + (nth - 1) * 7
+  const candidate = new Date(Date.UTC(year, month, day))
+  // A fifth Saturday does not exist in every month; asking for one that is not
+  // there must mean "no occurrence", not "roll into next month".
+  return candidate.getUTCMonth() === month ? candidate : null
+}
+
+/**
+ * Does this event run on this date?
+ *
+ * Unknown or malformed rules fall through to every day rather than to silence:
+ * an event that reminds too often is a nuisance, one that never reminds is a
+ * missed rally, and only the second is discovered too late.
+ */
+function occursOn(rule, date) {
+  if (!rule || typeof rule !== 'object') return true
+  const day = new Date(utcMidnight(date))
+
+  if (rule.type === 'weekdays') {
+    const days = Array.isArray(rule.days) ? rule.days : []
+    return days.length ? days.includes(day.getUTCDay()) : true
+  }
+
+  if (rule.type === 'interval') {
+    const step = Number(rule.days)
+    if (!Number.isInteger(step) || step < 1) return true
+    const anchor = Date.parse(`${rule.anchor}T00:00:00Z`)
+    if (Number.isNaN(anchor)) return true
+    // Floor division so dates before the anchor still land on the pattern
+    // rather than going negative and skewing the remainder.
+    const diff = Math.round((day.getTime() - anchor) / DAY_MS)
+    return ((diff % step) + step) % step === 0
+  }
+
+  if (rule.type === 'monthly') {
+    const weekday = Number(rule.weekday), nth = Number(rule.nth)
+    if (!Number.isInteger(weekday) || !Number.isInteger(nth)) return true
+    const target = nthWeekdayOfMonth(day.getUTCFullYear(), day.getUTCMonth(), weekday, nth)
+    return !!target && target.getTime() === day.getTime()
+  }
+
+  return true
+}
+
+/** The kingdom's repeat patterns, stored rules over the defaults above. */
+function repeatRules() {
+  const row = db.prepare("SELECT value FROM app_settings WHERE key='event_repeat'").get()
+  let saved = {}
+  try { saved = row ? JSON.parse(row.value) : {} } catch { saved = {} }
+  const out = {}
+  for (const event of ALLIANCE_EVENTS) out[event] = saved[event] || REPEAT_DEFAULTS[event] || { type: 'weekdays', days: [0, 1, 2, 3, 4, 5, 6] }
+  return out
+}
+
+/** The next few dates an event runs, for showing a leader what they just set. */
+function nextOccurrences(rule, from = new Date(), count = 4) {
+  const out = []
+  let cursor = new Date(utcMidnight(from))
+  for (let i = 0; i < 400 && out.length < count; i++) {
+    if (occursOn(rule, cursor)) out.push(cursor.toISOString().slice(0, 10))
+    cursor = new Date(cursor.getTime() + DAY_MS)
+  }
+  return out
+}
+
+app.get('/api/event-repeat', (_req, res) => {
+  const rules = repeatRules()
+  res.json({
+    rules,
+    // Sent alongside so the console can show what each rule actually means
+    // without reimplementing the calendar in the browser.
+    upcoming: Object.fromEntries(Object.entries(rules).map(([k, v]) => [k, nextOccurrences(v)])),
+  })
+})
+
+app.put('/api/event-repeat', auth, adminOnly, (req, res) => {
+  const incoming = req.body?.rules
+  if (!incoming || typeof incoming !== 'object') return res.status(400).json({ error: 'Rules object required' })
+  const current = repeatRules()
+  const next = { ...current }
+  for (const event of ALLIANCE_EVENTS) {
+    const rule = incoming[event]
+    if (!rule || typeof rule !== 'object') continue
+    if (rule.type === 'weekdays') {
+      const days = (Array.isArray(rule.days) ? rule.days : []).map(Number).filter((d) => Number.isInteger(d) && d >= 0 && d <= 6)
+      next[event] = { type: 'weekdays', days }
+    } else if (rule.type === 'interval') {
+      const days = Number(rule.days)
+      if (!Number.isInteger(days) || days < 1 || days > 365) return res.status(400).json({ error: `${event}: repeat every 1 to 365 days` })
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(String(rule.anchor || ''))) return res.status(400).json({ error: `${event}: a start date is required` })
+      next[event] = { type: 'interval', days, anchor: String(rule.anchor) }
+    } else if (rule.type === 'monthly') {
+      const weekday = Number(rule.weekday), nth = Number(rule.nth)
+      if (!Number.isInteger(weekday) || weekday < 0 || weekday > 6) return res.status(400).json({ error: `${event}: invalid weekday` })
+      if (!Number.isInteger(nth) || nth < 1 || nth > 5) return res.status(400).json({ error: `${event}: invalid week of the month` })
+      next[event] = { type: 'monthly', weekday, nth }
+    }
+  }
+  db.prepare('INSERT OR REPLACE INTO app_settings (key, value) VALUES (?,?)').run('event_repeat', JSON.stringify(next))
+  res.json({ rules: next, upcoming: Object.fromEntries(Object.entries(next).map(([k, v]) => [k, nextOccurrences(v)])) })
+})
+
 /* ---- What a notification says ----------------------------------------------
  * On a busy evening the notification is the whole app: most members will never
  * open a page, they will glance at a banner and decide whether to put the
@@ -1694,15 +1839,19 @@ async function runReminderTick() {
   const now = new Date()
   const alliances = db.prepare('SELECT slug FROM alliances').all().map((a) => a.slug)
 
+  const rules = repeatRules()
+
   for (const lead of REMINDER_LEADS) {
     const target = new Date(now.getTime() + lead * 60000)
     const hhmm = `${two(target.getUTCHours())}:${two(target.getUTCMinutes())}`
-    const day = target.getUTCDay()
     const dateKey = target.toISOString().slice(0, 10)
 
     for (const slug of alliances) {
       for (const item of allianceSchedule(slug)) {
-        if (!item.time || item.time !== hhmm || !item.days.includes(day)) continue
+        if (!item.time || item.time !== hhmm) continue
+        // Whether the event runs at all today is the kingdom's business; the
+        // alliance only chooses what time it musters.
+        if (!occursOn(rules[item.event], target)) continue
         const key = `${dateKey}|${slug}|${item.event}|${lead}`
         // INSERT first: if another tick already claimed this reminder the
         // primary key rejects it, so exactly one tick can ever get past here.
@@ -1745,7 +1894,7 @@ async function runReminderTick() {
 
 // Exported for the tests, which drive the tick directly rather than waiting on
 // a real clock.
-module.exports = { ...(module.exports || {}), runReminderTick, allianceSchedule, parseDays, defaultDaysFor, digestTick, isoWeekKey, arenaReset, eventNotification, arenaNotification, sendKingdomWide }
+module.exports = { ...(module.exports || {}), runReminderTick, allianceSchedule, parseDays, defaultDaysFor, digestTick, isoWeekKey, arenaReset, eventNotification, arenaNotification, occursOn, repeatRules, nextOccurrences, REPEAT_DEFAULTS, sendKingdomWide }
 
 app.get('/api/leader/roster', auth, leaderOnly, (req, res) => {
   const slug = req.user.alliance_slug

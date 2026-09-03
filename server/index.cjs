@@ -220,6 +220,7 @@ if (psCols.length) {
   add('digest_weekly', 'INTEGER DEFAULT 0')
   add('alert_transfers', 'INTEGER DEFAULT 1')
   add('alert_applications', 'INTEGER DEFAULT 1')
+  add('alert_arena', 'INTEGER DEFAULT 1')
   add('user_id', 'INTEGER')
 }
 
@@ -1384,7 +1385,7 @@ app.post('/api/push/status', (req, res) => {
  * them -- and each one has something on the server that actually sends it.
  * ------------------------------------------------------------------------- */
 
-const PREF_KEYS = ['digest_weekly', 'alert_transfers', 'alert_applications']
+const PREF_KEYS = ['digest_weekly', 'alert_transfers', 'alert_applications', 'alert_arena']
 
 function prefsOf(row) {
   if (!row) return null
@@ -1392,6 +1393,7 @@ function prefsOf(row) {
     digest_weekly: !!row.digest_weekly,
     alert_transfers: !!row.alert_transfers,
     alert_applications: !!row.alert_applications,
+    alert_arena: !!row.alert_arena,
     // Told to the client so Settings can show the two leadership alerts only to
     // the people they can ever fire for.
     is_leadership: !!row.user_id,
@@ -1538,6 +1540,68 @@ function two(n) { return String(n).padStart(2, '0') }
  * has to hit, so a slow or briefly stalled server still lands inside the minute
  * it was aiming at; push_sent is what keeps that from meaning repeats.
  */
+/* ---- Arena reset -----------------------------------------------------------
+ * The arena resets once a day for the whole kingdom, so unlike the alliance
+ * events it is one time rather than four, and the reminder goes to everyone
+ * rather than to one alliance's subscribers.
+ *
+ * The time is stored rather than hard-coded because it is not this code's to
+ * know: it is a property of the game server, Sparta can see it and I cannot, and
+ * a reminder that fires at the wrong minute is worse than no reminder at all.
+ * ------------------------------------------------------------------------- */
+const ARENA_DEFAULT_TIME = '00:00'
+
+function arenaReset() {
+  const row = db.prepare("SELECT value FROM app_settings WHERE key='arena_reset'").get()
+  if (!row) return { time: ARENA_DEFAULT_TIME, enabled: true, confirmed: false }
+  try {
+    const saved = JSON.parse(row.value)
+    return {
+      time: /^\d{2}:\d{2}$/.test(saved.time || '') ? saved.time : ARENA_DEFAULT_TIME,
+      enabled: saved.enabled !== false,
+      // Until Sparta has actually set it, the default is a guess and is flagged
+      // as one so the console can say so rather than implying it was checked.
+      confirmed: !!saved.confirmed,
+    }
+  } catch { return { time: ARENA_DEFAULT_TIME, enabled: true, confirmed: false } }
+}
+
+app.get('/api/arena-reset', (_req, res) => res.json(arenaReset()))
+
+app.put('/api/arena-reset', auth, adminOnly, (req, res) => {
+  const { time, enabled } = req.body || {}
+  if (time != null && !/^([01]\d|2[0-3]):[0-5]\d$/.test(String(time))) {
+    return res.status(400).json({ error: 'Time must be HH:MM in 24-hour UTC' })
+  }
+  const current = arenaReset()
+  const next = {
+    time: time != null ? String(time) : current.time,
+    enabled: typeof enabled === 'boolean' ? enabled : current.enabled,
+    confirmed: true,
+  }
+  db.prepare('INSERT OR REPLACE INTO app_settings (key, value) VALUES (?,?)').run('arena_reset', JSON.stringify(next))
+  res.json(next)
+})
+
+/** Push to every subscribed device that still wants arena reminders. */
+async function sendKingdomWide(prefColumn, payload) {
+  const subs = db.prepare(`SELECT * FROM push_subscriptions WHERE ${prefColumn}=1`).all()
+  const body = JSON.stringify(payload)
+  let sent = 0, dropped = 0
+  for (const sub of subs) {
+    try {
+      await webpush.sendNotification({ endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } }, body, { TTL: 300 })
+      sent++
+    } catch (err) {
+      if (err?.statusCode === 404 || err?.statusCode === 410) {
+        db.prepare('DELETE FROM push_subscriptions WHERE endpoint=?').run(sub.endpoint)
+        dropped++
+      }
+    }
+  }
+  return { sent, dropped }
+}
+
 async function runReminderTick() {
   const now = new Date()
   const alliances = db.prepare('SELECT slug FROM alliances').all().map((a) => a.slug)
@@ -1568,13 +1632,34 @@ async function runReminderTick() {
     }
   }
 
+  // The arena, on the same two leads. Kingdom-wide, so it sits outside the
+  // per-alliance loop above but shares its dedupe.
+  const arena = arenaReset()
+  if (arena.enabled && arena.time) {
+    for (const lead of REMINDER_LEADS) {
+      const target = new Date(now.getTime() + lead * 60000)
+      const hhmm = `${two(target.getUTCHours())}:${two(target.getUTCMinutes())}`
+      if (hhmm !== arena.time) continue
+      const dateKey = target.toISOString().slice(0, 10)
+      const key = `${dateKey}|arena|${lead}`
+      try { db.prepare('INSERT INTO push_sent (key) VALUES (?)').run(key) } catch { continue }
+      const result = await sendKingdomWide('alert_arena', {
+        title: `Arena reset in ${lead} minutes`,
+        body: `Resets at ${arena.time} UTC. Spend your challenges before they go.`,
+        tag: `arena-${dateKey}`,
+        url: '/#/events',
+      })
+      console.log(`[push] arena reset T-${lead}m -> ${result.sent} sent, ${result.dropped} stale`)
+    }
+  }
+
   // The dedupe log only has to outlive the reminders it guards.
   db.prepare("DELETE FROM push_sent WHERE sent_at < datetime('now', '-2 days')").run()
 }
 
 // Exported for the tests, which drive the tick directly rather than waiting on
 // a real clock.
-module.exports = { ...(module.exports || {}), runReminderTick, allianceSchedule, parseDays, defaultDaysFor, digestTick, isoWeekKey, alertLeadership }
+module.exports = { ...(module.exports || {}), runReminderTick, allianceSchedule, parseDays, defaultDaysFor, digestTick, isoWeekKey, alertLeadership, arenaReset, sendKingdomWide }
 
 app.get('/api/leader/roster', auth, leaderOnly, (req, res) => {
   const slug = req.user.alliance_slug

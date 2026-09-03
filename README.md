@@ -198,6 +198,10 @@ a browser tab is left exactly as it was:
 | Tapping a button | Grey flash | No flash. |
 | Screen change | Fades up | Slides in from the side. |
 | Footer credits | Shown | Hidden — dead end under every screen in an app. |
+| Losing signal | Nothing said | A strip appears: "No connection — showing what was last saved", and a note when it returns. |
+| Dragging down from the top | Browser reloads the page | The app's own pull-to-refresh: refetches the data, keeps you on the screen you're on. |
+| Back button with a menu open | Leaves the page | Closes the menu. |
+| Tapping a tab | — | A short haptic tick (Android). |
 | Status bar / notch | n/a | Header and tab bar hold their own safe-area clearance. |
 
 **Seeing app mode without installing.** Add `?appmode=1` to the URL to enter it

@@ -18,8 +18,12 @@ import InstallPrompt from './components/InstallPrompt'
 import AppLaunch from './components/AppLaunch'
 import TabBar from './components/TabBar'
 import { isAppMode } from './lib/appMode'
+import NetworkBanner from './components/NetworkBanner'
+import PullIndicator from './components/PullIndicator'
+import { usePullToRefresh } from './lib/usePullToRefresh'
+import { installNetworkWatch, probe } from './lib/network'
+import { SiteDataProvider, useSiteData } from './context/SiteDataContext'
 import { AuthProvider, useAuth } from './context/AuthContext'
-import { SiteDataProvider } from './context/SiteDataContext'
 import { nav, timeline, guides, news } from './data/kingdom'
 
 function useESTClock() {
@@ -75,6 +79,35 @@ const KNOWN_PAGES = new Set([
   'apply-noble', 'admin', 'console', 'leader-portal', 'war-room', 'settings',
 ])
 
+/**
+ * Android's back button, and the browser's, should close what is open on top of
+ * the screen before they leave the screen itself. Without this, dismissing the
+ * navigation drawer on a phone means backing out of the page behind it.
+ *
+ * Opening an overlay pushes a history entry that stands for "an overlay is
+ * open"; back pops it and closes the overlay instead of navigating. Closing it
+ * from the UI instead removes that entry again, so a later back press is not
+ * silently swallowed doing nothing.
+ */
+function useBackToClose(open, close) {
+  const closeRef = useRef(close)
+  closeRef.current = close
+  useEffect(() => {
+    if (!open) return
+    window.history.pushState({ k846Overlay: true }, '')
+    let poppedByBack = false
+    const onPop = () => { poppedByBack = true; closeRef.current?.() }
+    window.addEventListener('popstate', onPop)
+    return () => {
+      window.removeEventListener('popstate', onPop)
+      // Only unwind our own entry, and only if it is still the current one --
+      // navigating while the drawer is open pushes a real entry on top, and
+      // going back through that would undo the navigation itself.
+      if (!poppedByBack && window.history.state?.k846Overlay) window.history.back()
+    }
+  }, [open])
+}
+
 function Placeholder({ title, icon = 'bell', note }) {
   return (
     <div className="grid place-items-center py-20">
@@ -104,6 +137,7 @@ function Shell() {
   const [searchOpen, setSearchOpen] = useState(false)
   const [Login, setLogin] = useState(null)
   const scrollRef = useRef(null)
+  const { reload: reloadSiteData } = useSiteData()
 
   useEffect(() => {
     const onHashChange = () => setPage(getPageFromHash())
@@ -127,6 +161,7 @@ function Shell() {
 
   // One delegated listener for the whole app, attached once.
   useEffect(() => { installOutboundTracking() }, [])
+  useEffect(() => { installNetworkWatch() }, [])
   useEffect(() => installSurfaceTracking(), [])
   useEffect(() => installReveal(), [])
   useEffect(() => installPressFeedback(), [])
@@ -147,6 +182,9 @@ function Shell() {
   // the way every native tab bar behaves. Without it the tab is simply dead on
   // its own page, which is the moment a tab bar stops feeling like one.
   const selectTab = useCallback((p) => {
+    // A short tick under the thumb on tab change. Android honours it; iOS has
+    // no Vibration API and ignores the call, which is why it is not guarded.
+    try { navigator.vibrate?.(8) } catch {}
     if (p === page && !mobileNav) scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
     else navigate(p)
   }, [page, mobileNav])
@@ -166,6 +204,26 @@ function Shell() {
     if (!q) return index.slice(0, 6)
     return index.filter((i) => i.label.toLowerCase().includes(q)).slice(0, 8)
   }, [search, index])
+
+  // Refreshing means refetching, not reloading the document: the screen you are
+  // on, and where you are in it, both survive. Pages fetch their own data, so
+  // they are told to as well rather than only the shared site content.
+  const refresh = useCallback(async () => {
+    await Promise.allSettled([
+      probe(),
+      reloadSiteData?.(),
+      new Promise((resolve) => { window.dispatchEvent(new CustomEvent('k846-refresh')); resolve() }),
+    ])
+  }, [reloadSiteData])
+
+  // App mode only: in a browser tab the platform still provides its own
+  // pull-to-refresh, and two of them fighting over the same drag is worse than
+  // either alone.
+  const { pull, refreshing, threshold } = usePullToRefresh(scrollRef, refresh, appMode)
+
+  useBackToClose(mobileNav, () => setMobileNav(false))
+  useBackToClose(searchOpen, () => setSearchOpen(false))
+  useBackToClose(loginOpen, () => setLoginOpen(false))
 
   const canUseWarRoom = Boolean(isAdmin || user?.username?.toLowerCase() === 'shoni')
 
@@ -249,8 +307,15 @@ function Shell() {
             onLogin={() => { setLoginMode('leader'); setLoginOpen(true) }}
           />
 
-          <div ref={scrollRef} className="app-scroll flex-1 overflow-y-auto overflow-x-hidden overscroll-contain pt-4 md:pt-6" style={{ WebkitOverflowScrolling: 'touch' }}>
-            <div key={page} className="page-enter mx-auto max-w-6xl">{render()}</div>
+          <NetworkBanner />
+
+          <div ref={scrollRef} className="app-scroll relative flex-1 overflow-y-auto overflow-x-hidden overscroll-contain pt-4 md:pt-6" style={{ WebkitOverflowScrolling: 'touch' }}>
+            <PullIndicator pull={pull} refreshing={refreshing} threshold={threshold} />
+            <div
+              className="pull-shift"
+              style={pull > 0 ? { transform: `translateY(${pull * 0.42}px)`, transition: refreshing ? 'transform .2s ease' : 'none' } : undefined}
+            >
+              <div key={page} className="page-enter mx-auto max-w-6xl">{render()}</div>
             <footer className="site-footer mt-12 pt-6 pb-4 relative">
               <div className="flex flex-col items-center gap-2 text-center">
                 <div className="flex items-center gap-3"><span className="text-gold-bright float-anim"><Icon name="crown" size={20} /></span><span className="font-serif text-lg tracking-wider gradient-gold font-bold">Kingdom 846</span><span className="text-gold-bright float-anim" style={{ animationDelay: '2s' }}><Icon name="crown" size={20} /></span></div>
@@ -258,6 +323,7 @@ function Shell() {
                 <div className="mt-2 flex items-center gap-2 text-[11px] text-parchment/50"><span>Crafted by</span><span className="text-gold/70 font-semibold">Spartan</span><span className="text-gold/30">◆</span><span>Forged for the realm</span><span className="text-gold/30">◆</span><a href="https://discord.gg/rcxJCh97A" target="_blank" rel="noreferrer" className="text-gold/60 hover:text-gold-bright transition">Discord</a><span className="text-gold/30">◆</span><a href="#/privacy" className="text-gold/60 hover:text-gold-bright transition">Privacy</a></div>
               </div>
             </footer>
+            </div>
           </div>
         </main>
 

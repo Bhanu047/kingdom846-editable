@@ -63,6 +63,17 @@ db.exec(`
     created_at TEXT DEFAULT (datetime('now'))
   );
   CREATE UNIQUE INDEX IF NOT EXISTS idx_roster_unique ON roster_members(alliance_slug, governor_id) WHERE governor_id IS NOT NULL;
+  -- Birthdays the kingdom celebrates. Day and month only: the point is the
+  -- date, and nobody should have to hand over their age to be wished well.
+  CREATE TABLE IF NOT EXISTS birthdays (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    alliance_slug TEXT,
+    day INTEGER NOT NULL,
+    month INTEGER NOT NULL,
+    note TEXT,
+    created_at TEXT DEFAULT (datetime('now'))
+  );
   CREATE TABLE IF NOT EXISTS alliance_schedules (
     alliance_slug TEXT NOT NULL,
     event_name TEXT NOT NULL,
@@ -218,6 +229,7 @@ if (psCols.length) {
   add('digest_weekly', 'INTEGER DEFAULT 0')
   add('alert_arena', 'INTEGER DEFAULT 1')
   add('alert_crown', 'INTEGER DEFAULT 1')
+  add('alert_birthday', 'INTEGER DEFAULT 1')
 }
 
 const schedCols = db.prepare('PRAGMA table_info(alliance_schedules)').all()
@@ -1568,13 +1580,14 @@ app.post('/api/push/status', (req, res) => {
  * them -- and each one has something on the server that actually sends it.
  * ------------------------------------------------------------------------- */
 
-const PREF_KEYS = ['digest_weekly', 'alert_arena', 'alert_crown']
+const PREF_KEYS = ['digest_weekly', 'alert_arena', 'alert_crown', 'alert_birthday']
 
 function prefsOf(row) {
   if (!row) return null
   return {
     digest_weekly: !!row.digest_weekly,
     alert_arena: !!row.alert_arena,
+    alert_birthday: row.alert_birthday == null ? true : !!row.alert_birthday,
     alert_crown: !!row.alert_crown,
   }
 }
@@ -1950,6 +1963,171 @@ function arenaNotification({ time, lead }) {
   }
 }
 
+/* ===== Birthdays ===========================================================
+ * A kingdom is people, and this is the one thing in here that is not about
+ * rallying them. Sparta enters a name, an alliance and a date; on the day the
+ * kingdom is told once, and anyone opening the app sees it on the crest.
+ *
+ * Day and month only. Asking a stranger on the internet for their birth year to
+ * wish them a happy birthday is a bad trade, and the year is not needed for
+ * anything here.
+ * ------------------------------------------------------------------------- */
+const BIRTHDAY_DEFAULT_TIME = '12:00'
+const DAYS_IN_MONTH = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+
+/** A day/month pair, or null if it is not a date that exists. */
+function parseBirthday(day, month) {
+  const d = Number(day), m = Number(month)
+  if (!Number.isInteger(d) || !Number.isInteger(m)) return null
+  if (m < 1 || m > 12) return null
+  if (d < 1 || d > DAYS_IN_MONTH[m - 1]) return null
+  return { day: d, month: m }
+}
+
+function isLeapYear(year) {
+  return (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0
+}
+
+/** Everyone whose birthday falls on this date, in the order they were added.
+ *
+ * 29 February is the awkward one: three years in four it does not happen, and
+ * being wished a happy birthday once every four years is not the intent. Those
+ * are celebrated on the 28th in a common year.
+ */
+function birthdaysOn(date) {
+  const day = date.getUTCDate(), month = date.getUTCMonth() + 1
+  const rows = db.prepare('SELECT * FROM birthdays WHERE month=? AND day=? ORDER BY id').all(month, day)
+  if (month === 2 && day === 28 && !isLeapYear(date.getUTCFullYear())) {
+    rows.push(...db.prepare('SELECT * FROM birthdays WHERE month=2 AND day=29 ORDER BY id').all())
+  }
+  return rows
+}
+
+function birthdaySettings() {
+  try {
+    const row = db.prepare('SELECT value FROM app_settings WHERE key=?').get('birthday_announce')
+    const saved = row ? JSON.parse(row.value) : {}
+    return {
+      time: normalizeTime(saved.time) || BIRTHDAY_DEFAULT_TIME,
+      enabled: saved.enabled !== false,
+    }
+  } catch { return { time: BIRTHDAY_DEFAULT_TIME, enabled: true } }
+}
+
+/** How a person is named in the announcement: "Shoni [RYO]". */
+function birthdayLabel(row) {
+  const tag = row.alliance_slug ? `[${String(row.alliance_slug).toUpperCase()}]` : ''
+  return tag ? `${row.name} ${tag}` : String(row.name)
+}
+
+/** Join names the way a person writing the message would: A, B and C. */
+function joinNames(names) {
+  if (names.length <= 1) return names[0] || ''
+  return `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`
+}
+
+const COUNT_WORDS = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten']
+
+/* One notification however many birthdays fall on a day.
+ *
+ * Three people sharing a date must not mean three buzzes -- that is how a nice
+ * thing becomes the reason somebody turns notifications off.
+ */
+function birthdayNotification(rows) {
+  const labels = rows.map(birthdayLabel)
+  const single = rows.length === 1
+  const count = COUNT_WORDS[rows.length] || String(rows.length)
+  return {
+    title: single ? `Today is ${rows[0].name}'s birthday 🎂` : `${count} birthdays in Kingdom 846 today 🎂`,
+    body: single
+      ? `${birthdayLabel(rows[0])} — raise a horn for them.`
+      : `${joinNames(labels)}. Raise a horn for them.`,
+    image: '/assets/hero-throne-room.webp',
+    tag: 'birthday',
+    urgent: false,
+    url: '/#/dashboard',
+    actions: [{ action: 'dismiss', title: 'Dismiss' }],
+  }
+}
+
+// Public: who the app should congratulate on the crest today.
+app.get('/api/birthdays/today', (_req, res) => {
+  const settings = birthdaySettings()
+  if (!settings.enabled) return res.json({ people: [] })
+  const today = new Date()
+  res.json({
+    date: today.toISOString().slice(0, 10),
+    people: birthdaysOn(today).map((r) => ({
+      id: r.id, name: r.name, alliance_slug: r.alliance_slug || null, note: r.note || null,
+    })),
+  })
+})
+
+app.get('/api/birthdays', auth, adminOnly, (_req, res) => {
+  res.json({
+    settings: birthdaySettings(),
+    people: db.prepare('SELECT * FROM birthdays ORDER BY month, day, id').all(),
+  })
+})
+
+app.post('/api/birthdays', auth, adminOnly, (req, res) => {
+  const name = String(req.body?.name || '').trim()
+  if (!name) return res.status(400).json({ error: 'A name is required' })
+  if (name.length > 60) return res.status(400).json({ error: 'That name is too long' })
+  const when = parseBirthday(req.body?.day, req.body?.month)
+  if (!when) return res.status(400).json({ error: 'That is not a date that exists' })
+  const slug = String(req.body?.alliance_slug || '').toLowerCase() || null
+  if (slug && !db.prepare('SELECT slug FROM alliances WHERE slug=?').get(slug)) {
+    return res.status(400).json({ error: 'Unknown alliance' })
+  }
+  const note = String(req.body?.note || '').trim().slice(0, 120) || null
+  const info = db.prepare('INSERT INTO birthdays (name, alliance_slug, day, month, note) VALUES (?,?,?,?,?)')
+    .run(name, slug, when.day, when.month, note)
+  res.json({ ok: true, id: info.lastInsertRowid })
+})
+
+app.delete('/api/birthdays/:id', auth, adminOnly, (req, res) => {
+  const id = Number(req.params.id)
+  if (!Number.isInteger(id)) return res.status(400).json({ error: 'Bad id' })
+  db.prepare('DELETE FROM birthdays WHERE id=?').run(id)
+  res.json({ ok: true })
+})
+
+app.put('/api/birthday-settings', auth, adminOnly, (req, res) => {
+  const time = normalizeTime(req.body?.time)
+  if (req.body?.time != null && !time) return res.status(400).json({ error: 'Time must be a real time, like 12:00' })
+  const current = birthdaySettings()
+  const next = {
+    time: time || current.time,
+    enabled: typeof req.body?.enabled === 'boolean' ? req.body.enabled : current.enabled,
+  }
+  db.prepare('INSERT OR REPLACE INTO app_settings (key, value) VALUES (?,?)').run('birthday_announce', JSON.stringify(next))
+  res.json(next)
+})
+
+/** Announce the day's birthdays, once, at the hour the kingdom chose. */
+async function birthdayTick(now = new Date()) {
+  const settings = birthdaySettings()
+  if (!settings.enabled) return { sent: 0 }
+  const hhmm = `${two(now.getUTCHours())}:${two(now.getUTCMinutes())}`
+  if (hhmm !== settings.time) return { sent: 0 }
+
+  const people = birthdaysOn(now)
+  if (!people.length) return { sent: 0 }
+
+  const dateKey = now.toISOString().slice(0, 10)
+  // Same guard the reminders use: the tick runs every 30 seconds, and a
+  // birthday announced twice is worse than one announced late.
+  try { db.prepare('INSERT INTO push_sent (key) VALUES (?)').run(`${dateKey}|birthday`) } catch { return { sent: 0 } }
+
+  const result = await sendKingdomWide('alert_birthday', {
+    ...birthdayNotification(people),
+    tag: `birthday-${dateKey}`,
+  })
+  console.log(`[push] birthdays (${people.length}) -> ${result.sent} sent, ${result.dropped} stale`)
+  return result
+}
+
 const ARENA_DEFAULT_TIME = '00:00'
 
 // 00:00 UTC, confirmed by the kingdom's admin rather than assumed here, so it is
@@ -2063,13 +2241,17 @@ async function runReminderTick() {
     }
   }
 
+  // Birthdays, once a day at the hour the kingdom chose. Not a countdown, so
+  // it sits outside the lead loop entirely.
+  await birthdayTick(now)
+
   // The dedupe log only has to outlive the reminders it guards.
   db.prepare("DELETE FROM push_sent WHERE sent_at < datetime('now', '-2 days')").run()
 }
 
 // Exported for the tests, which drive the tick directly rather than waiting on
 // a real clock.
-module.exports = { ...(module.exports || {}), runReminderTick, allianceSchedule, contentSchedule, syncScheduleFromContent, normalizeTime, parseDays, defaultDaysFor, digestTick, isoWeekKey, arenaReset, eventNotification, arenaNotification, occursOn, repeatRules, nextOccurrences, REPEAT_DEFAULTS, sendKingdomWide }
+module.exports = { ...(module.exports || {}), runReminderTick, allianceSchedule, contentSchedule, syncScheduleFromContent, normalizeTime, parseDays, defaultDaysFor, digestTick, isoWeekKey, arenaReset, eventNotification, arenaNotification, birthdayTick, birthdaysOn, birthdayNotification, birthdaySettings, parseBirthday, occursOn, repeatRules, nextOccurrences, REPEAT_DEFAULTS, sendKingdomWide }
 
 app.get('/api/leader/roster', auth, leaderOnly, (req, res) => {
   const slug = req.user.alliance_slug

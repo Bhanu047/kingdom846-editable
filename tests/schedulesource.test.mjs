@@ -41,6 +41,19 @@ function setKingdomContent(schedules) {
     .run(JSON.stringify({ alliances }))
 }
 
+/** Saving the Master Console: the blob, plus the write-through the route does. */
+function saveMasterConsole(schedules) {
+  const before = db.prepare("SELECT data FROM site_content WHERE id='current'").get()
+  let previous = null
+  try { previous = before ? JSON.parse(before.data) : null } catch { previous = null }
+  const next = {
+    alliances: Object.entries(schedules).map(([slug, schedule]) => ({ slug, schedule })),
+  }
+  db.prepare("INSERT INTO site_content (id,data) VALUES ('current',?) ON CONFLICT(id) DO UPDATE SET data=excluded.data")
+    .run(JSON.stringify(next))
+  return server.syncScheduleFromContent(next, previous)
+}
+
 /** What the Leader Portal writes: one row per event. */
 function setLeaderTime(slug, event, time) {
   db.prepare(`INSERT INTO alliance_schedules (alliance_slug,event_name,event_time,event_days) VALUES (?,?,?,'')
@@ -92,9 +105,11 @@ test("nothing at 12:00 is called a Bear Hunt any more", () => {
   assert.deepEqual(at1200, ['Tri-Alliance Clash Legion-1', 'Swordland Showdown Legion-1'])
 })
 
-test("a leader's own time still wins over the kingdom's", () => {
+test('a saved time beats the content fallback', () => {
   clearAll()
   setKingdomContent({ ryo: RYO_REAL })
+  // The stored row is whoever saved last, leader or Sparta. The content blob is
+  // the fallback for every time set before either of them wrote one.
   setLeaderTime('ryo', 'Bear Hunt-2', '22:15')
   assert.equal(timeOf('ryo', 'Bear Hunt-2'), '22:15')
   // And only that one event moves.
@@ -156,4 +171,66 @@ test('the reminder text names the time the schedule resolved to', () => {
   assert.match(notif.title, /Bear Hunt-2 in 10 minutes/)
   assert.match(notif.body, /21:30 UTC/)
   assert.doesNotMatch(notif.body, /12:00/)
+})
+
+/* Both people who can set a time have to be able to set it for real. Ranking
+ * one editor above the other means the other's edit silently does nothing,
+ * which is the same class of bug as the one above, just quieter.
+ */
+test('Sparta changing a time in the Master Console reaches the phones', () => {
+  clearAll()
+  setKingdomContent({ ryo: RYO_REAL })
+  // A leader had set an older time first.
+  setLeaderTime('ryo', 'Bear Hunt-2', '22:15')
+  assert.equal(timeOf('ryo', 'Bear Hunt-2'), '22:15')
+
+  // Sparta now moves it in the Master Console. Their edit wins, because it is
+  // the most recent one.
+  const written = saveMasterConsole({ ryo: RYO_REAL.map((r) => r.event === 'Bear Hunt-2' ? { ...r, time: '20:45' } : r) })
+  assert.equal(written, 1, 'only the time that changed is written')
+  assert.equal(timeOf('ryo', 'Bear Hunt-2'), '20:45')
+})
+
+test('a leader can still move it back afterwards', () => {
+  clearAll()
+  saveMasterConsole({ ryo: RYO_REAL })
+  setLeaderTime('ryo', 'Bear Hunt-2', '23:00')
+  assert.equal(timeOf('ryo', 'Bear Hunt-2'), '23:00')
+})
+
+test("saving an unrelated change does not roll back a leader's time", () => {
+  clearAll()
+  saveMasterConsole({ ryo: RYO_REAL })
+  setLeaderTime('ryo', 'Bear Hunt-2', '23:00')
+
+  // Sparta edits a tagline and saves. The Master Console writes the whole blob
+  // every time, so the schedule is present and unchanged in that save; it must
+  // not quietly undo the leader's 23:00.
+  const written = saveMasterConsole({ ryo: RYO_REAL })
+  assert.equal(written, 0, 'nothing changed, so nothing is written')
+  assert.equal(timeOf('ryo', 'Bear Hunt-2'), '23:00')
+})
+
+test('a half-typed time never reaches anyone', () => {
+  clearAll()
+  saveMasterConsole({ ryo: RYO_REAL })
+  const written = saveMasterConsole({ ryo: RYO_REAL.map((r) => r.event === 'Bear Hunt-2' ? { ...r, time: '2' } : r) })
+  assert.equal(written, 0)
+  // Falls back through to the content blob, which still holds the last good one.
+  assert.equal(timeOf('ryo', 'Bear Hunt-2'), '21:30')
+})
+
+test('an event name the kingdom does not have is ignored', () => {
+  clearAll()
+  const written = saveMasterConsole({ ryo: [{ event: 'Dragon Picnic', time: '09:00' }] })
+  assert.equal(written, 0)
+  assert.equal(db.prepare("SELECT COUNT(*) n FROM alliance_schedules WHERE event_name='Dragon Picnic'").get().n, 0)
+})
+
+test('content with no alliances at all is a no-op, not a crash', () => {
+  clearAll()
+  assert.equal(server.syncScheduleFromContent(null, null), 0)
+  assert.equal(server.syncScheduleFromContent({}, {}), 0)
+  assert.equal(server.syncScheduleFromContent({ alliances: 'nope' }, null), 0)
+  assert.equal(server.syncScheduleFromContent({ alliances: [{ schedule: [{ event: 'Bear Hunt-2', time: '09:00' }] }] }, null), 0)
 })

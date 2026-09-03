@@ -57,12 +57,13 @@ export default function Admin() {
   // Re-sync draft when live data changes (e.g. after save)
   useEffect(() => { setDraft(data) }, [data])
 
-  /* Which of these times a leader has already overridden.
+  /* What reminders are currently sending, where a leader set it here first.
    *
-   * There are two editors for one fact — this page, and the Leader Portal — and
-   * a leader's own time wins. Without this, a time typed here would silently do
-   * nothing while the phones kept announcing the leader's, which is a version
-   * of the bug that had [RYO] hearing 12:00 for a 21:30 Bear Hunt.
+   * Two people can set an event time — Sparta on this page, a leader in the
+   * Leader Portal — and both edits take effect, the most recent one winning.
+   * This only says which times a leader has touched, so a number typed here
+   * that looks wrong against the phones has an explanation rather than looking
+   * like the bug that had [RYO] hearing 12:00 for a 21:30 Bear Hunt.
    */
   const [overrides, setOverrides] = useState({})
   useEffect(() => {
@@ -169,7 +170,7 @@ export default function Admin() {
                             />
                             {overridden && overridden !== s.time && (
                               <span className="mt-1 block text-[10px] leading-snug text-amber-300/80">
-                                The leader has set {overridden} — that is what will be sent, not this.
+                                Reminders are sending {overridden} — the leader set it. Save to replace it with this.
                               </span>
                             )}
                           </label>

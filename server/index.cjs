@@ -589,9 +589,18 @@ app.get('/api/content', (_req, res) => {
   res.json(row ? { data: JSON.parse(row.data), updated_at: row.updated_at } : { data: null })
 })
 app.put('/api/content', auth, adminOnly, (req, res) => {
+  // Read the previous version first: an event time is only written through to
+  // the reminder schedule if it actually changed here. See
+  // syncScheduleFromContent.
+  const before = db.prepare('SELECT data FROM site_content WHERE id = ?').get('current')
+  let previous = null
+  try { previous = before ? JSON.parse(before.data) : null } catch { previous = null }
+
   const data = JSON.stringify(req.body)
   db.prepare("INSERT INTO site_content (id, data, updated_by) VALUES (?,?,?) ON CONFLICT(id) DO UPDATE SET data=excluded.data, updated_at=datetime('now'), updated_by=excluded.updated_by").run('current', data, String(req.user.id))
-  res.json({ ok: true })
+
+  const schedule_updates = syncScheduleFromContent(req.body, previous)
+  res.json({ ok: true, schedule_updates })
 })
 
 // King status — public read, admin update
@@ -1395,12 +1404,62 @@ function contentSchedule(slug) {
   } catch { return {} }
 }
 
+/* Write an event time changed in the Master Console through to the schedule
+ * reminders read.
+ *
+ * Both people who can set a time have to be able to set it for real: Sparta in
+ * the Master Console, and a leader in the Leader Portal. Ranking one above the
+ * other means the other's edit silently does nothing, so instead both write to
+ * the same row and whoever saved last wins, per event.
+ *
+ * Only times that CHANGED are written. The Master Console saves the whole
+ * content blob whenever anything on it is touched, so writing every time on
+ * every save would let an edit to a tagline quietly roll back a leader's time
+ * hours after they set it.
+ */
+function syncScheduleFromContent(next, previous) {
+  const previousTimes = {}
+  for (const a of Array.isArray(previous?.alliances) ? previous.alliances : []) {
+    const slug = String(a?.slug || '').toLowerCase()
+    if (!slug) continue
+    previousTimes[slug] = {}
+    for (const item of Array.isArray(a?.schedule) ? a.schedule : []) {
+      if (item?.event) previousTimes[slug][item.event] = String(item.time || '')
+    }
+  }
+
+  const stmt = db.prepare(`INSERT INTO alliance_schedules (alliance_slug,event_name,event_time,event_days,updated_at)
+    VALUES (?,?,?,?,datetime('now'))
+    ON CONFLICT(alliance_slug,event_name) DO UPDATE SET event_time=excluded.event_time, updated_at=datetime('now')`)
+
+  let written = 0
+  for (const a of Array.isArray(next?.alliances) ? next.alliances : []) {
+    const slug = String(a?.slug || '').toLowerCase()
+    if (!slug) continue
+    for (const item of Array.isArray(a?.schedule) ? a.schedule : []) {
+      const event = item?.event
+      const time = String(item?.time || '')
+      if (!ALLIANCE_EVENTS.includes(event)) continue
+      // A half-typed time must not go out to three hundred phones.
+      if (!HHMM_RE.test(time)) continue
+      // Unchanged: leave whatever is there, which may be a leader's newer one.
+      if (previousTimes[slug] && previousTimes[slug][event] === time) continue
+      // Days are left alone on conflict, so a leader's day choice survives an
+      // admin changing only the time.
+      stmt.run(slug, event, time, defaultDaysFor(event))
+      written++
+    }
+  }
+  return written
+}
+
 /* Effective schedule for one alliance.
  *
- * Order matters and is the whole point: the leader's own row wins, then what
- * the kingdom's content says (which is what the app displays), then the seeded
- * default. The default is last because it is the only one of the three nobody
- * ever chose.
+ * The stored row is whoever set it last -- a leader through the Leader Portal,
+ * or Sparta through the Master Console, which writes through above. Then the
+ * kingdom's content, which covers every time set before that write-through
+ * existed and is what the app displays. The seeded default is last, because it
+ * is the only one of the three nobody ever chose.
  */
 function allianceSchedule(slug) {
   const rows = db.prepare('SELECT event_name, event_time, event_days FROM alliance_schedules WHERE alliance_slug=?').all(slug)
@@ -1974,7 +2033,7 @@ async function runReminderTick() {
 
 // Exported for the tests, which drive the tick directly rather than waiting on
 // a real clock.
-module.exports = { ...(module.exports || {}), runReminderTick, allianceSchedule, contentSchedule, parseDays, defaultDaysFor, digestTick, isoWeekKey, arenaReset, eventNotification, arenaNotification, occursOn, repeatRules, nextOccurrences, REPEAT_DEFAULTS, sendKingdomWide }
+module.exports = { ...(module.exports || {}), runReminderTick, allianceSchedule, contentSchedule, syncScheduleFromContent, parseDays, defaultDaysFor, digestTick, isoWeekKey, arenaReset, eventNotification, arenaNotification, occursOn, repeatRules, nextOccurrences, REPEAT_DEFAULTS, sendKingdomWide }
 
 app.get('/api/leader/roster', auth, leaderOnly, (req, res) => {
   const slug = req.user.alliance_slug

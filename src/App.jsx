@@ -15,7 +15,6 @@ import Aurora from './components/Aurora'
 import ScrollProgress from './components/ScrollProgress'
 import ChatAssistant from './components/ChatAssistant'
 import InstallPrompt from './components/InstallPrompt'
-import AppLaunch from './components/AppLaunch'
 import TabBar from './components/TabBar'
 import { isAppMode } from './lib/appMode'
 import NetworkBanner from './components/NetworkBanner'
@@ -281,9 +280,7 @@ function Shell() {
 
   return (
     <>
-      {showSplash && (appMode
-        ? <AppLaunch onDone={() => setShowSplash(false)} />
-        : <SplashScreen onEnter={() => setShowSplash(false)} />)}
+      {showSplash && <SplashScreen onEnter={() => setShowSplash(false)} />}
       <Aurora />
       <ParticleField />
       <ScrollProgress />

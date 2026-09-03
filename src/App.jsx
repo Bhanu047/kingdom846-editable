@@ -138,6 +138,8 @@ function Shell() {
   const [searchOpen, setSearchOpen] = useState(false)
   const [Login, setLogin] = useState(null)
   const scrollRef = useRef(null)
+  // Overlay stacking, so a layer added later does not land underneath one that
+  // opened it: 60 tab bar · 70 nav drawer · 80 search · 90 login · 10010 setup.
   const { reload: reloadSiteData } = useSiteData()
 
   useEffect(() => {
@@ -224,9 +226,25 @@ function Shell() {
   // either alone.
   const { pull, refreshing, threshold } = usePullToRefresh(scrollRef, refresh, appMode)
 
-  useBackToClose(mobileNav, () => setMobileNav(false))
-  useBackToClose(searchOpen, () => setSearchOpen(false))
-  useBackToClose(loginOpen, () => setLoginOpen(false))
+  // One history entry for "something is open", not one per overlay.
+  //
+  // Per-overlay entries looked equivalent and were not: opening the login from
+  // the drawer closes one and opens the other in the same tick, so the drawer's
+  // cleanup called history.back() while the login's effect pushed its own
+  // entry. The resulting popstate arrived at the login's newly-registered
+  // listener, which closed it again -- Royal Access dismissed the sidebar and
+  // then appeared to do nothing at all.
+  //
+  // Keyed on whether any overlay is open, that exchange is a no-op: the value
+  // never changes, so nothing is pushed or popped, and back still closes
+  // whatever is showing.
+  const overlayOpen = mobileNav || searchOpen || loginOpen
+  const closeOverlays = useCallback(() => {
+    setMobileNav(false)
+    setSearchOpen(false)
+    setLoginOpen(false)
+  }, [])
+  useBackToClose(overlayOpen, closeOverlays)
 
   const canUseWarRoom = Boolean(isAdmin || user?.username?.toLowerCase() === 'shoni')
 
@@ -283,14 +301,14 @@ function Shell() {
       )}
       <div className="app-shell flex overflow-hidden relative z-10">
         <div className="hidden md:flex">
-          <Sidebar active={page} onNavigate={navigate} user={sidebarUser} onLogin={() => { setLoginMode('admin'); setLoginOpen(true) }} onSignOut={handleSignOut} isAdmin={isAdmin} />
+          <Sidebar active={page} onNavigate={navigate} user={sidebarUser} onLogin={() => { setMobileNav(false); setLoginMode('admin'); setLoginOpen(true) }} onSignOut={handleSignOut} isAdmin={isAdmin} />
         </div>
 
         {mobileNav && (
           <div className="fixed inset-0 z-[70] md:hidden" onClick={() => setMobileNav(false)}>
             <div className="absolute inset-0 bg-ink/70" />
             <div className="absolute left-0 top-0 h-full" onClick={(e) => e.stopPropagation()}>
-              <Sidebar active={page} onNavigate={navigate} user={sidebarUser} onLogin={() => { setLoginMode('admin'); setLoginOpen(true) }} onSignOut={handleSignOut} isAdmin={isAdmin} />
+              <Sidebar active={page} onNavigate={navigate} user={sidebarUser} onLogin={() => { setMobileNav(false); setLoginMode('admin'); setLoginOpen(true) }} onSignOut={handleSignOut} isAdmin={isAdmin} />
             </div>
           </div>
         )}
@@ -308,7 +326,7 @@ function Shell() {
             onOpenMobileNav={() => setMobileNav(true)}
             onOpenSearch={() => setSearchOpen(true)}
             onSignOut={handleSignOut}
-            onLogin={() => { setLoginMode('leader'); setLoginOpen(true) }}
+            onLogin={() => { setMobileNav(false); setLoginMode('leader'); setLoginOpen(true) }}
           />
 
           <NetworkBanner />
@@ -332,7 +350,7 @@ function Shell() {
         </main>
 
         {searchOpen && (
-          <div className="fixed inset-0 z-50 flex items-start justify-center bg-ink/80 p-4 pt-[12vh]" onClick={() => setSearchOpen(false)}>
+          <div className="fixed inset-0 z-[80] flex items-start justify-center bg-ink/80 p-4 pt-[12vh]" onClick={() => setSearchOpen(false)}>
             <div className="w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
               <div className="panel panel-glow overflow-hidden">
                 <div className="flex items-center gap-2 border-b border-gold/15 p-3"><Icon name="search" size={16} className="text-gold" /><input autoFocus value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search pages, timeline, guides, news…" className="w-full bg-transparent text-sm text-parchment outline-none placeholder:text-parchment/40" /><button onClick={() => setSearchOpen(false)} className="text-parchment/40 hover:text-parchment text-xs">Esc</button></div>

@@ -61,7 +61,7 @@ export default function Login({ onClose, onSuccess, mode = 'leader' }) {
   // --- Force Change Password Screen ---
   if (needSetPw) {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4" onClick={onClose}>
+      <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/70 p-4" onClick={onClose}>
         <div className="page-enter panel aurora-border w-full max-w-sm p-6" onClick={(e) => e.stopPropagation()}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-gold">
@@ -115,7 +115,7 @@ export default function Login({ onClose, onSuccess, mode = 'leader' }) {
 
   // --- Normal Login Screen ---
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70  p-4" onClick={onClose}>
+    <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/70  p-4" onClick={onClose}>
       <div className="page-enter panel aurora-border w-full max-w-sm p-6" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-gold">

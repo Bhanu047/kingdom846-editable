@@ -1,0 +1,106 @@
+[
+ {
+  "id": "hi",
+  "title": "Greetings, traveler. I am the Royal Advisor of Kingdom 846.",
+  "keywords": [
+   "hi",
+   "hello",
+   "hey",
+   "greetings",
+   "hail",
+   "sup",
+   "yo"
+  ],
+  "answer": "Greetings, traveler. I am the Royal Advisor of Kingdom 846.\n\nI can help you with:\n- Alliance information\n- Current ruler and kingdom status\n- Event schedules\n- How to join or transfer\n- Strategy guides\n- Latest news\n\nAsk me anything about the realm."
+ },
+ {
+  "id": "thank",
+  "title": "thank",
+  "keywords": [
+   "thank",
+   "thx",
+   "appreciate"
+  ],
+  "answer": "You are most welcome. May your rallies be strong and your victories many."
+ },
+ {
+  "id": "bye",
+  "title": "bye",
+  "keywords": [
+   "bye",
+   "goodbye",
+   "farewell",
+   "see you",
+   "later"
+  ],
+  "answer": "Farewell, traveler. May your walls stand strong, your troops march victorious, and your rallies never fail.\n\nReturn whenever you seek counsel — the Royal Advisor is always here. Forging glory awaits you."
+ },
+ {
+  "id": "yes",
+  "title": "Is there anything else you'd like to know about Kingdom 846?",
+  "keywords": [
+   "yes",
+   "no",
+   "ok",
+   "okay",
+   "sure",
+   "cool",
+   "nice",
+   "great"
+  ],
+  "answer": "Is there anything else you'd like to know about Kingdom 846?\n\nYou can ask me about alliances, events, guides, how to join, strategies, KvK, or anything else about the realm."
+ },
+ {
+  "id": "asdf",
+  "title": "I see you're testing me! I'm working perfectly.",
+  "keywords": [
+   "asdf",
+   "test",
+   "aaaa",
+   "lorem ipsum",
+   "test test"
+  ],
+  "answer": "I see you're testing me! I'm working perfectly.\n\nTry asking me a real question like:\n- What alliances are in Kingdom 846?\n- How do I join?\n- What is KvK?\n- How to defend my city?\n- What is the Discord link?\n\nI'm here to help with anything about the realm."
+ },
+ {
+  "id": "love",
+  "title": "love",
+  "keywords": [
+   "love",
+   "awesome",
+   "amazing",
+   "great website",
+   "beautiful",
+   "cool website",
+   "impressive",
+   "wow"
+  ],
+  "answer": "Thank you for your kind words! The realm of Kingdom 846 was crafted with dedication by Spartan, our Sovereign Admin.\n\nIf you'd like to join our community, visit the Transfer page to apply to one of our four alliances, or join our Discord: https://discord.gg/rcxJCh97A\n\nWe take what's ours. Glory awaits."
+ },
+ {
+  "id": "hate",
+  "title": "hate",
+  "keywords": [
+   "hate",
+   "terrible",
+   "worst",
+   "sucks",
+   "bad",
+   "awful",
+   "stupid"
+  ],
+  "answer": "I'm sorry to hear that. We're always improving the Kingdom 846 experience.\n\nIf you have specific feedback, please share it in our Discord: https://discord.gg/rcxJCh97A\n\nSpartan (our admin) takes all feedback seriously and works to make the realm better for everyone."
+ },
+ {
+  "id": "good-morning",
+  "title": "good morning",
+  "keywords": [
+   "good morning",
+   "good afternoon",
+   "good evening",
+   "good night",
+   "goodnight"
+  ],
+  "answer": "A fine time to visit the realm! Whether morning, noon, or night in your corner of the world, Kingdom 846's events run 24/7.\n\nCheck the Events page for what's happening right now, or join our Discord (https://discord.gg/rcxJCh97A) for real-time activity.\n\nHow may I assist you today?"
+ }
+]

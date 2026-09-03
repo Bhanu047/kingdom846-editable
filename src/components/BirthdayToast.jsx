@@ -79,11 +79,16 @@ export default function BirthdayToast() {
    *
    * The alliance is already on the entry, so the card may as well be theirs
    * rather than the same throne room for everyone -- a [RYO] player's day looks
-   * like [RYO]. Two people from different alliances get no banner instead of an
-   * arbitrary one: picking the first would quietly say the day belongs to them.
+   * like [RYO]. Two people from different alliances get the throne room rather
+   * than one of their banners: picking the first would quietly say the day
+   * belongs to them, and the throne room belongs to all four.
    */
   const slugs = [...new Set(people.map((p) => p.alliance_slug).filter(Boolean))]
-  const banner = slugs.length === 1 && people.every((p) => p.alliance_slug) ? BANNERS[slugs[0]] : null
+  const shared = slugs.length === 1 && people.every((p) => p.alliance_slug)
+  // The throne room when they do not share one: it belongs to all four, and it
+  // is the picture the notification carries in the same case, so the buzz and
+  // the card show the same thing.
+  const banner = shared ? BANNERS[slugs[0]] : './assets/hero-throne-room.webp'
   const names = people.map((p) => (
     <span key={p.id} className="inline-flex items-baseline gap-1">
       <span className="font-display font-bold text-gold-bright">{p.name}</span>
@@ -93,7 +98,7 @@ export default function BirthdayToast() {
 
   return (
     <div className={`bday-veil ${leaving ? 'is-leaving' : ''}`} role="dialog" aria-modal="true" aria-label="Birthday in the kingdom">
-      <div className={`bday-card gold-corners ${banner ? 'has-banner' : ''}`}>
+      <div className="bday-card gold-corners has-banner">
         {banner && (
           <div className="bday-banner" aria-hidden="true">
             <img src={banner} alt="" />

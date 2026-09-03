@@ -193,3 +193,14 @@ export async function setNotificationPref(key, value) {
   }
 }
 
+/** Send this device a sample reminder, so it can be seen before it matters. */
+export async function sendTestNotification() {
+  const endpoint = await currentEndpoint()
+  if (!endpoint) return { ok: false, reason: 'no-subscription' }
+  try {
+    await apiJson('/api/push/test', { method: 'POST', body: JSON.stringify({ endpoint }) })
+    return { ok: true }
+  } catch (err) {
+    return { ok: false, reason: 'failed', detail: err?.message }
+  }
+}

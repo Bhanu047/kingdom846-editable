@@ -9,7 +9,7 @@
  * Bump CACHE_VERSION on any change to this file's caching rules; the activate
  * handler deletes every cache that doesn't match, so old entries never linger.
  */
-const CACHE_VERSION = 'v2'
+const CACHE_VERSION = 'v3'
 const SHELL_CACHE = `k846-shell-${CACHE_VERSION}`
 const ASSET_CACHE = `k846-assets-${CACHE_VERSION}`
 const FONT_CACHE = `k846-fonts-${CACHE_VERSION}`
@@ -151,26 +151,48 @@ self.addEventListener('push', (event) => {
   let data = {}
   try { data = event.data ? event.data.json() : {} } catch {}
   const title = data.title || 'Kingdom 846'
-  event.waitUntil(
-    self.registration.showNotification(title, {
-      body: data.body || '',
-      icon: '/app-icons/icon-192.png',
-      badge: '/app-icons/icon-192.png',
-      // The tag collapses a 10-minute and a 5-minute reminder for the same
-      // event onto one notification rather than stacking two in the shade;
-      // renotify makes the second one still buzz.
-      tag: data.tag || 'k846',
-      renotify: true,
-      requireInteraction: false,
-      data: { url: data.url || '/#/events' },
-      vibrate: [90, 45, 90],
-    })
-  )
+
+  // A notification is the only part of this app most members will see on a busy
+  // evening, so it gets the same treatment as a page: the event's own artwork,
+  // a way to act on it without hunting for the right screen, and an urgency
+  // that rises as the clock runs down.
+  //
+  // Everything below degrades rather than breaks. Android and desktop Chrome
+  // show the image and the buttons; iOS shows the title, body and icon and
+  // quietly ignores the rest, which is why the body alone still has to say
+  // everything that matters.
+  const options = {
+    body: data.body || '',
+    icon: '/app-icons/icon-192.png',
+    badge: '/app-icons/icon-192.png',
+    // The tag collapses a 10-minute and a 5-minute reminder for the same event
+    // onto one notification rather than stacking two in the shade; renotify
+    // makes the second one still buzz.
+    tag: data.tag || 'k846',
+    renotify: true,
+    data: { url: data.url || '/#/events' },
+    // A short double tap for a heads-up, a longer insistent pattern when the
+    // thing is about to start.
+    vibrate: data.urgent ? [120, 60, 120, 60, 240] : [90, 45, 90],
+    // The last call stays on screen until it is dealt with; the earlier one
+    // does not need to be dismissed by hand.
+    requireInteraction: !!data.urgent,
+    timestamp: Date.now(),
+  }
+  if (data.image) options.image = data.image
+  if (Array.isArray(data.actions) && data.actions.length) options.actions = data.actions.slice(0, 2)
+
+  event.waitUntil(self.registration.showNotification(title, options))
 })
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close()
-  const target = event.notification.data?.url || '/#/events'
+  // A dismiss button closes and goes no further; any other action carries its
+  // own destination, so "See the schedule" and a tap on the body itself can
+  // land in different places.
+  if (event.action === 'dismiss') return
+  const actions = event.notification.data?.actionUrls || {}
+  const target = (event.action && actions[event.action]) || event.notification.data?.url || '/#/events'
   event.waitUntil((async () => {
     const clientList = await self.clients.matchAll({ type: 'window', includeUncontrolled: true })
     // Focus the app if it is already open somewhere rather than opening a

@@ -589,10 +589,14 @@ app.put('/api/king-status', auth, adminOnly, (req, res) => {
   // Sent after the response for the same reason as every other alert here: the
   // save must not fail because a push service is having a bad afternoon.
   sendKingdomWide('alert_crown', {
-    title: 'The crown has changed',
-    body: `${next.king_type} ${next.name} of ${next.alliance_tag} ${next.alliance_name} now rules Kingdom 846.`,
+    title: `${next.king_type} ${next.name} takes the throne`,
+    body: `${next.alliance_tag} ${next.alliance_name} holds the crown of Kingdom 846. Long may they reign.`,
+    image: '/assets/hero-throne-room.webp',
     tag: `crown-${Date.now()}`,
+    urgent: false,
     url: '/#/dashboard',
+    actions: [{ action: 'kingdom', title: 'See the kingdom' }, { action: 'dismiss', title: 'Dismiss' }],
+    actionUrls: { kingdom: '/#/dashboard' },
   })
     .then((r) => console.log(`[push] crown -> ${next.king_type} ${next.name} · ${r.sent} sent, ${r.dropped} stale`))
     .catch((e) => console.error('[push] crown announcement failed', e.message))
@@ -1400,6 +1404,46 @@ function prefsOf(row) {
   }
 }
 
+/**
+ * Send this device a sample reminder, on demand.
+ *
+ * It exists because a notification is the one part of this app nobody can see
+ * before it matters: you find out whether it works, and what it looks like, at
+ * 23:50 on the night you were relying on it. This turns that into a button.
+ * The sample is the real five-minute Bear Hunt payload, so what arrives is what
+ * will arrive.
+ */
+app.post('/api/push/test', async (req, res) => {
+  const endpoint = req.body?.endpoint
+  if (!endpoint || typeof endpoint !== 'string') return res.status(400).json({ error: 'Endpoint required' })
+  const sub = db.prepare('SELECT * FROM push_subscriptions WHERE endpoint=?').get(endpoint)
+  if (!sub) return res.status(404).json({ error: 'This device is not signed up for notifications' })
+
+  const sample = eventNotification({
+    event: 'Bear Hunt -1',
+    slug: sub.alliance_slug,
+    time: allianceSchedule(sub.alliance_slug).find((e) => /bear/i.test(e.event))?.time || '04:00',
+    lead: 5,
+  })
+  try {
+    await webpush.sendNotification(
+      { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
+      JSON.stringify({ ...sample, title: `${sample.title} (test)`, tag: `test-${Date.now()}` }),
+      { TTL: 60 },
+    )
+    res.json({ ok: true })
+  } catch (err) {
+    // 404/410 means the browser threw this subscription away; say so plainly
+    // rather than leaving someone waiting for a buzz that can never come.
+    if (err?.statusCode === 404 || err?.statusCode === 410) {
+      db.prepare('DELETE FROM push_subscriptions WHERE endpoint=?').run(endpoint)
+      return res.status(410).json({ error: 'This device is no longer registered. Turn reminders off and on again.' })
+    }
+    console.error('[push] test send failed:', err?.message)
+    res.status(502).json({ error: 'The push service would not take it. Try again in a moment.' })
+  }
+})
+
 app.post('/api/push/prefs', (req, res) => {
   const endpoint = req.body?.endpoint
   if (!endpoint || typeof endpoint !== 'string') return res.status(400).json({ error: 'Endpoint required' })
@@ -1456,7 +1500,15 @@ async function digestTick() {
     try {
       await webpush.sendNotification(
         { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
-        JSON.stringify({ title: 'Kingdom 846 — this week', body, tag: key, url: '/#/news' }),
+        JSON.stringify({
+          title: 'Kingdom 846 — this week',
+          body,
+          image: '/assets/hero-news.webp',
+          tag: key,
+          url: '/#/news',
+          actions: [{ action: 'news', title: 'Read the news' }, { action: 'dismiss', title: 'Dismiss' }],
+          actionUrls: { news: '/#/news' },
+        }),
         { TTL: 86400 },
       )
       sent++
@@ -1513,6 +1565,71 @@ function two(n) { return String(n).padStart(2, '0') }
  * know: it is a property of the game server, Sparta can see it and I cannot, and
  * a reminder that fires at the wrong minute is worse than no reminder at all.
  * ------------------------------------------------------------------------- */
+
+/* ---- What a notification says ----------------------------------------------
+ * On a busy evening the notification is the whole app: most members will never
+ * open a page, they will glance at a banner and decide whether to put the
+ * kettle down. So it carries the event's own artwork, says the time and the
+ * alliance without being opened, and gets more insistent as the clock runs out.
+ * ------------------------------------------------------------------------- */
+
+// Artwork per event, matched on the name the leaders actually use.
+const EVENT_ART = [
+  [/bear/i, '/assets/art-bear-trap.png'],
+  [/viking/i, '/assets/art-castle-battle.png'],
+  [/clash/i, '/assets/art-kvk-prep.png'],
+  [/swordland|showdown/i, '/assets/art-castle-battle.png'],
+]
+
+function artFor(event) {
+  const hit = EVENT_ART.find(([re]) => re.test(event))
+  return hit ? hit[1] : '/assets/hero-events.webp'
+}
+
+/**
+ * One alliance event reminder.
+ *
+ * The body has to stand alone: iOS shows no image and no buttons, so the time,
+ * the alliance and the urgency all live in the words.
+ */
+function eventNotification({ event, slug, time, lead }) {
+  const urgent = lead <= 5
+  return {
+    title: urgent ? `${event} starts in ${lead} minutes` : `${event} in ${lead} minutes`,
+    body: urgent
+      ? `[${slug.toUpperCase()}] · ${time} UTC. Last call — get your march ready.`
+      : `[${slug.toUpperCase()}] · ${time} UTC. Time to gather.`,
+    image: artFor(event),
+    tag: `${slug}-${event}`,
+    urgent,
+    url: '/#/events',
+    actions: [
+      { action: 'schedule', title: 'See the schedule' },
+      { action: 'dismiss', title: 'Dismiss' },
+    ],
+    actionUrls: { schedule: '/#/events' },
+  }
+}
+
+function arenaNotification({ time, lead }) {
+  const urgent = lead <= 5
+  return {
+    title: urgent ? `Arena resets in ${lead} minutes` : `Arena reset in ${lead} minutes`,
+    body: urgent
+      ? `Resets at ${time} UTC. Last chance — spend your challenges now.`
+      : `Resets at ${time} UTC. Unspent challenges are lost.`,
+    image: '/assets/hero-rankings.webp',
+    tag: 'arena',
+    urgent,
+    url: '/#/rankings',
+    actions: [
+      { action: 'rankings', title: 'Open rankings' },
+      { action: 'dismiss', title: 'Dismiss' },
+    ],
+    actionUrls: { rankings: '/#/rankings' },
+  }
+}
+
 const ARENA_DEFAULT_TIME = '00:00'
 
 // 00:00 UTC, confirmed by the kingdom's admin rather than assumed here, so it is
@@ -1593,10 +1710,10 @@ async function runReminderTick() {
           db.prepare('INSERT INTO push_sent (key) VALUES (?)').run(key)
         } catch { continue }
         const result = await sendToAlliance(slug, {
-          title: `${item.event} in ${lead} minutes`,
-          body: `[${slug.toUpperCase()}] starts at ${item.time} UTC. Rally up.`,
+          ...eventNotification({ event: item.event, slug, time: item.time, lead }),
+          // The date is in the tag so tonight's Bear Hunt does not replace the
+          // one still sitting in the shade from this morning.
           tag: `${slug}-${item.event}-${dateKey}`,
-          url: '/#/events',
         })
         console.log(`[push] ${slug} ${item.event} T-${lead}m -> ${result.sent} sent, ${result.dropped} stale`)
       }
@@ -1615,10 +1732,8 @@ async function runReminderTick() {
       const key = `${dateKey}|arena|${lead}`
       try { db.prepare('INSERT INTO push_sent (key) VALUES (?)').run(key) } catch { continue }
       const result = await sendKingdomWide('alert_arena', {
-        title: `Arena reset in ${lead} minutes`,
-        body: `Resets at ${arena.time} UTC. Spend your challenges before they go.`,
+        ...arenaNotification({ time: arena.time, lead }),
         tag: `arena-${dateKey}`,
-        url: '/#/events',
       })
       console.log(`[push] arena reset T-${lead}m -> ${result.sent} sent, ${result.dropped} stale`)
     }
@@ -1630,7 +1745,7 @@ async function runReminderTick() {
 
 // Exported for the tests, which drive the tick directly rather than waiting on
 // a real clock.
-module.exports = { ...(module.exports || {}), runReminderTick, allianceSchedule, parseDays, defaultDaysFor, digestTick, isoWeekKey, arenaReset, sendKingdomWide }
+module.exports = { ...(module.exports || {}), runReminderTick, allianceSchedule, parseDays, defaultDaysFor, digestTick, isoWeekKey, arenaReset, eventNotification, arenaNotification, sendKingdomWide }
 
 app.get('/api/leader/roster', auth, leaderOnly, (req, res) => {
   const slug = req.user.alliance_slug

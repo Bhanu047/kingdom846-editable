@@ -248,3 +248,44 @@ test('no arena reminder fires at any other minute of the day', async () => {
   }
   assert.equal(received.length, 0, 'only 23:50 and 23:55 count')
 })
+
+test('a reminder carries artwork, buttons, and words that stand alone', () => {
+  const ten = server.eventNotification({ event: 'Bear Hunt -1', slug: 'ryo', time: '04:00', lead: 10 })
+  const five = server.eventNotification({ event: 'Bear Hunt -1', slug: 'ryo', time: '04:00', lead: 5 })
+
+  // iOS shows no image and no buttons, so the body alone still has to carry the
+  // alliance, the time, and the urgency.
+  for (const n of [ten, five]) {
+    assert.match(n.body, /\[RYO\]/)
+    assert.match(n.body, /04:00 UTC/)
+    assert.ok(n.image, 'the event brings its own art')
+    assert.equal(n.actions.length, 2)
+  }
+  assert.equal(ten.image, '/assets/art-bear-trap.png', 'a bear hunt looks like a bear hunt')
+
+  // The last call is the insistent one: it stays on screen and buzzes harder.
+  assert.equal(ten.urgent, false)
+  assert.equal(five.urgent, true)
+  assert.match(five.body, /Last call/)
+  assert.notEqual(ten.title, five.title)
+})
+
+test('each event gets its own picture, and an unknown one still gets a picture', () => {
+  const art = (event) => server.eventNotification({ event, slug: 'ryo', time: '04:00', lead: 10 }).image
+  assert.equal(art('Bear Hunt-2'), '/assets/art-bear-trap.png')
+  assert.equal(art('Vikings Vengeance Tuesday'), '/assets/art-castle-battle.png')
+  assert.equal(art('Tri-Alliance Clash Legion-1'), '/assets/art-kvk-prep.png')
+  assert.equal(art('Swordland Showdown Legion-2'), '/assets/art-castle-battle.png')
+  // An event a leader renames must not arrive with a blank space where the
+  // picture should be.
+  assert.ok(art('Some Future Event'), 'there is always a fallback')
+})
+
+test('the arena reminder sharpens for the last call too', () => {
+  const ten = server.arenaNotification({ time: '00:00', lead: 10 })
+  const five = server.arenaNotification({ time: '00:00', lead: 5 })
+  assert.match(ten.body, /Unspent challenges are lost/)
+  assert.match(five.body, /Last chance/)
+  assert.equal(five.urgent, true)
+  assert.ok(ten.image && ten.actions.length === 2)
+})

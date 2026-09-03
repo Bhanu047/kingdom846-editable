@@ -46,12 +46,20 @@ export default function BirthdayPanel() {
     if (!name.trim() || busy) return
     setBusy(true); setMsg(null); setErr(null)
     try {
-      await apiJson('/api/birthdays', {
+      const r = await apiJson('/api/birthdays', {
         method: 'POST',
         body: JSON.stringify({ name: name.trim(), alliance_slug: slug || null, day: Number(day), month: Number(month) }),
       })
+      const who = name.trim()
       setName(''); setSlug('')
-      setMsg(`${name.trim()} added — the kingdom will hear on ${prettyDate(day, month)}.`)
+      // Say what actually happened. "Added" alone leaves Sparta wondering
+      // whether the kingdom heard, which is the whole reason for entering it.
+      setMsg(
+        r.announce === 'now' ? `${who} added — the kingdom has just been told.`
+        : r.announce === 'scheduled' ? `${who} added — it's today, and the kingdom hears at ${r.announce_time} UTC.`
+        : r.announce === 'off' ? `${who} added, but birthday announcements are switched off below.`
+        : `${who} added — the kingdom will hear on ${prettyDate(day, month)}.`
+      )
       await load()
     } catch (e) { setErr(e.message || 'Could not add that.') } finally { setBusy(false) }
   }
@@ -90,6 +98,8 @@ export default function BirthdayPanel() {
       <p className="mt-2 text-sm leading-relaxed text-parchment/60">
         Add someone and on the day the whole kingdom gets one notification, and the app shows it on the
         crest when they open it. Day and month only — <strong className="text-gold/80">no year, no age</strong>.
+        Add a birthday that is <strong className="text-gold/80">today</strong> and the kingdom is told
+        straight away, so finding out late still means they get wished.
       </p>
 
       {/* Add someone */}

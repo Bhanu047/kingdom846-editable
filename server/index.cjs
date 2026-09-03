@@ -212,16 +212,12 @@ function voterFingerprint(req) {
 // Notification preferences belong to the device, not the account: the same
 // person may want a digest on their phone and nothing on the desktop they leave
 // logged in. The push subscription IS the device, so the preferences live on it.
-// user_id is filled in when a leader or Sparta signs in on that device, which is
-// what makes it possible to alert them and nobody else.
 const psCols = db.prepare('PRAGMA table_info(push_subscriptions)').all()
 if (psCols.length) {
   const add = (col, decl) => { if (!psCols.some((c) => c.name === col)) db.exec(`ALTER TABLE push_subscriptions ADD COLUMN ${col} ${decl}`) }
   add('digest_weekly', 'INTEGER DEFAULT 0')
-  add('alert_transfers', 'INTEGER DEFAULT 1')
-  add('alert_applications', 'INTEGER DEFAULT 1')
   add('alert_arena', 'INTEGER DEFAULT 1')
-  add('user_id', 'INTEGER')
+  add('alert_crown', 'INTEGER DEFAULT 1')
 }
 
 const schedCols = db.prepare('PRAGMA table_info(alliance_schedules)').all()
@@ -530,14 +526,6 @@ app.post('/api/transfers', (req, res) => {
   const info = db.prepare('INSERT INTO transfers (name, game_id, discord, alliance, note, preferred_date, preferred_slot, assigned_slot) VALUES (?,?,?,?,?,?,?,?)').run(name, game_id, discord, alliance || null, note || null, result.date, result.slot, result.slot)
   logEvent(req, 'action', 'transfer-request', { detail: alliance || null })
   res.json({ ok: true, id: info.lastInsertRowid, assigned_date: result.date, assigned_slot: result.slot })
-  // Sent after the response for the same reason as the application alert: the
-  // person requesting a transfer should never wait on a push service.
-  alertLeadership('alert_transfers', {
-    title: 'New transfer request',
-    body: `${name}${alliance ? ` → ${alliance}` : ''} · ${result.date} at ${result.slot} UTC`,
-    tag: `transfer-${info.lastInsertRowid}`,
-    url: '/#/console',
-  }).catch((e) => console.error('[push] transfer alert failed', e.message))
 })
 // Public: which 30-min slots are already taken on a given date (so the form can show availability)
 app.get('/api/transfers/slots', (req, res) => {
@@ -581,9 +569,33 @@ app.get('/api/king-status', (_req, res) => {
 })
 app.put('/api/king-status', auth, adminOnly, (req, res) => {
   const { king_type, name, alliance_tag, alliance_name } = req.body || {}
+  const before = db.prepare('SELECT king_type, name, alliance_tag, alliance_name FROM king_status WHERE id=1').get() || {}
+  const next = {
+    king_type: king_type || 'King',
+    name: name || 'King Spartan',
+    alliance_tag: alliance_tag || '[RYO]',
+    alliance_name: alliance_name || 'Spiders',
+  }
   db.prepare("UPDATE king_status SET king_type=?, name=?, alliance_tag=?, alliance_name=?, updated_at=datetime('now') WHERE id=1").run(
-    king_type || 'King', name || 'King Spartan', alliance_tag || '[RYO]', alliance_name || 'Spiders')
+    next.king_type, next.name, next.alliance_tag, next.alliance_name)
   res.json({ ok: true })
+
+  // Only when something actually changed. Saving the form untouched -- which
+  // happens whenever this page is opened and closed again -- must not announce
+  // a coronation that did not occur.
+  const changed = ['king_type', 'name', 'alliance_tag', 'alliance_name'].some((k) => (before[k] || '') !== next[k])
+  if (!changed) return
+
+  // Sent after the response for the same reason as every other alert here: the
+  // save must not fail because a push service is having a bad afternoon.
+  sendKingdomWide('alert_crown', {
+    title: 'The crown has changed',
+    body: `${next.king_type} ${next.name} of ${next.alliance_tag} ${next.alliance_name} now rules Kingdom 846.`,
+    tag: `crown-${Date.now()}`,
+    url: '/#/dashboard',
+  })
+    .then((r) => console.log(`[push] crown -> ${next.king_type} ${next.name} · ${r.sent} sent, ${r.dropped} stale`))
+    .catch((e) => console.error('[push] crown announcement failed', e.message))
 })
 
 // Applications — public submit, admin view/manage
@@ -594,14 +606,6 @@ app.post('/api/applications', (req, res) => {
     .run(type, player_id, nickname, request_kind || null, day || null, JSON.stringify(payload || {}))
   logEvent(req, 'action', 'application', { detail: type })
   res.json({ ok: true, id: info.lastInsertRowid })
-  // After the response: the applicant should never wait on a push, and a push
-  // service having a bad afternoon must not turn their application into an error.
-  alertLeadership('alert_applications', {
-    title: 'New ministry application',
-    body: `${nickname} applied for ${type === 'chief_minister' ? 'Chief Minister' : 'Noble Advisor'}.`,
-    tag: `application-${info.lastInsertRowid}`,
-    url: '/#/console',
-  }).catch((e) => console.error('[push] application alert failed', e.message))
 })
 app.get('/api/applications', auth, leadershipOnly, (_req, res) =>
   res.json(db.prepare('SELECT * FROM applications ORDER BY created_at DESC').all()))
@@ -1385,18 +1389,14 @@ app.post('/api/push/status', (req, res) => {
  * them -- and each one has something on the server that actually sends it.
  * ------------------------------------------------------------------------- */
 
-const PREF_KEYS = ['digest_weekly', 'alert_transfers', 'alert_applications', 'alert_arena']
+const PREF_KEYS = ['digest_weekly', 'alert_arena', 'alert_crown']
 
 function prefsOf(row) {
   if (!row) return null
   return {
     digest_weekly: !!row.digest_weekly,
-    alert_transfers: !!row.alert_transfers,
-    alert_applications: !!row.alert_applications,
     alert_arena: !!row.alert_arena,
-    // Told to the client so Settings can show the two leadership alerts only to
-    // the people they can ever fire for.
-    is_leadership: !!row.user_id,
+    alert_crown: !!row.alert_crown,
   }
 }
 
@@ -1415,43 +1415,7 @@ app.post('/api/push/prefs', (req, res) => {
   res.json({ ok: true, prefs: prefsOf(updated) })
 })
 
-/**
- * Tie this device to the signed-in account, so the leadership alerts below know
- * where to go. Called after a leader or Sparta signs in on a device that already
- * has notifications on.
- */
-app.post('/api/push/bind', auth, (req, res) => {
-  const endpoint = req.body?.endpoint
-  if (!endpoint) return res.status(400).json({ error: 'Endpoint required' })
-  const changed = db.prepare('UPDATE push_subscriptions SET user_id=? WHERE endpoint=?').run(req.user.id, String(endpoint)).changes
-  if (!changed) return res.status(404).json({ error: 'This device is not signed up for notifications' })
-  res.json({ ok: true })
-})
 
-/** Push to the leadership devices that asked for this kind of alert. */
-async function alertLeadership(prefColumn, payload) {
-  const rows = db.prepare(`
-    SELECT s.* FROM push_subscriptions s
-    JOIN users u ON u.id = s.user_id
-    WHERE s.${prefColumn} = 1 AND u.role IN ('admin','leader')`).all()
-  let sent = 0
-  for (const sub of rows) {
-    try {
-      await webpush.sendNotification(
-        { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
-        JSON.stringify(payload),
-        { TTL: 86400 },
-      )
-      sent++
-    } catch (err) {
-      if (err?.statusCode === 404 || err?.statusCode === 410) {
-        db.prepare('DELETE FROM push_subscriptions WHERE endpoint=?').run(sub.endpoint)
-      }
-    }
-  }
-  if (sent) console.log(`[push] ${prefColumn} -> ${sent} leadership device(s)`)
-  return sent
-}
 
 /**
  * The weekly digest. Sent once a week rather than once a day, so the dedupe key
@@ -1666,7 +1630,7 @@ async function runReminderTick() {
 
 // Exported for the tests, which drive the tick directly rather than waiting on
 // a real clock.
-module.exports = { ...(module.exports || {}), runReminderTick, allianceSchedule, parseDays, defaultDaysFor, digestTick, isoWeekKey, alertLeadership, arenaReset, sendKingdomWide }
+module.exports = { ...(module.exports || {}), runReminderTick, allianceSchedule, parseDays, defaultDaysFor, digestTick, isoWeekKey, arenaReset, sendKingdomWide }
 
 app.get('/api/leader/roster', auth, leaderOnly, (req, res) => {
   const slug = req.user.alliance_slug

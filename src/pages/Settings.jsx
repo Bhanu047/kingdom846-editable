@@ -106,14 +106,8 @@ export default function Settings() {
           <div className="mt-3 space-y-2">
             {[
               { key: 'alert_arena', label: 'Arena Reset', desc: 'Ten and five minutes before the daily arena reset' },
+              { key: 'alert_crown', label: 'A New Ruler', desc: 'When the crown changes hands after Castle Battle' },
               { key: 'digest_weekly', label: 'Weekly News Digest', desc: 'A summary of kingdom news, Mondays at 12:00 UTC' },
-              // The two below only ever fire for leadership, so they are shown
-              // only to a device signed in as a leader or Sparta rather than
-              // offering everyone a switch that can do nothing for them.
-              ...(prefs.is_leadership ? [
-                { key: 'alert_transfers', label: 'Transfer Requests', desc: 'When someone asks to transfer into the kingdom' },
-                { key: 'alert_applications', label: 'Ministry Applications', desc: 'When someone applies for Chief Minister or Noble Advisor' },
-              ] : []),
             ].map((item) => (
               <div key={item.key} className="flex items-center justify-between rounded-lg border border-gold/15 bg-white/5 p-3">
                 <div className="min-w-0 flex-1">
@@ -132,11 +126,6 @@ export default function Settings() {
                 </button>
               </div>
             ))}
-            {!prefs.is_leadership && (
-              <p className="pt-1 text-[11px] text-parchment/35">
-                Transfer and application alerts appear here once you sign in as an alliance leader or Sparta on this device.
-              </p>
-            )}
           </div>
         )}
       </Panel>

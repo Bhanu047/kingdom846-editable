@@ -193,13 +193,3 @@ export async function setNotificationPref(key, value) {
   }
 }
 
-/**
- * Tie this device to the account that just signed in, so the leadership alerts
- * know where to go. Safe to call for anyone: it needs a login and a
- * subscription, and quietly does nothing without both.
- */
-export async function bindDeviceToAccount() {
-  const endpoint = await currentEndpoint()
-  if (!endpoint) return
-  try { await apiJson('/api/push/bind', { method: 'POST', body: JSON.stringify({ endpoint }) }) } catch {}
-}

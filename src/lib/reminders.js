@@ -148,3 +148,58 @@ export async function reminderStatus() {
     return { subscribed: false, alliance: savedAlliance(), permission: permission() }
   }
 }
+
+/** The push endpoint for this device, or null when notifications are off. */
+async function currentEndpoint() {
+  if (!remindersSupported() || permission() !== 'granted') return null
+  try {
+    const reg = await registration()
+    const sub = await reg.pushManager.getSubscription()
+    return sub?.endpoint || null
+  } catch { return null }
+}
+
+/**
+ * Notification preferences for this device.
+ *
+ * They are stored against the push subscription rather than in the browser,
+ * which is what makes them survive the app being closed -- the previous
+ * toggles were component state with hard-coded defaults, so every relaunch
+ * reset them, and nothing on the server was reading them anyway.
+ */
+export async function getNotificationPrefs() {
+  const endpoint = await currentEndpoint()
+  if (!endpoint) return null
+  try {
+    const status = await apiJson('/api/push/status', {
+      method: 'POST',
+      body: JSON.stringify({ endpoint }),
+    })
+    return status.subscribed ? status.prefs : null
+  } catch { return null }
+}
+
+export async function setNotificationPref(key, value) {
+  const endpoint = await currentEndpoint()
+  if (!endpoint) return { ok: false, reason: 'no-subscription' }
+  try {
+    const out = await apiJson('/api/push/prefs', {
+      method: 'POST',
+      body: JSON.stringify({ endpoint, prefs: { [key]: value } }),
+    })
+    return { ok: true, prefs: out.prefs }
+  } catch (err) {
+    return { ok: false, reason: 'failed', detail: err?.message }
+  }
+}
+
+/**
+ * Tie this device to the account that just signed in, so the leadership alerts
+ * know where to go. Safe to call for anyone: it needs a login and a
+ * subscription, and quietly does nothing without both.
+ */
+export async function bindDeviceToAccount() {
+  const endpoint = await currentEndpoint()
+  if (!endpoint) return
+  try { await apiJson('/api/push/bind', { method: 'POST', body: JSON.stringify({ endpoint }) }) } catch {}
+}

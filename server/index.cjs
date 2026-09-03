@@ -1575,10 +1575,10 @@ function two(n) { return String(n).padStart(2, '0') }
 
 // Artwork per event, matched on the name the leaders actually use.
 const EVENT_ART = [
-  [/bear/i, '/assets/art-bear-trap.png'],
-  [/viking/i, '/assets/art-castle-battle.png'],
-  [/clash/i, '/assets/art-kvk-prep.png'],
-  [/swordland|showdown/i, '/assets/art-castle-battle.png'],
+  [/bear/i, '/assets/notif/art-bear-trap.png'],
+  [/viking/i, '/assets/notif/art-castle-battle.png'],
+  [/clash/i, '/assets/notif/art-kvk-prep.png'],
+  [/swordland|showdown/i, '/assets/notif/art-castle-battle.png'],
 ]
 
 function artFor(event) {

@@ -2087,7 +2087,7 @@ select.royal-select option {
 .royal-rail-mark {
   position: absolute; left: 50%; bottom: 8%;
   width: 190px; height: 190px; translate: -50% 0;
-  background: url('./assets/crest-846.png') center/contain no-repeat;
+  background: url('./assets/crest-846.webp') center/contain no-repeat;
   opacity: .045;
   animation: rail-mark-breathe 14s ease-in-out infinite;
 }

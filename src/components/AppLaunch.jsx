@@ -38,7 +38,7 @@ export default function AppLaunch({ onDone }) {
   return (
     <section className={`app-launch ${leaving ? 'is-leaving' : ''}`} aria-label="Kingdom 846 starting">
       <div className="app-launch-body">
-        <img src="./assets/crest-846.png" alt="" className="app-launch-crest" />
+        <img src="./assets/crest-846.webp" alt="" className="app-launch-crest" />
         <div className="app-launch-word">KINGDOM 846</div>
         <div className="app-launch-rule" aria-hidden="true"><i /></div>
       </div>

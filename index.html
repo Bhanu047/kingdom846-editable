@@ -37,7 +37,18 @@
   #boot-veil.gone{display:none}</style>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;800;900&family=Cinzel+Decorative:wght@700;900&family=Spectral:wght@300;400;500;600;700&family=Montserrat:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <!-- Loaded without blocking the first paint.
+       A plain stylesheet link holds the whole page back until it resolves, so
+       on a slow connection nothing at all is drawn until Google answers -- the
+       app sits on the web view's white default, which is exactly what an
+       installed app must never do. media="print" makes the browser fetch it at
+       low priority without waiting for it; onload promotes it to the real
+       stylesheet the moment it lands. The faces already carry display=swap, so
+       the words appear in the fallback stack and change to Cinzel a beat
+       later, rather than the page waiting to show any words at all. -->
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;800;900&family=Cinzel+Decorative:wght@700;900&family=Spectral:wght@300;400;500;600;700&family=Montserrat:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" />
+  <link rel="stylesheet" media="print" onload="this.media='all'; this.onload=null" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;800;900&family=Cinzel+Decorative:wght@700;900&family=Spectral:wght@300;400;500;600;700&family=Montserrat:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" />
+  <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700;800;900&family=Cinzel+Decorative:wght@700;900&family=Spectral:wght@300;400;500;600;700&family=Montserrat:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" /></noscript>
   <link rel="icon" type="image/png" href="./favicon.png" />
   <!-- Installable app. The manifest carries the icons, name and standalone
        display mode; the apple-* tags below are Safari's older equivalent, which

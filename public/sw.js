@@ -1,15 +1,19 @@
 /* Kingdom 846 — service worker.
  *
  * Two jobs: make the installed app open instantly, and let it open at all when
- * the phone has no signal. Everything here is deliberately conservative — a
- * portal that shows a stale roster is worse than one that shows a spinner, so
- * anything that can change (the API, the document itself) goes to the network
- * first and only falls back to cache when the network genuinely fails.
+ * the phone has no signal. Live data is deliberately conservative — a portal
+ * that shows a stale roster is worse than one that shows a spinner, so the API
+ * is never cached and anything that can change goes to the network first.
+ *
+ * The document itself is the exception, and it took a bug report to get there:
+ * see shellFirst below. Opening instantly is the whole point of an installed
+ * app, and the shell is the one file that has to arrive before anything at all
+ * can be drawn.
  *
  * Bump CACHE_VERSION on any change to this file's caching rules; the activate
  * handler deletes every cache that doesn't match, so old entries never linger.
  */
-const CACHE_VERSION = 'v3'
+const CACHE_VERSION = 'v4'
 const SHELL_CACHE = `k846-shell-${CACHE_VERSION}`
 const ASSET_CACHE = `k846-assets-${CACHE_VERSION}`
 const FONT_CACHE = `k846-fonts-${CACHE_VERSION}`
@@ -18,7 +22,11 @@ const KEEP = new Set([SHELL_CACHE, ASSET_CACHE, FONT_CACHE])
 // Enough to paint the shell offline. Deliberately small: the hashed build
 // assets are cached on first use instead, so a failed precache of one stale
 // filename can never block the whole install.
-const SHELL_URLS = ['/', '/index.html', '/manifest.webmanifest', '/app-icons/icon-192.png']
+// The crest is in here because the launch screen is only on screen for 1.3
+// seconds. Fetched at that moment it does not arrive in time and the screen
+// shows its dark ground with no crest on it -- reported as "a black screen,
+// then the home page, no welcome screen". Precached, it is already local.
+const SHELL_URLS = ['/', '/index.html', '/manifest.webmanifest', '/app-icons/icon-192.png', '/assets/crest-846.webp']
 
 // Runtime-cacheable file types. index.html is excluded on purpose — it is
 // served no-store so the versioned ?v= script URLs inside it stay honest.
@@ -81,6 +89,38 @@ async function networkFirst(request, cacheName, fallbackUrl) {
   }
 }
 
+/* The page itself: from cache immediately, refreshed behind you.
+ *
+ * This used to be networkFirst, and that is what put a blank screen in front of
+ * every cold open. networkFirst awaits the round trip before returning
+ * anything, and it only consults the cache when fetch REJECTS -- so a
+ * slow-but-not-failing connection never falls back at all, it just waits, and
+ * the web view sits on its own white default until the HTML lands. Reported
+ * from an iPhone in India opening the installed app against a server in
+ * Oregon: a grey screen, then a white one, then the dashboard.
+ *
+ * The shell is precached at install and is a few kB. Serving it from cache is
+ * instant and offline-proof; the network copy replaces it for next time. A
+ * deploy therefore arrives one open later, which is what the existing "new
+ * version" prompt is for -- and one launch behind beats every launch blank.
+ */
+async function shellFirst(request, cacheName, shellUrl) {
+  const cache = await caches.open(cacheName)
+  const cached = (await cache.match(shellUrl)) || (await cache.match(request))
+  // Not awaited when a cached copy exists: the refresh must never be the thing
+  // the first paint is waiting for, which was the whole bug.
+  const network = fetch(request)
+    .then((response) => {
+      if (response && response.ok) cache.put(shellUrl, response.clone())
+      return response
+    })
+    .catch(() => null)
+  if (cached) return cached
+  const response = await network
+  if (response) return response
+  throw new Error(`offline and no shell cached: ${request.url}`)
+}
+
 // Serve from cache immediately, refresh in the background. Right for hashed
 // build assets and fonts, which are either immutable or change rarely.
 async function staleWhileRevalidate(request, cacheName) {
@@ -126,7 +166,7 @@ self.addEventListener('fetch', (event) => {
   // cached shell as the offline answer. Hash routing means every in-app route
   // resolves to the same document, so one cached shell covers the whole site.
   if (request.mode === 'navigate') {
-    event.respondWith(networkFirst(request, SHELL_CACHE, '/index.html'))
+    event.respondWith(shellFirst(request, SHELL_CACHE, '/index.html'))
     return
   }
 

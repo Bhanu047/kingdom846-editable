@@ -10,6 +10,7 @@ import ErrorBoundary from './components/ErrorBoundary'
 import { ToastProvider } from './components/Toast'
 import { PageSkeleton } from './components/Skeleton'
 import SplashScreen from './components/SplashScreen'
+import AppLaunch from './components/AppLaunch'
 import ParticleField from './components/ParticleField'
 import Aurora from './components/Aurora'
 import ScrollProgress from './components/ScrollProgress'
@@ -280,7 +281,9 @@ function Shell() {
 
   return (
     <>
-      {showSplash && <SplashScreen onEnter={() => setShowSplash(false)} />}
+      {showSplash && (appMode
+        ? <AppLaunch onDone={() => setShowSplash(false)} />
+        : <SplashScreen onEnter={() => setShowSplash(false)} />)}
       <Aurora />
       <ParticleField />
       <ScrollProgress />

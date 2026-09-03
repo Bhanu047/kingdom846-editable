@@ -2942,6 +2942,7 @@ html[data-app-mode] {
    Content keeps both -- copying a governor ID or a guide paragraph still works,
    which is why this is a list rather than a blanket rule on body. */
 html[data-app-mode] .royal-header,
+html[data-app-mode] .app-launch,
 html[data-app-mode] .app-tabbar,
 html[data-app-mode] .royal-rail,
 html[data-app-mode] button,
@@ -3064,8 +3065,93 @@ html[data-app-mode] .page-enter { animation: app-page-in .28s cubic-bezier(0.22,
   pointer-events: none;
 }
 
+/* ---- Launch screen ------------------------------------------------------- */
+.app-launch {
+  position: fixed;
+  inset: 0;
+  height: 100vh;
+  height: 100dvh;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  background:
+    radial-gradient(ellipse at 50% 38%, rgba(212, 175, 55, .10), transparent 62%),
+    linear-gradient(180deg, #0A0D18 0%, #060810 100%);
+  touch-action: none;
+  overscroll-behavior: none;
+  transition: opacity .38s ease;
+}
+.app-launch.is-leaving { opacity: 0; pointer-events: none; }
+
+.app-launch-body { display: flex; flex-direction: column; align-items: center; gap: .85rem; }
+
+.app-launch-crest {
+  width: min(38vw, 148px);
+  height: auto;
+  filter: drop-shadow(0 10px 32px rgba(0, 0, 0, .75));
+  animation: app-launch-crest .9s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes app-launch-crest {
+  from { opacity: 0; transform: translateY(10px) scale(.9); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.app-launch-word {
+  font-family: 'Cinzel', Georgia, serif;
+  font-weight: 800;
+  font-size: clamp(1.15rem, 6vw, 1.7rem);
+  letter-spacing: .18em;
+  background: linear-gradient(180deg, #F7E9B8, #D4AF37 62%, #A8842A);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: app-launch-word .7s .18s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes app-launch-word {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* A loading rule rather than a spinner: it says the app is working without
+   borrowing an indicator from a web page waiting on a server. */
+.app-launch-rule {
+  width: min(46vw, 190px);
+  height: 1px;
+  overflow: hidden;
+  background: rgba(212, 175, 55, .16);
+}
+.app-launch-rule i {
+  display: block;
+  width: 42%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, #E8C766, transparent);
+  animation: app-launch-sweep 1.05s .2s ease-in-out infinite;
+}
+@keyframes app-launch-sweep {
+  from { transform: translateX(-110%); }
+  to { transform: translateX(280%); }
+}
+
+.app-launch-foot {
+  position: absolute;
+  bottom: calc(1.75rem + env(safe-area-inset-bottom, 0px));
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: rgba(212, 175, 55, .42);
+  animation: app-launch-word .7s .34s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  html[data-app-mode] .page-enter { animation: none !important; }
+  html[data-app-mode] .page-enter,
+  .app-launch-crest,
+  .app-launch-word,
+  .app-launch-foot { animation: none !important; }
+  .app-launch-rule i { animation-duration: 3s; }
   .app-tab-mark { transition: none; }
 }
 

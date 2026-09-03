@@ -4,7 +4,7 @@ import Icon from './Icon'
 import { alliances } from '../data/kingdom'
 import {
   remindersSupported, permission, reminderStatus,
-  enableReminders, changeAlliance, disableReminders,
+  enableReminders, changeAlliance, disableReminders, sendTestNotification,
 } from '../lib/reminders'
 
 /* Where reminders live once the one-time setup has been answered — turning them
@@ -46,6 +46,18 @@ export default function ReminderSettings() {
     if (result.ok) { setNote(on ? 'Alliance updated.' : 'Reminders are on.'); await refresh() }
     else if (result.reason === 'denied') setNote('Notifications are blocked. Turn them on for Kingdom 846 in your phone settings, then come back.')
     else setNote('Could not update reminders just now. Try again in a moment.')
+  }
+
+  // A notification is the one thing here nobody can check before it matters:
+  // without this you find out whether it works at 23:50 on the night you were
+  // counting on it. The sample is the real five-minute Bear Hunt reminder.
+  async function sendTest() {
+    setBusy(true); setNote(null)
+    const result = await sendTestNotification()
+    setBusy(false)
+    if (result.ok) setNote('Sent — it should appear in a second or two. If nothing arrives, check Kingdom 846 is allowed to notify you in your phone settings.')
+    else if (result.reason === 'no-subscription') setNote('Turn reminders on first, then try again.')
+    else setNote(result.detail || 'Could not send the test just now.')
   }
 
   async function turnOff() {
@@ -105,9 +117,15 @@ export default function ReminderSettings() {
       {note && <p className="mt-3 text-xs text-parchment/60">{note}</p>}
 
       {on && (
-        <button onClick={turnOff} disabled={busy} className="mt-3 rounded-lg border border-rose-500/25 px-3 py-1.5 text-xs font-semibold text-rose-300 hover:bg-rose-500/10 disabled:opacity-40">
-          Turn reminders off
-        </button>
+        <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-gold/10 pt-4">
+          <button onClick={sendTest} disabled={busy} className="btn-primary !py-1.5 !text-xs disabled:opacity-40">
+            {busy ? 'Sending…' : 'Send me a test reminder'}
+          </button>
+          <span className="text-[11px] text-parchment/40">See exactly what arrives before it matters.</span>
+          <button onClick={turnOff} disabled={busy} className="ml-auto rounded-lg border border-rose-500/25 px-3 py-1.5 text-xs font-semibold text-rose-300 hover:bg-rose-500/10 disabled:opacity-40">
+            Turn off
+          </button>
+        </div>
       )}
     </Panel>
   )

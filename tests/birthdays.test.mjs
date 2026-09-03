@@ -89,9 +89,11 @@ test('it announces at the chosen minute and not before', async () => {
 
   assert.equal((await server.birthdayTick(new Date('2026-09-03T11:59:00Z'))).sent, 0, 'a minute early')
   assert.equal((await server.birthdayTick(new Date('2026-09-03T12:01:00Z'))).sent, 0, 'a minute late')
-  // On the minute it claims the day, even with nobody subscribed to receive it.
+  // On the minute it claims the day for that person, even with nobody
+  // subscribed to receive it. Keyed per person, not per day, so a birthday
+  // entered later the same day is not locked out.
   await server.birthdayTick(new Date('2026-09-03T12:00:00Z'))
-  assert.equal(db.prepare("SELECT COUNT(*) n FROM push_sent WHERE key='2026-09-03|birthday'").get().n, 1)
+  assert.equal(db.prepare("SELECT COUNT(*) n FROM push_sent WHERE key LIKE '2026-09-03|birthday|%'").get().n, 1)
 })
 
 test('the tick runs every 30 seconds and must not announce twice', async () => {
@@ -101,7 +103,7 @@ test('the tick runs every 30 seconds and must not announce twice', async () => {
     .run('birthday_announce', JSON.stringify({ time: '12:00', enabled: true }))
   await server.birthdayTick(new Date('2026-09-03T12:00:00Z'))
   await server.birthdayTick(new Date('2026-09-03T12:00:00Z'))
-  assert.equal(db.prepare("SELECT COUNT(*) n FROM push_sent WHERE key LIKE '%birthday'").get().n, 1)
+  assert.equal(db.prepare("SELECT COUNT(*) n FROM push_sent WHERE key LIKE '%birthday%'").get().n, 1)
 })
 
 test('turned off means silent, even on the day', async () => {
@@ -162,4 +164,91 @@ test('every alliance has a banner that exists', async () => {
     assert.notEqual(url, '/assets/hero-throne-room.webp', `${slug} has no banner mapped`)
     assert.ok(fsp.existsSync(new URL(`../public${url}`, import.meta.url)), `${url} is not a file that exists`)
   }
+})
+
+/* Adding a birthday on the day you find out about it.
+ *
+ * "I don't know whose birthday when. When I get to know, I update it in Royal
+ * Access, then all should get the notification." Before this, a birthday
+ * entered after the announcing hour was never announced at all: the hour had
+ * gone, and the day was already locked by a single per-day key.
+ */
+const personOn = (name, slug, when) => {
+  const info = db.prepare('INSERT INTO birthdays (name, alliance_slug, day, month) VALUES (?,?,?,?)')
+    .run(name, slug, when.getUTCDate(), when.getUTCMonth() + 1)
+  return db.prepare('SELECT * FROM birthdays WHERE id=?').get(info.lastInsertRowid)
+}
+const setAnnounce = (time, enabled = true) =>
+  db.prepare('INSERT OR REPLACE INTO app_settings (key,value) VALUES (?,?)')
+    .run('birthday_announce', JSON.stringify({ time, enabled }))
+
+test('added after the hour, the kingdom is told straight away', async () => {
+  clear()
+  const now = new Date('2026-09-03T15:00:00Z')
+  setAnnounce('12:00')
+  const p = personOn('Shoni', 'ryo', now)
+  const r = await server.announceIfToday(p, now)
+  assert.equal(r.when, 'sent')
+  assert.ok(server.alreadyAnnounced(p.id, '2026-09-03'), 'and remembered, so it is not repeated')
+})
+
+test('added before the hour, it still goes out on the save', async () => {
+  clear()
+  const now = new Date('2026-09-03T09:00:00Z')
+  setAnnounce('12:00')
+  const p = personOn('Shoni', 'ryo', now)
+  // Nobody learns a birthday on a schedule. Whatever o'clock it is when it is
+  // entered, that is when the kingdom hears.
+  assert.equal((await server.announceIfToday(p, now)).when, 'sent')
+  assert.ok(server.alreadyAnnounced(p.id, '2026-09-03'))
+
+  // And the hour does not then announce them a second time.
+  assert.equal((await server.birthdayTick(new Date('2026-09-03T12:00:00Z'))).sent, 0)
+})
+
+test('a date entered in advance is announced on the day, at the hour', async () => {
+  clear()
+  setAnnounce('12:00')
+  // Entered days earlier: nothing is sent at the time it is entered.
+  const p = personOn('Shoni', 'ryo', new Date('2026-09-03T12:00:00Z'))
+  assert.equal((await server.announceIfToday(p, new Date('2026-08-30T15:00:00Z'))).when, 'later')
+  assert.equal(server.alreadyAnnounced(p.id, '2026-08-30'), false)
+
+  // The daily hour is what carries it when the day comes round.
+  await server.birthdayTick(new Date('2026-09-03T12:00:00Z'))
+  assert.ok(server.alreadyAnnounced(p.id, '2026-09-03'))
+})
+
+test('someone already wished today is never wished twice', async () => {
+  clear()
+  setAnnounce('12:00')
+  const day = new Date('2026-09-03T12:00:00Z')
+  const first = personOn('Shoni', 'ryo', day)
+  await server.birthdayTick(day)
+  assert.ok(server.alreadyAnnounced(first.id, '2026-09-03'))
+
+  // A second person added later that day gets their own announcement, and the
+  // first is not dragged into it again.
+  const second = personOn('Arden', 'sas', new Date('2026-09-03T18:00:00Z'))
+  const r = await server.announceIfToday(second, new Date('2026-09-03T18:00:00Z'))
+  assert.equal(r.when, 'sent')
+  assert.ok(server.alreadyAnnounced(second.id, '2026-09-03'))
+  // Running the tick again announces nobody at all.
+  assert.equal((await server.birthdayTick(new Date('2026-09-03T12:00:00Z'))).sent, 0)
+})
+
+test('a future birthday says nothing today', async () => {
+  clear()
+  setAnnounce('12:00')
+  const p = personOn('Later', 'ice', new Date('2026-12-25T00:00:00Z'))
+  assert.equal((await server.announceIfToday(p, new Date('2026-09-03T15:00:00Z'))).when, 'later')
+  assert.equal(server.alreadyAnnounced(p.id, '2026-09-03'), false)
+})
+
+test('with announcements off, adding one stays silent', async () => {
+  clear()
+  setAnnounce('12:00', false)
+  const p = personOn('Shoni', 'ryo', new Date('2026-09-03T15:00:00Z'))
+  assert.equal((await server.announceIfToday(p, new Date('2026-09-03T15:00:00Z'))).when, 'off')
+  assert.equal(db.prepare('SELECT COUNT(*) n FROM push_sent').get().n, 0)
 })

@@ -2100,7 +2100,25 @@ app.post('/api/birthdays', auth, adminOnly, (req, res) => {
   const note = String(req.body?.note || '').trim().slice(0, 120) || null
   const info = db.prepare('INSERT INTO birthdays (name, alliance_slug, day, month, note) VALUES (?,?,?,?,?)')
     .run(name, slug, when.day, when.month, note)
-  res.json({ ok: true, id: info.lastInsertRowid })
+  const person = db.prepare('SELECT * FROM birthdays WHERE id=?').get(info.lastInsertRowid)
+
+  // Answered before the push, so the console never waits on a push service, and
+  // the announcement is reported back so the panel can say what happened rather
+  // than leaving Sparta to guess whether the kingdom heard.
+  announceIfToday(person)
+    .then((r) => { if (r.when === 'sent') console.log(`[push] ${person.name} added on the day -> announced`) })
+    .catch((e) => console.error('[push] birthday announce failed', e))
+
+  const settings = birthdaySettings()
+  const isToday = birthdaysOn(new Date()).some((p) => p.id === person.id)
+  res.json({
+    ok: true,
+    id: person.id,
+    // 'now'   -- dated today, so it goes out on this save, whatever the hour.
+    // 'later' -- a future date; the daily hour announces it when the day comes.
+    announce: !settings.enabled ? 'off' : isToday ? 'now' : 'later',
+    announce_time: settings.time,
+  })
 })
 
 app.delete('/api/birthdays/:id', auth, adminOnly, (req, res) => {
@@ -2123,26 +2141,65 @@ app.put('/api/birthday-settings', auth, adminOnly, (req, res) => {
 })
 
 /** Announce the day's birthdays, once, at the hour the kingdom chose. */
+/* Who has already been wished today.
+ *
+ * Keyed per person rather than per day, because a birthday can be added on the
+ * day it falls -- which is how it actually happens: Sparta finds out someone's
+ * birthday, opens the console and enters it. A single per-day key would let the
+ * scheduled announcement lock the day and leave that person unwished.
+ */
+function alreadyAnnounced(id, dateKey) {
+  return !!db.prepare('SELECT key FROM push_sent WHERE key=?').get(`${dateKey}|birthday|${id}`)
+}
+function claimAnnouncement(id, dateKey) {
+  try { db.prepare('INSERT INTO push_sent (key) VALUES (?)').run(`${dateKey}|birthday|${id}`); return true }
+  catch { return false }
+}
+
+/** Announce a specific set of people, and remember that they were announced. */
+async function announceBirthdays(people, dateKey, why) {
+  const fresh = people.filter((p) => claimAnnouncement(p.id, dateKey))
+  if (!fresh.length) return { sent: 0, dropped: 0, people: [] }
+  const result = await sendKingdomWide('alert_birthday', {
+    ...birthdayNotification(fresh),
+    tag: `birthday-${dateKey}-${fresh.map((p) => p.id).join('-')}`,
+  })
+  console.log(`[push] birthdays ${why} (${fresh.map((p) => p.name).join(', ')}) -> ${result.sent} sent, ${result.dropped} stale`)
+  return { ...result, people: fresh }
+}
+
 async function birthdayTick(now = new Date()) {
   const settings = birthdaySettings()
   if (!settings.enabled) return { sent: 0 }
   const hhmm = `${two(now.getUTCHours())}:${two(now.getUTCMinutes())}`
   if (hhmm !== settings.time) return { sent: 0 }
 
-  const people = birthdaysOn(now)
-  if (!people.length) return { sent: 0 }
-
   const dateKey = now.toISOString().slice(0, 10)
-  // Same guard the reminders use: the tick runs every 30 seconds, and a
-  // birthday announced twice is worse than one announced late.
-  try { db.prepare('INSERT INTO push_sent (key) VALUES (?)').run(`${dateKey}|birthday`) } catch { return { sent: 0 } }
+  const people = birthdaysOn(now).filter((p) => !alreadyAnnounced(p.id, dateKey))
+  if (!people.length) return { sent: 0 }
+  return announceBirthdays(people, dateKey, 'on the hour')
+}
 
-  const result = await sendKingdomWide('alert_birthday', {
-    ...birthdayNotification(people),
-    tag: `birthday-${dateKey}`,
-  })
-  console.log(`[push] birthdays (${people.length}) -> ${result.sent} sent, ${result.dropped} stale`)
-  return result
+/* Added on the day itself: the kingdom hears when you press save.
+ *
+ * An earlier version waited for the daily hour if the hour had not yet come,
+ * to avoid two buzzes. Sparta's answer to that was the point: "I may be busy
+ * and can't update at 12 -- whenever I update it and save, all kingdom-wide."
+ * Nobody knows a birthday on a schedule. You hear it, you enter it, and the
+ * kingdom is told, whatever o'clock it happens to be.
+ *
+ * The daily hour still exists, but only for birthdays entered in advance: it
+ * is what announces a date typed in last week when the day comes round. The
+ * per-person record is what keeps the two from colliding.
+ */
+async function announceIfToday(person, now = new Date()) {
+  const settings = birthdaySettings()
+  if (!settings.enabled) return { when: 'off' }
+  const today = birthdaysOn(now).some((p) => p.id === person.id)
+  if (!today) return { when: 'later' }
+
+  const result = await announceBirthdays([person], now.toISOString().slice(0, 10), 'added today')
+  return { when: 'sent', sent: result.sent }
 }
 
 const ARENA_DEFAULT_TIME = '00:00'
@@ -2286,7 +2343,7 @@ async function runReminderTick() {
 
 // Exported for the tests, which drive the tick directly rather than waiting on
 // a real clock.
-module.exports = { ...(module.exports || {}), runReminderTick, allianceSchedule, contentSchedule, syncScheduleFromContent, normalizeTime, parseDays, defaultDaysFor, digestTick, isoWeekKey, arenaReset, eventNotification, arenaNotification, birthdayTick, birthdaysOn, birthdayNotification, birthdayBanner, birthdaySettings, parseBirthday, occursOn, repeatRules, nextOccurrences, REPEAT_DEFAULTS, sendKingdomWide }
+module.exports = { ...(module.exports || {}), runReminderTick, allianceSchedule, contentSchedule, syncScheduleFromContent, normalizeTime, parseDays, defaultDaysFor, digestTick, isoWeekKey, arenaReset, eventNotification, arenaNotification, birthdayTick, announceIfToday, announceBirthdays, alreadyAnnounced, birthdaysOn, birthdayNotification, birthdayBanner, birthdaySettings, parseBirthday, occursOn, repeatRules, nextOccurrences, REPEAT_DEFAULTS, sendKingdomWide }
 
 app.get('/api/leader/roster', auth, leaderOnly, (req, res) => {
   const slug = req.user.alliance_slug

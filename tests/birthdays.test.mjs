@@ -192,16 +192,29 @@ test('added after the hour, the kingdom is told straight away', async () => {
   assert.ok(server.alreadyAnnounced(p.id, '2026-09-03'), 'and remembered, so it is not repeated')
 })
 
-test('added before the hour, the scheduled one carries them — not two buzzes', async () => {
+test('added before the hour, it still goes out on the save', async () => {
   clear()
   const now = new Date('2026-09-03T09:00:00Z')
   setAnnounce('12:00')
   const p = personOn('Shoni', 'ryo', now)
-  const r = await server.announceIfToday(p, now)
-  assert.equal(r.when, 'scheduled')
-  assert.equal(server.alreadyAnnounced(p.id, '2026-09-03'), false)
+  // Nobody learns a birthday on a schedule. Whatever o'clock it is when it is
+  // entered, that is when the kingdom hears.
+  assert.equal((await server.announceIfToday(p, now)).when, 'sent')
+  assert.ok(server.alreadyAnnounced(p.id, '2026-09-03'))
 
-  // And the hour still picks them up.
+  // And the hour does not then announce them a second time.
+  assert.equal((await server.birthdayTick(new Date('2026-09-03T12:00:00Z'))).sent, 0)
+})
+
+test('a date entered in advance is announced on the day, at the hour', async () => {
+  clear()
+  setAnnounce('12:00')
+  // Entered days earlier: nothing is sent at the time it is entered.
+  const p = personOn('Shoni', 'ryo', new Date('2026-09-03T12:00:00Z'))
+  assert.equal((await server.announceIfToday(p, new Date('2026-08-30T15:00:00Z'))).when, 'later')
+  assert.equal(server.alreadyAnnounced(p.id, '2026-08-30'), false)
+
+  // The daily hour is what carries it when the day comes round.
   await server.birthdayTick(new Date('2026-09-03T12:00:00Z'))
   assert.ok(server.alreadyAnnounced(p.id, '2026-09-03'))
 })

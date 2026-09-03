@@ -2111,14 +2111,12 @@ app.post('/api/birthdays', auth, adminOnly, (req, res) => {
 
   const settings = birthdaySettings()
   const isToday = birthdaysOn(new Date()).some((p) => p.id === person.id)
-  const hhmm = `${two(new Date().getUTCHours())}:${two(new Date().getUTCMinutes())}`
   res.json({
     ok: true,
     id: person.id,
-    // 'now' -- the day is already past the hour, so it goes out immediately.
-    // 'scheduled' -- today, but the hour has not come; the scheduled one carries them.
-    // 'later' -- a future date.
-    announce: !settings.enabled ? 'off' : !isToday ? 'later' : (hhmm < settings.time ? 'scheduled' : 'now'),
+    // 'now'   -- dated today, so it goes out on this save, whatever the hour.
+    // 'later' -- a future date; the daily hour announces it when the day comes.
+    announce: !settings.enabled ? 'off' : isToday ? 'now' : 'later',
     announce_time: settings.time,
   })
 })
@@ -2182,21 +2180,23 @@ async function birthdayTick(now = new Date()) {
   return announceBirthdays(people, dateKey, 'on the hour')
 }
 
-/* Added on the day itself.
+/* Added on the day itself: the kingdom hears when you press save.
  *
- * Before the announcing hour there is nothing to do -- the scheduled one will
- * carry them, and sending now would mean two buzzes for one day. After it, the
- * hour has gone and saying nothing would mean the kingdom never hears at all,
- * which is exactly the case this exists for.
+ * An earlier version waited for the daily hour if the hour had not yet come,
+ * to avoid two buzzes. Sparta's answer to that was the point: "I may be busy
+ * and can't update at 12 -- whenever I update it and save, all kingdom-wide."
+ * Nobody knows a birthday on a schedule. You hear it, you enter it, and the
+ * kingdom is told, whatever o'clock it happens to be.
+ *
+ * The daily hour still exists, but only for birthdays entered in advance: it
+ * is what announces a date typed in last week when the day comes round. The
+ * per-person record is what keeps the two from colliding.
  */
 async function announceIfToday(person, now = new Date()) {
   const settings = birthdaySettings()
   if (!settings.enabled) return { when: 'off' }
   const today = birthdaysOn(now).some((p) => p.id === person.id)
   if (!today) return { when: 'later' }
-
-  const hhmm = `${two(now.getUTCHours())}:${two(now.getUTCMinutes())}`
-  if (hhmm < settings.time) return { when: 'scheduled', time: settings.time }
 
   const result = await announceBirthdays([person], now.toISOString().slice(0, 10), 'added today')
   return { when: 'sent', sent: result.sent }

@@ -102,6 +102,7 @@ export default function Settings() {
         ) : (
           <div className="mt-3 space-y-2">
             {[
+              { key: 'alert_arena', label: 'Arena Reset', desc: 'Ten and five minutes before the daily arena reset' },
               { key: 'digest_weekly', label: 'Weekly News Digest', desc: 'A summary of kingdom news, Mondays at 12:00 UTC' },
               // The two below only ever fire for leadership, so they are shown
               // only to a device signed in as a leader or Sparta rather than

@@ -133,3 +133,64 @@ test.after(() => {
   fake.close()
   try { fs.rmSync(workdir, { recursive: true, force: true }) } catch {}
 })
+
+test('the arena reset time defaults to a value flagged as unconfirmed', () => {
+  const arena = server.arenaReset()
+  assert.equal(arena.time, '00:00')
+  assert.equal(arena.enabled, true)
+  // Until Sparta saves it, the default must not present itself as checked —
+  // the console shows a warning off the back of this.
+  assert.equal(arena.confirmed, false)
+})
+
+test('the arena reminder is kingdom-wide, on both leads, and never repeats', async () => {
+  quietEverything()
+  db.prepare('DELETE FROM push_sent').run()
+  db.prepare('DELETE FROM push_subscriptions').run()
+  received.length = 0
+
+  // Two devices in different alliances: the arena belongs to neither.
+  subscribe('ryo', 'arena-ryo')
+  subscribe('ice', 'arena-ice')
+
+  // Set the reset so that "now + 10 minutes" lands on it.
+  const target = new Date(Date.now() + 10 * 60000)
+  const hhmm = `${String(target.getUTCHours()).padStart(2, '0')}:${String(target.getUTCMinutes()).padStart(2, '0')}`
+  db.prepare('INSERT OR REPLACE INTO app_settings (key, value) VALUES (?,?)')
+    .run('arena_reset', JSON.stringify({ time: hhmm, enabled: true, confirmed: true }))
+
+  await server.runReminderTick()
+  assert.equal(received.length, 2, 'both alliances are reminded, not one')
+  assert.ok(received.includes('/push/arena-ryo') && received.includes('/push/arena-ice'))
+
+  await server.runReminderTick()
+  assert.equal(received.length, 2, 'the same reminder never fires twice')
+})
+
+test('a device that switched arena reminders off is skipped', async () => {
+  db.prepare('DELETE FROM push_sent').run()
+  received.length = 0
+  db.prepare("UPDATE push_subscriptions SET alert_arena=0 WHERE endpoint LIKE '%arena-ice'").run()
+
+  const target = new Date(Date.now() + 5 * 60000)
+  const hhmm = `${String(target.getUTCHours()).padStart(2, '0')}:${String(target.getUTCMinutes()).padStart(2, '0')}`
+  db.prepare('INSERT OR REPLACE INTO app_settings (key, value) VALUES (?,?)')
+    .run('arena_reset', JSON.stringify({ time: hhmm, enabled: true, confirmed: true }))
+
+  await server.runReminderTick()
+  assert.deepEqual(received, ['/push/arena-ryo'])
+})
+
+test('turning the arena off for the kingdom silences it entirely', async () => {
+  db.prepare('DELETE FROM push_sent').run()
+  db.prepare('UPDATE push_subscriptions SET alert_arena=1').run()
+  received.length = 0
+
+  const target = new Date(Date.now() + 10 * 60000)
+  const hhmm = `${String(target.getUTCHours()).padStart(2, '0')}:${String(target.getUTCMinutes()).padStart(2, '0')}`
+  db.prepare('INSERT OR REPLACE INTO app_settings (key, value) VALUES (?,?)')
+    .run('arena_reset', JSON.stringify({ time: hhmm, enabled: false, confirmed: true }))
+
+  await server.runReminderTick()
+  assert.equal(received.length, 0)
+})

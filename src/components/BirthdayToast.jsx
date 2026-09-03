@@ -14,10 +14,21 @@ import { apiJson } from '../lib/api'
  * kingdom noticing.
  */
 const SEEN_KEY = 'k846.birthday.seen'
-// The one-time alliance question owns the screen until it is answered: it is
-// how somebody gets reminders at all, and a cake landing on top of it buries
-// the thing they actually needed to do. Written by AllianceSetup.
-const SETUP_KEY = 'k846-reminder-setup-seen'
+
+/* The one-time alliance question owns the screen while it is up: it is how
+ * somebody gets reminders at all, and a cake landing on top of it buries the
+ * thing they actually needed to do.
+ *
+ * This asks the page whether that sheet is actually on screen rather than
+ * guessing from a stored flag. The first attempt read the key AllianceSetup
+ * writes, which is never written on the website -- that sheet only appears in
+ * the installed app -- so the card would have waited for something that was
+ * never coming and no website visitor would ever have seen a birthday. It also
+ * never gets written for anyone already subscribed, who skips the sheet.
+ */
+const SETUP_SELECTOR = '.setup-veil'
+const SETUP_POLL_MS = 1500
+const SETUP_GIVE_UP_MS = 2 * 60 * 1000
 
 export default function BirthdayToast() {
   const [people, setPeople] = useState([])
@@ -26,22 +37,31 @@ export default function BirthdayToast() {
 
   useEffect(() => {
     let cancelled = false
+    const timers = []
+
     apiJson('/api/birthdays/today').then((data) => {
       if (cancelled || !data?.people?.length) return
-      let seen = null, setupPending = false
-      try {
-        seen = localStorage.getItem(SEEN_KEY)
-        setupPending = !localStorage.getItem(SETUP_KEY)
-      } catch { /* private mode: show it, rather than never showing it */ }
+      let seen = null
+      try { seen = localStorage.getItem(SEEN_KEY) } catch { /* private mode */ }
       if (seen === data.date) return
-      // Not today, then — they will see it next time they open the app, which
-      // for a birthday is soon enough.
-      if (setupPending) return
       setPeople(data.people)
-      const timer = setTimeout(() => setOpen(true), 1200)
-      return () => clearTimeout(timer)
+
+      // A beat after landing. Appearing in the same frame as the page paints
+      // reads as a bug; arriving just after reads as the kingdom noticing.
+      const waitedFrom = Date.now()
+      const show = () => {
+        if (cancelled) return
+        const setupUp = typeof document !== 'undefined' && document.querySelector(SETUP_SELECTOR)
+        if (setupUp && Date.now() - waitedFrom < SETUP_GIVE_UP_MS) {
+          timers.push(setTimeout(show, SETUP_POLL_MS))
+          return
+        }
+        setOpen(true)
+      }
+      timers.push(setTimeout(show, 1200))
     }).catch(() => {})
-    return () => { cancelled = true }
+
+    return () => { cancelled = true; timers.forEach(clearTimeout) }
   }, [])
 
   function dismiss() {

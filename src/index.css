@@ -3399,3 +3399,34 @@ html[data-app-mode] .page-enter { animation: app-page-in .28s cubic-bezier(0.22,
   .bday-spark, .bday-cake { animation: none; }
   .bday-spark { opacity: .5; }
 }
+
+/* The birthday card, wearing their alliance's colours.
+ *
+ * The banner is the picture; the scrim is what keeps the names readable on top
+ * of it. Both are needed — [KzK]'s banner is bright enough that gold text on it
+ * alone would be a guess rather than a design.
+ */
+.bday-banner { position: absolute; inset: 0; overflow: hidden; border-radius: inherit; }
+.bday-banner img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  opacity: .62;
+  transform: scale(1.06);
+  animation: bday-banner-drift 22s ease-in-out infinite alternate;
+}
+@keyframes bday-banner-drift {
+  from { transform: scale(1.06) translate3d(-1.2%, 0, 0) }
+  to   { transform: scale(1.12) translate3d(1.2%, -1%, 0) }
+}
+.bday-banner-scrim {
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(120% 80% at 50% 6%, rgba(232, 199, 102, .2), transparent 58%),
+    /* Light at the top so the banner is actually seen, heavy from the eyebrow
+       down so the names sit on ink rather than on somebody's artwork. */
+    linear-gradient(180deg, rgba(11, 16, 32, .3) 0%, rgba(11, 16, 32, .52) 34%, rgba(11, 16, 32, .88) 62%, rgba(11, 16, 32, .96) 100%);
+}
+.bday-card.has-banner { background: linear-gradient(180deg, #131a2e 0%, #0b1020 100%); }
+.bday-card > *:not(.bday-banner) { position: relative; }
+
+@media (prefers-reduced-motion: reduce) { .bday-banner img { animation: none } }

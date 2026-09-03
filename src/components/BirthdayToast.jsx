@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import Icon from './Icon'
 import { apiJson } from '../lib/api'
+import { BANNERS } from '../data/kingdom'
 
 /* The birthday, on the crest.
  *
@@ -73,6 +74,16 @@ export default function BirthdayToast() {
   if (!open || !people.length) return null
 
   const single = people.length === 1
+
+  /* Their alliance's banner behind the card.
+   *
+   * The alliance is already on the entry, so the card may as well be theirs
+   * rather than the same throne room for everyone -- a [RYO] player's day looks
+   * like [RYO]. Two people from different alliances get no banner instead of an
+   * arbitrary one: picking the first would quietly say the day belongs to them.
+   */
+  const slugs = [...new Set(people.map((p) => p.alliance_slug).filter(Boolean))]
+  const banner = slugs.length === 1 && people.every((p) => p.alliance_slug) ? BANNERS[slugs[0]] : null
   const names = people.map((p) => (
     <span key={p.id} className="inline-flex items-baseline gap-1">
       <span className="font-display font-bold text-gold-bright">{p.name}</span>
@@ -82,7 +93,13 @@ export default function BirthdayToast() {
 
   return (
     <div className={`bday-veil ${leaving ? 'is-leaving' : ''}`} role="dialog" aria-modal="true" aria-label="Birthday in the kingdom">
-      <div className="bday-card gold-corners">
+      <div className={`bday-card gold-corners ${banner ? 'has-banner' : ''}`}>
+        {banner && (
+          <div className="bday-banner" aria-hidden="true">
+            <img src={banner} alt="" />
+            <span className="bday-banner-scrim" />
+          </div>
+        )}
         <div className="bday-sparks" aria-hidden="true">
           {['8%', '24%', '41%', '58%', '75%', '92%'].map((left, i) => (
             <span key={left} className="bday-spark" style={{ left, animationDelay: `${i * 0.4}s` }} />

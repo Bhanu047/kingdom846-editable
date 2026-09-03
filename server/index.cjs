@@ -2033,6 +2033,23 @@ const COUNT_WORDS = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 
  * Three people sharing a date must not mean three buzzes -- that is how a nice
  * thing becomes the reason somebody turns notifications off.
  */
+// The picture on the notification, matching the card in the app: their own
+// alliance's banner where everybody named shares one, the throne room where
+// they do not. Picking one alliance's banner for a mixed day would quietly say
+// the day belonged to them.
+const ALLIANCE_BANNERS = {
+  ryo: '/assets/banner-spiders.png',
+  kzk: '/assets/banner-kamilkaze.png',
+  sas: '/assets/banner-saints-sinners.png',
+  ice: '/assets/banner-icehunters.png',
+}
+
+function birthdayBanner(rows) {
+  const slugs = [...new Set(rows.map((r) => r.alliance_slug).filter(Boolean))]
+  if (slugs.length !== 1 || !rows.every((r) => r.alliance_slug)) return '/assets/hero-throne-room.webp'
+  return ALLIANCE_BANNERS[slugs[0]] || '/assets/hero-throne-room.webp'
+}
+
 function birthdayNotification(rows) {
   const labels = rows.map(birthdayLabel)
   const single = rows.length === 1
@@ -2042,7 +2059,7 @@ function birthdayNotification(rows) {
     body: single
       ? `${birthdayLabel(rows[0])} — raise a horn for them.`
       : `${joinNames(labels)}. Raise a horn for them.`,
-    image: '/assets/hero-throne-room.webp',
+    image: birthdayBanner(rows),
     tag: 'birthday',
     urgent: false,
     url: '/#/dashboard',
@@ -2251,7 +2268,7 @@ async function runReminderTick() {
 
 // Exported for the tests, which drive the tick directly rather than waiting on
 // a real clock.
-module.exports = { ...(module.exports || {}), runReminderTick, allianceSchedule, contentSchedule, syncScheduleFromContent, normalizeTime, parseDays, defaultDaysFor, digestTick, isoWeekKey, arenaReset, eventNotification, arenaNotification, birthdayTick, birthdaysOn, birthdayNotification, birthdaySettings, parseBirthday, occursOn, repeatRules, nextOccurrences, REPEAT_DEFAULTS, sendKingdomWide }
+module.exports = { ...(module.exports || {}), runReminderTick, allianceSchedule, contentSchedule, syncScheduleFromContent, normalizeTime, parseDays, defaultDaysFor, digestTick, isoWeekKey, arenaReset, eventNotification, arenaNotification, birthdayTick, birthdaysOn, birthdayNotification, birthdayBanner, birthdaySettings, parseBirthday, occursOn, repeatRules, nextOccurrences, REPEAT_DEFAULTS, sendKingdomWide }
 
 app.get('/api/leader/roster', auth, leaderOnly, (req, res) => {
   const slug = req.user.alliance_slug

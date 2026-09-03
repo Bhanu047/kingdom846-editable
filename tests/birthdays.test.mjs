@@ -136,3 +136,30 @@ test('devices can turn birthdays off for themselves', () => {
   const cols = db.prepare('PRAGMA table_info(push_subscriptions)').all().map((c) => c.name)
   assert.ok(cols.includes('alert_birthday'), 'the preference is stored on the device')
 })
+
+test('the notification wears the alliance banner when they all share one', () => {
+  const ryo = [{ name: 'Shoni', alliance_slug: 'ryo' }]
+  assert.equal(server.birthdayBanner(ryo), '/assets/banner-spiders.png')
+  assert.equal(server.birthdayNotification(ryo).image, '/assets/banner-spiders.png')
+
+  const bothRyo = [{ name: 'A', alliance_slug: 'ryo' }, { name: 'B', alliance_slug: 'ryo' }]
+  assert.equal(server.birthdayBanner(bothRyo), '/assets/banner-spiders.png')
+
+  // Mixed alliances get the throne room. Choosing one of them would quietly
+  // say the day belonged to that alliance.
+  const mixed = [{ name: 'A', alliance_slug: 'ryo' }, { name: 'B', alliance_slug: 'sas' }]
+  assert.equal(server.birthdayBanner(mixed), '/assets/hero-throne-room.webp')
+
+  // As does anybody without an alliance, alone or alongside one who has.
+  assert.equal(server.birthdayBanner([{ name: 'W', alliance_slug: null }]), '/assets/hero-throne-room.webp')
+  assert.equal(server.birthdayBanner([{ name: 'A', alliance_slug: 'ryo' }, { name: 'W', alliance_slug: null }]), '/assets/hero-throne-room.webp')
+})
+
+test('every alliance has a banner that exists', async () => {
+  const fsp = await import('node:fs')
+  for (const slug of ['ryo', 'kzk', 'sas', 'ice']) {
+    const url = server.birthdayBanner([{ name: 'X', alliance_slug: slug }])
+    assert.notEqual(url, '/assets/hero-throne-room.webp', `${slug} has no banner mapped`)
+    assert.ok(fsp.existsSync(new URL(`../public${url}`, import.meta.url)), `${url} is not a file that exists`)
+  }
+})

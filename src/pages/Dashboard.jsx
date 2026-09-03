@@ -10,6 +10,8 @@ import { useSiteData } from '../context/SiteDataContext'
 import { useEgg, EggToast } from '../lib/useEgg'
 import { currentHall, hallImageFor } from '../data/realmArt'
 import LiveHall from '../components/LiveHall'
+import { useLanguage, categoryLabel } from '../lib/i18n'
+import { localizeGuide } from '../data/guides.i18n'
 
 const colorMap = {
   gold: 'text-gold', silver: 'text-slate-200', crimson: 'text-rose-300',
@@ -47,6 +49,7 @@ export default function Dashboard({ onNavigate }) {
   const guides = data.guides
   const events = data.events
   const isAdmin = user?.role === 'admin'
+  const lang = useLanguage()
   useNow()
   // Upcoming Event card: prefer a curated featured event, then fall back to
   // the nearest still-upcoming timeline milestone so this never goes stale
@@ -65,7 +68,10 @@ export default function Dashboard({ onNavigate }) {
   useEffect(() => { apiJson('/api/kingshot').then(setLiveData).catch(() => {}) }, [])
   // Merge: prefer live synced data, fall back to static
   const displayNews = liveData?.news?.length ? liveData.news : news
-  const displayGuides = liveData?.guides?.length ? liveData.guides : guides
+  // The kingdom's own, not the wiki sync. These are the three a new arrival
+  // needs, they are the ones that exist in Turkish and Chinese, and the "All →"
+  // link leads to the page where the wider library also sits.
+  const displayGuides = guides.map((g) => localizeGuide(g, lang))
   const kingSlug = (liveKing?.alliance_tag || kingdom.kingTag || '').replace(/[\[\]]/g, '').toLowerCase()
   const kingAlliance = alliances.find(a => a.slug === kingSlug) || alliances.find(a => a.slug === kingdom.kingAllianceSlug) || alliances[0]
   const kingBanner = BANNERS[kingSlug] || BANNERS[kingdom.kingAllianceSlug] || BANNERS.ryo
@@ -330,7 +336,7 @@ export default function Dashboard({ onNavigate }) {
                   <div className="absolute inset-x-0 bottom-0 p-2"><h3 className="text-sm font-bold text-parchment drop-shadow">{g.title}</h3></div>
                 </div>
                 <div className="p-3">
-                  <div className="mb-1"><Pill tone="blue">{g.category}</Pill></div>
+                  <div className="mb-1"><Pill tone="blue">{categoryLabel(g.category, lang)}</Pill></div>
                   <p className="text-xs text-parchment/60">{g.excerpt}</p>
                 </div>
               </button>

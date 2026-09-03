@@ -3,7 +3,7 @@ import {
   Home, Castle, Shield, CalendarDays, Newspaper, BookOpen, Trophy, Users,
   Crown, Bell, Settings, Swords, Clock, Search, Flame, ArrowRight, ChevronRight,
   LogOut, Landmark, ShieldCheck, Sparkles, Star, ScrollText, RefreshCw, Download, Upload,
-  Crosshair, Zap, Layers, Flag, Target, Axe, PawPrint, Snowflake, User, ArrowRightLeft
+  Crosshair, Zap, Layers, Flag, Target, Axe, PawPrint, Snowflake, User, ArrowRightLeft, Globe
 } from 'lucide-react'
 
 const map = {
@@ -14,7 +14,7 @@ const map = {
   logout: LogOut, landmark: Landmark, shieldCheck: ShieldCheck,
   sparkles: Sparkles, star: Star, scroll: ScrollText, refresh: RefreshCw, download: Download, upload: Upload,
   crosshair: Crosshair, zap: Zap, layers: Layers, flag: Flag, target: Target, axe: Axe, paw: PawPrint, snowflake: Snowflake,
-  user: User, transfer: ArrowRightLeft
+  user: User, transfer: ArrowRightLeft, globe: Globe
 }
 
 export default function Icon({ name, size, className }) {

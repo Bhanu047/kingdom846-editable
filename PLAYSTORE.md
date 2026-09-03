@@ -94,6 +94,10 @@ THE KINGDOM
 Alliance rankings, the current King or Queen, the event timeline, kingdom news
 and a full library of Kingshot guides.
 
+READ IN YOUR OWN LANGUAGE
+The kingdom's own guides and rules — the NAP rules, the KvK checklist, what
+happens when you transfer in — in English, Türkçe and 中文.
+
 WORKS WITHOUT SIGNAL
 Opens and reads offline. Notifications still arrive.
 

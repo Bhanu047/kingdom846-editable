@@ -8,7 +8,7 @@
 //  - Kingshot Optimizer timeline: https://kingshotoptimizer.com/kingdom-timeline/846
 //  - Kingshot Optimizer KvK rankings: https://kingshotoptimizer.com/kvk-rankings/kingdom/846
 
-import { tracker846 } from './tracker846'
+import { tracker846 } from './tracker846.js'
 
 export const kingdom = {
   id: 846,
@@ -266,7 +266,7 @@ export const guides = [
       'NAP Registration: NAPs are registered with the Kingdom 846 leadership. The King or a Chief Minister records the NAP in the kingdom diplomacy channel, including the allied alliance tag, duration, and any special terms.',
       'Royal Decrees: The King can issue Royal Decrees that apply to the entire kingdom. These include mandatory NAPs during KvK prep, rally coordination orders, and resource-sharing agreements.',
       'Enforcement: Violations of a NAP are handled by the King and leadership. Repeated violations can result in being kicked from the kingdom or being targeted in the next Castle Battle.',
-      'Always check the current NAP list before attacking an unknown target. When in doubt, ask in the kingdom Discord.',
+      'Always check the current NAP list before attacking an unknown target. When in doubt, ask your alliance leader.',
     ].join('\n\n')
   },
   {
@@ -300,8 +300,8 @@ export const guides = [
       'Transfer events allow players to move between kingdoms during designated windows. Each kingdom is assigned to a Transfer Group based on age and power.',
       'Eligibility: Your account must meet the power requirements for the destination kingdom. High-power players may require a Special Invitation from the King.',
       'Invitations: Kingdom leadership receives a limited number of Special Invitations each transfer season. These are reserved for players who will strengthen the kingdom roster.',
-      'Before Transferring: Contact Kingdom 846 leadership on Discord. Do not transfer without approval — alliance spots and event schedules need to be coordinated.',
-      'After Arrival: Join your assigned alliance immediately, update your in-game name/tag if required, and introduce yourself in the kingdom Discord.',
+      'Before Transferring: Contact Kingdom 846 leadership through this portal. Do not transfer without approval — alliance spots and event schedules need to be coordinated.',
+      'After Arrival: Join your assigned alliance immediately, update your in-game name/tag if required, and introduce yourself to your alliance leader.',
     ].join('\n\n')
   },
   {

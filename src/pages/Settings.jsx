@@ -6,10 +6,13 @@ import { useToast } from '../components/Toast'
 import ReminderSettings from '../components/ReminderSettings'
 import PageHeader from '../components/PageHeader'
 import { getNotificationPrefs, setNotificationPref } from '../lib/reminders'
+import LanguagePicker from '../components/LanguagePicker'
+import { useLanguage, t } from '../lib/i18n'
 
 export default function Settings() {
   const { user, signOut } = useAuth()
   const { toast } = useToast()
+  const lang = useLanguage()
   // These used to be component state with hard-coded defaults: nothing wrote
   // them down and nothing read them, so a toggle lasted until the app closed
   // and would not have sent anything if it had lasted. They now live on this
@@ -53,6 +56,14 @@ export default function Settings() {
       />
 
       <ReminderSettings />
+
+      {/* Reading language */}
+      <Panel className="p-5">
+        <SectionTitle eyebrow="Reading" title={t('settingsLangTitle', lang)} icon="globe" />
+        <p className="mt-2 text-sm leading-relaxed text-parchment/60">{t('settingsLangDesc', lang)}</p>
+        <LanguagePicker className="mt-4" scopeNote={false} />
+        <p className="mt-3 text-xs leading-relaxed text-parchment/40">{t('langScope', lang)}</p>
+      </Panel>
 
       {/* Profile */}
       <Panel className="p-5">

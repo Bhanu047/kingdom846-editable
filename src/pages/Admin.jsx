@@ -57,6 +57,32 @@ export default function Admin() {
   // Re-sync draft when live data changes (e.g. after save)
   useEffect(() => { setDraft(data) }, [data])
 
+  /* What reminders are currently sending, where a leader set it here first.
+   *
+   * Two people can set an event time — Sparta on this page, a leader in the
+   * Leader Portal — and both edits take effect, the most recent one winning.
+   * This only says which times a leader has touched, so a number typed here
+   * that looks wrong against the phones has an explanation rather than looking
+   * like the bug that had [RYO] hearing 12:00 for a 21:30 Bear Hunt.
+   */
+  const [overrides, setOverrides] = useState({})
+  useEffect(() => {
+    let cancelled = false
+    apiJson('/api/alliance-schedules')
+      .then((rows) => {
+        if (cancelled || !Array.isArray(rows)) return
+        const map = {}
+        for (const r of rows) {
+          for (const item of r.schedule || []) {
+            if (item.source === 'leader') map[`${r.alliance_slug}|${item.event}`] = item.time
+          }
+        }
+        setOverrides(map)
+      })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [])
+
   if (!isAdmin) {
     return (
       <div className="panel p-6 text-center">
@@ -128,7 +154,9 @@ export default function Admin() {
                     <div className="sm:col-span-2 space-y-2">
                       <span className="text-[10px] uppercase tracking-wider text-parchment/50">Event Schedule (UTC)</span>
                       <div className="grid gap-2 sm:grid-cols-2">
-                        {schedule.map((s, si) => (
+                        {schedule.map((s, si) => {
+                          const overridden = overrides[`${a.slug}|${s.event}`]
+                          return (
                           <label key={si} className="block rounded-lg border border-gold/15 bg-white/5 p-2.5">
                             <span className="text-[10px] text-parchment/40">{s.event}</span>
                             <input
@@ -140,8 +168,14 @@ export default function Admin() {
                               }}
                               className="mt-1 w-full rounded-md border border-gold/20 bg-ink/60 px-2 py-1.5 text-sm text-parchment outline-none focus:border-gold/60"
                             />
+                            {overridden && overridden !== s.time && (
+                              <span className="mt-1 block text-[10px] leading-snug text-amber-300/80">
+                                Reminders are sending {overridden} — the leader set it. Save to replace it with this.
+                              </span>
+                            )}
                           </label>
-                        ))}
+                          )
+                        })}
                       </div>
                     </div>
                   </Row>

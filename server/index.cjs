@@ -1265,10 +1265,13 @@ const ALLIANCE_EVENTS = [
   'Swordland Showdown Legion-1', 'Swordland Showdown Legion-2'
 ]
 
-// Public: get all alliance schedules (for Events/Alliances pages)
+// Public: the resolved schedule per alliance -- the same answer the reminder
+// tick works from, so what the page shows is what the phone will say. It used
+// to return the raw alliance_schedules rows, which is a different and usually
+// emptier thing; nothing consumed it.
 app.get('/api/alliance-schedules', (_req, res) => {
-  const rows = db.prepare('SELECT * FROM alliance_schedules').all()
-  res.json(rows)
+  const slugs = db.prepare('SELECT slug FROM alliances').all().map((a) => a.slug)
+  res.json(slugs.map((slug) => ({ alliance_slug: slug, schedule: allianceSchedule(slug) })))
 })
 
 // Default schedule per alliance (from kingdom.js static data)
@@ -1358,15 +1361,60 @@ function parseDays(value) {
     .split(',').map((d) => Number(d.trim())).filter((d) => Number.isInteger(d) && d >= 0 && d <= 6)
 }
 
-/** Effective schedule for one alliance: stored rows over seeded defaults. */
+const HHMM_RE = /^([01]\d|2[0-3]):[0-5]\d$/
+
+/* The times the app is showing.
+ *
+ * There are two places an event time can be set and they are edited by
+ * different people. A leader sets their own in the Leader Portal, which writes
+ * rows to alliance_schedules. Sparta sets them in the Master Console, which
+ * writes the whole site content blob -- and it is that blob the Alliances page
+ * renders. Reminders only ever read the first of those, so times entered in the
+ * Master Console never reached anyone's phone: [RYO] showed Bear Hunt-2 at
+ * 21:30 on the page while the reminder announced it for 12:00, which is the
+ * seeded default nobody had ever chosen and, on that alliance, is not a Bear
+ * Hunt at all.
+ *
+ * Reading it here is what puts the two back together, and the endpoint below
+ * now publishes the resolved answer so the page can show the same one.
+ */
+function contentSchedule(slug) {
+  try {
+    const row = db.prepare('SELECT data FROM site_content WHERE id = ?').get('current')
+    if (!row) return {}
+    const list = JSON.parse(row.data)?.alliances
+    if (!Array.isArray(list)) return {}
+    const found = list.find((a) => String(a?.slug || '').toLowerCase() === String(slug).toLowerCase())
+    const out = {}
+    for (const item of Array.isArray(found?.schedule) ? found.schedule : []) {
+      // A blank or malformed time means "not set", and must fall through rather
+      // than becoming a reminder at a time nobody can read.
+      if (item?.event && HHMM_RE.test(String(item.time || ''))) out[item.event] = String(item.time)
+    }
+    return out
+  } catch { return {} }
+}
+
+/* Effective schedule for one alliance.
+ *
+ * Order matters and is the whole point: the leader's own row wins, then what
+ * the kingdom's content says (which is what the app displays), then the seeded
+ * default. The default is last because it is the only one of the three nobody
+ * ever chose.
+ */
 function allianceSchedule(slug) {
   const rows = db.prepare('SELECT event_name, event_time, event_days FROM alliance_schedules WHERE alliance_slug=?').all(slug)
+  const content = contentSchedule(slug)
   const defaults = SCHEDULE_DEFAULTS[slug] || {}
   return ALLIANCE_EVENTS.map((event) => {
     const row = rows.find((r) => r.event_name === event)
+    const stored = HHMM_RE.test(String(row?.event_time || '')) ? String(row.event_time) : ''
     return {
       event,
-      time: row?.event_time || defaults[event] || '',
+      time: stored || content[event] || defaults[event] || '',
+      // Where the time came from, so the Master Console can show it and nobody
+      // has to guess which of the two editors an alliance is actually using.
+      source: stored ? 'leader' : content[event] ? 'kingdom' : 'default',
       // Vikings Vengeance names its own day, so an alliance that never touched
       // the schedule still gets that one right rather than a buzz every day.
       days: parseDays(row?.event_days ?? defaultDaysFor(event)),
@@ -1926,7 +1974,7 @@ async function runReminderTick() {
 
 // Exported for the tests, which drive the tick directly rather than waiting on
 // a real clock.
-module.exports = { ...(module.exports || {}), runReminderTick, allianceSchedule, parseDays, defaultDaysFor, digestTick, isoWeekKey, arenaReset, eventNotification, arenaNotification, occursOn, repeatRules, nextOccurrences, REPEAT_DEFAULTS, sendKingdomWide }
+module.exports = { ...(module.exports || {}), runReminderTick, allianceSchedule, contentSchedule, parseDays, defaultDaysFor, digestTick, isoWeekKey, arenaReset, eventNotification, arenaNotification, occursOn, repeatRules, nextOccurrences, REPEAT_DEFAULTS, sendKingdomWide }
 
 app.get('/api/leader/roster', auth, leaderOnly, (req, res) => {
   const slug = req.user.alliance_slug

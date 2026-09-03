@@ -1,10 +1,11 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { ArtImage } from '../components/ui'
 import Icon from '../components/Icon'
 import { Modal } from '../components/RosterPending'
 import { useSiteData } from '../context/SiteDataContext'
 import { buildSchedule } from '../data/kingdom'
 import PageHeader from '../components/PageHeader'
+import { apiJson } from '../lib/api'
 
 const colorMap = {
   gold: { ring: 'ring-gold/40', text: 'text-gold', bg: 'bg-gold/10', grad: 'from-gold/30 to-gold/5' },
@@ -23,6 +24,28 @@ export default function Alliances() {
   const alliances = data.alliances
   const [active, setActive] = useState(null)
   const activeColor = active ? (colorMap[active.color] || colorMap.blue) : colorMap.blue
+
+  /* The times that will actually be pushed.
+   *
+   * An event time can be set in two places — a leader sets theirs in the Leader
+   * Portal, Sparta sets them in the Master Console — and this page used to show
+   * only the second. A phone that buzzed off the first then announced a time
+   * nobody could find on the page. This endpoint returns the one resolved
+   * answer the reminder tick works from, so the schedule on screen is the
+   * schedule that fires. Falls back to the content times if it cannot be
+   * reached, which is the same thing offline.
+   */
+  const [resolved, setResolved] = useState(null)
+  useEffect(() => {
+    let cancelled = false
+    apiJson('/api/alliance-schedules')
+      .then((rows) => {
+        if (cancelled || !Array.isArray(rows)) return
+        setResolved(Object.fromEntries(rows.map((r) => [r.alliance_slug, r.schedule])))
+      })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [])
 
   return (
     <div className="space-y-6">
@@ -61,7 +84,7 @@ export default function Alliances() {
         {active && (
           <div className="-m-5 mb-0">
             <div className="relative h-24"><ArtImage src={active.art} alt={active.name} className="h-full w-full" /><div className="absolute inset-0 bg-gradient-to-t from-ink via-ink/60 to-ink/10" /><button onClick={() => setActive(null)} className="absolute right-3 top-2 rounded-full bg-ink/60 p-1.5 text-parchment/70 hover:text-parchment"><Icon name="chevron" size={14} className="rotate-90" /></button><div className="absolute inset-x-0 bottom-0 px-4 pb-2"><div className="flex items-center gap-2"><span className={`font-display text-lg font-bold ${activeColor.text}`}>{active.tag}</span><span className="text-sm font-semibold text-parchment">{active.name}</span></div><div className="text-[10px] uppercase tracking-wider text-gold/60">Event Schedule (UTC)</div></div></div>
-            <div className="p-3"><div className="grid grid-cols-2 gap-1.5">{buildSchedule(active.schedule).map((s, si) => { const meta = getEventMetaLocal(s.event); return <div key={si} className="royal-plaque text-center" style={{ padding: '0.5rem 0.375rem' }}><div className="royal-icon-circle mx-auto mb-0.5" style={{ width: '1.5rem', height: '1.5rem' }}><Icon name={meta.icon} size={11} className="text-gold-bright" /></div><div className="text-[8px] font-semibold leading-tight text-parchment/80">{s.event}</div><div className="mt-0.5 royal-time" style={{ fontSize: '0.75rem' }}>{s.time || 'TBA'}</div></div> })}</div></div>
+            <div className="p-3"><div className="grid grid-cols-2 gap-1.5">{buildSchedule(resolved?.[active.slug] || active.schedule).map((s, si) => { const meta = getEventMetaLocal(s.event); return <div key={si} className="royal-plaque text-center" style={{ padding: '0.5rem 0.375rem' }}><div className="royal-icon-circle mx-auto mb-0.5" style={{ width: '1.5rem', height: '1.5rem' }}><Icon name={meta.icon} size={11} className="text-gold-bright" /></div><div className="text-[8px] font-semibold leading-tight text-parchment/80">{s.event}</div><div className="mt-0.5 royal-time" style={{ fontSize: '0.75rem' }}>{s.time || 'TBA'}</div></div> })}</div></div>
           </div>
         )}
       </Modal>

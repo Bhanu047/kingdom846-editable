@@ -3223,3 +3223,85 @@ html[data-app-mode] .page-enter { animation: app-page-in .28s cubic-bezier(0.22,
   .net-strip { animation: none; }
   .pull-dial.is-spinning .pull-dial-mark { animation-duration: 2.4s; }
 }
+
+/* ---- Alliance setup ------------------------------------------------------
+   Asked once, on top of the app, because the answer decides whether every
+   reminder afterwards is right or wrong. Sheet-style on a phone -- it rises
+   from the bottom where the thumb is -- and a centred card once there is room
+   for one. */
+.setup-veil {
+  position: fixed;
+  inset: 0;
+  z-index: 10010;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0;
+  background: rgba(4, 6, 12, .74);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  animation: setup-veil-in .24s ease both;
+}
+@keyframes setup-veil-in { from { opacity: 0 } to { opacity: 1 } }
+
+.setup-card {
+  width: 100%;
+  max-width: 26rem;
+  max-height: 88vh;
+  overflow-y: auto;
+  padding: 1.15rem 1.1rem calc(1.15rem + env(safe-area-inset-bottom, 0px));
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  animation: setup-card-in .3s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes setup-card-in {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (min-width: 640px) {
+  .setup-veil { align-items: center; padding: 1rem; }
+  .setup-card { border-radius: 1rem; padding-bottom: 1.15rem; }
+}
+
+.setup-option {
+  display: flex;
+  align-items: center;
+  gap: .65rem;
+  width: 100%;
+  padding: .6rem .7rem;
+  border-radius: .7rem;
+  border: 1px solid rgba(212, 175, 55, .16);
+  background: rgba(10, 14, 26, .6);
+  transition: border-color .16s ease, background .16s ease, transform .12s ease;
+}
+.setup-option:active { transform: scale(.985); }
+.setup-option.is-picked {
+  border-color: rgba(232, 199, 102, .6);
+  background: linear-gradient(180deg, rgba(212, 175, 55, .14), rgba(212, 175, 55, .06));
+}
+.setup-tag {
+  flex-shrink: 0;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 11px;
+  font-weight: 600;
+  color: #E8C766;
+}
+
+/* Day toggles on the leader's schedule. Small, because there are seven of them
+   on a row that already carries an icon, a name and two time selects. */
+.day-chip {
+  width: 1.65rem;
+  height: 1.65rem;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  color: rgba(239, 230, 207, .42);
+  border: 1px solid rgba(212, 175, 55, .18);
+  background: rgba(10, 14, 26, .55);
+  transition: color .15s ease, border-color .15s ease, background .15s ease;
+}
+.day-chip.is-on {
+  color: #0A0D18;
+  border-color: rgba(232, 199, 102, .8);
+  background: linear-gradient(180deg, #F2DC9B, #D4AF37);
+}

@@ -204,6 +204,46 @@ a browser tab is left exactly as it was:
 | Tapping a tab | — | A short haptic tick (Android). |
 | Status bar / notch | n/a | Header and tab bar hold their own safe-area clearance. |
 
+### Event reminders
+
+Installed players get a push **10 minutes and 5 minutes before their alliance's
+events**, with the app closed. The flow is: install → a sheet asks which
+alliance you are in → permission → done. It is asked once; skipping is
+remembered, and it can be turned on, switched or turned off later under
+**Settings → Event Reminders** (Settings now has a link in the rail; it used to
+be reachable only by typing the URL).
+
+**Times and days come from the leader's schedule.** The schedule previously
+stored only a time, which is fine to read in a table but not enough to decide
+whether to buzz a phone — so `alliance_schedules` gained an `event_days` column
+and the Leader Portal gained a day picker per event. Events named for a day
+(Vikings Vengeance Tuesday/Thursday) default to that day; everything else
+defaults to **every day** and leaders should narrow it, or an event that runs
+twice a week will remind the alliance seven times a week.
+
+| Piece | Where |
+|---|---|
+| Subscriptions, dedupe log, VAPID keys | `push_subscriptions`, `push_sent`, `app_settings` tables |
+| Endpoints | `/api/push/key`, `/subscribe`, `/unsubscribe`, `/status` |
+| Scheduler | `runReminderTick()` in `server/index.cjs`, every 30s |
+| Receiving | the `push` / `notificationclick` handlers in `public/sw.js` |
+| Browser side | `src/lib/reminders.js` |
+| Screens | `AllianceSetup.jsx` (once), `ReminderSettings.jsx` (Settings) |
+
+The scheduler ticks every 30 seconds — more often than the reminders it has to
+hit, so a briefly stalled server still lands inside the right minute — and
+`push_sent` is what makes those extra ticks harmless. `/api/push/*` is never
+cached by the service worker.
+
+**VAPID keys** are generated once on first run and stored in `app_settings`.
+Do not regenerate them: every existing subscription would silently stop working
+with nothing appearing to be wrong. Set `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY`
+to pin them explicitly.
+
+> **iPhone:** web push needs iOS 16.4+ **and** the app added to the Home Screen.
+> In a Safari tab it will not work, which is why the setup sheet only appears in
+> app mode.
+
 **Seeing app mode without installing.** Add `?appmode=1` to the URL to enter it
 in a normal tab, `?appmode=0` to leave. It lasts for the session. Handy for
 checking a change to the tab bar without reinstalling on a phone each time.

@@ -3,6 +3,7 @@ import { Panel, SectionTitle, Pill } from '../components/ui'
 import Icon from '../components/Icon'
 import { useAuth } from '../context/AuthContext'
 import { useToast } from '../components/Toast'
+import ReminderSettings from '../components/ReminderSettings'
 
 export default function Settings() {
   const { user, signOut } = useAuth()
@@ -28,6 +29,8 @@ export default function Settings() {
         <h1 className="mt-1 font-display text-3xl font-bold gradient-gold glow-pulse">Settings</h1>
         <p className="mt-2 text-sm text-parchment/60">Manage your profile, notifications, and preferences.</p>
       </Panel>
+
+      <ReminderSettings />
 
       {/* Profile */}
       <Panel className="p-5">

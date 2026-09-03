@@ -19,6 +19,7 @@ import AppLaunch from './components/AppLaunch'
 import TabBar from './components/TabBar'
 import { isAppMode } from './lib/appMode'
 import NetworkBanner from './components/NetworkBanner'
+import AllianceSetup from './components/AllianceSetup'
 import PullIndicator from './components/PullIndicator'
 import { usePullToRefresh } from './lib/usePullToRefresh'
 import { installNetworkWatch, probe } from './lib/network'
@@ -193,6 +194,8 @@ function Shell() {
     const items = []
     nav.forEach((n) => items.push({ type: 'Page', label: n.label, page: n.id, icon: n.icon }))
     items.push({ type: 'Tool', label: 'Battle Lab', page: 'battle-lab', icon: 'crosshair' })
+    items.push({ type: 'Page', label: 'Settings', page: 'settings', icon: 'settings' })
+    items.push({ type: 'Page', label: 'Event Reminders', page: 'settings', icon: 'bell' })
     timeline.forEach((t) => items.push({ type: 'Timeline', label: t.name, page: 'timeline', icon: 'clock' }))
     guides.forEach((g) => items.push({ type: 'Guide', label: g.title, page: 'guides', icon: 'book' }))
     news.forEach((n) => items.push({ type: 'News', label: n.title, page: 'news', icon: 'newspaper' }))
@@ -272,6 +275,7 @@ function Shell() {
           nothing to answer until there is a page behind it anyway. */}
       {!showSplash && <ChatAssistant />}
       {!showSplash && <InstallPrompt />}
+      {!showSplash && <AllianceSetup appMode={appMode} />}
       {appMode && !showSplash && (
         <div className="md:hidden">
           <TabBar active={page} onNavigate={selectTab} onOpenMore={() => setMobileNav(true)} moreOpen={mobileNav} />

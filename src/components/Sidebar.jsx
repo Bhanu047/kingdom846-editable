@@ -88,6 +88,10 @@ export default function Sidebar({ active, onNavigate, onLogin, onSignOut, user, 
           </Fragment>
         ))}
 
+        <button onClick={() => onNavigate('settings')} className={`nav-item w-full text-left ${active === 'settings' ? 'active nav-glow' : ''}`}>
+          <Icon name="settings" size={17} /><span>Settings</span>
+        </button>
+
         {isAdmin && (
           <>
             <div className="gold-divider my-3" />

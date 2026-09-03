@@ -9,7 +9,7 @@
  * Bump CACHE_VERSION on any change to this file's caching rules; the activate
  * handler deletes every cache that doesn't match, so old entries never linger.
  */
-const CACHE_VERSION = 'v1'
+const CACHE_VERSION = 'v2'
 const SHELL_CACHE = `k846-shell-${CACHE_VERSION}`
 const ASSET_CACHE = `k846-assets-${CACHE_VERSION}`
 const FONT_CACHE = `k846-fonts-${CACHE_VERSION}`
@@ -139,4 +139,50 @@ self.addEventListener('fetch', (event) => {
     // there is no network to ask. Offline still works; a deploy is never stale.
     event.respondWith(networkFirst(request, ASSET_CACHE))
   }
+})
+
+/* ---- Event reminders ------------------------------------------------------
+   The service worker is the only part of the app that is running when the app
+   is not: a closed tab cannot set a timer, so the server pushes and this
+   receives. Everything below runs with no page open at all.
+   ------------------------------------------------------------------------- */
+
+self.addEventListener('push', (event) => {
+  let data = {}
+  try { data = event.data ? event.data.json() : {} } catch {}
+  const title = data.title || 'Kingdom 846'
+  event.waitUntil(
+    self.registration.showNotification(title, {
+      body: data.body || '',
+      icon: '/app-icons/icon-192.png',
+      badge: '/app-icons/icon-192.png',
+      // The tag collapses a 10-minute and a 5-minute reminder for the same
+      // event onto one notification rather than stacking two in the shade;
+      // renotify makes the second one still buzz.
+      tag: data.tag || 'k846',
+      renotify: true,
+      requireInteraction: false,
+      data: { url: data.url || '/#/events' },
+      vibrate: [90, 45, 90],
+    })
+  )
+})
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close()
+  const target = event.notification.data?.url || '/#/events'
+  event.waitUntil((async () => {
+    const clientList = await self.clients.matchAll({ type: 'window', includeUncontrolled: true })
+    // Focus the app if it is already open somewhere rather than opening a
+    // second copy of it, which on a phone means two of the same app in the
+    // switcher.
+    for (const client of clientList) {
+      if (client.url.includes(self.location.origin)) {
+        await client.focus()
+        if ('navigate' in client) await client.navigate(target).catch(() => {})
+        return
+      }
+    }
+    await self.clients.openWindow(target)
+  })())
 })

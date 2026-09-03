@@ -233,7 +233,51 @@ a browser tab is left exactly as it was:
 | Tapping a button | Grey flash | No flash. |
 | Screen change | Fades up | Slides in from the side. |
 | Footer credits | Shown | Hidden — dead end under every screen in an app. |
+| Losing signal | Nothing said | A strip appears: "No connection — showing what was last saved", and a note when it returns. |
+| Dragging down from the top | Browser reloads the page | The app's own pull-to-refresh: refetches the data, keeps you on the screen you're on. |
+| Back button with a menu open | Leaves the page | Closes the menu. |
+| Tapping a tab | — | A short haptic tick (Android). |
 | Status bar / notch | n/a | Header and tab bar hold their own safe-area clearance. |
+
+### Event reminders
+
+Installed players get a push **10 minutes and 5 minutes before their alliance's
+events**, with the app closed. The flow is: install → a sheet asks which
+alliance you are in → permission → done. It is asked once; skipping is
+remembered, and it can be turned on, switched or turned off later under
+**Settings → Event Reminders** (Settings now has a link in the rail; it used to
+be reachable only by typing the URL).
+
+**Times and days come from the leader's schedule.** The schedule previously
+stored only a time, which is fine to read in a table but not enough to decide
+whether to buzz a phone — so `alliance_schedules` gained an `event_days` column
+and the Leader Portal gained a day picker per event. Events named for a day
+(Vikings Vengeance Tuesday/Thursday) default to that day; everything else
+defaults to **every day** and leaders should narrow it, or an event that runs
+twice a week will remind the alliance seven times a week.
+
+| Piece | Where |
+|---|---|
+| Subscriptions, dedupe log, VAPID keys | `push_subscriptions`, `push_sent`, `app_settings` tables |
+| Endpoints | `/api/push/key`, `/subscribe`, `/unsubscribe`, `/status` |
+| Scheduler | `runReminderTick()` in `server/index.cjs`, every 30s |
+| Receiving | the `push` / `notificationclick` handlers in `public/sw.js` |
+| Browser side | `src/lib/reminders.js` |
+| Screens | `AllianceSetup.jsx` (once), `ReminderSettings.jsx` (Settings) |
+
+The scheduler ticks every 30 seconds — more often than the reminders it has to
+hit, so a briefly stalled server still lands inside the right minute — and
+`push_sent` is what makes those extra ticks harmless. `/api/push/*` is never
+cached by the service worker.
+
+**VAPID keys** are generated once on first run and stored in `app_settings`.
+Do not regenerate them: every existing subscription would silently stop working
+with nothing appearing to be wrong. Set `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY`
+to pin them explicitly.
+
+> **iPhone:** web push needs iOS 16.4+ **and** the app added to the Home Screen.
+> In a Safari tab it will not work, which is why the setup sheet only appears in
+> app mode.
 
 **Seeing app mode without installing.** Add `?appmode=1` to the URL to enter it
 in a normal tab, `?appmode=0` to leave. It lasts for the session. Handy for
@@ -273,7 +317,91 @@ is deleted on activation.
 > so it can't interfere with hot reload. To test it, run `npm run build` then
 > `NODE_ENV=production node server/index.cjs`.
 
-## 7. Notes
+## 7. The chat assistant (Royal Advisor)
+
+The assistant answers from **Gemini**, grounded in the kingdom's own live data.
+
+It previously answered from `getKingdomAnswer()` — roughly 1,900 lines of
+hand-written keyword matching that never called a model at all, despite living
+behind `/api/ai/chat`. That is good at the questions it anticipated and helpless
+at every other one: anything unrecognised got the same forty-bullet "I am not
+sure about that" reply, and it could not follow up or answer two things at once.
+
+**The matcher is kept as the fallback.** With no key set, or if the model is
+unreachable or times out, the assistant degrades to exactly what it did before
+rather than to an error. Responses carry `source: "ai"` or `source: "builtin"`
+so you can tell which answered.
+
+**Grounding.** Every question is sent with a freshly built KINGDOM FACTS block —
+current ruler, the four alliances and their leaders, each alliance's event
+schedule with times and days, upcoming events, news and guide titles, and what
+each site page is for. The instruction tells the advisor that this block is the
+only source of truth for kingdom specifics, to answer general Kingshot mechanics
+from its own knowledge, and to say plainly when it does not know rather than
+inventing a time or a name. Schedules are read through the same helper the
+reminders and Leader Portal use, so the advisor cannot contradict the Events
+page.
+
+**Only public data goes into that block** — no governor IDs, applications,
+transfer requests, or anything behind a login, because `/api/ai/chat` takes no
+auth.
+
+The last 8 turns are sent with each question, so "and for ICE?" works. History
+is filtered to real user/assistant turns and capped, and messages are capped at
+1,200 characters. Rate limit is unchanged at 15 questions per IP per minute, and
+a request that takes over 12 seconds is abandoned in favour of the matcher.
+
+| Setting | |
+|---|---|
+| Key | `GEMINI_API_KEY` (already set on the live service) |
+| Model | `gemini-flash-latest` |
+| Pin the model | edit `GEMINI_MODEL` in `server/index.cjs` |
+
+> Chat now consumes Gemini quota that previously only the 4-hourly agent used.
+> If you hit free-tier limits, the visible symptom is answers quietly reverting
+> to the old matcher style — check the logs for `[advisor] model returned 429`.
+
+## 8. Backups
+
+Everything the kingdom has is one SQLite file. It is now copied automatically.
+
+**How it works.** A backup is taken when the server starts — a deploy is exactly
+when you want a copy of what came before it — and then once a day. Each one is
+taken through SQLite's **online backup API**, not by copying the file: the
+database runs in WAL mode, so a plain copy taken while the server is serving can
+miss the write-ahead log and produce a file that opens fine and is quietly
+missing the last writes.
+
+**Every backup is verified before it is kept.** It is written under a temporary
+name, opened, run through `PRAGMA integrity_check`, and checked for actual rows.
+Only then is it moved into place. A copy that fails is deleted and logged. An
+unverified backup is a guess.
+
+**Master Console → Database Backups** lists them with size and age, has a
+**Back up now** button, and a **Download** button on each. It warns if the newest
+is more than a day and a half old.
+
+> **Download one now and then.** The copies sit on the same disk as the database.
+> That survives the common disasters — a bad migration, a mistaken roster upload,
+> corruption — but not losing the disk. A copy kept somewhere else is the only one
+> that survives everything, and the Download button is what makes that possible.
+
+**To restore:** stop the service, replace the file at `DB_PATH`
+(`/var/data/data.db` live) with the backup, renaming it to `data.db`, and start
+again. Delete any `data.db-wal` / `data.db-shm` beside it first.
+
+| Setting | Default | |
+|---|---|---|
+| `BACKUP_DIR` | `backups/` next to the database | Where copies are kept |
+| `BACKUP_KEEP` | `14` | How many to keep before pruning oldest |
+| `BACKUP_MAX_BYTES` | 300 MB | Total cap, so backups can't fill the 1 GB disk |
+
+Endpoints are admin-only: `GET /api/admin/backups`, `POST /api/admin/backups`,
+`GET /api/admin/backups/:name`. The download hands over the entire database,
+password hashes included — the filename is pattern-checked and the resolved path
+confirmed to sit inside the backup directory.
+
+## 9. Notes
 
 - The app uses **hash-based URL routing** — pages have shareable URLs and browser
   back/forward works.

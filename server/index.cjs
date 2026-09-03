@@ -70,6 +70,34 @@ db.exec(`
     updated_at TEXT DEFAULT (datetime('now')),
     PRIMARY KEY (alliance_slug, event_name)
   );
+  -- One row per installed app that asked for reminders. The endpoint is the
+  -- push service's own URL for that device and is unique by construction, so it
+  -- doubles as the primary key: reinstalling or re-subscribing updates the row
+  -- rather than accumulating duplicates that would each fire their own buzz.
+  CREATE TABLE IF NOT EXISTS push_subscriptions (
+    endpoint TEXT PRIMARY KEY,
+    p256dh TEXT NOT NULL,
+    auth TEXT NOT NULL,
+    alliance_slug TEXT NOT NULL,
+    created_at TEXT DEFAULT (datetime('now')),
+    last_seen TEXT DEFAULT (datetime('now')),
+    failures INTEGER DEFAULT 0
+  );
+  CREATE INDEX IF NOT EXISTS idx_push_alliance ON push_subscriptions(alliance_slug);
+  -- What has already been sent. The scheduler runs far more often than once per
+  -- reminder so that a slow tick cannot miss a window; this is what stops that
+  -- from meaning six buzzes for one Bear Hunt.
+  CREATE TABLE IF NOT EXISTS push_sent (
+    key TEXT PRIMARY KEY,
+    sent_at TEXT DEFAULT (datetime('now'))
+  );
+  -- Server-held settings that must outlive a restart. Currently the VAPID key
+  -- pair: regenerating it would silently invalidate every existing
+  -- subscription, so it is generated once and kept.
+  CREATE TABLE IF NOT EXISTS app_settings (
+    key TEXT PRIMARY KEY,
+    value TEXT
+  );
   CREATE TABLE IF NOT EXISTS alliances (
     slug TEXT PRIMARY KEY,
     name TEXT NOT NULL,
@@ -177,6 +205,15 @@ function voterFingerprint(req) {
 }
 
 // Columns added after the table shipped; the live database already exists.
+// The schedule stored a time but never a day, so nothing knew whether an event
+// runs today. That was fine while the schedule was only ever read by a human
+// looking at a table; it is not fine for something that decides whether to buzz
+// a phone. Existing rows default to every day and leaders narrow them.
+const schedCols = db.prepare('PRAGMA table_info(alliance_schedules)').all()
+if (!schedCols.some((c) => c.name === 'event_days')) {
+  db.exec("ALTER TABLE alliance_schedules ADD COLUMN event_days TEXT DEFAULT '0,1,2,3,4,5,6'")
+}
+
 const aeCols = db.prepare('PRAGMA table_info(analytics_events)').all()
 if (!aeCols.some((c) => c.name === 'country')) db.exec('ALTER TABLE analytics_events ADD COLUMN country TEXT')
 if (!aeCols.some((c) => c.name === 'campaign')) db.exec('ALTER TABLE analytics_events ADD COLUMN campaign TEXT')
@@ -948,6 +985,183 @@ app.get('/api/vote/audit', auth, adminOnly, (_req, res) => {
   })
 })
 
+
+/* ===== Backups ==============================================================
+ * Everything the kingdom has -- rosters, applications, transfer requests,
+ * credentials, notification sign-ups -- is one SQLite file on one disk. Until
+ * now there was no second copy of it anywhere.
+ *
+ * Three things make this a real backup rather than a file lying next to the
+ * original:
+ *
+ *   1. It is taken through SQLite's online backup API, not by copying the file.
+ *      The database runs in WAL mode, so a plain copy taken while the server is
+ *      serving can miss the write-ahead log and produce a file that opens fine
+ *      and is quietly missing the last writes -- or does not open at all.
+ *   2. Every backup is verified immediately after it is written, by opening it
+ *      and running an integrity check. An unverified backup is a guess.
+ *   3. Sparta can download it. A copy on the same disk survives the common
+ *      disasters -- a bad migration, a mistaken roster upload, corruption -- but
+ *      not the disk itself. The download is what makes an off-site copy
+ *      possible, and off-site is the only copy that survives everything.
+ * ------------------------------------------------------------------------- */
+
+// `fs` is declared further down this file for serving the frontend; a second
+// `const fs` at module scope would be a redeclaration error, so this binding is
+// named for what it is used by.
+const backupFs = require('node:fs')
+
+const BACKUP_DIR = process.env.BACKUP_DIR || path.join(path.dirname(DB_PATH), 'backups')
+const BACKUP_KEEP = Math.max(1, Number(process.env.BACKUP_KEEP) || 14)
+// The disk is 1 GB on the live service and the database shares it, so backups
+// are not allowed to grow until there is no room left for the thing they exist
+// to protect.
+const BACKUP_MAX_BYTES = Number(process.env.BACKUP_MAX_BYTES) || 300 * 1024 * 1024
+const BACKUP_NAME_RE = /^k846-\d{4}-\d{2}-\d{2}(-\d{6})?\.db$/
+
+function backupStamp(date, withTime) {
+  const iso = date.toISOString()
+  return withTime
+    ? `${iso.slice(0, 10)}-${iso.slice(11, 19).replace(/:/g, '')}`
+    : iso.slice(0, 10)
+}
+
+function listBackups() {
+  try { backupFs.mkdirSync(BACKUP_DIR, { recursive: true }) } catch {}
+  return backupFs.readdirSync(BACKUP_DIR)
+    .filter((name) => BACKUP_NAME_RE.test(name))
+    .map((name) => {
+      const stat = backupFs.statSync(path.join(BACKUP_DIR, name))
+      return { name, bytes: stat.size, taken_at: stat.mtime.toISOString() }
+    })
+    // Newest first. The names sort lexically by date, but mtime is the truth
+    // for a file that was restored or copied in by hand.
+    .sort((a, b) => b.name.localeCompare(a.name))
+}
+
+/**
+ * Open the finished file and ask SQLite whether it is sound, then confirm the
+ * tables that matter actually came across. A backup that is merely present
+ * tells you nothing; this is what lets the console say "verified".
+ */
+function verifyBackup(file) {
+  let probe
+  try {
+    probe = new Database(file, { readonly: true, fileMustExist: true })
+    const integrity = probe.pragma('integrity_check', { simple: true })
+    if (integrity !== 'ok') return { ok: false, reason: `integrity_check: ${integrity}` }
+    // A structurally valid but empty file would pass the check above.
+    const users = probe.prepare('SELECT COUNT(*) n FROM users').get().n
+    if (!users) return { ok: false, reason: 'no user rows in the copy' }
+    const roster = probe.prepare('SELECT COUNT(*) n FROM roster_members').get().n
+    return { ok: true, users, roster_members: roster }
+  } catch (err) {
+    return { ok: false, reason: err.message }
+  } finally {
+    try { probe?.close() } catch {}
+  }
+}
+
+/** Drop the oldest backups once there are too many, or they take too much room. */
+function pruneBackups() {
+  const removed = []
+  let files = listBackups()
+
+  while (files.length > BACKUP_KEEP) {
+    const oldest = files.pop()
+    try { backupFs.unlinkSync(path.join(BACKUP_DIR, oldest.name)); removed.push(oldest.name) } catch {}
+  }
+  // Never prune below two: one recent copy, and one to fall back to if the
+  // recent one turns out to have captured the very problem being recovered from.
+  while (files.reduce((sum, f) => sum + f.bytes, 0) > BACKUP_MAX_BYTES && files.length > 2) {
+    const oldest = files.pop()
+    try { backupFs.unlinkSync(path.join(BACKUP_DIR, oldest.name)); removed.push(oldest.name) } catch {}
+  }
+  return removed
+}
+
+/**
+ * Take one backup. `manual` puts the time in the filename so an on-demand copy
+ * never overwrites the day's automatic one.
+ */
+async function runBackup({ manual = false } = {}) {
+  try { backupFs.mkdirSync(BACKUP_DIR, { recursive: true }) } catch {}
+  const name = `k846-${backupStamp(new Date(), manual)}.db`
+  const target = path.join(BACKUP_DIR, name)
+  const temp = `${target}.part`
+  const started = Date.now()
+
+  try {
+    // Written under a temporary name and moved into place only once it is
+    // verified, so a backup interrupted half-way never appears in the list as
+    // though it were usable.
+    await db.backup(temp)
+    const check = verifyBackup(temp)
+    if (!check.ok) {
+      try { backupFs.unlinkSync(temp) } catch {}
+      console.error(`[backup] discarded ${name}: ${check.reason}`)
+      return { ok: false, error: check.reason }
+    }
+    backupFs.renameSync(temp, target)
+    const bytes = backupFs.statSync(target).size
+    const pruned = pruneBackups()
+    const ms = Date.now() - started
+    console.log(`[backup] ${name} — ${(bytes / 1024).toFixed(0)} KB, ${check.users} users, ${check.roster_members} roster rows, ${ms}ms${pruned.length ? `, pruned ${pruned.length}` : ''}`)
+    return { ok: true, name, bytes, ms, verified: check, pruned }
+  } catch (err) {
+    try { backupFs.unlinkSync(temp) } catch {}
+    console.error('[backup] failed:', err.message)
+    return { ok: false, error: err.message }
+  }
+}
+
+/**
+ * Checked often, acts rarely: if there is no backup carrying today's date, take
+ * one. Restart-safe by construction -- a fixed daily timer would simply skip a
+ * day whenever a deploy landed near its hour, which is exactly the day you most
+ * want a copy from.
+ */
+async function backupTick() {
+  const today = backupStamp(new Date(), false)
+  if (listBackups().some((b) => b.name.startsWith(`k846-${today}`))) return
+  await runBackup()
+}
+
+app.get('/api/admin/backups', auth, adminOnly, (_req, res) => {
+  const files = listBackups()
+  res.json({
+    directory: BACKUP_DIR,
+    keep: BACKUP_KEEP,
+    total_bytes: files.reduce((sum, f) => sum + f.bytes, 0),
+    database_bytes: (() => { try { return backupFs.statSync(DB_PATH).size } catch { return null } })(),
+    backups: files,
+  })
+})
+
+app.post('/api/admin/backups', auth, adminOnly, async (_req, res) => {
+  const result = await runBackup({ manual: true })
+  if (!result.ok) return res.status(500).json({ error: result.error || 'Backup failed' })
+  res.json(result)
+})
+
+app.get('/api/admin/backups/:name', auth, adminOnly, (req, res) => {
+  const name = String(req.params.name || '')
+  // The filename is checked against the pattern AND the resolved path is
+  // confirmed to sit inside the backup directory. This endpoint hands over the
+  // entire database, password hashes included, so a traversal here would be the
+  // whole kingdom rather than one file.
+  if (!BACKUP_NAME_RE.test(name)) return res.status(400).json({ error: 'Invalid backup name' })
+  const target = path.resolve(BACKUP_DIR, name)
+  if (path.dirname(target) !== path.resolve(BACKUP_DIR)) return res.status(400).json({ error: 'Invalid backup name' })
+  if (!backupFs.existsSync(target)) return res.status(404).json({ error: 'No such backup' })
+  res.download(target, name)
+})
+
+// Exported for the tests. Placed after the constants above rather than beside
+// the other exports further up: those run before these are initialised, and
+// reading a const early is a load-time error that takes the whole server down.
+module.exports = { ...(module.exports || {}), runBackup, backupTick, listBackups, verifyBackup, pruneBackups, BACKUP_DIR }
+
 app.get('/api/admin/leaders', auth, adminOnly, (_req, res) => {
   res.json(db.prepare("SELECT id, username, display_name, alliance_tag, alliance_slug, role, must_change_password FROM users WHERE role='leader' ORDER BY alliance_slug").all())
 })
@@ -997,11 +1211,16 @@ const SCHEDULE_DEFAULTS = {
 // Leader: get their alliance's event schedule
 app.get('/api/leader/schedule', auth, leaderOnly, (req, res) => {
   const slug = req.user.alliance_slug
-  const rows = db.prepare('SELECT event_name, event_time, updated_at FROM alliance_schedules WHERE alliance_slug = ?').all(slug)
+  const rows = db.prepare('SELECT event_name, event_time, event_days, updated_at FROM alliance_schedules WHERE alliance_slug = ?').all(slug)
   const defaults = SCHEDULE_DEFAULTS[slug] || {}
   const schedule = ALLIANCE_EVENTS.map(event => {
     const match = rows.find(r => r.event_name === event)
-    return { event, time: match?.event_time || defaults[event] || '', updated: match?.updated_at || null }
+    return {
+      event,
+      time: match?.event_time || defaults[event] || '',
+      days: parseDays(match?.event_days ?? defaultDaysFor(event)),
+      updated: match?.updated_at || null,
+    }
   })
   res.json({ alliance_slug: slug, schedule })
 })
@@ -1011,14 +1230,191 @@ app.put('/api/leader/schedule', auth, leaderOnly, (req, res) => {
   const slug = req.user.alliance_slug
   const { schedule } = req.body
   if (!Array.isArray(schedule)) return res.status(400).json({ error: 'Schedule array required' })
-  const stmt = db.prepare("INSERT INTO alliance_schedules (alliance_slug, event_name, event_time, updated_at) VALUES (?,?,?,datetime('now')) ON CONFLICT(alliance_slug, event_name) DO UPDATE SET event_time=excluded.event_time, updated_at=datetime('now')")
+  const stmt = db.prepare("INSERT INTO alliance_schedules (alliance_slug, event_name, event_time, event_days, updated_at) VALUES (?,?,?,?,datetime('now')) ON CONFLICT(alliance_slug, event_name) DO UPDATE SET event_time=excluded.event_time, event_days=excluded.event_days, updated_at=datetime('now')")
   for (const item of schedule) {
     if (item.event && ALLIANCE_EVENTS.includes(item.event)) {
-      stmt.run(slug, item.event, item.time || '')
+      // Days decide whether a phone buzzes, so they are normalised here rather
+      // than trusted: anything unparseable falls back to the event's default
+      // instead of silently becoming "no days" and going quiet.
+      const days = parseDays(Array.isArray(item.days) ? item.days.join(',') : item.days)
+      stmt.run(slug, item.event, item.time || '', (days.length ? days : parseDays(defaultDaysFor(item.event))).join(','))
     }
   }
   res.json({ ok: true, alliance_slug: slug, updated: schedule.length })
 })
+
+
+/* ===== Event reminders =====================================================
+ * Players install the app, pick their alliance, and get a buzz 10 minutes and
+ * 5 minutes before that alliance's events.
+ *
+ * These have to arrive when the app is closed, which rules out anything the
+ * page could do for itself: a tab that is not running cannot set a timer, and
+ * the Notification Triggers API that would let a service worker schedule one
+ * has never shipped. So the server holds the schedule and pushes.
+ * ------------------------------------------------------------------------- */
+const webpush = require('web-push')
+
+// Generated once and kept. Regenerating the pair would silently invalidate
+// every subscription already handed out -- every installed app would keep
+// listening on a key the server no longer signs with, and nothing would appear
+// to be wrong until nobody got a reminder.
+function vapidKeys() {
+  const fromEnv = process.env.VAPID_PUBLIC_KEY && process.env.VAPID_PRIVATE_KEY
+  if (fromEnv) return { publicKey: process.env.VAPID_PUBLIC_KEY, privateKey: process.env.VAPID_PRIVATE_KEY }
+  const get = db.prepare('SELECT value FROM app_settings WHERE key=?')
+  const pub = get.get('vapid_public')?.value
+  const priv = get.get('vapid_private')?.value
+  if (pub && priv) return { publicKey: pub, privateKey: priv }
+  const pair = webpush.generateVAPIDKeys()
+  const put = db.prepare('INSERT OR REPLACE INTO app_settings (key, value) VALUES (?,?)')
+  put.run('vapid_public', pair.publicKey)
+  put.run('vapid_private', pair.privateKey)
+  console.log('[push] generated a new VAPID key pair')
+  return pair
+}
+
+const VAPID = vapidKeys()
+// The contact address is required by the push services and is what they use to
+// reach an operator about a misbehaving sender.
+webpush.setVapidDetails(process.env.VAPID_SUBJECT || 'mailto:admin@kingdom846.com', VAPID.publicKey, VAPID.privateKey)
+
+const REMINDER_LEADS = [10, 5]           // minutes before an event
+const ALL_DAYS = '0,1,2,3,4,5,6'
+
+function parseDays(value) {
+  return String(value == null || value === '' ? ALL_DAYS : value)
+    .split(',').map((d) => Number(d.trim())).filter((d) => Number.isInteger(d) && d >= 0 && d <= 6)
+}
+
+/** Effective schedule for one alliance: stored rows over seeded defaults. */
+function allianceSchedule(slug) {
+  const rows = db.prepare('SELECT event_name, event_time, event_days FROM alliance_schedules WHERE alliance_slug=?').all(slug)
+  const defaults = SCHEDULE_DEFAULTS[slug] || {}
+  return ALLIANCE_EVENTS.map((event) => {
+    const row = rows.find((r) => r.event_name === event)
+    return {
+      event,
+      time: row?.event_time || defaults[event] || '',
+      // Vikings Vengeance names its own day, so an alliance that never touched
+      // the schedule still gets that one right rather than a buzz every day.
+      days: parseDays(row?.event_days ?? defaultDaysFor(event)),
+    }
+  })
+}
+
+function defaultDaysFor(event) {
+  if (/tuesday/i.test(event)) return '2'
+  if (/thursday/i.test(event)) return '4'
+  return ALL_DAYS
+}
+
+app.get('/api/push/key', (_req, res) => res.json({ publicKey: VAPID.publicKey }))
+
+app.post('/api/push/subscribe', (req, res) => {
+  const { subscription, alliance_slug: slug } = req.body || {}
+  const endpoint = subscription?.endpoint
+  const p256dh = subscription?.keys?.p256dh
+  const auth = subscription?.keys?.auth
+  if (!endpoint || !p256dh || !auth) return res.status(400).json({ error: 'A complete push subscription is required' })
+  if (typeof endpoint !== 'string' || endpoint.length > 800) return res.status(400).json({ error: 'Invalid endpoint' })
+  const valid = db.prepare('SELECT slug FROM alliances WHERE slug=?').get(String(slug || '').toLowerCase())
+  if (!valid) return res.status(400).json({ error: 'Pick a valid alliance' })
+  db.prepare(`INSERT INTO push_subscriptions (endpoint, p256dh, auth, alliance_slug)
+    VALUES (?,?,?,?)
+    ON CONFLICT(endpoint) DO UPDATE SET
+      p256dh=excluded.p256dh, auth=excluded.auth, alliance_slug=excluded.alliance_slug,
+      last_seen=datetime('now'), failures=0`).run(endpoint, p256dh, auth, valid.slug)
+  res.json({ ok: true, alliance_slug: valid.slug })
+})
+
+app.post('/api/push/unsubscribe', (req, res) => {
+  const endpoint = req.body?.endpoint
+  if (!endpoint) return res.status(400).json({ error: 'Endpoint required' })
+  db.prepare('DELETE FROM push_subscriptions WHERE endpoint=?').run(String(endpoint))
+  res.json({ ok: true })
+})
+
+/** What this device is currently signed up for, if anything. */
+app.post('/api/push/status', (req, res) => {
+  const endpoint = req.body?.endpoint
+  if (!endpoint) return res.json({ subscribed: false })
+  const row = db.prepare('SELECT alliance_slug FROM push_subscriptions WHERE endpoint=?').get(String(endpoint))
+  res.json({ subscribed: !!row, alliance_slug: row?.alliance_slug || null })
+})
+
+async function sendToAlliance(slug, payload) {
+  const subs = db.prepare('SELECT * FROM push_subscriptions WHERE alliance_slug=?').all(slug)
+  const body = JSON.stringify(payload)
+  let sent = 0, dropped = 0
+  for (const sub of subs) {
+    try {
+      await webpush.sendNotification(
+        { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
+        body,
+        { TTL: 300 },  // a reminder that arrives after the event is worse than none
+      )
+      sent++
+    } catch (err) {
+      // 404/410 mean the browser threw the subscription away -- the app was
+      // uninstalled, or the user cleared site data. Those are permanent, so the
+      // row goes rather than being retried before every future event forever.
+      const code = err?.statusCode
+      if (code === 404 || code === 410) {
+        db.prepare('DELETE FROM push_subscriptions WHERE endpoint=?').run(sub.endpoint)
+        dropped++
+      } else {
+        db.prepare('UPDATE push_subscriptions SET failures=failures+1 WHERE endpoint=?').run(sub.endpoint)
+      }
+    }
+  }
+  return { sent, dropped }
+}
+
+function two(n) { return String(n).padStart(2, '0') }
+
+/**
+ * Runs often, sends once. The tick is deliberately faster than the reminders it
+ * has to hit, so a slow or briefly stalled server still lands inside the minute
+ * it was aiming at; push_sent is what keeps that from meaning repeats.
+ */
+async function runReminderTick() {
+  const now = new Date()
+  const alliances = db.prepare('SELECT slug FROM alliances').all().map((a) => a.slug)
+
+  for (const lead of REMINDER_LEADS) {
+    const target = new Date(now.getTime() + lead * 60000)
+    const hhmm = `${two(target.getUTCHours())}:${two(target.getUTCMinutes())}`
+    const day = target.getUTCDay()
+    const dateKey = target.toISOString().slice(0, 10)
+
+    for (const slug of alliances) {
+      for (const item of allianceSchedule(slug)) {
+        if (!item.time || item.time !== hhmm || !item.days.includes(day)) continue
+        const key = `${dateKey}|${slug}|${item.event}|${lead}`
+        // INSERT first: if another tick already claimed this reminder the
+        // primary key rejects it, so exactly one tick can ever get past here.
+        try {
+          db.prepare('INSERT INTO push_sent (key) VALUES (?)').run(key)
+        } catch { continue }
+        const result = await sendToAlliance(slug, {
+          title: `${item.event} in ${lead} minutes`,
+          body: `[${slug.toUpperCase()}] starts at ${item.time} UTC. Rally up.`,
+          tag: `${slug}-${item.event}-${dateKey}`,
+          url: '/#/events',
+        })
+        console.log(`[push] ${slug} ${item.event} T-${lead}m -> ${result.sent} sent, ${result.dropped} stale`)
+      }
+    }
+  }
+
+  // The dedupe log only has to outlive the reminders it guards.
+  db.prepare("DELETE FROM push_sent WHERE sent_at < datetime('now', '-2 days')").run()
+}
+
+// Exported for the tests, which drive the tick directly rather than waiting on
+// a real clock.
+module.exports = { ...(module.exports || {}), runReminderTick, allianceSchedule, parseDays, defaultDaysFor }
 
 app.get('/api/leader/roster', auth, leaderOnly, (req, res) => {
   const slug = req.user.alliance_slug
@@ -1860,6 +2256,19 @@ const isProduction = process.env.NODE_ENV === 'production'
   }
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`Kingdom 846 backend listening on ${PORT} (${isProduction ? 'production' : 'dev'})`)
+    // Backups. One immediately, because a server that has just started is a
+    // server that has just changed -- a deploy is exactly when you want a copy
+    // of what came before it -- and then a check every half hour that does
+    // nothing on the days a copy already exists.
+    runBackup().catch((e) => console.error('[backup] startup backup failed', e))
+    setInterval(() => { backupTick().catch((e) => console.error('[backup] tick failed', e)) }, 30 * 60 * 1000)
+    console.log(`[backup] daily backups to ${BACKUP_DIR}, keeping ${BACKUP_KEEP}`)
+
+    // Event reminders. Every 30 seconds so a stalled tick still lands inside
+    // the minute it was aiming at; push_sent makes the repeats harmless.
+    setInterval(() => { runReminderTick().catch((e) => console.error('[push] tick failed', e)) }, 30000)
+    console.log('[push] event reminders scheduled (10 and 5 minutes before each alliance event)')
+
     // Start autonomous AI agent — runs on startup then every 4 hours
     if (GEMINI_API_KEY) {
       // Don't run on startup — preserves free tier quota for chat

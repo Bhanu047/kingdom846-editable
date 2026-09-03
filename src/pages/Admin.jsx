@@ -74,6 +74,8 @@ export default function Admin() {
         const map = {}
         for (const r of rows) {
           for (const item of r.schedule || []) {
+            // Only a leader's — a time this page set reads back as 'console',
+            // and telling Sparta a leader set their own edit would be a lie.
             if (item.source === 'leader') map[`${r.alliance_slug}|${item.event}`] = item.time
           }
         }

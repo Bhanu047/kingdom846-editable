@@ -51,6 +51,41 @@ node server/index.cjs  # serves API on :5000; serve dist/ as static
 | `GET  /api/king-status` / `PUT` | King & leading alliance (editable by Sparta). |
 | `GET  /api/admin/leaders` | List 4 leaders (admin only). |
 | `PATCH /api/admin/leaders/:id/credentials` | Reset a leader's password (admin only). |
+| `POST /api/ai/chat` | Ask the Royal Advisor (public, read-only). |
+| `POST /api/ai/admin` | Ask the Royal Advisor with actions unlocked (admin only). |
+
+---
+
+## 2b. The Royal Advisor — the kingdom's own AI
+
+The crown button on every page opens **the kingdom's own AI**, built in
+`server/ai/`. It runs entirely on this server: no external model, no API key,
+no per-message cost, and no visitor question ever leaves the box.
+
+It ranks 323 knowledge topics by relevance to the question, reads the live
+database for anything that changes (the ruler, alliance leaders, event
+timings, news), understands typos and alliance nicknames, and follows a
+conversation — after "tell me about IceHunters", "when is their bear hunt?"
+resolves to that alliance.
+
+Its most important property is knowing what it does not know. Retrieval
+reports a confidence, so an unfamiliar question gets an honest "I'm not sure"
+and the nearest topics instead of a confident wrong answer. That is the
+trade against a hosted chatbot: narrower range, but it cannot invent an
+alliance leader or a bear hunt time that does not exist.
+
+Visitors ask and look things up. A signed-in admin can also *instruct* it —
+"sync the news", "crown Dunngeon High King" — and it confirms before changing
+anything. That boundary is a role check in code, not a matter of phrasing, so
+a visitor typing "crown me king" is refused.
+
+```bash
+npm run advisor:eval     # retrieval quality + honesty check
+npm test                 # full regression suite
+```
+
+See `server/ai/README.md` for how to add topics, fix a misunderstood question,
+and the tuning decisions behind the ranking.
 
 ---
 

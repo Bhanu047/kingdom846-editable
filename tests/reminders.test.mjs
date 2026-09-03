@@ -132,5 +132,4 @@ test('both the 10 and 5 minute reminders fire, as separate sends', async () => {
 test.after(() => {
   fake.close()
   try { fs.rmSync(workdir, { recursive: true, force: true }) } catch {}
-  process.exit(0)
 })

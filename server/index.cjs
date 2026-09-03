@@ -985,6 +985,183 @@ app.get('/api/vote/audit', auth, adminOnly, (_req, res) => {
   })
 })
 
+
+/* ===== Backups ==============================================================
+ * Everything the kingdom has -- rosters, applications, transfer requests,
+ * credentials, notification sign-ups -- is one SQLite file on one disk. Until
+ * now there was no second copy of it anywhere.
+ *
+ * Three things make this a real backup rather than a file lying next to the
+ * original:
+ *
+ *   1. It is taken through SQLite's online backup API, not by copying the file.
+ *      The database runs in WAL mode, so a plain copy taken while the server is
+ *      serving can miss the write-ahead log and produce a file that opens fine
+ *      and is quietly missing the last writes -- or does not open at all.
+ *   2. Every backup is verified immediately after it is written, by opening it
+ *      and running an integrity check. An unverified backup is a guess.
+ *   3. Sparta can download it. A copy on the same disk survives the common
+ *      disasters -- a bad migration, a mistaken roster upload, corruption -- but
+ *      not the disk itself. The download is what makes an off-site copy
+ *      possible, and off-site is the only copy that survives everything.
+ * ------------------------------------------------------------------------- */
+
+// `fs` is declared further down this file for serving the frontend; a second
+// `const fs` at module scope would be a redeclaration error, so this binding is
+// named for what it is used by.
+const backupFs = require('node:fs')
+
+const BACKUP_DIR = process.env.BACKUP_DIR || path.join(path.dirname(DB_PATH), 'backups')
+const BACKUP_KEEP = Math.max(1, Number(process.env.BACKUP_KEEP) || 14)
+// The disk is 1 GB on the live service and the database shares it, so backups
+// are not allowed to grow until there is no room left for the thing they exist
+// to protect.
+const BACKUP_MAX_BYTES = Number(process.env.BACKUP_MAX_BYTES) || 300 * 1024 * 1024
+const BACKUP_NAME_RE = /^k846-\d{4}-\d{2}-\d{2}(-\d{6})?\.db$/
+
+function backupStamp(date, withTime) {
+  const iso = date.toISOString()
+  return withTime
+    ? `${iso.slice(0, 10)}-${iso.slice(11, 19).replace(/:/g, '')}`
+    : iso.slice(0, 10)
+}
+
+function listBackups() {
+  try { backupFs.mkdirSync(BACKUP_DIR, { recursive: true }) } catch {}
+  return backupFs.readdirSync(BACKUP_DIR)
+    .filter((name) => BACKUP_NAME_RE.test(name))
+    .map((name) => {
+      const stat = backupFs.statSync(path.join(BACKUP_DIR, name))
+      return { name, bytes: stat.size, taken_at: stat.mtime.toISOString() }
+    })
+    // Newest first. The names sort lexically by date, but mtime is the truth
+    // for a file that was restored or copied in by hand.
+    .sort((a, b) => b.name.localeCompare(a.name))
+}
+
+/**
+ * Open the finished file and ask SQLite whether it is sound, then confirm the
+ * tables that matter actually came across. A backup that is merely present
+ * tells you nothing; this is what lets the console say "verified".
+ */
+function verifyBackup(file) {
+  let probe
+  try {
+    probe = new Database(file, { readonly: true, fileMustExist: true })
+    const integrity = probe.pragma('integrity_check', { simple: true })
+    if (integrity !== 'ok') return { ok: false, reason: `integrity_check: ${integrity}` }
+    // A structurally valid but empty file would pass the check above.
+    const users = probe.prepare('SELECT COUNT(*) n FROM users').get().n
+    if (!users) return { ok: false, reason: 'no user rows in the copy' }
+    const roster = probe.prepare('SELECT COUNT(*) n FROM roster_members').get().n
+    return { ok: true, users, roster_members: roster }
+  } catch (err) {
+    return { ok: false, reason: err.message }
+  } finally {
+    try { probe?.close() } catch {}
+  }
+}
+
+/** Drop the oldest backups once there are too many, or they take too much room. */
+function pruneBackups() {
+  const removed = []
+  let files = listBackups()
+
+  while (files.length > BACKUP_KEEP) {
+    const oldest = files.pop()
+    try { backupFs.unlinkSync(path.join(BACKUP_DIR, oldest.name)); removed.push(oldest.name) } catch {}
+  }
+  // Never prune below two: one recent copy, and one to fall back to if the
+  // recent one turns out to have captured the very problem being recovered from.
+  while (files.reduce((sum, f) => sum + f.bytes, 0) > BACKUP_MAX_BYTES && files.length > 2) {
+    const oldest = files.pop()
+    try { backupFs.unlinkSync(path.join(BACKUP_DIR, oldest.name)); removed.push(oldest.name) } catch {}
+  }
+  return removed
+}
+
+/**
+ * Take one backup. `manual` puts the time in the filename so an on-demand copy
+ * never overwrites the day's automatic one.
+ */
+async function runBackup({ manual = false } = {}) {
+  try { backupFs.mkdirSync(BACKUP_DIR, { recursive: true }) } catch {}
+  const name = `k846-${backupStamp(new Date(), manual)}.db`
+  const target = path.join(BACKUP_DIR, name)
+  const temp = `${target}.part`
+  const started = Date.now()
+
+  try {
+    // Written under a temporary name and moved into place only once it is
+    // verified, so a backup interrupted half-way never appears in the list as
+    // though it were usable.
+    await db.backup(temp)
+    const check = verifyBackup(temp)
+    if (!check.ok) {
+      try { backupFs.unlinkSync(temp) } catch {}
+      console.error(`[backup] discarded ${name}: ${check.reason}`)
+      return { ok: false, error: check.reason }
+    }
+    backupFs.renameSync(temp, target)
+    const bytes = backupFs.statSync(target).size
+    const pruned = pruneBackups()
+    const ms = Date.now() - started
+    console.log(`[backup] ${name} — ${(bytes / 1024).toFixed(0)} KB, ${check.users} users, ${check.roster_members} roster rows, ${ms}ms${pruned.length ? `, pruned ${pruned.length}` : ''}`)
+    return { ok: true, name, bytes, ms, verified: check, pruned }
+  } catch (err) {
+    try { backupFs.unlinkSync(temp) } catch {}
+    console.error('[backup] failed:', err.message)
+    return { ok: false, error: err.message }
+  }
+}
+
+/**
+ * Checked often, acts rarely: if there is no backup carrying today's date, take
+ * one. Restart-safe by construction -- a fixed daily timer would simply skip a
+ * day whenever a deploy landed near its hour, which is exactly the day you most
+ * want a copy from.
+ */
+async function backupTick() {
+  const today = backupStamp(new Date(), false)
+  if (listBackups().some((b) => b.name.startsWith(`k846-${today}`))) return
+  await runBackup()
+}
+
+app.get('/api/admin/backups', auth, adminOnly, (_req, res) => {
+  const files = listBackups()
+  res.json({
+    directory: BACKUP_DIR,
+    keep: BACKUP_KEEP,
+    total_bytes: files.reduce((sum, f) => sum + f.bytes, 0),
+    database_bytes: (() => { try { return backupFs.statSync(DB_PATH).size } catch { return null } })(),
+    backups: files,
+  })
+})
+
+app.post('/api/admin/backups', auth, adminOnly, async (_req, res) => {
+  const result = await runBackup({ manual: true })
+  if (!result.ok) return res.status(500).json({ error: result.error || 'Backup failed' })
+  res.json(result)
+})
+
+app.get('/api/admin/backups/:name', auth, adminOnly, (req, res) => {
+  const name = String(req.params.name || '')
+  // The filename is checked against the pattern AND the resolved path is
+  // confirmed to sit inside the backup directory. This endpoint hands over the
+  // entire database, password hashes included, so a traversal here would be the
+  // whole kingdom rather than one file.
+  if (!BACKUP_NAME_RE.test(name)) return res.status(400).json({ error: 'Invalid backup name' })
+  const target = path.resolve(BACKUP_DIR, name)
+  if (path.dirname(target) !== path.resolve(BACKUP_DIR)) return res.status(400).json({ error: 'Invalid backup name' })
+  if (!backupFs.existsSync(target)) return res.status(404).json({ error: 'No such backup' })
+  res.download(target, name)
+})
+
+// Exported for the tests. Placed after the constants above rather than beside
+// the other exports further up: those run before these are initialised, and
+// reading a const early is a load-time error that takes the whole server down.
+module.exports = { ...(module.exports || {}), runBackup, backupTick, listBackups, verifyBackup, pruneBackups, BACKUP_DIR }
+
 app.get('/api/admin/leaders', auth, adminOnly, (_req, res) => {
   res.json(db.prepare("SELECT id, username, display_name, alliance_tag, alliance_slug, role, must_change_password FROM users WHERE role='leader' ORDER BY alliance_slug").all())
 })
@@ -4083,6 +4260,14 @@ const isProduction = process.env.NODE_ENV === 'production'
   }
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`Kingdom 846 backend listening on ${PORT} (${isProduction ? 'production' : 'dev'})`)
+    // Backups. One immediately, because a server that has just started is a
+    // server that has just changed -- a deploy is exactly when you want a copy
+    // of what came before it -- and then a check every half hour that does
+    // nothing on the days a copy already exists.
+    runBackup().catch((e) => console.error('[backup] startup backup failed', e))
+    setInterval(() => { backupTick().catch((e) => console.error('[backup] tick failed', e)) }, 30 * 60 * 1000)
+    console.log(`[backup] daily backups to ${BACKUP_DIR}, keeping ${BACKUP_KEEP}`)
+
     // Event reminders. Every 30 seconds so a stalled tick still lands inside
     // the minute it was aiming at; push_sent makes the repeats harmless.
     setInterval(() => { runReminderTick().catch((e) => console.error('[push] tick failed', e)) }, 30000)

@@ -8,3 +8,7 @@ data.db
 data.db-shm
 data.db-wal
 server/kingdom846.db
+
+# Database backups — these are copies of the live data, never committed.
+backups/
+*.db.part

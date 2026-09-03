@@ -37,7 +37,6 @@ const ok = (text) => () => ({ ok: true, status: 200, json: async () => ({ candid
 test.after(() => {
   globalThis.fetch = realFetch
   try { fs.rmSync(workdir, { recursive: true, force: true }) } catch {}
-  process.exit(0)
 })
 
 test('the kingdom facts carry the live ruler, alliances and schedule', () => {

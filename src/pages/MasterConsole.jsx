@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext'
 import { Panel, SectionTitle, Pill } from '../components/ui'
 import Icon from '../components/Icon'
 import { apiJson, apiFetch } from '../lib/api'
+import BackupPanel from '../components/BackupPanel'
 
 const KING_TYPES = ['High King', 'King', 'High Queen', 'Queen']
 const KING_ALLIANCES = [
@@ -129,6 +130,8 @@ export default function MasterConsole() {
       </Panel>
 
       {/* Change my credentials */}
+      <BackupPanel />
+
       <Panel className="p-5">
         <SectionTitle eyebrow="Account" title="My Sparta Login" icon="crown" />
         <p className="mb-4 text-xs text-parchment/50">Current username: <span className="font-semibold text-gold">{user?.username}</span></p>

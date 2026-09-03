@@ -326,7 +326,47 @@ a request that takes over 12 seconds is abandoned in favour of the matcher.
 > If you hit free-tier limits, the visible symptom is answers quietly reverting
 > to the old matcher style — check the logs for `[advisor] model returned 429`.
 
-## 8. Notes
+## 8. Backups
+
+Everything the kingdom has is one SQLite file. It is now copied automatically.
+
+**How it works.** A backup is taken when the server starts — a deploy is exactly
+when you want a copy of what came before it — and then once a day. Each one is
+taken through SQLite's **online backup API**, not by copying the file: the
+database runs in WAL mode, so a plain copy taken while the server is serving can
+miss the write-ahead log and produce a file that opens fine and is quietly
+missing the last writes.
+
+**Every backup is verified before it is kept.** It is written under a temporary
+name, opened, run through `PRAGMA integrity_check`, and checked for actual rows.
+Only then is it moved into place. A copy that fails is deleted and logged. An
+unverified backup is a guess.
+
+**Master Console → Database Backups** lists them with size and age, has a
+**Back up now** button, and a **Download** button on each. It warns if the newest
+is more than a day and a half old.
+
+> **Download one now and then.** The copies sit on the same disk as the database.
+> That survives the common disasters — a bad migration, a mistaken roster upload,
+> corruption — but not losing the disk. A copy kept somewhere else is the only one
+> that survives everything, and the Download button is what makes that possible.
+
+**To restore:** stop the service, replace the file at `DB_PATH`
+(`/var/data/data.db` live) with the backup, renaming it to `data.db`, and start
+again. Delete any `data.db-wal` / `data.db-shm` beside it first.
+
+| Setting | Default | |
+|---|---|---|
+| `BACKUP_DIR` | `backups/` next to the database | Where copies are kept |
+| `BACKUP_KEEP` | `14` | How many to keep before pruning oldest |
+| `BACKUP_MAX_BYTES` | 300 MB | Total cap, so backups can't fill the 1 GB disk |
+
+Endpoints are admin-only: `GET /api/admin/backups`, `POST /api/admin/backups`,
+`GET /api/admin/backups/:name`. The download hands over the entire database,
+password hashes included — the filename is pattern-checked and the resolved path
+confirmed to sit inside the backup directory.
+
+## 9. Notes
 
 - The app uses **hash-based URL routing** — pages have shareable URLs and browser
   back/forward works.

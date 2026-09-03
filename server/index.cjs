@@ -1551,6 +1551,13 @@ function two(n) { return String(n).padStart(2, '0') }
  * ------------------------------------------------------------------------- */
 const ARENA_DEFAULT_TIME = '00:00'
 
+// 00:00 UTC, confirmed by the kingdom's admin rather than assumed here, so it is
+// seeded as settled: the reminders land at 23:50 and 23:55 the night before,
+// and nobody has to clear a warning about a guess that was never a guess.
+// Only written when nothing is stored, so a later change from the console wins.
+db.prepare("INSERT OR IGNORE INTO app_settings (key, value) VALUES ('arena_reset', ?)")
+  .run(JSON.stringify({ time: ARENA_DEFAULT_TIME, enabled: true, confirmed: true }))
+
 function arenaReset() {
   const row = db.prepare("SELECT value FROM app_settings WHERE key='arena_reset'").get()
   if (!row) return { time: ARENA_DEFAULT_TIME, enabled: true, confirmed: false }

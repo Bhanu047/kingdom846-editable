@@ -253,3 +253,60 @@ test('content with no alliances at all is a no-op, not a crash', () => {
   assert.equal(server.syncScheduleFromContent({ alliances: 'nope' }, null), 0)
   assert.equal(server.syncScheduleFromContent({ alliances: [{ schedule: [{ event: 'Bear Hunt-2', time: '09:00' }] }] }, null), 0)
 })
+
+/* The live outage this file exists to prevent happening twice.
+ *
+ * The Master Console's own field says "e.g. 14:00 UTC", so every real time in
+ * the kingdom is stored with the unit typed in. A strict HH:MM validator
+ * rejected all of them, and once the resolved schedule reached the Alliances
+ * page too, [RYO] went from 12:30 / 21:30 to the seeded 04:00 / 12:00 on the
+ * page AND in the notifications.
+ */
+const RYO_AS_TYPED = RYO_REAL.map((r) => ({ ...r, time: `${r.time} UTC` }))
+
+test('times typed the way the field asks for them are read, not discarded', () => {
+  clearAll()
+  setKingdomContent({ ryo: RYO_AS_TYPED })
+  assert.equal(timeOf('ryo', 'Bear Hunt -1'), '12:30')
+  assert.equal(timeOf('ryo', 'Bear Hunt-2'), '21:30')
+  assert.equal(timeOf('ryo', 'Tri-Alliance Clash Legion-2'), '19:00')
+  // Not one of them falls through to a seeded default.
+  for (const item of server.allianceSchedule('ryo')) {
+    assert.notEqual(item.source, 'default', `${item.event} fell back to a default`)
+  }
+})
+
+test('a time with the unit still writes through to the phones', () => {
+  clearAll()
+  setKingdomContent({ ryo: RYO_AS_TYPED })
+  const written = saveMasterConsole({ ryo: RYO_AS_TYPED.map((r) => r.event === 'Bear Hunt-2' ? { ...r, time: '20:45 UTC' } : r) })
+  assert.equal(written, 1)
+  // Stored normalised, so the notification reads "20:45 UTC" and not
+  // "20:45 UTC UTC".
+  assert.equal(db.prepare("SELECT event_time t FROM alliance_schedules WHERE alliance_slug='ryo' AND event_name='Bear Hunt-2'").get().t, '20:45')
+  assert.equal(timeOf('ryo', 'Bear Hunt-2'), '20:45')
+  assert.match(server.eventNotification({ event: 'Bear Hunt-2', slug: 'ryo', time: timeOf('ryo', 'Bear Hunt-2'), lead: 5 }).body, /20:45 UTC\./)
+})
+
+test('an unchanged schedule is still recognised when the unit is typed', () => {
+  clearAll()
+  saveMasterConsole({ ryo: RYO_AS_TYPED })
+  setLeaderTime('ryo', 'Bear Hunt-2', '23:00')
+  // Saving the same blob again must not roll the leader back.
+  assert.equal(saveMasterConsole({ ryo: RYO_AS_TYPED }), 0)
+  assert.equal(timeOf('ryo', 'Bear Hunt-2'), '23:00')
+})
+
+test('normalizeTime reads what people type and refuses what it cannot', () => {
+  const ok = {
+    '12:30': '12:30', '12:30 UTC': '12:30', '12:30 utc': '12:30', '12:30UTC': '12:30',
+    '  21:30 UTC  ': '21:30', '9:05': '09:05', '9:05 UTC': '09:05', '00:00': '00:00',
+    '23:59': '23:59', '9.05': '09:05',
+  }
+  for (const [input, expected] of Object.entries(ok)) {
+    assert.equal(server.normalizeTime(input), expected, `${JSON.stringify(input)} should read as ${expected}`)
+  }
+  for (const bad of ['', '  ', null, undefined, '2', '12', 'noon', '24:00', '12:60', '25:00', '12:3', 'UTC', '1200', '12:30:00', 'half past']) {
+    assert.equal(server.normalizeTime(bad), '', `${JSON.stringify(bad)} should be refused`)
+  }
+})

@@ -6,6 +6,7 @@ import { apiJson, apiFetch } from '../lib/api'
 import BackupPanel from '../components/BackupPanel'
 import ArenaResetPanel from '../components/ArenaResetPanel'
 import EventRepeatPanel from '../components/EventRepeatPanel'
+import BirthdayPanel from '../components/BirthdayPanel'
 
 const KING_TYPES = ['High King', 'King', 'High Queen', 'Queen']
 const KING_ALLIANCES = [
@@ -135,6 +136,8 @@ export default function MasterConsole() {
       <EventRepeatPanel />
 
       <ArenaResetPanel />
+
+      <BirthdayPanel />
 
       <BackupPanel />
 

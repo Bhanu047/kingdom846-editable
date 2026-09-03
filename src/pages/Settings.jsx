@@ -107,6 +107,7 @@ export default function Settings() {
             {[
               { key: 'alert_arena', label: 'Arena Reset', desc: 'Ten and five minutes before the daily arena reset' },
               { key: 'alert_crown', label: 'A New Ruler', desc: 'When the crown changes hands after Castle Battle' },
+              { key: 'alert_birthday', label: 'Birthdays', desc: 'One message on the day, when someone in the kingdom has a birthday' },
               { key: 'digest_weekly', label: 'Weekly News Digest', desc: 'A summary of kingdom news, Mondays at 12:00 UTC' },
             ].map((item) => (
               <div key={item.key} className="flex items-center justify-between rounded-lg border border-gold/15 bg-white/5 p-3">

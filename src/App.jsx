@@ -20,6 +20,7 @@ import TabBar from './components/TabBar'
 import { isAppMode } from './lib/appMode'
 import NetworkBanner from './components/NetworkBanner'
 import AllianceSetup from './components/AllianceSetup'
+import BirthdayToast from './components/BirthdayToast'
 import PullIndicator from './components/PullIndicator'
 import { usePullToRefresh } from './lib/usePullToRefresh'
 import { installNetworkWatch, probe } from './lib/network'
@@ -139,7 +140,8 @@ function Shell() {
   const [Login, setLogin] = useState(null)
   const scrollRef = useRef(null)
   // Overlay stacking, so a layer added later does not land underneath one that
-  // opened it: 60 tab bar · 70 nav drawer · 80 search · 90 login · 10010 setup.
+  // opened it: 60 tab bar · 70 nav drawer · 80 search · 90 login · 10010 setup
+  // · 10020 birthday.
   const { reload: reloadSiteData } = useSiteData()
 
   useEffect(() => {
@@ -294,6 +296,9 @@ function Shell() {
       {!showSplash && <ChatAssistant />}
       {!showSplash && <InstallPrompt />}
       {!showSplash && <AllianceSetup appMode={appMode} />}
+      {/* Above the alliance sheet in the stack, but it only ever appears on a
+          birthday, so the two are almost never up together. */}
+      {!showSplash && <BirthdayToast />}
       {appMode && !showSplash && (
         <div className="md:hidden">
           <TabBar active={page} onNavigate={selectTab} onOpenMore={() => setMobileNav(true)} moreOpen={mobileNav} />

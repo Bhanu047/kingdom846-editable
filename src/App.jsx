@@ -1,4 +1,4 @@
-import { useState, useMemo, lazy, Suspense, useEffect } from 'react'
+import { useState, useMemo, lazy, Suspense, useEffect, useRef, useCallback } from 'react'
 import { trackPage, trackAction, installOutboundTracking } from './lib/analytics'
 import { installSurfaceTracking } from './lib/surface'
 import { installReveal } from './lib/reveal'
@@ -14,6 +14,10 @@ import ParticleField from './components/ParticleField'
 import Aurora from './components/Aurora'
 import ScrollProgress from './components/ScrollProgress'
 import ChatAssistant from './components/ChatAssistant'
+import InstallPrompt from './components/InstallPrompt'
+import AppLaunch from './components/AppLaunch'
+import TabBar from './components/TabBar'
+import { isAppMode } from './lib/appMode'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { SiteDataProvider } from './context/SiteDataContext'
 import { nav, timeline, guides, news } from './data/kingdom'
@@ -86,6 +90,11 @@ function Placeholder({ title, icon = 'bell', note }) {
 function Shell() {
   const { user, signOut, isAdmin } = useAuth()
   const estTime = useESTClock()
+  // Fixed for the life of the shell: display-mode cannot change without the
+  // document being reloaded into a different window, and re-rendering the whole
+  // app because a media query flickered would be worse than being one launch
+  // behind. lib/appMode.js still keeps the <html> attribute in step for CSS.
+  const [appMode] = useState(isAppMode)
   const [showSplash, setShowSplash] = useState(true)
   const [page, setPage] = useState(getPageFromHash)
   const [loginOpen, setLoginOpen] = useState(false)
@@ -94,6 +103,7 @@ function Shell() {
   const [search, setSearch] = useState('')
   const [searchOpen, setSearchOpen] = useState(false)
   const [Login, setLogin] = useState(null)
+  const scrollRef = useRef(null)
 
   useEffect(() => {
     const onHashChange = () => setPage(getPageFromHash())
@@ -104,6 +114,12 @@ function Shell() {
   useEffect(() => {
     if (loginOpen && !Login) import('./components/Login').then((m) => setLogin(() => m.default))
   }, [loginOpen, Login])
+
+  // A new screen starts at its top. The scrolling element is the shell, not the
+  // page, so it keeps its offset when the page inside it is swapped -- which
+  // meant arriving at Events from halfway down Rankings dropped you halfway
+  // down Events, past its header.
+  useEffect(() => { scrollRef.current?.scrollTo({ top: 0 }) }, [page])
 
   // One page view per navigation. Deliberately keyed on `page` rather than the
   // hash, so a re-render or a query-string tweak does not double-count.
@@ -126,6 +142,14 @@ function Shell() {
     setPage(p)
     setMobileNav(false)
   }
+
+  // Tapping the tab you are already on scrolls that screen back to the top,
+  // the way every native tab bar behaves. Without it the tab is simply dead on
+  // its own page, which is the moment a tab bar stops feeling like one.
+  const selectTab = useCallback((p) => {
+    if (p === page && !mobileNav) scrollRef.current?.scrollTo({ top: 0, behavior: 'smooth' })
+    else navigate(p)
+  }, [page, mobileNav])
 
   const index = useMemo(() => {
     const items = []
@@ -178,18 +202,30 @@ function Shell() {
 
   return (
     <>
-      {showSplash && <SplashScreen onEnter={() => setShowSplash(false)} />}
+      {showSplash && (appMode
+        ? <AppLaunch onDone={() => setShowSplash(false)} />
+        : <SplashScreen onEnter={() => setShowSplash(false)} />)}
       <Aurora />
       <ParticleField />
       <ScrollProgress />
-      <ChatAssistant />
+      {/* The chat button carries z-index 9999, the same as the entrance and
+          the launch screen, and it renders after both -- so it sat on top of
+          them, a floating crown over a door nobody had opened yet. It has
+          nothing to answer until there is a page behind it anyway. */}
+      {!showSplash && <ChatAssistant />}
+      {!showSplash && <InstallPrompt />}
+      {appMode && !showSplash && (
+        <div className="md:hidden">
+          <TabBar active={page} onNavigate={selectTab} onOpenMore={() => setMobileNav(true)} moreOpen={mobileNav} />
+        </div>
+      )}
       <div className="app-shell flex overflow-hidden relative z-10">
         <div className="hidden md:flex">
           <Sidebar active={page} onNavigate={navigate} user={sidebarUser} onLogin={() => { setLoginMode('admin'); setLoginOpen(true) }} onSignOut={handleSignOut} isAdmin={isAdmin} />
         </div>
 
         {mobileNav && (
-          <div className="fixed inset-0 z-40 md:hidden" onClick={() => setMobileNav(false)}>
+          <div className="fixed inset-0 z-[70] md:hidden" onClick={() => setMobileNav(false)}>
             <div className="absolute inset-0 bg-ink/70" />
             <div className="absolute left-0 top-0 h-full" onClick={(e) => e.stopPropagation()}>
               <Sidebar active={page} onNavigate={navigate} user={sidebarUser} onLogin={() => { setLoginMode('admin'); setLoginOpen(true) }} onSignOut={handleSignOut} isAdmin={isAdmin} />
@@ -201,6 +237,7 @@ function Shell() {
           <AppHeader
             page={page}
             title={titles[page] || 'Page'}
+            appMode={appMode}
             estTime={estTime}
             isAdmin={isAdmin}
             user={user}
@@ -212,9 +249,9 @@ function Shell() {
             onLogin={() => { setLoginMode('leader'); setLoginOpen(true) }}
           />
 
-          <div className="app-scroll flex-1 overflow-y-auto overflow-x-hidden overscroll-contain pt-4 md:pt-6" style={{ WebkitOverflowScrolling: 'touch' }}>
+          <div ref={scrollRef} className="app-scroll flex-1 overflow-y-auto overflow-x-hidden overscroll-contain pt-4 md:pt-6" style={{ WebkitOverflowScrolling: 'touch' }}>
             <div key={page} className="page-enter mx-auto max-w-6xl">{render()}</div>
-            <footer className="mt-12 pt-6 pb-4 relative">
+            <footer className="site-footer mt-12 pt-6 pb-4 relative">
               <div className="flex flex-col items-center gap-2 text-center">
                 <div className="flex items-center gap-3"><span className="text-gold-bright float-anim"><Icon name="crown" size={20} /></span><span className="font-serif text-lg tracking-wider gradient-gold font-bold">Kingdom 846</span><span className="text-gold-bright float-anim" style={{ animationDelay: '2s' }}><Icon name="crown" size={20} /></span></div>
                 <p className="text-[12px] text-gold/50 italic font-serif">Where legends are forged in fire and crowned in gold</p>

@@ -22,7 +22,11 @@ const KEEP = new Set([SHELL_CACHE, ASSET_CACHE, FONT_CACHE])
 // Enough to paint the shell offline. Deliberately small: the hashed build
 // assets are cached on first use instead, so a failed precache of one stale
 // filename can never block the whole install.
-const SHELL_URLS = ['/', '/index.html', '/manifest.webmanifest', '/app-icons/icon-192.png']
+// The crest is in here because the launch screen is only on screen for 1.3
+// seconds. Fetched at that moment it does not arrive in time and the screen
+// shows its dark ground with no crest on it -- reported as "a black screen,
+// then the home page, no welcome screen". Precached, it is already local.
+const SHELL_URLS = ['/', '/index.html', '/manifest.webmanifest', '/app-icons/icon-192.png', '/assets/crest-846.webp']
 
 // Runtime-cacheable file types. index.html is excluded on purpose — it is
 // served no-store so the versioned ?v= script URLs inside it stay honest.

@@ -26,8 +26,8 @@ export default function AppHeader({
           the screen, where a thumb already is -- two controls for one drawer,
           one of them out of reach in the top corner, is the website layout. */}
       {!appMode && <button onClick={onOpenMobileNav} aria-label="Open navigation" className="tap-target shrink-0 text-parchment/70 hover:text-parchment md:hidden"><Icon name="home" size={20} /></button>}
-      {appMode && <img src="./assets/crest-846.png" alt="" className="h-7 w-7 shrink-0 sm:hidden" />}
-      <img src="./assets/crest-846.png" alt="" className="crest-pulse h-8 w-8 hidden sm:block shrink-0" />
+      {appMode && <img src="./assets/crest-846.webp" alt="" className="h-7 w-7 shrink-0 sm:hidden" />}
+      <img src="./assets/crest-846.webp" alt="" className="crest-pulse h-8 w-8 hidden sm:block shrink-0" />
       <div className="min-w-0 flex-1">
         <div className="eyebrow hidden truncate sm:block">Kingdom 846 · {title}</div>
         <div className="truncate font-display text-base font-bold text-gold-bright">{title}</div>

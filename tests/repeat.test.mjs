@@ -63,12 +63,23 @@ test('Tri-Alliance Clash runs on the first Saturday of each month', () => {
   assert.equal(runs(rule, '2026-10-31'), false, 'a 28-day step would have fired here')
 })
 
-test('Vikings Vengeance is the one that really is weekly', () => {
+test('Vikings Vengeance runs on a Tuesday and a Thursday, every second week', () => {
   const tue = server.REPEAT_DEFAULTS['Vikings Vengeance Tuesday']
   const thu = server.REPEAT_DEFAULTS['Vikings Vengeance Thursday']
-  assert.equal(runs(tue, '2026-09-08'), true)   // a Tuesday
-  assert.equal(runs(tue, '2026-09-10'), false)  // a Thursday
-  assert.equal(runs(thu, '2026-09-10'), true)
+
+  // Given as: next Tuesday the 8th, so the Thursday of that fortnight is the 10th.
+  assert.deepEqual(server.nextOccurrences(tue, d('2026-09-08'), 4),
+    ['2026-09-08', '2026-09-22', '2026-10-06', '2026-10-20'])
+  assert.deepEqual(server.nextOccurrences(thu, d('2026-09-10'), 4),
+    ['2026-09-10', '2026-09-24', '2026-10-08', '2026-10-22'])
+
+  // The names carry a weekday, which is what made the first version weekly:
+  // the Tuesday and Thursday of the off week are silent.
+  assert.equal(runs(tue, '2026-09-15'), false, 'the Tuesday in between is skipped')
+  assert.equal(runs(thu, '2026-09-17'), false, 'the Thursday in between is skipped')
+
+  // And each still only runs on its own day.
+  assert.equal(runs(tue, '2026-09-10'), false)
   assert.equal(runs(thu, '2026-09-08'), false)
 })
 

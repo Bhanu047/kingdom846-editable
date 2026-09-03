@@ -209,6 +209,20 @@ function voterFingerprint(req) {
 // runs today. That was fine while the schedule was only ever read by a human
 // looking at a table; it is not fine for something that decides whether to buzz
 // a phone. Existing rows default to every day and leaders narrow them.
+// Notification preferences belong to the device, not the account: the same
+// person may want a digest on their phone and nothing on the desktop they leave
+// logged in. The push subscription IS the device, so the preferences live on it.
+// user_id is filled in when a leader or Sparta signs in on that device, which is
+// what makes it possible to alert them and nobody else.
+const psCols = db.prepare('PRAGMA table_info(push_subscriptions)').all()
+if (psCols.length) {
+  const add = (col, decl) => { if (!psCols.some((c) => c.name === col)) db.exec(`ALTER TABLE push_subscriptions ADD COLUMN ${col} ${decl}`) }
+  add('digest_weekly', 'INTEGER DEFAULT 0')
+  add('alert_transfers', 'INTEGER DEFAULT 1')
+  add('alert_applications', 'INTEGER DEFAULT 1')
+  add('user_id', 'INTEGER')
+}
+
 const schedCols = db.prepare('PRAGMA table_info(alliance_schedules)').all()
 if (!schedCols.some((c) => c.name === 'event_days')) {
   db.exec("ALTER TABLE alliance_schedules ADD COLUMN event_days TEXT DEFAULT '0,1,2,3,4,5,6'")
@@ -515,6 +529,14 @@ app.post('/api/transfers', (req, res) => {
   const info = db.prepare('INSERT INTO transfers (name, game_id, discord, alliance, note, preferred_date, preferred_slot, assigned_slot) VALUES (?,?,?,?,?,?,?,?)').run(name, game_id, discord, alliance || null, note || null, result.date, result.slot, result.slot)
   logEvent(req, 'action', 'transfer-request', { detail: alliance || null })
   res.json({ ok: true, id: info.lastInsertRowid, assigned_date: result.date, assigned_slot: result.slot })
+  // Sent after the response for the same reason as the application alert: the
+  // person requesting a transfer should never wait on a push service.
+  alertLeadership('alert_transfers', {
+    title: 'New transfer request',
+    body: `${name}${alliance ? ` → ${alliance}` : ''} · ${result.date} at ${result.slot} UTC`,
+    tag: `transfer-${info.lastInsertRowid}`,
+    url: '/#/console',
+  }).catch((e) => console.error('[push] transfer alert failed', e.message))
 })
 // Public: which 30-min slots are already taken on a given date (so the form can show availability)
 app.get('/api/transfers/slots', (req, res) => {
@@ -571,6 +593,14 @@ app.post('/api/applications', (req, res) => {
     .run(type, player_id, nickname, request_kind || null, day || null, JSON.stringify(payload || {}))
   logEvent(req, 'action', 'application', { detail: type })
   res.json({ ok: true, id: info.lastInsertRowid })
+  // After the response: the applicant should never wait on a push, and a push
+  // service having a bad afternoon must not turn their application into an error.
+  alertLeadership('alert_applications', {
+    title: 'New ministry application',
+    body: `${nickname} applied for ${type === 'chief_minister' ? 'Chief Minister' : 'Noble Advisor'}.`,
+    tag: `application-${info.lastInsertRowid}`,
+    url: '/#/console',
+  }).catch((e) => console.error('[push] application alert failed', e.message))
 })
 app.get('/api/applications', auth, leadershipOnly, (_req, res) =>
   res.json(db.prepare('SELECT * FROM applications ORDER BY created_at DESC').all()))
@@ -1339,9 +1369,139 @@ app.post('/api/push/unsubscribe', (req, res) => {
 app.post('/api/push/status', (req, res) => {
   const endpoint = req.body?.endpoint
   if (!endpoint) return res.json({ subscribed: false })
-  const row = db.prepare('SELECT alliance_slug FROM push_subscriptions WHERE endpoint=?').get(String(endpoint))
-  res.json({ subscribed: !!row, alliance_slug: row?.alliance_slug || null })
+  const row = db.prepare('SELECT * FROM push_subscriptions WHERE endpoint=?').get(String(endpoint))
+  res.json({ subscribed: !!row, alliance_slug: row?.alliance_slug || null, prefs: prefsOf(row) })
 })
+
+
+/* ---- Notification preferences ---------------------------------------------
+ * The Settings toggles used to be React state with hard-coded defaults: never
+ * written anywhere, never read by anything, and never connected to a sender.
+ * Turning one on lasted until the app was closed, and would not have done
+ * anything if it had lasted, because nothing was listening.
+ *
+ * They are stored on the push subscription now -- the device that would receive
+ * them -- and each one has something on the server that actually sends it.
+ * ------------------------------------------------------------------------- */
+
+const PREF_KEYS = ['digest_weekly', 'alert_transfers', 'alert_applications']
+
+function prefsOf(row) {
+  if (!row) return null
+  return {
+    digest_weekly: !!row.digest_weekly,
+    alert_transfers: !!row.alert_transfers,
+    alert_applications: !!row.alert_applications,
+    // Told to the client so Settings can show the two leadership alerts only to
+    // the people they can ever fire for.
+    is_leadership: !!row.user_id,
+  }
+}
+
+app.post('/api/push/prefs', (req, res) => {
+  const endpoint = req.body?.endpoint
+  if (!endpoint || typeof endpoint !== 'string') return res.status(400).json({ error: 'Endpoint required' })
+  const row = db.prepare('SELECT * FROM push_subscriptions WHERE endpoint=?').get(endpoint)
+  if (!row) return res.status(404).json({ error: 'This device is not signed up for notifications' })
+
+  const prefs = req.body?.prefs || {}
+  for (const key of PREF_KEYS) {
+    if (typeof prefs[key] !== 'boolean') continue
+    db.prepare(`UPDATE push_subscriptions SET ${key}=? WHERE endpoint=?`).run(prefs[key] ? 1 : 0, endpoint)
+  }
+  const updated = db.prepare('SELECT * FROM push_subscriptions WHERE endpoint=?').get(endpoint)
+  res.json({ ok: true, prefs: prefsOf(updated) })
+})
+
+/**
+ * Tie this device to the signed-in account, so the leadership alerts below know
+ * where to go. Called after a leader or Sparta signs in on a device that already
+ * has notifications on.
+ */
+app.post('/api/push/bind', auth, (req, res) => {
+  const endpoint = req.body?.endpoint
+  if (!endpoint) return res.status(400).json({ error: 'Endpoint required' })
+  const changed = db.prepare('UPDATE push_subscriptions SET user_id=? WHERE endpoint=?').run(req.user.id, String(endpoint)).changes
+  if (!changed) return res.status(404).json({ error: 'This device is not signed up for notifications' })
+  res.json({ ok: true })
+})
+
+/** Push to the leadership devices that asked for this kind of alert. */
+async function alertLeadership(prefColumn, payload) {
+  const rows = db.prepare(`
+    SELECT s.* FROM push_subscriptions s
+    JOIN users u ON u.id = s.user_id
+    WHERE s.${prefColumn} = 1 AND u.role IN ('admin','leader')`).all()
+  let sent = 0
+  for (const sub of rows) {
+    try {
+      await webpush.sendNotification(
+        { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
+        JSON.stringify(payload),
+        { TTL: 86400 },
+      )
+      sent++
+    } catch (err) {
+      if (err?.statusCode === 404 || err?.statusCode === 410) {
+        db.prepare('DELETE FROM push_subscriptions WHERE endpoint=?').run(sub.endpoint)
+      }
+    }
+  }
+  if (sent) console.log(`[push] ${prefColumn} -> ${sent} leadership device(s)`)
+  return sent
+}
+
+/**
+ * The weekly digest. Sent once a week rather than once a day, so the dedupe key
+ * is the ISO week: a restart, a redeploy, or the half-hourly tick running
+ * forty-eight times cannot turn one digest into two.
+ */
+function isoWeekKey(date) {
+  // Thursday of the current week decides the ISO year, which is what keeps the
+  // turn of the year from producing two week-ones or none.
+  const d = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()))
+  d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7))
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1))
+  const week = Math.ceil(((d - yearStart) / 86400000 + 1) / 7)
+  return `${d.getUTCFullYear()}-W${String(week).padStart(2, '0')}`
+}
+
+const DIGEST_DAY = 1     // Monday
+const DIGEST_HOUR = 12   // 12:00 UTC
+
+async function digestTick() {
+  const now = new Date()
+  if (now.getUTCDay() !== DIGEST_DAY || now.getUTCHours() < DIGEST_HOUR) return
+
+  const key = `digest|${isoWeekKey(now)}`
+  // Claimed before sending, so only one tick can ever get past here.
+  try { db.prepare('INSERT INTO push_sent (key) VALUES (?)').run(key) } catch { return }
+
+  const subs = db.prepare('SELECT * FROM push_subscriptions WHERE digest_weekly=1').all()
+  if (!subs.length) return
+
+  const news = db.prepare("SELECT title FROM kingshot_sync WHERE type='news' ORDER BY synced_at DESC LIMIT 3").all()
+  const body = news.length
+    ? news.map((n) => `• ${n.title}`).join('\n')
+    : 'No new kingdom news this week. The realm is quiet.'
+
+  let sent = 0
+  for (const sub of subs) {
+    try {
+      await webpush.sendNotification(
+        { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
+        JSON.stringify({ title: 'Kingdom 846 — this week', body, tag: key, url: '/#/news' }),
+        { TTL: 86400 },
+      )
+      sent++
+    } catch (err) {
+      if (err?.statusCode === 404 || err?.statusCode === 410) {
+        db.prepare('DELETE FROM push_subscriptions WHERE endpoint=?').run(sub.endpoint)
+      }
+    }
+  }
+  console.log(`[push] weekly digest ${key} -> ${sent} device(s)`)
+}
 
 async function sendToAlliance(slug, payload) {
   const subs = db.prepare('SELECT * FROM push_subscriptions WHERE alliance_slug=?').all(slug)
@@ -1414,7 +1574,7 @@ async function runReminderTick() {
 
 // Exported for the tests, which drive the tick directly rather than waiting on
 // a real clock.
-module.exports = { ...(module.exports || {}), runReminderTick, allianceSchedule, parseDays, defaultDaysFor }
+module.exports = { ...(module.exports || {}), runReminderTick, allianceSchedule, parseDays, defaultDaysFor, digestTick, isoWeekKey, alertLeadership }
 
 app.get('/api/leader/roster', auth, leaderOnly, (req, res) => {
   const slug = req.user.alliance_slug
@@ -2267,6 +2427,10 @@ const isProduction = process.env.NODE_ENV === 'production'
     // Event reminders. Every 30 seconds so a stalled tick still lands inside
     // the minute it was aiming at; push_sent makes the repeats harmless.
     setInterval(() => { runReminderTick().catch((e) => console.error('[push] tick failed', e)) }, 30000)
+    // The weekly digest checks on the same half-hourly cadence as the backups;
+    // it sends on Mondays and does nothing the rest of the week.
+    setInterval(() => { digestTick().catch((e) => console.error('[push] digest failed', e)) }, 30 * 60 * 1000)
+    digestTick().catch(() => {})
     console.log('[push] event reminders scheduled (10 and 5 minutes before each alliance event)')
 
     // Start autonomous AI agent — runs on startup then every 4 hours

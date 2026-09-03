@@ -136,3 +136,23 @@ test('the app pulls one crest, and a small one', () => {
       `${rel} pulls the 956 KB crest; the app should use the webp`)
   }
 })
+
+test('the welcome screen is in the page, not behind 370 kB of code', () => {
+  const html = fs.readFileSync(path.join(here, '..', 'index.html'), 'utf8')
+  assert.ok(html.includes('id="k846-launch"'), 'the launch screen must ship in the HTML')
+  assert.ok(html.includes('#k846-launch{'), 'and be styled inline, not from the CSS bundle')
+})
+
+test('what reveals the welcome screen runs before any stylesheet', () => {
+  const html = fs.readFileSync(path.join(here, '..', 'index.html'), 'utf8')
+  // A script does not run while a stylesheet earlier in the document is still
+  // loading. With this script below the font links it waited on Google Fonts
+  // and on the CSS bundle, so on the first open after a deploy the welcome
+  // screen stayed hidden for seconds -- the reported black screen.
+  const setter = html.indexOf("setAttribute('data-app-launch'")
+  assert.ok(setter > 0, 'the app-mode decision must be in the HTML')
+  const firstSheet = html.search(/<link[^>]+rel=["']stylesheet["']/)
+  assert.ok(firstSheet > 0, 'expected at least one stylesheet link')
+  assert.ok(setter < firstSheet,
+    'the script that reveals the welcome screen must come before the first stylesheet')
+})

@@ -261,7 +261,7 @@ test('a reminder carries artwork, buttons, and words that stand alone', () => {
     assert.ok(n.image, 'the event brings its own art')
     assert.equal(n.actions.length, 2)
   }
-  assert.equal(ten.image, '/assets/art-bear-trap.png', 'a bear hunt looks like a bear hunt')
+  assert.equal(ten.image, '/assets/notif/art-bear-trap.png', 'a bear hunt looks like a bear hunt')
 
   // The last call is the insistent one: it stays on screen and buzzes harder.
   assert.equal(ten.urgent, false)
@@ -272,10 +272,10 @@ test('a reminder carries artwork, buttons, and words that stand alone', () => {
 
 test('each event gets its own picture, and an unknown one still gets a picture', () => {
   const art = (event) => server.eventNotification({ event, slug: 'ryo', time: '04:00', lead: 10 }).image
-  assert.equal(art('Bear Hunt-2'), '/assets/art-bear-trap.png')
-  assert.equal(art('Vikings Vengeance Tuesday'), '/assets/art-castle-battle.png')
-  assert.equal(art('Tri-Alliance Clash Legion-1'), '/assets/art-kvk-prep.png')
-  assert.equal(art('Swordland Showdown Legion-2'), '/assets/art-castle-battle.png')
+  assert.equal(art('Bear Hunt-2'), '/assets/notif/art-bear-trap.png')
+  assert.equal(art('Vikings Vengeance Tuesday'), '/assets/notif/art-castle-battle.png')
+  assert.equal(art('Tri-Alliance Clash Legion-1'), '/assets/notif/art-kvk-prep.png')
+  assert.equal(art('Swordland Showdown Legion-2'), '/assets/notif/art-castle-battle.png')
   // An event a leader renames must not arrive with a blank space where the
   // picture should be.
   assert.ok(art('Some Future Event'), 'there is always a fallback')
@@ -288,4 +288,14 @@ test('the arena reminder sharpens for the last call too', () => {
   assert.match(five.body, /Last chance/)
   assert.equal(five.urgent, true)
   assert.ok(ten.image && ten.actions.length === 2)
+})
+
+test('notification art is sized for a notification, not for a page', async () => {
+  const { statSync } = await import('node:fs')
+  // The page originals are around 2.6 MB. A phone fetches this twice per event,
+  // often on mobile data, so anything approaching that weight is a bug.
+  for (const name of ['art-bear-trap', 'art-castle-battle', 'art-kvk-prep']) {
+    const bytes = statSync(`public/assets/notif/${name}.png`).size
+    assert.ok(bytes < 400 * 1024, `${name} is ${Math.round(bytes / 1024)} KB, too heavy for a notification`)
+  }
 })

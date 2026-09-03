@@ -247,7 +247,9 @@ test('a 00:00 arena reset reminds at 23:50 and 23:55 the night before', async ()
   // Each is claimed under the date of the reset it announces, not the date it
   // was sent on, so re-running either minute cannot produce a third.
   const keys = db.prepare("SELECT key FROM push_sent WHERE key LIKE '%arena%' ORDER BY key").all().map((r) => r.key)
-  assert.deepEqual(keys, ['2026-09-21|arena|10', '2026-09-21|arena|5'], 'both keyed to the 21st, the day the arena resets')
+  // The reset time is in the key too, so that moving it does not leave the new
+  // one muted by a reminder already sent for the old.
+  assert.deepEqual(keys, ['2026-09-21|arena|00:00|10', '2026-09-21|arena|00:00|5'], 'both keyed to the 21st, the day the arena resets')
 
   await runAt(23, 50)
   await runAt(23, 55)
@@ -318,4 +320,52 @@ test('notification art is sized for a notification, not for a page', async () =>
     const bytes = statSync(`public/assets/notif/${name}.png`).size
     assert.ok(bytes < 400 * 1024, `${name} is ${Math.round(bytes / 1024)} KB, too heavy for a notification`)
   }
+})
+
+/* 3 September, exactly as it happened.
+ *
+ * At 11:50 the broken resolver said [RYO]'s Bear Hunt-2 was at 12:00 and sent
+ * a reminder for it. That claimed the day's slot under a key with no time in
+ * it. At 21:20 the corrected 21:30 matched, the insert hit the conflict, and
+ * the tick skipped in silence -- so the fix to the time could not take effect
+ * until the following bear day. A reminder for a different time is a different
+ * reminder, and must not be muted by the wrong one that preceded it.
+ */
+test('a corrected time still reminds, even after the wrong one already went out', async () => {
+  quietEverything()
+  db.prepare('DELETE FROM push_sent').run()
+  db.prepare('DELETE FROM push_subscriptions').run()
+  received.length = 0
+
+  const target = new Date(Date.now() + 10 * 60000)
+  const hhmm = `${String(target.getUTCHours()).padStart(2, '0')}:${String(target.getUTCMinutes()).padStart(2, '0')}`
+  scheduleAt('ryo', 'Bear Hunt -1', target, String(target.getUTCDay()))
+  subscribe('ryo', 'ryo-device')
+
+  // Earlier today, a reminder went out for this same event at the wrong time.
+  const dateKey = target.toISOString().slice(0, 10)
+  db.prepare('INSERT INTO push_sent (key) VALUES (?)').run(`${dateKey}|ryo|Bear Hunt -1|12:00|10`)
+
+  await server.runReminderTick()
+  assert.deepEqual(received, ['/push/ryo-device'], 'the corrected reminder must still arrive')
+  assert.ok(
+    db.prepare('SELECT key FROM push_sent WHERE key LIKE ?').all(`${dateKey}|ryo|Bear Hunt -1|${hhmm}|%`).length > 0,
+    'and it claims its own slot, keyed by the time it actually announced',
+  )
+})
+
+test('the same reminder twice in a minute is still only sent once', async () => {
+  quietEverything()
+  db.prepare('DELETE FROM push_sent').run()
+  db.prepare('DELETE FROM push_subscriptions').run()
+  received.length = 0
+
+  const target = new Date(Date.now() + 10 * 60000)
+  scheduleAt('ryo', 'Bear Hunt -1', target, String(target.getUTCDay()))
+  subscribe('ryo', 'ryo-device')
+
+  await server.runReminderTick()
+  await server.runReminderTick()
+  await server.runReminderTick()
+  assert.equal(received.length, 1, 'the time in the key must not weaken the guard')
 })

@@ -2222,12 +2222,25 @@ async function runReminderTick() {
         // Whether the event runs at all today is the kingdom's business; the
         // alliance only chooses what time it musters.
         if (!occursOn(rules[item.event], target)) continue
-        const key = `${dateKey}|${slug}|${item.event}|${lead}`
+        // The TIME is part of the key, and that is not decoration. Without it
+        // a reminder already sent for this event today blocks every later one,
+        // however wrong the first was -- which is exactly what happened on
+        // 3 September: the broken resolver announced Bear Hunt-2 for 12:00 at
+        // 11:50, claimed the day's slot, and when the corrected 21:30 came
+        // round the insert below hit the conflict and skipped in silence. A
+        // reminder for a different time is a different reminder.
+        const key = `${dateKey}|${slug}|${item.event}|${item.time}|${lead}`
         // INSERT first: if another tick already claimed this reminder the
         // primary key rejects it, so exactly one tick can ever get past here.
         try {
           db.prepare('INSERT INTO push_sent (key) VALUES (?)').run(key)
-        } catch { continue }
+        } catch {
+          // Not silent any more. A reminder that matched and then did nothing
+          // is the hardest kind to diagnose: it looks identical, from outside,
+          // to one that never matched at all.
+          console.log(`[push] ${slug} ${item.event} ${item.time} T-${lead}m already sent today, skipping`)
+          continue
+        }
         const result = await sendToAlliance(slug, {
           ...eventNotification({ event: item.event, slug, time: item.time, lead }),
           // The date is in the tag so tonight's Bear Hunt does not replace the
@@ -2248,8 +2261,13 @@ async function runReminderTick() {
       const hhmm = `${two(target.getUTCHours())}:${two(target.getUTCMinutes())}`
       if (hhmm !== arena.time) continue
       const dateKey = target.toISOString().slice(0, 10)
-      const key = `${dateKey}|arena|${lead}`
-      try { db.prepare('INSERT INTO push_sent (key) VALUES (?)').run(key) } catch { continue }
+      // Same reasoning as the event key above: a corrected arena time must not
+      // be muted by a reminder already sent for the old one.
+      const key = `${dateKey}|arena|${arena.time}|${lead}`
+      try { db.prepare('INSERT INTO push_sent (key) VALUES (?)').run(key) } catch {
+        console.log(`[push] arena ${arena.time} T-${lead}m already sent today, skipping`)
+        continue
+      }
       const result = await sendKingdomWide('alert_arena', {
         ...arenaNotification({ time: arena.time, lead }),
         tag: `arena-${dateKey}`,

@@ -56,8 +56,8 @@ function saveMasterConsole(schedules) {
 
 /** What the Leader Portal writes: one row per event. */
 function setLeaderTime(slug, event, time) {
-  db.prepare(`INSERT INTO alliance_schedules (alliance_slug,event_name,event_time,event_days) VALUES (?,?,?,'')
-    ON CONFLICT(alliance_slug,event_name) DO UPDATE SET event_time=excluded.event_time`).run(slug, event, time)
+  db.prepare(`INSERT INTO alliance_schedules (alliance_slug,event_name,event_time,event_days,set_by) VALUES (?,?,?,'','leader')
+    ON CONFLICT(alliance_slug,event_name) DO UPDATE SET event_time=excluded.event_time, set_by='leader'`).run(slug, event, time)
 }
 
 function clearAll() {
@@ -116,15 +116,34 @@ test('a saved time beats the content fallback', () => {
   assert.equal(timeOf('ryo', 'Bear Hunt -1'), '12:30')
 })
 
-test('where the time came from is reported, so nobody has to guess', () => {
+test('which editor set a time is reported truthfully', () => {
   clearAll()
   setKingdomContent({ ryo: RYO_REAL })
   setLeaderTime('ryo', 'Bear Hunt-2', '22:15')
-  const by = Object.fromEntries(server.allianceSchedule('ryo').map((e) => [e.event, e.source]))
+  let by = Object.fromEntries(server.allianceSchedule('ryo').map((e) => [e.event, e.source]))
   assert.equal(by['Bear Hunt-2'], 'leader')
-  assert.equal(by['Bear Hunt -1'], 'kingdom')
+  assert.equal(by['Bear Hunt -1'], 'console')   // the content blob is this page's own store
+
+  // A time Sparta saves must NOT come back labelled as the leader's. The
+  // Master Console tells them who set what, and getting this backwards would
+  // have it reporting their own edit as somebody else's.
+  saveMasterConsole({ ryo: RYO_REAL.map((r) => r.event === 'Bear Hunt-2' ? { ...r, time: '20:45' } : r) })
+  by = Object.fromEntries(server.allianceSchedule('ryo').map((e) => [e.event, e.source]))
+  assert.equal(by['Bear Hunt-2'], 'console')
+
+  // And the leader taking it back says so again.
+  setLeaderTime('ryo', 'Bear Hunt-2', '23:00')
+  assert.equal(server.allianceSchedule('ryo').find((e) => e.event === 'Bear Hunt-2').source, 'leader')
+
   clearAll()
   assert.equal(server.allianceSchedule('ryo').find((e) => e.event === 'Bear Hunt-2').source, 'default')
+})
+
+test('a row written before the stamp existed reads as the leader who wrote it', () => {
+  clearAll()
+  // Exactly what an upgraded database looks like: a row with no set_by.
+  db.prepare("INSERT INTO alliance_schedules (alliance_slug,event_name,event_time,event_days) VALUES ('ryo','Bear Hunt-2','22:15','')").run()
+  assert.equal(server.allianceSchedule('ryo').find((e) => e.event === 'Bear Hunt-2').source, 'leader')
 })
 
 test('a blank or malformed time falls through instead of becoming a reminder', () => {

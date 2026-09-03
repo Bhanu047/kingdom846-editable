@@ -224,6 +224,12 @@ const schedCols = db.prepare('PRAGMA table_info(alliance_schedules)').all()
 if (!schedCols.some((c) => c.name === 'event_days')) {
   db.exec("ALTER TABLE alliance_schedules ADD COLUMN event_days TEXT DEFAULT '0,1,2,3,4,5,6'")
 }
+// Which of the two editors wrote each event time. Rows that predate this column
+// were all written by the Leader Portal, which was the only writer then, so a
+// null reads as 'leader'.
+if (!schedCols.some((c) => c.name === 'set_by')) {
+  db.exec('ALTER TABLE alliance_schedules ADD COLUMN set_by TEXT')
+}
 
 const aeCols = db.prepare('PRAGMA table_info(analytics_events)').all()
 if (!aeCols.some((c) => c.name === 'country')) db.exec('ALTER TABLE analytics_events ADD COLUMN country TEXT')
@@ -258,6 +264,7 @@ const verifyToken = (token) => {
 const cols = db.prepare("PRAGMA table_info(users)").all()
 if (!cols.some((c) => c.name === 'display_name')) db.exec('ALTER TABLE users ADD COLUMN display_name TEXT')
 if (!cols.some((c) => c.name === 'alliance_tag')) db.exec('ALTER TABLE users ADD COLUMN alliance_tag TEXT')
+
 if (!cols.some((c) => c.name === 'must_change_password')) {
   db.exec('ALTER TABLE users ADD COLUMN must_change_password INTEGER DEFAULT 0')
   db.prepare("UPDATE users SET must_change_password = 1 WHERE role = 'leader'").run()
@@ -1313,7 +1320,7 @@ app.put('/api/leader/schedule', auth, leaderOnly, (req, res) => {
   const slug = req.user.alliance_slug
   const { schedule } = req.body
   if (!Array.isArray(schedule)) return res.status(400).json({ error: 'Schedule array required' })
-  const stmt = db.prepare("INSERT INTO alliance_schedules (alliance_slug, event_name, event_time, event_days, updated_at) VALUES (?,?,?,?,datetime('now')) ON CONFLICT(alliance_slug, event_name) DO UPDATE SET event_time=excluded.event_time, event_days=excluded.event_days, updated_at=datetime('now')")
+  const stmt = db.prepare("INSERT INTO alliance_schedules (alliance_slug, event_name, event_time, event_days, set_by, updated_at) VALUES (?,?,?,?,'leader',datetime('now')) ON CONFLICT(alliance_slug, event_name) DO UPDATE SET event_time=excluded.event_time, event_days=excluded.event_days, set_by='leader', updated_at=datetime('now')")
   for (const item of schedule) {
     if (item.event && ALLIANCE_EVENTS.includes(item.event)) {
       // Days decide whether a phone buzzes, so they are normalised here rather
@@ -1428,9 +1435,9 @@ function syncScheduleFromContent(next, previous) {
     }
   }
 
-  const stmt = db.prepare(`INSERT INTO alliance_schedules (alliance_slug,event_name,event_time,event_days,updated_at)
-    VALUES (?,?,?,?,datetime('now'))
-    ON CONFLICT(alliance_slug,event_name) DO UPDATE SET event_time=excluded.event_time, updated_at=datetime('now')`)
+  const stmt = db.prepare(`INSERT INTO alliance_schedules (alliance_slug,event_name,event_time,event_days,set_by,updated_at)
+    VALUES (?,?,?,?,'console',datetime('now'))
+    ON CONFLICT(alliance_slug,event_name) DO UPDATE SET event_time=excluded.event_time, set_by='console', updated_at=datetime('now')`)
 
   let written = 0
   for (const a of Array.isArray(next?.alliances) ? next.alliances : []) {
@@ -1462,7 +1469,7 @@ function syncScheduleFromContent(next, previous) {
  * is the only one of the three nobody ever chose.
  */
 function allianceSchedule(slug) {
-  const rows = db.prepare('SELECT event_name, event_time, event_days FROM alliance_schedules WHERE alliance_slug=?').all(slug)
+  const rows = db.prepare('SELECT event_name, event_time, event_days, set_by FROM alliance_schedules WHERE alliance_slug=?').all(slug)
   const content = contentSchedule(slug)
   const defaults = SCHEDULE_DEFAULTS[slug] || {}
   return ALLIANCE_EVENTS.map((event) => {
@@ -1471,9 +1478,12 @@ function allianceSchedule(slug) {
     return {
       event,
       time: stored || content[event] || defaults[event] || '',
-      // Where the time came from, so the Master Console can show it and nobody
-      // has to guess which of the two editors an alliance is actually using.
-      source: stored ? 'leader' : content[event] ? 'kingdom' : 'default',
+      // Which editor set it, so the Master Console can say so truthfully. A
+      // stored row with no stamp predates that column and can only have come
+      // from the Leader Portal; the content blob is the Master Console's own
+      // store, so it reads as 'console' too.
+      source: stored ? (row.set_by === 'console' ? 'console' : 'leader')
+        : content[event] ? 'console' : 'default',
       // Vikings Vengeance names its own day, so an alliance that never touched
       // the schedule still gets that one right rather than a buzz every day.
       days: parseDays(row?.event_days ?? defaultDaysFor(event)),

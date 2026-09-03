@@ -3,6 +3,7 @@ import { Panel, SectionTitle, Pill } from './ui'
 import Icon from './Icon'
 import { apiJson, apiFetch } from '../lib/api'
 import { alliances } from '../data/kingdom'
+import { BIRTHDAYS_CHANGED } from './BirthdayToast'
 
 /* Birthdays, in the Master Console.
  *
@@ -59,6 +60,10 @@ export default function BirthdayPanel() {
         : r.announce === 'off' ? `${who} added, but birthday announcements are switched off below.`
         : `${who} added — the kingdom will hear on ${prettyDate(day, month)}.`
       )
+      // Tell the app to look again, so the card appears on this screen rather
+      // than waiting for the next launch. Saving something and seeing nothing
+      // happen is indistinguishable from it not having worked.
+      window.dispatchEvent(new CustomEvent(BIRTHDAYS_CHANGED))
       await load()
     } catch (e) { setErr(e.message || 'Could not add that.') } finally { setBusy(false) }
   }

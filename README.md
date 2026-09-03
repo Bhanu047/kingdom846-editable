@@ -282,7 +282,51 @@ is deleted on activation.
 > so it can't interfere with hot reload. To test it, run `npm run build` then
 > `NODE_ENV=production node server/index.cjs`.
 
-## 7. Notes
+## 7. The chat assistant (Royal Advisor)
+
+The assistant answers from **Gemini**, grounded in the kingdom's own live data.
+
+It previously answered from `getKingdomAnswer()` — roughly 1,900 lines of
+hand-written keyword matching that never called a model at all, despite living
+behind `/api/ai/chat`. That is good at the questions it anticipated and helpless
+at every other one: anything unrecognised got the same forty-bullet "I am not
+sure about that" reply, and it could not follow up or answer two things at once.
+
+**The matcher is kept as the fallback.** With no key set, or if the model is
+unreachable or times out, the assistant degrades to exactly what it did before
+rather than to an error. Responses carry `source: "ai"` or `source: "builtin"`
+so you can tell which answered.
+
+**Grounding.** Every question is sent with a freshly built KINGDOM FACTS block —
+current ruler, the four alliances and their leaders, each alliance's event
+schedule with times and days, upcoming events, news and guide titles, and what
+each site page is for. The instruction tells the advisor that this block is the
+only source of truth for kingdom specifics, to answer general Kingshot mechanics
+from its own knowledge, and to say plainly when it does not know rather than
+inventing a time or a name. Schedules are read through the same helper the
+reminders and Leader Portal use, so the advisor cannot contradict the Events
+page.
+
+**Only public data goes into that block** — no governor IDs, applications,
+transfer requests, or anything behind a login, because `/api/ai/chat` takes no
+auth.
+
+The last 8 turns are sent with each question, so "and for ICE?" works. History
+is filtered to real user/assistant turns and capped, and messages are capped at
+1,200 characters. Rate limit is unchanged at 15 questions per IP per minute, and
+a request that takes over 12 seconds is abandoned in favour of the matcher.
+
+| Setting | |
+|---|---|
+| Key | `GEMINI_API_KEY` (already set on the live service) |
+| Model | `gemini-flash-latest` |
+| Pin the model | edit `GEMINI_MODEL` in `server/index.cjs` |
+
+> Chat now consumes Gemini quota that previously only the 4-hourly agent used.
+> If you hit free-tier limits, the visible symptom is answers quietly reverting
+> to the old matcher style — check the logs for `[advisor] model returned 429`.
+
+## 8. Notes
 
 - The app uses **hash-based URL routing** — pages have shareable URLs and browser
   back/forward works.

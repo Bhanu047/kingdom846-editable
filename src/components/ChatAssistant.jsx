@@ -43,9 +43,17 @@ export default function ChatAssistant() {
     setMessages(prev => [...prev, { role: 'user', content: msg }])
 
     try {
+      // The last few turns go with the question so the advisor can follow up --
+      // "and for ICE?" only means anything if it can see what was just asked.
+      // Read from `messages` rather than the state set a line above, which has
+      // not been applied yet; the new question is sent separately anyway.
+      const history = messages
+        .filter((m) => m.role === 'user' || m.role === 'assistant')
+        .slice(-8)
+        .map((m) => ({ role: m.role, content: m.content }))
       const res = await apiJson('/api/ai/chat', {
         method: 'POST',
-        body: JSON.stringify({ message: msg })
+        body: JSON.stringify({ message: msg, history })
       })
       setMessages(prev => [...prev, { role: 'assistant', content: res.reply }])
       if (!open) setUnread(true)

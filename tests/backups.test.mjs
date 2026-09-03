@@ -116,3 +116,18 @@ test('the download endpoint refuses anything that is not a backup name', async (
 test.after(() => {
   try { fs.rmSync(workdir, { recursive: true, force: true }) } catch {}
 })
+
+test('the Play Store asset links file is published, not swallowed by the SPA', async () => {
+  const base = 'http://127.0.0.1:5395'
+  const res = await fetch(`${base}/.well-known/assetlinks.json`)
+  assert.equal(res.status, 200)
+  // If the SPA fallback answered, this would be text/html and the Android
+  // wrapper would fail verification silently — showing a browser URL bar across
+  // the top of every screen with nothing to say why.
+  assert.match(res.headers.get('content-type'), /application\/json/)
+  const body = await res.json()
+  assert.ok(Array.isArray(body), 'an array, as the Digital Asset Links spec requires')
+  // No fingerprint is configured in the test environment, so it claims no app
+  // rather than claiming the wrong one.
+  assert.equal(body.length, 0)
+})

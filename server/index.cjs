@@ -433,6 +433,38 @@ rollupAndPrune()
 setInterval(rollupAndPrune, 6 * 60 * 60 * 1000).unref?.()
 
 // --- Routes ---
+/* ---- Play Store: Digital Asset Links ---------------------------------------
+ * The Android wrapper is a Trusted Web Activity -- a Chrome window with the
+ * browser furniture removed, pointing here. Chrome only removes that furniture
+ * if this file proves the app and the site have the same owner; without it the
+ * app still works and still shows a URL bar across the top, which is the whole
+ * thing people notice.
+ *
+ * It has to be declared before the SPA fallback, which would otherwise answer
+ * with index.html and fail verification in a way that looks like nothing at all.
+ *
+ * The fingerprint comes from the key Play signs the app with. With Play App
+ * Signing -- the default, and the one worth using -- that key is Google's, and
+ * the fingerprint appears in the Play Console under Setup -> App signing after
+ * the first upload. Until it is set this returns an empty list, which is honest:
+ * no app is claimed rather than the wrong one.
+ * ------------------------------------------------------------------------- */
+const TWA_PACKAGE = process.env.TWA_PACKAGE || 'com.kingdom846.portal'
+const TWA_FINGERPRINTS = (process.env.TWA_SHA256 || '')
+  .split(',').map((f) => f.trim().toUpperCase()).filter(Boolean)
+
+app.get('/.well-known/assetlinks.json', (_req, res) => {
+  res.type('application/json')
+  res.json(TWA_FINGERPRINTS.map((fingerprint) => ({
+    relation: ['delegate_permission/common.handle_all_urls'],
+    target: {
+      namespace: 'android_app',
+      package_name: TWA_PACKAGE,
+      sha256_cert_fingerprints: [fingerprint],
+    },
+  })))
+})
+
 app.get('/api/health', (_req, res) => res.json({ ok: true, ts: Date.now() }))
 
 // Public collector. Never returns data, never sets a cookie, and accepts a

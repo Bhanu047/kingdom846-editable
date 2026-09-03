@@ -3136,6 +3136,23 @@ const isProduction = process.env.NODE_ENV === 'production'
     setInterval(() => { backupTick().catch((e) => console.error('[backup] tick failed', e)) }, 30 * 60 * 1000)
     console.log(`[backup] daily backups to ${BACKUP_DIR}, keeping ${BACKUP_KEEP}`)
 
+    // What the reminders will actually use, printed once at boot.
+    //
+    // There was no way to see this without a phone in hand. Twice now a
+    // reminder has gone to the wrong time or not gone at all, and both took a
+    // screenshot from a member to diagnose because the server never said what
+    // it thought the schedule was. Now it says.
+    try {
+      for (const { slug } of db.prepare('SELECT slug FROM alliances ORDER BY slug').all()) {
+        const line = allianceSchedule(slug)
+          .map((e) => `${e.event}=${e.time || 'unset'}(${e.source})`)
+          .join('  ')
+        console.log(`[schedule] ${slug.toUpperCase()}  ${line}`)
+      }
+      const ar = arenaReset()
+      console.log(`[schedule] arena reset ${ar.time} ${ar.enabled ? 'on' : 'off'}${ar.confirmed ? '' : ' (unconfirmed default)'}`)
+    } catch (e) { console.error('[schedule] could not read the schedule', e) }
+
     // Event reminders. Every 30 seconds so a stalled tick still lands inside
     // the minute it was aiming at; push_sent makes the repeats harmless.
     setInterval(() => { runReminderTick().catch((e) => console.error('[push] tick failed', e)) }, 30000)

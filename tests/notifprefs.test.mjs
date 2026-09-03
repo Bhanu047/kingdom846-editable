@@ -114,28 +114,6 @@ test('the week key rolls over correctly across a year boundary', () => {
   assert.equal(server.isoWeekKey(new Date(Date.UTC(2026, 8, 7))), server.isoWeekKey(new Date(Date.UTC(2026, 8, 11))))
 })
 
-test('leadership alerts reach only signed-in leaders who want them', async () => {
-  db.prepare('DELETE FROM push_subscriptions').run()
-  received.length = 0
-
-  const leader = await subscribe('leader-device')
-  const member = await subscribe('member-device')
-  // A member device has no account attached, so it can never be alerted.
-  const admin = db.prepare("SELECT id FROM users WHERE role='admin'").get()
-  db.prepare('UPDATE push_subscriptions SET user_id=? WHERE endpoint=?').run(admin.id, leader)
-
-  await server.alertLeadership('alert_transfers', { title: 'New transfer request', body: 'Someone' })
-  assert.deepEqual(received, ['/dev/leader-device'], 'the member device is never alerted')
-
-  // And turning it off is respected.
-  received.length = 0
-  await fetch(`${BASE}/api/push/prefs`, {
-    method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ endpoint: leader, prefs: { alert_transfers: false } }),
-  })
-  await server.alertLeadership('alert_transfers', { title: 'New transfer request', body: 'Someone' })
-  assert.equal(received.length, 0, 'a device that opted out is not alerted')
-})
 
 test('preferences for an unknown device are refused rather than invented', async () => {
   const res = await fetch(`${BASE}/api/push/prefs`, {
@@ -143,9 +121,80 @@ test('preferences for an unknown device are refused rather than invented', async
     body: JSON.stringify({ endpoint: 'https://not-a-real-device/x', prefs: { digest_weekly: true } }),
   })
   assert.equal(res.status, 404)
-  assert.equal((await fetch(`${BASE}/api/push/bind`, {
-    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ endpoint: 'x' }),
-  })).status, 401, 'binding a device to an account needs a login')
+})
+
+async function adminToken() {
+  const out = await fetch(`${BASE}/api/login`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ mode: 'admin', username: 'sparta', password: 'SpartaAdmin_846!' }),
+  }).then((r) => r.json())
+  return out.token
+}
+
+const setKing = (token, body) => fetch(`${BASE}/api/king-status`, {
+  method: 'PUT',
+  headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+  body: JSON.stringify(body),
+})
+
+test('crowning a new ruler tells the whole kingdom', async () => {
+  db.prepare('DELETE FROM push_subscriptions').run()
+  await subscribe('crown-ryo', 'ryo')
+  await subscribe('crown-ice', 'ice')
+  received.length = 0
+
+  const token = await adminToken()
+  const res = await setKing(token, { king_type: 'High Queen', name: 'Lady Charlotte', alliance_tag: '[SAS]', alliance_name: 'SaintsAndSinners' })
+  assert.equal(res.status, 200)
+  // The push is sent after the response, so give it a moment to land.
+  await new Promise((r) => setTimeout(r, 400))
+
+  assert.equal(received.length, 2, 'every alliance is told, not just one')
+  assert.ok(received.includes('/dev/crown-ryo') && received.includes('/dev/crown-ice'))
+})
+
+test('saving the same ruler again announces nothing', async () => {
+  received.length = 0
+  const token = await adminToken()
+  // Opening the console and saving without changing anything is a normal thing
+  // to do; it must not read as a coronation.
+  await setKing(token, { king_type: 'High Queen', name: 'Lady Charlotte', alliance_tag: '[SAS]', alliance_name: 'SaintsAndSinners' })
+  await new Promise((r) => setTimeout(r, 400))
+  assert.equal(received.length, 0)
+})
+
+test('any part of the title changing counts as a new ruler', async () => {
+  const token = await adminToken()
+  for (const change of [
+    { king_type: 'Queen', name: 'Lady Charlotte', alliance_tag: '[SAS]', alliance_name: 'SaintsAndSinners' },
+    { king_type: 'Queen', name: 'Shoni', alliance_tag: '[SAS]', alliance_name: 'SaintsAndSinners' },
+    { king_type: 'Queen', name: 'Shoni', alliance_tag: '[RYO]', alliance_name: 'Spiders' },
+  ]) {
+    received.length = 0
+    await setKing(token, change)
+    await new Promise((r) => setTimeout(r, 400))
+    assert.equal(received.length, 2, `changing to ${JSON.stringify(change)} announces`)
+  }
+})
+
+test('a device that switched the crown alert off is not told', async () => {
+  db.prepare("UPDATE push_subscriptions SET alert_crown=0 WHERE endpoint LIKE '%crown-ice'").run()
+  received.length = 0
+  const token = await adminToken()
+  await setKing(token, { king_type: 'High King', name: 'Oliver', alliance_tag: '[KzK]', alliance_name: 'KamilKazeKarnival' })
+  await new Promise((r) => setTimeout(r, 400))
+  assert.deepEqual(received, ['/dev/crown-ryo'])
+})
+
+test('only Sparta can crown anyone', async () => {
+  received.length = 0
+  const res = await fetch(`${BASE}/api/king-status`, {
+    method: 'PUT', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ king_type: 'King', name: 'Impostor' }),
+  })
+  assert.equal(res.status, 401)
+  await new Promise((r) => setTimeout(r, 300))
+  assert.equal(received.length, 0, 'a refused change announces nothing')
 })
 
 test.after(() => {

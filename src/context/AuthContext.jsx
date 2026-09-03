@@ -1,6 +1,5 @@
 import { createContext, useContext, useCallback, useEffect, useState } from 'react'
 import { apiJson, apiFetch, setAuthToken, getAuthToken } from '../lib/api'
-import { bindDeviceToAccount } from '../lib/reminders'
 
 const AuthContext = createContext(null)
 
@@ -27,11 +26,6 @@ export function AuthProvider({ children }) {
       })
       setAuthToken(data.token)
       setUser(data.user)
-      // Tie this device's notification sign-up to the account, so the transfer
-      // and application alerts have somewhere to go. Deliberately not awaited
-      // and never fatal: it needs a push subscription to exist, most sign-ins
-      // do not have one, and a login must not fail over a notification detail.
-      bindDeviceToAccount().catch(() => {})
       return { error: null, user: data.user }
     } catch (err) {
       return { error: { message: err.message } }

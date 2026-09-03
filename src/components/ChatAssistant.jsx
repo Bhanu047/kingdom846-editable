@@ -3,9 +3,33 @@ import Icon from './Icon'
 import { apiJson } from '../lib/api'
 
 /**
- * Royal Advisor Chat — reliable, database-powered, never crashes.
- * Answers from the website's own data: alliances, events, king, transfers, guides.
+ * Royal Advisor Chat.
+ *
+ * Talks to the kingdom's own advisor engine at /api/ai/chat — retrieval over
+ * the site's knowledge base plus live database lookups, all served from this
+ * website's server with no external AI behind it.
  */
+
+/**
+ * A per-visitor id so the advisor can follow a conversation: after "tell me
+ * about IceHunters", "when is their bear hunt?" resolves to that alliance.
+ * Kept in sessionStorage so it lasts the visit and no longer, and falls back
+ * to an in-memory value where storage is blocked (private windows, embedded
+ * webviews) rather than throwing on open.
+ */
+let memorySessionId = null
+function getSessionId() {
+  if (memorySessionId) return memorySessionId
+  memorySessionId = 'v' + Math.random().toString(36).slice(2, 10)
+  try {
+    const saved = sessionStorage.getItem('k846-chat-session')
+    if (saved) memorySessionId = saved
+    else sessionStorage.setItem('k846-chat-session', memorySessionId)
+  } catch {
+    // Storage unavailable — the in-memory id still works for this page view.
+  }
+  return memorySessionId
+}
 
 const CrownIcon = ({ size = 28 }) => (
   <span style={{ fontSize: size * 0.8, lineHeight: 1, filter: 'drop-shadow(0 0 6px rgba(212,175,55,0.5))' }}>👑</span>
@@ -43,17 +67,9 @@ export default function ChatAssistant() {
     setMessages(prev => [...prev, { role: 'user', content: msg }])
 
     try {
-      // The last few turns go with the question so the advisor can follow up --
-      // "and for ICE?" only means anything if it can see what was just asked.
-      // Read from `messages` rather than the state set a line above, which has
-      // not been applied yet; the new question is sent separately anyway.
-      const history = messages
-        .filter((m) => m.role === 'user' || m.role === 'assistant')
-        .slice(-8)
-        .map((m) => ({ role: m.role, content: m.content }))
       const res = await apiJson('/api/ai/chat', {
         method: 'POST',
-        body: JSON.stringify({ message: msg, history })
+        body: JSON.stringify({ message: msg, sessionId: getSessionId() })
       })
       setMessages(prev => [...prev, { role: 'assistant', content: res.reply }])
       if (!open) setUnread(true)

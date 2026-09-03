@@ -1592,8 +1592,8 @@ const DAY_MS = 86400000
 const REPEAT_DEFAULTS = {
   'Bear Hunt -1': { type: 'interval', days: 2, anchor: '2026-09-03' },
   'Bear Hunt-2': { type: 'interval', days: 2, anchor: '2026-09-03' },
-  'Vikings Vengeance Tuesday': { type: 'weekdays', days: [2] },
-  'Vikings Vengeance Thursday': { type: 'weekdays', days: [4] },
+  'Vikings Vengeance Tuesday': { type: 'interval', days: 14, anchor: '2026-09-08' },
+  'Vikings Vengeance Thursday': { type: 'interval', days: 14, anchor: '2026-09-10' },
   'Tri-Alliance Clash Legion-1': { type: 'monthly', weekday: 6, nth: 1 },
   'Tri-Alliance Clash Legion-2': { type: 'monthly', weekday: 6, nth: 1 },
   'Swordland Showdown Legion-1': { type: 'interval', days: 14, anchor: '2026-09-06' },

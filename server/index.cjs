@@ -271,11 +271,66 @@ if (!db.prepare('SELECT id FROM king_status WHERE id = ?').get(1)) {
 }
 
 // --- Auth helpers (no external deps) ---
-const SECRET = 'k846-' + (process.env.SESSION_SECRET || 'realm-secret-9f3a7c2e')
-const hash = (pw) => crypto.scryptSync(pw, SECRET, 64).toString('hex')
-const verify = (pw, h) => {
-  try { return crypto.scryptSync(pw, SECRET, 64).toString('hex') === h } catch { return false }
+//
+// SESSION_SECRET signs every session token. The literal that used to stand in
+// for it lived in this file, so anyone who could read the repo could forge a
+// token for user 1 and arrive as Sparta. A missing secret is now fatal in
+// production rather than silently falling back to a public string.
+const RAW_SECRET = process.env.SESSION_SECRET || ''
+if (!RAW_SECRET && process.env.NODE_ENV === 'production') {
+  console.error('[fatal] SESSION_SECRET is not set. Refusing to start with a guessable signing key.')
+  process.exit(1)
 }
+if (!RAW_SECRET) console.warn('[warn] SESSION_SECRET is not set - using a development-only key.')
+const SECRET = 'k846-' + (RAW_SECRET || 'dev-only-insecure-key')
+
+const SCRYPT_KEYLEN = 64
+const SALT_BYTES = 16
+
+// Every password gets its own random salt. The previous scheme derived every
+// hash as scrypt(password, SECRET) -- one salt for the whole deployment -- so
+// two accounts with the same password produced byte-identical hashes and a
+// single precomputed table would open all five at once.
+const hash = (pw) => {
+  const salt = crypto.randomBytes(SALT_BYTES)
+  const digest = crypto.scryptSync(String(pw).normalize('NFKC'), salt, SCRYPT_KEYLEN)
+  return `scrypt$${salt.toString('hex')}$${digest.toString('hex')}`
+}
+
+// The old shared-salt derivation. Kept ONLY so passwords set before this change
+// still work; needsRehash() flags those rows and the login route rewrites them
+// in the new format as their owner signs in.
+const legacyHash = (pw) => crypto.scryptSync(String(pw), SECRET, SCRYPT_KEYLEN).toString('hex')
+
+const sameHex = (a, b) => {
+  try {
+    const ab = Buffer.from(a, 'hex')
+    const bb = Buffer.from(b, 'hex')
+    return ab.length === bb.length && crypto.timingSafeEqual(ab, bb)
+  } catch { return false }
+}
+
+// Returns a boolean, deliberately: several routes call this as `if (!verify(...))`
+// and an object would be truthy there, turning the check into a no-op.
+const verify = (pw, stored) => {
+  try {
+    if (typeof stored !== 'string' || !stored) return false
+    if (!stored.includes('$')) return sameHex(legacyHash(pw), stored)
+    const [scheme, saltHex, digestHex] = stored.split('$')
+    if (scheme !== 'scrypt' || !saltHex || !digestHex) return false
+    const actual = crypto.scryptSync(String(pw).normalize('NFKC'), Buffer.from(saltHex, 'hex'), SCRYPT_KEYLEN)
+    return sameHex(actual.toString('hex'), digestHex)
+  } catch { return false }
+}
+
+// True for a hash still in the old shared-salt format.
+const needsRehash = (stored) => typeof stored === 'string' && !stored.includes('$')
+
+// A hash of a value nobody holds. An unknown username is verified against this
+// so the miss costs the same scrypt work as a hit: without it, a wrong username
+// returned far faster than a wrong password, which tells an attacker exactly
+// which of the five accounts are real.
+const DECOY_HASH = hash(crypto.randomBytes(32).toString('hex'))
 const makeToken = (userId) => {
   const payload = Buffer.from(String(userId)).toString('base64url')
   const sig = crypto.createHmac('sha256', SECRET).update(String(userId)).digest('base64url')
@@ -305,6 +360,16 @@ const tcols = db.prepare("PRAGMA table_info(transfers)").all()
 if (!tcols.some((c) => c.name === 'preferred_date')) db.exec('ALTER TABLE transfers ADD COLUMN preferred_date TEXT')
 if (!tcols.some((c) => c.name === 'preferred_slot')) db.exec('ALTER TABLE transfers ADD COLUMN preferred_slot TEXT')
 if (!tcols.some((c) => c.name === 'assigned_slot')) db.exec('ALTER TABLE transfers ADD COLUMN assigned_slot TEXT')
+
+// One live booking per arrival window. Created after the columns above exist.
+// If historical rows already double-booked a slot the index cannot be built --
+// that is reported rather than thrown, because refusing to boot over old data
+// would take the whole portal down.
+try {
+  db.exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_transfers_slot_unique ON transfers(preferred_date, preferred_slot) WHERE preferred_date IS NOT NULL AND preferred_slot IS NOT NULL AND status != 'done'")
+} catch (e) {
+  console.warn('[transfers] could not create the slot uniqueness index -- existing rows double-book a window:', e.message)
+}
 
 // --- Seed 5 accounts (server-side only; never in the frontend bundle) ---
 const SEED = [
@@ -545,7 +610,18 @@ app.post('/api/login', (req, res) => {
   }
   const { username, password, mode } = req.body || {}
   const user = db.prepare('SELECT * FROM users WHERE username = ?').get(String(username || '').trim().toLowerCase())
-  if (!user || !verify(password || '', user.password_hash)) return res.status(401).json({ error: 'Invalid username or password' })
+  // Always spend the scrypt work, even when there is no such user -- see DECOY_HASH.
+  const ok = verify(password || '', user ? user.password_hash : DECOY_HASH)
+  if (!user || !ok) return res.status(401).json({ error: 'Invalid username or password' })
+  // A correct password stored in the old shared-salt format is rewritten with a
+  // per-user salt here, which is the only moment the plaintext is available.
+  if (needsRehash(user.password_hash)) {
+    try {
+      const upgraded = hash(password)
+      db.prepare('UPDATE users SET password_hash = ? WHERE id = ?').run(upgraded, user.id)
+      user.password_hash = upgraded
+    } catch (e) { console.error('[auth] password rehash failed', e.message) }
+  }
   if (mode === 'admin' && user.role !== 'admin') return res.status(403).json({ error: 'This login is for the Sparta master account only.' })
   if (mode === 'leader' && user.role !== 'leader') return res.status(403).json({ error: 'Leader login only. Sparta uses Royal Access.' })
   clearRateLimit(ip)
@@ -568,16 +644,24 @@ const takenSlotsForDate = (date) => db.prepare(
 app.post('/api/transfers', (req, res) => {
   const { name, game_id, discord, alliance, note, preferred_date, preferred_slot } = req.body || {}
   if (!name || !game_id || !discord) return res.status(400).json({ error: 'Name, Player ID, and Discord are required' })
-  const assign = db.transaction(() => {
+  // Reading the free slots and writing the row must be ONE atomic unit. They
+  // used to be two: the search ran in a transaction that committed before the
+  // INSERT was issued, so two requests arriving together were both told the
+  // same window was free and both took it. idx_transfers_slot_unique is the
+  // backstop for the case the database is being written by anything else.
+  const insertTransfer = db.prepare('INSERT INTO transfers (name, game_id, discord, alliance, note, preferred_date, preferred_slot, assigned_slot) VALUES (?,?,?,?,?,?,?,?)')
+  const book = db.transaction(() => {
     // 'any' = non-emergency: auto-assign the first free 30-min slot (search up to 14 days)
     if (preferred_slot === 'any') {
       const base = preferred_date ? new Date(preferred_date + 'T00:00:00Z') : new Date()
       for (let d = 0; d < 14; d++) {
-        const date = new Date(base.getTime() + d * 86400000)
-        const iso = date.toISOString().slice(0, 10)
+        const iso = new Date(base.getTime() + d * 86400000).toISOString().slice(0, 10)
         const taken = new Set(takenSlotsForDate(iso))
         const free = SLOTS_30.find((s) => !taken.has(s))
-        if (free) return { date: iso, slot: free }
+        if (free) {
+          const r = insertTransfer.run(name, game_id, discord, alliance || null, note || null, iso, free, free)
+          return { date: iso, slot: free, id: r.lastInsertRowid }
+        }
       }
       return null
     }
@@ -585,16 +669,26 @@ app.post('/api/transfers', (req, res) => {
     if (preferred_date && preferred_slot) {
       const taken = new Set(takenSlotsForDate(preferred_date))
       if (taken.has(preferred_slot)) return { conflict: true, slot: preferred_slot, date: preferred_date }
-      return { date: preferred_date, slot: preferred_slot }
+      const r = insertTransfer.run(name, game_id, discord, alliance || null, note || null, preferred_date, preferred_slot, preferred_slot)
+      return { date: preferred_date, slot: preferred_slot, id: r.lastInsertRowid }
     }
-    return { date: null, slot: null }
+    const r = insertTransfer.run(name, game_id, discord, alliance || null, note || null, null, null, null)
+    return { date: null, slot: null, id: r.lastInsertRowid }
   })
-  const result = assign()
+
+  let result
+  try {
+    result = book()
+  } catch (e) {
+    if (String(e && e.message).includes('UNIQUE')) {
+      return res.status(409).json({ error: 'That time was taken a moment ago. Please pick another slot or choose "Any available time".', taken: true })
+    }
+    throw e
+  }
   if (!result) return res.status(409).json({ error: 'No free slots in the next 14 days. Please contact leadership on Discord.', taken: true })
   if (result.conflict) return res.status(409).json({ error: `That time (${result.slot} UTC on ${result.date}) is already reserved. Please pick another slot or choose "Any available time".`, taken: true, slot: result.slot, date: result.date })
-  const info = db.prepare('INSERT INTO transfers (name, game_id, discord, alliance, note, preferred_date, preferred_slot, assigned_slot) VALUES (?,?,?,?,?,?,?,?)').run(name, game_id, discord, alliance || null, note || null, result.date, result.slot, result.slot)
   logEvent(req, 'action', 'transfer-request', { detail: alliance || null })
-  res.json({ ok: true, id: info.lastInsertRowid, assigned_date: result.date, assigned_slot: result.slot })
+  res.json({ ok: true, id: result.id, assigned_date: result.date, assigned_slot: result.slot })
 })
 // Public: which 30-min slots are already taken on a given date (so the form can show availability)
 app.get('/api/transfers/slots', (req, res) => {

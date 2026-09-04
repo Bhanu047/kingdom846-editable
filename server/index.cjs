@@ -2793,106 +2793,16 @@ async function fetchKingshotData() {
 }
 
 // Sync endpoint (called by cron with secret key)
-// --- AI Chat Assistant (Google Gemini) ---
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY || ''
-const GEMINI_MODEL = 'gemini-flash-latest'
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`
-
-// Kingdom context for the AI
-function buildKingdomContext() {
-  const kingRow = db.prepare('SELECT * FROM king_status WHERE id = 1').get()
-  const alliances = db.prepare('SELECT slug, name, leader, language, tagline FROM alliances').all()
-  const events = db.prepare("SELECT title, date, category, excerpt FROM kingshot_sync WHERE type != 'news' ORDER BY date ASC LIMIT 10").all()
-  const news = db.prepare("SELECT title, excerpt, category FROM kingshot_sync WHERE type = 'news' ORDER BY synced_at DESC LIMIT 5").all()
-  const guides = db.prepare("SELECT title, category, excerpt FROM kingshot_sync WHERE type = 'guide' ORDER BY id DESC LIMIT 10").all()
-  const transfers = db.prepare('SELECT name, alliance, status FROM transfers ORDER BY created_at DESC LIMIT 5').all()
-  const applications = db.prepare('SELECT type, nickname, status FROM applications ORDER BY created_at DESC LIMIT 5').all()
-  
-  return `You are the Royal Advisor AI for Kingdom 846, a gaming community for the strategy game Kingshot.
-You can DO things, not just talk. You have tools to sync data, update king status, manage alliances, add events, and view reports.
-Keep answers concise (2-4 sentences). Be friendly and use medieval/royal tone.
-
-KINGDOM DATA:
-- Kingdom: 846
-- Season: KvK Season 4
-- King: ${kingRow ? kingRow.name : 'Not set'} (${kingRow ? kingRow.king_type : ''}) (${kingRow ? kingRow.alliance_tag : ''})
-
-ALLIANCES:
-${alliances.map(a => `- [${a.slug}] ${a.name} — Leader: ${a.leader}, Language: ${a.language}, Tagline: ${a.tagline || 'none'}`).join('\n')}
-
-UPCOMING EVENTS:
-${events.length ? events.map(e => `- ${e.title} (${e.date}) — ${e.excerpt || ''}`).join('\n') : 'None scheduled'}
-
-RECENT NEWS:
-${news.length ? news.map(n => `- ${n.title}`).join('\n') : 'None'}
-
-GUIDES:
-${guides.length ? guides.map(g => `- ${g.title} (${g.category})`).join('\n') : 'None'}
-
-RECENT TRANSFERS:
-${transfers.length ? transfers.map(t => `- ${t.name} -> ${t.alliance || 'unassigned'} (${t.status})`).join('\n') : 'None'}
-
-RECENT APPLICATIONS:
-${applications.length ? applications.map(a => `- ${a.nickname} applied for ${a.type} (${a.status})`).join('\n') : 'None'}
-`
-}
-
-// AI Tools — functions the AI can call to actually DO things
-const AI_TOOLS = [
-  {
-    name: 'sync_kingshot',
-    description: 'Sync latest news and guides from Kingshot sources. Fetches fresh content and updates the database.',
-    parameters: { type: 'object', properties: {} }
-  },
-  {
-    name: 'update_king_status',
-    description: 'Update the king/queen status. Changes who rules the kingdom.',
-    parameters: {
-      type: 'object',
-      properties: {
-        king_type: { type: 'string', enum: ['High King', 'King', 'High Queen', 'Queen'] },
-        name: { type: 'string', description: 'Name of the ruler' },
-        alliance_tag: { type: 'string', description: 'Alliance tag e.g. [RYO]' },
-        alliance_name: { type: 'string', description: 'Alliance name e.g. Spiders' }
-      },
-      required: ['king_type', 'name']
-    }
-  },
-  {
-    name: 'get_kingdom_stats',
-    description: 'Get full kingdom statistics including alliance count, event count, transfer count, application count.',
-    parameters: { type: 'object', properties: {} }
-  },
-  {
-    name: 'get_transfers',
-    description: 'Get list of all transfer applications with status.',
-    parameters: { type: 'object', properties: {} }
-  },
-  {
-    name: 'get_applications',
-    description: 'Get list of all role applications (Chief Minister, Noble Advisor) with status.',
-    parameters: { type: 'object', properties: {} }
-  },
-  {
-    name: 'update_alliance',
-    description: 'Update an alliance details (leader, language, tagline).',
-    parameters: {
-      type: 'object',
-      properties: {
-        slug: { type: 'string', description: 'Alliance slug e.g. spiders' },
-        leader: { type: 'string' },
-        language: { type: 'string' },
-        tagline: { type: 'string' }
-      },
-      required: ['slug']
-    }
-  },
-  {
-    name: 'get_alliances',
-    description: 'Get full list of all alliances with details.',
-    parameters: { type: 'object', properties: {} }
-  }
-]
+// --- The kingdom's own advisor ---
+//
+// This kingdom runs its own AI. There is no external model, no API key, and no
+// per-message cost: the Royal Advisor answers from the topic corpus in
+// server/ai/, from live database state, and from the tools below.
+//
+// A Google Gemini integration used to live here -- a context builder, a tool
+// schema, an autonomous agent on a four-hour timer, and a design scanner. It
+// was unreliable in practice and has been removed entirely. The tools below are
+// kept because the advisor's own action stage calls them directly.
 
 // Execute a tool call
 async function executeTool(toolName, args) {
@@ -2979,17 +2889,12 @@ async function executeTool(toolName, args) {
 // narrower rule written below it — which ranking removes entirely. The answers
 // themselves were kept: they live in server/ai/knowledge.json.
 const { createEngine } = require('./ai/engine.cjs')
-const { createLlm } = require('./ai/llm.cjs')
 
 let advisor = null
 function getAdvisor() {
   if (!advisor) {
-    // The model is optional. Without GEMINI_API_KEY the advisor behaves exactly
-    // as it always has; with it, questions the corpus cannot match get a grounded
-    // answer instead of "I am not sure".
-    const advisorLlm = createLlm({ apiKey: GEMINI_API_KEY, buildContext: buildKingdomContext })
-    advisor = createEngine({ db, scheduleDefaults: SCHEDULE_DEFAULTS, executeTool, llm: advisorLlm })
-    console.log(`[Advisor] ready — ${advisor.topicCount} topics indexed, ${advisorLlm ? `model fallback on (${advisorLlm.model})` : 'no external AI'}`)
+    advisor = createEngine({ db, scheduleDefaults: SCHEDULE_DEFAULTS, executeTool })
+    console.log(`[Advisor] ready — ${advisor.topicCount} topics indexed, no external AI`)
   }
   return advisor
 }
@@ -3089,174 +2994,23 @@ function logAction(action, detail) {
   console.log(`[AI Agent] ${action}: ${detail}`)
 }
 
-// --- Design Intelligence Scanner ---
-// Scans GitHub for trending animation libraries, SVG icon sets, and UI motion design tools
-// Uses Gemini to pick top 3 relevant to Kingdom 846's gaming/fantasy aesthetic
-async function runDesignScan() {
-  if (!GEMINI_API_KEY) return
-  console.log('[AI Agent] Scanning design resources...')
-  try {
-    const oneMonthAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-
-    // GitHub Search API — free, no auth needed (60 req/hr)
-    const searches = [
-      { category: 'Animation Libraries', q: `animation+library+language:javascript+pushed:>${oneMonthAgo}&sort=stars&order=desc&per_page=8` },
-      { category: 'SVG Icon Sets', q: `svg+icons+language:javascript+pushed:>${oneMonthAgo}&sort=stars&order=desc&per_page=8` },
-      { category: 'UI Motion Design', q: `motion+ui+design+language:javascript+pushed:>${oneMonthAgo}&sort=stars&order=desc&per_page=8` },
-      { category: 'Gaming/Fantasy UI', q: `game+ui+fantasy+language:javascript+stars:>50&sort=stars&order=desc&per_page=8` },
-      { category: 'CSS Effects', q: `css+animation+effects+language:css+stars:>100&sort=stars&order=desc&per_page=5` },
-    ]
-
-    const allResults = []
-    for (const search of searches) {
-      try {
-        const res = await fetch(`https://api.github.com/search/repositories?q=${search.q}`, {
-          headers: { 'Accept': 'application/vnd.github.v3+json', 'User-Agent': 'Kingdom846-AI-Agent' }
-        })
-        if (res.ok) {
-          const data = await res.json()
-          for (const repo of (data.items || []).slice(0, 5)) {
-            allResults.push({
-              category: search.category,
-              name: repo.full_name,
-              url: repo.html_url,
-              stars: repo.stargazers_count,
-              description: repo.description || '',
-              updated: repo.pushed_at,
-              language: repo.language,
-            })
-          }
-        }
-      } catch (e) { console.error(`[AI Agent] GitHub search error for ${search.category}:`, e.message) }
-    }
-
-    // Use Gemini to analyze and pick top 3 for Kingdom 846
-    const repoList = allResults.map((r, i) => `${i+1}. [${r.category}] ${r.name} (${r.stars} stars, updated ${r.updated.split('T')[0]})\n   ${r.description}\n   URL: ${r.url}`).join('\n\n')
-
-    const analysisPrompt = `You are the design intelligence agent for Kingdom 846, a gaming community portal for the strategy game Kingshot.
-The site uses a dark medieval/fantasy theme with gold accents (#0E1220 bg, #D4AF37 gold, #F3E8CC parchment).
-Stack: React 18 + Vite 5 + Tailwind 3.
-
-Here are trending GitHub repos found today:
-${repoList}
-
-Pick the TOP 3 most relevant for Kingdom 846's visual identity. Respond as JSON array:
-[
-  {
-    "name": "repo name",
-    "category": "category",
-    "url": "github url",
-    "stars": 12345,
-    "why": "1-2 sentences why it fits Kingdom 846's medieval/fantasy gaming aesthetic",
-    "integration": "how to integrate (e.g., 'npm install X' or 'use for hero animations')",
-    "priority": "high|medium|low"
-  }
-]
-
-Only include repos with 100+ stars or updated in the last 30 days. Respond ONLY with the JSON array.`
-
-    const aiRes = await fetch(GEMINI_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ role: 'user', parts: [{ text: analysisPrompt }] }],
-        generationConfig: { temperature: 0.4, maxOutputTokens: 1000 }
-      })
-    })
-
-    if (aiRes.ok) {
-      const aiData = await aiRes.json()
-      const rawText = aiData.candidates?.[0]?.content?.parts?.map(p => p.text || '').join('') || '[]'
-      const cleaned = rawText.replace(/```json|```/g, '').trim()
-      // Extract JSON array from response (in case AI adds extra text)
-      const jsonMatch = cleaned.match(/\[[\s\S]*\]/)
-      const jsonStr = jsonMatch ? jsonMatch[0] : cleaned
-      try {
-        const picks = JSON.parse(jsonStr)
-        designBriefing = {
-          date: new Date().toISOString(),
-          scanned: allResults.length,
-          top_picks: picks,
-        }
-        logAction('Design Scan', `Scanned ${allResults.length} repos, picked top ${picks.length}`)
-        console.log(`[AI Agent] Design scan complete: ${picks.length} picks from ${allResults.length} repos`)
-      } catch (parseErr) { console.error('[AI Agent] Failed to parse design scan JSON:', jsonStr.substring(0, 200)) }
-    }
-  } catch (err) {
-    console.error('[AI Agent] Design scan error:', err.message)
-  }
-}
-
-async function runAutonomousAgent() {
-  if (!GEMINI_API_KEY) return
-  console.log('[AI Agent] Running autonomous check...')
-  try {
-    // 1. Auto-sync Kingshot data
-    const { news, guides, live, seedCount } = await fetchKingshotData()
-    const all = [...news, ...guides]
-    db.prepare('DELETE FROM kingshot_sync').run()
-    const stmt = db.prepare('INSERT OR REPLACE INTO kingshot_sync (id, type, title, category, date, excerpt, body, source, art, read_time, synced_at) VALUES (?,?,?,?,?,?,?,?,?,?,datetime(\'now\'))')
-    for (const item of all) {
-      stmt.run(item.id, item.type, item.title, item.category || null, item.date || null, item.excerpt || null, item.body || null, item.source || null, item.art || null, item.read_time || null)
-    }
-    // 2. Skip insights generation on auto-runs to save free tier quota for chat
-    // Insights can be generated manually from admin panel
-    console.log(`[AI Agent] Synced ${all.length} items (skipping insights to save quota)`)
-
-    lastAgentRun = new Date().toISOString()
-
-    // Say where the items came from. "Synced 66 items" was true on every run
-    // for days and told nobody that 59 of those are hardcoded in this file and
-    // the other 7 never changed. A summary that cannot distinguish a working
-    // sync from a dead one is not a summary. The activity row is truncated in
-    // the UI, so this has to say it in a few words.
-    const liveCount = recordSync({ news, guides, live, seedCount }).live
-    logAction('Auto-sync', liveCount === 0
-      ? `${all.length} items · 0 live — sources gave nothing`
-      : `${all.length} items · ${liveCount} live · ${seedCount} built-in`)
-
-    // 3. Run design scan only if explicitly requested (skip on auto-runs to save quota)
-    // Design scan is triggered manually via admin panel
-    console.log(`[AI Agent] Complete at ${lastAgentRun}`)
-  } catch (err) {
-    console.error('[AI Agent] Error:', err.message)
-  }
-}
-
-// Run agent on startup, then every 4 hours
-const AGENT_INTERVAL = 4 * 60 * 60 * 1000 // 4 hours
-
-// Get AI agent status and insights
+// Advisor status. The response shape is unchanged so the Dashboard and Admin
+// panels keep working; `insights` and `design_briefing` were only ever produced
+// by the removed Gemini agent, so they are now always empty and those banners
+// simply do not render. `activity_log` is still real -- it records the actions
+// the advisor actually performs.
 app.get('/api/ai/status', (_req, res) => {
   res.json({
-    configured: !!GEMINI_API_KEY,
-    last_run: lastAgentRun,
-    insights: agentInsights,
+    configured: true,
+    engine: 'kingdom-846-advisor',
+    external_model: false,
+    last_run: null,
+    insights: [],
     activity_log: agentLog.slice(0, 10),
-    design_briefing: designBriefing,
+    design_briefing: null,
     last_sync: lastSyncReport,
-    next_run: lastAgentRun ? new Date(new Date(lastAgentRun).getTime() + AGENT_INTERVAL).toISOString() : null
+    next_run: null,
   })
-})
-
-// Trigger agent manually (admin only)
-app.post('/api/ai/run-agent', auth, adminOnly, async (_req, res) => {
-  try {
-    await runAutonomousAgent()
-    res.json({ ok: true, last_run: lastAgentRun, insights: agentInsights })
-  } catch (err) {
-    res.status(500).json({ error: err.message })
-  }
-})
-
-// Trigger design scan manually (admin only)
-app.post('/api/ai/run-design-scan', auth, adminOnly, async (_req, res) => {
-  try {
-    await runDesignScan()
-    res.json({ ok: true, briefing: designBriefing })
-  } catch (err) {
-    res.status(500).json({ error: err.message })
-  }
 })
 
 // Sync endpoint (manual trigger)
@@ -3443,12 +3197,6 @@ function webpNegotiation(root) {
     console.log('[push] event reminders scheduled (10 and 5 minutes before each alliance event)')
 
     // Start autonomous AI agent — runs on startup then every 4 hours
-    if (GEMINI_API_KEY) {
-      // Don't run on startup — preserves free tier quota for chat
-      setInterval(() => runAutonomousAgent(), AGENT_INTERVAL)
-      console.log('[AI Agent] Autonomous agent scheduled (every 4 hours, no startup run)')
-    } else {
-      console.log('[AI Agent] No GEMINI_API_KEY set — AI features disabled')
-    }
+    console.log(`[Advisor] the kingdom's own advisor is serving; no external model is used`)
   })
 })()

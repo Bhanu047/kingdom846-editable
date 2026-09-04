@@ -47,7 +47,7 @@ I can help you with:
 
 Ask me anything about the realm.`
 
-function createEngine({ db, scheduleDefaults = {}, executeTool = null, llm = null } = {}) {
+function createEngine({ db, scheduleDefaults = {}, executeTool = null } = {}) {
   const index = new Bm25Index(KNOWLEDGE)
   const memory = new Memory()
   const resolveLive = db ? createLive({ db, scheduleDefaults }) : () => null
@@ -191,33 +191,7 @@ function createEngine({ db, scheduleDefaults = {}, executeTool = null, llm = nul
       return { reply: hits[0].doc.answer, topic: hits[0].doc.id, confidence: score }
     }
 
-    // 6. Retrieval could not answer it. Before giving up, hand the question to
-    //    the model along with the kingdom's live facts and whatever passages did
-    //    surface, and let it compose an answer from those alone. Reaching here at
-    //    all is the uncommon case, which is what keeps this cheap: every question
-    //    stages 1-5 could handle has already been answered for free.
-    //
-    //    The model returns null when the context cannot answer -- see llm.cjs --
-    //    so an unanswerable question still falls through to the honest reply
-    //    below rather than being improvised.
-    if (llm) {
-      try {
-        const composed = await llm.answer({
-          question: text,
-          passages: hits.map((h) => ({ title: h.doc.title, answer: h.doc.answer })),
-        })
-        if (composed) {
-          memory.remember(sessionId, { question: text, topic: 'model', alliance })
-          return { reply: composed, topic: 'model', confidence: score, viaModel: true }
-        }
-      } catch (err) {
-        // A model that is slow, rate-limited, or down must never take the
-        // advisor with it; the pre-existing answer is still right here.
-        console.error('[Advisor] model fallback failed:', err.message)
-      }
-    }
-
-    // 7. Say so, and offer the nearest topics.
+    // 6. Say so, and offer the nearest topics.
     memory.remember(sessionId, { question: text, topic: 'unknown', alliance })
     return { reply: clarify(hits), topic: 'unknown', confidence: score }
   }

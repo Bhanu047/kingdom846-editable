@@ -628,21 +628,10 @@ function AdminAI() {
 
   return (
     <div className="panel gold-corners p-4">
-      <RoyalSectionHeader icon="sparkles" eyebrow="AI Powered" title="Admin Assistant" action={
-        <div className="flex items-center gap-2">
-          {agentStatus?.last_run && (
-            <span className="text-[10px] text-parchment/40">Last run: {new Date(agentStatus.last_run).toLocaleTimeString()}</span>
-          )}
-          <button onClick={async () => {
-            setSyncing(true)
-            try { await apiJson('/api/ai/run-agent', { method: 'POST' }); setMessages(prev => [...prev, { role: 'assistant', content: 'Agent triggered manually. Check back in a moment for insights.' }]) }
-            catch { setMessages(prev => [...prev, { role: 'assistant', content: 'Failed to trigger agent.' }]) }
-            finally { setSyncing(false) }
-          }} disabled={syncing} className="btn-secondary !py-1 !text-xs">
-            <Icon name="refresh" size={12} /> {syncing ? 'Running…' : 'Run Agent'}
-          </button>
-        </div>
-      } />
+      {/* The "Run Agent" button triggered an autonomous Gemini agent that has
+          been removed. The kingdom's advisor answers on demand and has nothing
+          to schedule, so there is nothing left to trigger. */}
+      <RoyalSectionHeader icon="sparkles" eyebrow="Kingdom 846" title="Royal Advisor" />
 
       {/* Agent insights */}
       {agentStatus?.insights?.length > 0 && (

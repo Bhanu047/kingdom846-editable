@@ -133,10 +133,3 @@ is logged but never fails the backup — a verified local copy still beats none.
 
 Check it is on: `GET /api/admin/backups` reports an `offsite` block, and the
 boot log prints the bucket.
-
-## The Royal Advisor's model fallback (optional)
-
-Set `GEMINI_API_KEY` to a Google AI Studio key and questions the advisor's own
-corpus cannot match get a grounded answer instead of "I am not sure". It is
-only consulted after the built-in stages fail, so common questions still cost
-nothing. Unset, the advisor behaves exactly as it always has.

@@ -13,7 +13,7 @@
  * Bump CACHE_VERSION on any change to this file's caching rules; the activate
  * handler deletes every cache that doesn't match, so old entries never linger.
  */
-const CACHE_VERSION = 'v4'
+const CACHE_VERSION = 'v5'
 const SHELL_CACHE = `k846-shell-${CACHE_VERSION}`
 const ASSET_CACHE = `k846-assets-${CACHE_VERSION}`
 const FONT_CACHE = `k846-fonts-${CACHE_VERSION}`
@@ -111,7 +111,16 @@ async function shellFirst(request, cacheName, shellUrl) {
   // the first paint is waiting for, which was the whole bug.
   const network = fetch(request)
     .then((response) => {
-      if (response && response.ok) cache.put(shellUrl, response.clone())
+      if (response && response.ok) {
+        cache.put(shellUrl, response.clone())
+        // And the build the new shell asks for, while we are here. Without
+        // this the deploy lands on the NEXT open: shell from cache instantly,
+        // then a quarter of a megabyte of freshly-named JS fetched from Oregon
+        // with the launch screen held up in front of it the whole way. Pulled
+        // now, in the background of a visit that is already finished, the next
+        // open is local and immediate.
+        primeBuild(response.clone()).catch(() => {})
+      }
       return response
     })
     .catch(() => null)
@@ -121,11 +130,41 @@ async function shellFirst(request, cacheName, shellUrl) {
   throw new Error(`offline and no shell cached: ${request.url}`)
 }
 
+/* Warm the asset cache with the hashed files a freshly-fetched shell names.
+ *
+ * Only /assets/ URLs, which carry a content hash, so a wrong guess is
+ * impossible -- a file that changed has a different name. Failures are
+ * deliberately silent: this is an optimisation running behind a page that has
+ * already loaded, and it must never be able to break one.
+ */
+async function primeBuild(response) {
+  const html = await response.text()
+  const urls = new Set()
+  // The build writes these relative -- src="./assets/index-<hash>.js" -- so the
+  // leading dot is optional and the match is normalised back to a root path.
+  const re = /["'(]\.?(\/assets\/[A-Za-z0-9._-]+\.(?:js|css))["')]/g
+  let m
+  while ((m = re.exec(html))) urls.add(m[1])
+  if (!urls.size) return
+  const cache = await caches.open(ASSET_CACHE)
+  await Promise.all([...urls].map(async (url) => {
+    if (await cache.match(url)) return
+    await cache.add(url).catch(() => {})
+  }))
+}
+
 // Serve from cache immediately, refresh in the background. Right for hashed
 // build assets and fonts, which are either immutable or change rarely.
 async function staleWhileRevalidate(request, cacheName) {
   const cache = await caches.open(cacheName)
-  const cached = await cache.match(request)
+  const stored = await cache.match(request)
+  // A stored response that is not ok is worse than none at all. This is
+  // cache-first, so a bad entry -- a put that ran out of quota half way, an
+  // error page saved during a deploy -- is handed back for ever, and a broken
+  // image never heals itself. Opaque cross-origin responses report status 0 and
+  // are legitimate; only a real failure status is thrown away.
+  const cached = stored && (stored.ok || stored.type === 'opaque' || stored.status === 0) ? stored : undefined
+  if (stored && !cached) await cache.delete(request).catch(() => {})
   const network = fetch(request)
     .then((response) => {
       // Opaque cross-origin responses report status 0; they are still worth
@@ -162,10 +201,17 @@ self.addEventListener('fetch', (event) => {
 
   if (url.origin !== self.location.origin) return
 
-  // Navigations: network first so a deploy is picked up immediately, with the
-  // cached shell as the offline answer. Hash routing means every in-app route
-  // resolves to the same document, so one cached shell covers the whole site.
-  if (request.mode === 'navigate') {
+  // Navigations: the cached shell first, so the first paint never waits on the
+  // network. Hash routing means every in-app route resolves to the same
+  // document, so one cached shell covers the whole site.
+  //
+  // The tab's own navigation, and only that. A frame loading inside the page is
+  // a navigation too, and the website's entrance -- the nine halls -- is an
+  // iframe: served the shell, the front door would have the app behind it.
+  // `destination` is what tells them apart, 'document' against 'iframe'; where
+  // it is not implemented it reads as '' and the mode alone decides, which is
+  // the behaviour this had before.
+  if (request.mode === 'navigate' && request.destination !== 'iframe' && request.destination !== 'frame') {
     event.respondWith(shellFirst(request, SHELL_CACHE, '/index.html'))
     return
   }

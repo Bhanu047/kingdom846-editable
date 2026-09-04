@@ -21,6 +21,7 @@ const source = fs.readFileSync(path.join(here, '..', 'public', 'sw.js'), 'utf8')
 /** Load sw.js against stand-in browser globals and hand back its internals. */
 function loadWorker({ fetchImpl }) {
   const stores = new Map()
+  const added = []
   const caches = {
     async open(name) {
       if (!stores.has(name)) stores.set(name, new Map())
@@ -28,7 +29,8 @@ function loadWorker({ fetchImpl }) {
       return {
         async match(key) { return store.get(String(key)) || undefined },
         async put(key, value) { store.set(String(key), value) },
-        async add() {},
+        async add(key) { added.push(String(key)); store.set(String(key), { body: 'fetched' }) },
+        async delete(key) { return store.delete(String(key)) },
       }
     },
     async keys() { return [...stores.keys()] },
@@ -36,8 +38,8 @@ function loadWorker({ fetchImpl }) {
   }
   const self = { addEventListener() {}, skipWaiting() {}, clients: { claim() {} }, registration: {} }
   const factory = new Function('self', 'caches', 'fetch', 'URL', 'Response',
-    `${source}\n;return { shellFirst, networkFirst, CACHE_VERSION, SHELL_URLS };`)
-  return { api: factory(self, caches, fetchImpl, URL, class {}), caches, stores }
+    `${source}\n;return { shellFirst, networkFirst, staleWhileRevalidate, primeBuild, CACHE_VERSION, SHELL_URLS };`)
+  return { api: factory(self, caches, fetchImpl, URL, class {}), caches, stores, added }
 }
 
 const cachedShell = { ok: true, body: 'cached shell', clone() { return this } }
@@ -98,7 +100,7 @@ test('the shell the app opens from is precached at install', async () => {
 test('the cache version was bumped with the rule change', () => {
   // sw.js says so in its own header: stale entries under an old policy are how
   // a fix fails to reach the phones that need it.
-  assert.equal(loadWorker({ fetchImpl: async () => freshShell }).api.CACHE_VERSION, 'v4')
+  assert.equal(loadWorker({ fetchImpl: async () => freshShell }).api.CACHE_VERSION, 'v5')
 })
 
 test('the fonts do not hold up the first paint', () => {
@@ -155,4 +157,124 @@ test('what reveals the welcome screen runs before any stylesheet', () => {
   assert.ok(firstSheet > 0, 'expected at least one stylesheet link')
   assert.ok(setter < firstSheet,
     'the script that reveals the welcome screen must come before the first stylesheet')
+})
+
+/* The build the new shell asks for, pulled while nobody is waiting.
+ *
+ * shellFirst hands over the cached shell instantly and refreshes it behind the
+ * visit -- so the deploy lands on the NEXT open, and that open had to fetch a
+ * quarter of a megabyte of freshly-named JS before it could draw anything.
+ * Priming the assets alongside the shell is what makes that open local too.
+ */
+test('a fresh shell brings its build in with it', async () => {
+  const html = `<!doctype html><html><head>
+    <script type="module" crossorigin src="./assets/index-Ce8CVWka.js"></script>
+    <link rel="stylesheet" href="./assets/index-3BqRtSbR.css">
+  </head><body></body></html>`
+  const { api, added } = loadWorker({ fetchImpl: async () => ({ ok: true }) })
+  await api.primeBuild({ text: async () => html })
+  // Relative in the built HTML, absolute in the cache: the paths the browser
+  // will actually ask for.
+  assert.deepEqual(added.sort(), ['/assets/index-3BqRtSbR.css', '/assets/index-Ce8CVWka.js'])
+})
+
+test('priming asks for nothing that is already local', async () => {
+  const html = '<script src="./assets/index-abc.js"></script>'
+  const { api, added, stores } = loadWorker({ fetchImpl: async () => ({ ok: true }) })
+  await api.primeBuild({ text: async () => html })
+  assert.deepEqual(added, ['/assets/index-abc.js'], 'first visit fetches it')
+  added.length = 0
+  await api.primeBuild({ text: async () => html })
+  assert.deepEqual(added, [], 'the second finds it cached')
+  assert.ok(stores.size)
+})
+
+/* Two doors, and each keeps its own.
+ *
+ * The crest screen is the app's. The website's is the nine halls, and while
+ * that entrance loads -- it is an iframe inside the React bundle, so it cannot
+ * paint until the bundle has landed AND the iframe has loaded -- the cover it
+ * sits behind must be the hall it is about to open in, not a flat #060810
+ * rectangle. That rectangle is what was reported from an iPhone as a black
+ * screen at kingdom846.com with nothing on it.
+ */
+test('the crest screen stays the app\'s', () => {
+  const html = fs.readFileSync(path.join(here, '..', 'index.html'), 'utf8')
+  const rule = html.match(/#k846-launch\{[^}]*\}/)
+  assert.ok(rule && /display:none/.test(rule[0]), 'hidden by default')
+  assert.match(html, /html\[data-app-launch\]\s*#k846-launch\{display:flex\}/, 'shown only in the app')
+})
+
+test('the website waits in the hall it is about to open in', () => {
+  const html = fs.readFileSync(path.join(here, '..', 'index.html'), 'utf8')
+  assert.match(html, /html\[data-hall\]\s*#boot-veil\{[^}]*var\(--k846-hall\)/,
+    'the cover carries the hall image, not a flat colour')
+  // Same nine, same order, same start -- the entrance picks from these too, and
+  // a cover showing a different room than the door behind it is worse than none.
+  const entrance = fs.readFileSync(path.join(here, '..', 'public', 'royal-welcome-2', 'index.html'), 'utf8')
+  const halls = (s) => (s.match(/'sapphire'\s*,\s*'coronation'[^\]]*/) || [''])[0].replace(/\s+/g, '')
+  assert.equal(halls(html), halls(entrance), 'the two lists must not drift apart')
+  assert.ok(html.includes('Date.UTC(2026, 7, 24)'), 'and neither must the start of the rotation')
+  assert.ok(entrance.includes('Date.UTC(2026, 7, 24)'))
+})
+
+test('the entrance takes the welcome screen away when it has painted', () => {
+  const src = fs.readFileSync(path.join(here, '..', 'src', 'components', 'SplashScreen.jsx'), 'utf8')
+  // Whoever drops the veil must dismiss the screen above it too, or the site
+  // sits behind a crest until the 6-second safety line.
+  const reveal = src.slice(src.indexOf('const reveal ='), src.indexOf('const reveal =') + 400)
+  assert.match(reveal, /__k846DropVeil/)
+  assert.match(reveal, /__k846DismissLaunch/)
+})
+
+/* The front door is an iframe, and an iframe load is a navigation.
+ *
+ * shellFirst answers navigations with the app's cached shell. Applied to the
+ * entrance -- /royal-welcome-2/index.html, loaded in a frame -- that puts the
+ * app inside the front door. Only the tab's own navigation gets the shell.
+ */
+test('the entrance iframe is not answered with the app shell', () => {
+  const handler = source.slice(source.indexOf("request.mode === 'navigate'"))
+  const guard = handler.slice(0, handler.indexOf('\n'))
+  assert.match(guard, /destination !== 'iframe'/, 'a frame is not the tab')
+  assert.match(guard, /destination !== 'frame'/)
+})
+
+/* A bad cached entry, on a cache-first path, is served for ever.
+ *
+ * Reported from an iPhone with forty tabs open: the entrance drawn, the hall
+ * behind it, and the broken-image icon where the crest goes -- on every reload.
+ * Media is served cache-first, so a put that ran out of quota half way is the
+ * answer to every later request for that file.
+ */
+test('a failed response in the cache is thrown away, not served', async () => {
+  let fetched = 0
+  const { api, caches: store } = loadWorker({
+    fetchImpl: async () => { fetched += 1; return { ok: true, status: 200, body: 'the real crest', clone: () => ({ body: 'the real crest' }) } },
+  })
+  const cache = await store.open('k846-assets-test')
+  await cache.put('/royal-welcome-2/assets/crest.webp', { ok: false, status: 503, body: 'half a crest' })
+  const out = await api.staleWhileRevalidate('/royal-welcome-2/assets/crest.webp', 'k846-assets-test')
+  assert.equal(out.body, 'the real crest', 'the network answers, not the poisoned entry')
+  assert.equal(fetched, 1)
+})
+
+test('a good cached entry is still served without a round trip', async () => {
+  let fetched = 0
+  const { api, caches: store } = loadWorker({
+    fetchImpl: async () => { fetched += 1; return { ok: true, status: 200, body: 'network', clone: () => ({ body: 'network' }) } },
+  })
+  const cache = await store.open('k846-assets-test')
+  await cache.put('/assets/hall.webp', { ok: true, status: 200, body: 'cached' })
+  assert.equal((await api.staleWhileRevalidate('/assets/hall.webp', 'k846-assets-test')).body, 'cached')
+})
+
+/* <picture> chooses a source on type support alone and never reconsiders. */
+test('the crest falls back when the webp fails to load', () => {
+  const entrance = fs.readFileSync(path.join(here, '..', 'public', 'royal-welcome-2', 'index.html'), 'utf8')
+  const img = entrance.match(/<img class="crest"[^>]*>/)
+  assert.ok(img, 'the crest is an img')
+  assert.match(img[0], /onerror=/, 'a failed load has somewhere to go')
+  assert.match(img[0], /crest\.png\?retry=1/, 'to the png, under a name no cache entry answers to')
+  assert.match(img[0], /dataset\.retried/, 'once, not in a loop')
 })

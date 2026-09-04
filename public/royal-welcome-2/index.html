@@ -954,7 +954,18 @@ body[data-theme="celestial"]{--disp:'Italiana',serif;--disp-w:400;--disp-track:.
     <div class="crest-stack">
       <div class="crest-wrap">
         <div class="halo"></div>
-        <picture><source srcset="assets/crest.webp" type="image/webp"><img class="crest" src="assets/crest.png" width="1024" height="1536" alt="Kingdom 846 crest" fetchpriority="high" /></picture>
+        <!-- onerror, because <picture> does not fall back on a failed LOAD.
+             A <source> is chosen on type support alone: once the browser has
+             picked the webp, a decode that runs out of memory or a cache entry
+             that came back short leaves the broken-image icon standing in the
+             doorway, and a reload picks the same source again. Reported from an
+             iPhone with forty tabs open: the hall, the name, and a grey box
+             where the crest goes.
+             So on failure, drop the <source> and take the png -- smaller, and
+             under a name the service worker has not cached, so a poisoned entry
+             cannot answer it. Once only: a crest that will not load twice is
+             better absent than blinking. -->
+        <picture><source srcset="assets/crest.webp" type="image/webp"><img class="crest" src="assets/crest.png" width="1024" height="1536" alt="Kingdom 846 crest" fetchpriority="high" onerror="if(!this.dataset.retried){this.dataset.retried='1';var s=this.parentNode.querySelector('source');if(s)s.remove();this.src='assets/crest.png?retry=1';}" /></picture>
       </div>
     </div>
 

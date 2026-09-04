@@ -22,7 +22,7 @@
    "recruit",
    "enlist"
   ],
-  "answer": "How to Join Kingdom 846:\n\n1. Transfer to an Alliance — Use the Transfer page to apply to [RYO] Spiders, [KzK] KamilKazeKarnival, [SAS] SaintsAndSinners, or [ICE] IceHunters.\n\n2. Apply for a Role — Apply for Chief Minister or Noble Advisor positions through the Apply page.\n\nBoth forms are available in the navigation menu. Leadership reviews all applications."
+  "answer": "How to Join Kingdom 846:\n\n1. Transfer to an Alliance — Use the Transfer page to apply to [RYO] Spiders, [KzK] KamikazeKarnival, [SAS] SaintsAndSinners, or [ICE] IceHunters.\n\n2. Apply for a Role — Apply for Chief Minister or Noble Advisor positions through the Apply page.\n\nBoth forms are available in the navigation menu. Leadership reviews all applications."
  },
  {
   "id": "about-the-kingdom",
@@ -39,7 +39,7 @@
    "lore",
    "kingdom"
   ],
-  "answer": "Kingdom 846 — One Crown. Four Alliances. Endless Glory.\n\nA kingdom forged in ten wars, seven dominations, and a perfect diplomatic record. Four alliances stand united under one crown:\n\n- [RYO] Spiders — Led by Shoni\n- [KzK] KamilKazeKarnival — Led by Lovely Khaos\n- [SAS] SaintsAndSinners — Led by Lady Charlotte\n- [ICE] IceHunters — Led by Dunngeon\n\nWhere legends are forged in fire and crowned in gold. Visit the About page for the full kingdom history and doctrine."
+  "answer": "Kingdom 846 — One Crown. Four Alliances. Endless Glory.\n\nA kingdom forged in ten wars, seven dominations, and a perfect diplomatic record. Four alliances stand united under one crown:\n\n- [RYO] Spiders — Led by Shoni\n- [KzK] KamikazeKarnival — Led by Lovely Khaos\n- [SAS] SaintsAndSinners — Led by Lady Charlotte\n- [ICE] IceHunters — Led by Dunngeon\n\nWhere legends are forged in fire and crowned in gold. Visit the About page for the full kingdom history and doctrine."
  },
  {
   "id": "season",
@@ -1218,7 +1218,7 @@
    "new alliance to kingdom",
    "more alliances"
   ],
-  "answer": "Kingdom 846 currently has four alliances: RYO (Spiders), KzK (KamilKazeKarnival), SAS (SaintsAndSinners), and ICE (IceHunters).\n\nAdding a fifth alliance would require approval from the King/Queen and the council. Contact Spartan (admin) through Discord (https://discord.gg/rcxJCh97A) to discuss.\n\nAll alliances in Kingdom 846 work together under one crown."
+  "answer": "Kingdom 846 currently has four alliances: RYO (Spiders), KzK (KamikazeKarnival), SAS (SaintsAndSinners), and ICE (IceHunters).\n\nAdding a fifth alliance would require approval from the King/Queen and the council. Contact Spartan (admin) through Discord (https://discord.gg/rcxJCh97A) to discuss.\n\nAll alliances in Kingdom 846 work together under one crown."
  },
  {
   "id": "bug",
@@ -1379,7 +1379,7 @@
    "play music",
    "play a game"
   ],
-  "answer": "In the halls of Kingdom 846, where gold meets fire and crowns are forged...\n\nFour alliances marched through the gates of destiny. The Spiders wove their webs of strategy. The KamilKazeKarnival brought chaos and glory. The SaintsAndSinners walked the line between light and shadow. The IceHunters struck from the frozen north.\n\nUnited under one crown, they took what was theirs. And the realm trembled.\n\nThe end... or rather, the beginning. Your story in Kingdom 846 awaits!"
+  "answer": "In the halls of Kingdom 846, where gold meets fire and crowns are forged...\n\nFour alliances marched through the gates of destiny. The Spiders wove their webs of strategy. The KamikazeKarnival brought chaos and glory. The SaintsAndSinners walked the line between light and shadow. The IceHunters struck from the frozen north.\n\nUnited under one crown, they took what was theirs. And the realm trembled.\n\nThe end... or rather, the beginning. Your story in Kingdom 846 awaits!"
  },
  {
   "id": "what-is-love",
@@ -1651,7 +1651,7 @@
    "which is the best",
    "top alliance"
   ],
-  "answer": "All four alliances in Kingdom 846 are strong in different ways:\n\n- RYO (Spiders): Best at strategy and coordination\n- KzK (KamilKazeKarnival): Best at aggressive PvP\n- SAS (SaintsAndSinners): Best at balanced gameplay\n- ICE (IceHunters): Best at focused execution\n\nThere is no \"best\" alliance — each excels in its own way. The real strength of Kingdom 846 is that all four work together under one crown.\n\nChoose the alliance that matches your playstyle."
+  "answer": "All four alliances in Kingdom 846 are strong in different ways:\n\n- RYO (Spiders): Best at strategy and coordination\n- KzK (KamikazeKarnival): Best at aggressive PvP\n- SAS (SaintsAndSinners): Best at balanced gameplay\n- ICE (IceHunters): Best at focused execution\n\nThere is no \"best\" alliance — each excels in its own way. The real strength of Kingdom 846 is that all four work together under one crown.\n\nChoose the alliance that matches your playstyle."
  },
  {
   "id": "win-pvp",
@@ -1777,7 +1777,7 @@
    "sas",
    "ice"
   ],
-  "answer": "Differences Between Kingdom 846 Alliances:\n\nRYO (Spiders): Led by Shoni. Strategic, disciplined, web-like coordination. Focus on calculated attacks.\n\nKzK (KamilKazeKarnival): Led by Lovely Khaos. Aggressive, fast-paced, high-energy PvP. Focus on overwhelming offense.\n\nSAS (SaintsAndSinners): Led by Lady Charlotte. Balanced tactics, strong defense + offense. Focus on adaptability.\n\nICE (IceHunters): Led by Dunngeon. Focused, efficient, precise execution. Focus on targeted operations.\n\nAll four are part of the same kingdom and fight together in KvK."
+  "answer": "Differences Between Kingdom 846 Alliances:\n\nRYO (Spiders): Led by Shoni. Strategic, disciplined, web-like coordination. Focus on calculated attacks.\n\nKzK (KamikazeKarnival): Led by Lovely Khaos. Aggressive, fast-paced, high-energy PvP. Focus on overwhelming offense.\n\nSAS (SaintsAndSinners): Led by Lady Charlotte. Balanced tactics, strong defense + offense. Focus on adaptability.\n\nICE (IceHunters): Led by Dunngeon. Focused, efficient, precise execution. Focus on targeted operations.\n\nAll four are part of the same kingdom and fight together in KvK."
  },
  {
   "id": "ryo",
@@ -1790,13 +1790,13 @@
  },
  {
   "id": "kzk",
-  "title": "KzK (KamilKazeKarnival)",
+  "title": "KzK (KamikazeKarnival)",
   "keywords": [
    "kzk",
    "kamikaze",
    "kamilkaze"
   ],
-  "answer": "KzK (KamilKazeKarnival):\n\n- Leader: Lovely Khaos\n- Tagline: Chaos crowned in glory\n- Playstyle: Aggressive and fast-paced\n- Strength: Overwhelming PvP offense\n- Alliance color: Crimson\n\nVisit the Alliances page for more details or use the Transfer page to apply."
+  "answer": "KzK (KamikazeKarnival):\n\n- Leader: Lovely Khaos\n- Tagline: Chaos crowned in glory\n- Playstyle: Aggressive and fast-paced\n- Strength: Overwhelming PvP offense\n- Alliance color: Crimson\n\nVisit the Alliances page for more details or use the Transfer page to apply."
  },
  {
   "id": "sas",
@@ -1848,7 +1848,7 @@
    "lovely",
    "khaos"
   ],
-  "answer": "Lovely Khaos is the leader of KzK (KamilKazeKarnival) alliance in Kingdom 846.\n\n- Alliance: KzK (KamilKazeKarnival)\n- Role: Alliance Leader\n- Avatar: KzK Lord (chaos queen themed)\n- Playstyle: Aggressive and fast-paced PvP\n- Contact: Through Discord or in-game\n\nLovely Khaos manages KzK event schedules through the Leader Portal."
+  "answer": "Lovely Khaos is the leader of KzK (KamikazeKarnival) alliance in Kingdom 846.\n\n- Alliance: KzK (KamikazeKarnival)\n- Role: Alliance Leader\n- Avatar: KzK Lord (chaos queen themed)\n- Playstyle: Aggressive and fast-paced PvP\n- Contact: Through Discord or in-game\n\nLovely Khaos manages KzK event schedules through the Leader Portal."
  },
  {
   "id": "charlotte",
@@ -2407,7 +2407,7 @@
    "alliance page",
    "council page"
   ],
-  "answer": "The Alliances Page:\n\n- Shows all four Kingdom 846 alliances\n- Each alliance has a card with leader, tagline, and details\n- Council chamber background image\n- Shimmer animation effects on cards\n- Links to apply through the Transfer page\n\nAlliances:\n- RYO (Spiders) — Led by Shoni\n- KzK (KamilKazeKarnival) — Led by Lovely Khaos\n- SAS (SaintsAndSinners) — Led by Lady Charlotte\n- ICE (IceHunters) — Led by Dunngeon"
+  "answer": "The Alliances Page:\n\n- Shows all four Kingdom 846 alliances\n- Each alliance has a card with leader, tagline, and details\n- Council chamber background image\n- Shimmer animation effects on cards\n- Links to apply through the Transfer page\n\nAlliances:\n- RYO (Spiders) — Led by Shoni\n- KzK (KamikazeKarnival) — Led by Lovely Khaos\n- SAS (SaintsAndSinners) — Led by Lady Charlotte\n- ICE (IceHunters) — Led by Dunngeon"
  },
  {
   "id": "rankings-page",
@@ -2930,7 +2930,7 @@
    "pillars",
    "4 pillars"
   ],
-  "answer": "The Four Pillars of Kingdom 846:\n\n1. RYO (Spiders) — Strategy\n2. KzK (KamilKazeKarnival) — Aggression\n3. SAS (SaintsAndSinners) — Balance\n4. ICE (IceHunters) — Precision\n\nThese four alliances are the pillars that hold the kingdom together. Each brings a unique strength. Together, they are unbreakable.\n\nVisit the Alliances page for more details."
+  "answer": "The Four Pillars of Kingdom 846:\n\n1. RYO (Spiders) — Strategy\n2. KzK (KamikazeKarnival) — Aggression\n3. SAS (SaintsAndSinners) — Balance\n4. ICE (IceHunters) — Precision\n\nThese four alliances are the pillars that hold the kingdom together. Each brings a unique strength. Together, they are unbreakable.\n\nVisit the Alliances page for more details."
  },
  {
   "id": "kingdom-color",
@@ -3046,7 +3046,7 @@
    "tag prefix",
    "alliance tag"
   ],
-  "answer": "Kingdom 846 Alliance Tags:\n\n- RYO: Spiders (led by Shoni)\n- KzK: KamilKazeKarnival (led by Lovely Khaos)\n- SAS: SaintsAndSinners (led by Lady Charlotte)\n- ICE: IceHunters (led by Dunngeon)\n\nThese tags appear next to player names in-game and on the Rankings page."
+  "answer": "Kingdom 846 Alliance Tags:\n\n- RYO: Spiders (led by Shoni)\n- KzK: KamikazeKarnival (led by Lovely Khaos)\n- SAS: SaintsAndSinners (led by Lady Charlotte)\n- ICE: IceHunters (led by Dunngeon)\n\nThese tags appear next to player names in-game and on the Rankings page."
  },
  {
   "id": "royal-advisor",
@@ -3092,7 +3092,7 @@
    "original alliance",
    "founding alliance"
   ],
-  "answer": "All four alliances in Kingdom 846 were founded together as part of the kingdom's creation.\n\n- RYO (Spiders) — Founding member\n- KzK (KamilKazeKarnival) — Founding member\n- SAS (SaintsAndSinners) — Founding member\n- ICE (IceHunters) — Founding member\n\nAll four are equal founding pillars of the kingdom. No alliance is older than another."
+  "answer": "All four alliances in Kingdom 846 were founded together as part of the kingdom's creation.\n\n- RYO (Spiders) — Founding member\n- KzK (KamikazeKarnival) — Founding member\n- SAS (SaintsAndSinners) — Founding member\n- ICE (IceHunters) — Founding member\n\nAll four are equal founding pillars of the kingdom. No alliance is older than another."
  },
  {
   "id": "officer",

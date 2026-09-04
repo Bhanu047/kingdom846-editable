@@ -137,7 +137,7 @@ db.exec(`
   );
   INSERT OR IGNORE INTO alliances (slug, name, leader, language, tagline) VALUES
     ('ryo', 'Spiders', 'Shoni', 'English', 'Loyal warriors of the crown'),
-    ('kzk', 'KamilKazeKarnival', 'Lovely Khaos', 'English', 'Chaos with purpose'),
+    ('kzk', 'KamikazeKarnival', 'Lovely Khaos', 'English', 'Chaos with purpose'),
     ('sas', 'SaintsAndSinners', 'Lady Charlotte', 'English', 'Saints by day, sinners by night'),
     ('ice', 'IceHunters', 'Dunngeon', 'English', 'Cold steel, colder hearts');
   CREATE TABLE IF NOT EXISTS kingshot_sync (

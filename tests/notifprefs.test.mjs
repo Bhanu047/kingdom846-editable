@@ -181,7 +181,7 @@ test('a device that switched the crown alert off is not told', async () => {
   db.prepare("UPDATE push_subscriptions SET alert_crown=0 WHERE endpoint LIKE '%crown-ice'").run()
   received.length = 0
   const token = await adminToken()
-  await setKing(token, { king_type: 'High King', name: 'Oliver', alliance_tag: '[KzK]', alliance_name: 'KamilKazeKarnival' })
+  await setKing(token, { king_type: 'High King', name: 'Oliver', alliance_tag: '[KzK]', alliance_name: 'KamikazeKarnival' })
   await new Promise((r) => setTimeout(r, 400))
   assert.deepEqual(received, ['/dev/crown-ryo'])
 })

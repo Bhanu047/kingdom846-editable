@@ -10,7 +10,7 @@ import BirthdayPanel from '../components/BirthdayPanel'
 
 const KING_TYPES = ['High King', 'King', 'High Queen', 'Queen']
 const KING_ALLIANCES = [
-  { tag: '[RYO]', name: 'Spiders' }, { tag: '[KzK]', name: 'KamilKazeKarnival' },
+  { tag: '[RYO]', name: 'Spiders' }, { tag: '[KzK]', name: 'KamikazeKarnival' },
   { tag: '[SAS]', name: 'SaintsAndSinners' }, { tag: '[ICE]', name: 'IceHunters' },
 ]
 export default function MasterConsole() {

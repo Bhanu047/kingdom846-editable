@@ -2949,12 +2949,17 @@ async function executeTool(toolName, args) {
 // narrower rule written below it — which ranking removes entirely. The answers
 // themselves were kept: they live in server/ai/knowledge.json.
 const { createEngine } = require('./ai/engine.cjs')
+const { createLlm } = require('./ai/llm.cjs')
 
 let advisor = null
 function getAdvisor() {
   if (!advisor) {
-    advisor = createEngine({ db, scheduleDefaults: SCHEDULE_DEFAULTS, executeTool })
-    console.log(`[Advisor] ready — ${advisor.topicCount} topics indexed, no external AI`)
+    // The model is optional. Without GEMINI_API_KEY the advisor behaves exactly
+    // as it always has; with it, questions the corpus cannot match get a grounded
+    // answer instead of "I am not sure".
+    const advisorLlm = createLlm({ apiKey: GEMINI_API_KEY, buildContext: buildKingdomContext })
+    advisor = createEngine({ db, scheduleDefaults: SCHEDULE_DEFAULTS, executeTool, llm: advisorLlm })
+    console.log(`[Advisor] ready — ${advisor.topicCount} topics indexed, ${advisorLlm ? `model fallback on (${advisorLlm.model})` : 'no external AI'}`)
   }
   return advisor
 }

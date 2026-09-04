@@ -188,20 +188,33 @@ test('priming asks for nothing that is already local', async () => {
   assert.ok(stores.size)
 })
 
-/* The website's share of the welcome screen.
+/* Two doors, and each keeps its own.
  *
- * Reported as a black rectangle at kingdom846.com with nothing on it. The
- * entrance is an iframe inside the React bundle, so it cannot paint until the
- * bundle has landed AND the iframe has loaded; until then #boot-veil covered
- * the document with a flat #060810 and the welcome screen -- already in the
- * HTML, already painted -- was held at display:none because it was "the app's".
+ * The crest screen is the app's. The website's is the nine halls, and while
+ * that entrance loads -- it is an iframe inside the React bundle, so it cannot
+ * paint until the bundle has landed AND the iframe has loaded -- the cover it
+ * sits behind must be the hall it is about to open in, not a flat #060810
+ * rectangle. That rectangle is what was reported from an iPhone as a black
+ * screen at kingdom846.com with nothing on it.
  */
-test('the welcome screen is not gated on app mode', () => {
+test('the crest screen stays the app\'s', () => {
   const html = fs.readFileSync(path.join(here, '..', 'index.html'), 'utf8')
   const rule = html.match(/#k846-launch\{[^}]*\}/)
-  assert.ok(rule, 'the launch screen has its own rule')
-  assert.ok(!/display:none/.test(rule[0]), 'it must be on screen from the first frame, on the site as well')
-  assert.ok(!/html\[data-app-launch\]\s*#k846-launch/.test(html), 'and not behind an app-mode gate')
+  assert.ok(rule && /display:none/.test(rule[0]), 'hidden by default')
+  assert.match(html, /html\[data-app-launch\]\s*#k846-launch\{display:flex\}/, 'shown only in the app')
+})
+
+test('the website waits in the hall it is about to open in', () => {
+  const html = fs.readFileSync(path.join(here, '..', 'index.html'), 'utf8')
+  assert.match(html, /html\[data-hall\]\s*#boot-veil\{[^}]*var\(--k846-hall\)/,
+    'the cover carries the hall image, not a flat colour')
+  // Same nine, same order, same start -- the entrance picks from these too, and
+  // a cover showing a different room than the door behind it is worse than none.
+  const entrance = fs.readFileSync(path.join(here, '..', 'public', 'royal-welcome-2', 'index.html'), 'utf8')
+  const halls = (s) => (s.match(/'sapphire'\s*,\s*'coronation'[^\]]*/) || [''])[0].replace(/\s+/g, '')
+  assert.equal(halls(html), halls(entrance), 'the two lists must not drift apart')
+  assert.ok(html.includes('Date.UTC(2026, 7, 24)'), 'and neither must the start of the rotation')
+  assert.ok(entrance.includes('Date.UTC(2026, 7, 24)'))
 })
 
 test('the entrance takes the welcome screen away when it has painted', () => {

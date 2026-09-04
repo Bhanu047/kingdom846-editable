@@ -35,6 +35,16 @@
      must not strand the site behind a dark rectangle forever. */
   #boot-veil{position:fixed;inset:0;background:#060810;z-index:10000;pointer-events:none}
   #boot-veil.gone{display:none}
+  /* On the website the veil wears the hall the entrance is about to open in.
+     It was a flat #060810 rectangle, and since the entrance is an iframe inside
+     the React bundle -- it cannot paint until the bundle has landed AND the
+     iframe has loaded -- that rectangle was the whole wait. Reported from an
+     iPhone as a black screen at kingdom846.com with nothing on it.
+     The image is the same file the entrance itself uses, so this costs no extra
+     bytes: the iframe finds it already fetched. */
+  html[data-hall] #boot-veil{background:#060810 var(--k846-hall) center/cover no-repeat}
+  html[data-hall] #boot-veil::after{content:'';position:absolute;inset:0;
+    background:radial-gradient(120% 80% at 50% 40%,transparent 0%,rgba(6,8,16,.55) 70%,rgba(6,8,16,.85) 100%)}
 
   /* The welcome screen, in the page itself.
      It used to be a React component, which meant it could not appear until 370
@@ -45,16 +55,15 @@
      it just could not be drawn yet. Here it is markup and inline CSS, on screen
      in the first frame, before a line of JS runs. React only takes it away.
 
-     It shows on the website as well, and that is not a change of mind about the
-     entrance -- the entrance is an iframe that cannot paint until the bundle has
-     landed AND the iframe itself has loaded, and until then something has to be
-     on screen. That something used to be #boot-veil: a plain black rectangle
-     with nothing on it. Reported as "the website is black and nothing works".
-     A crest is the same cover doing the same job with the lights on. */
-  #k846-launch{position:fixed;inset:0;height:100vh;height:100dvh;z-index:10001;display:flex;
+     The app's, and only the app's. The website has its own front door -- the
+     nine halls -- and putting a crest in front of it would be a second welcome
+     screen for a site that already has one. What the website needs while that
+     door loads is its own room: see #boot-veil above. */
+  #k846-launch{position:fixed;inset:0;height:100vh;height:100dvh;z-index:10001;display:none;
     flex-direction:column;align-items:center;justify-content:center;gap:.85rem;
     background:radial-gradient(120% 80% at 50% 38%,#141d33 0%,#0a0e1c 58%,#060810 100%);
     transition:opacity .42s ease;opacity:1}
+  html[data-app-launch] #k846-launch{display:flex}
   #k846-launch.gone{opacity:0;pointer-events:none}
   #k846-launch img{width:min(38vw,148px);height:auto;filter:drop-shadow(0 10px 32px rgba(0,0,0,.75));
     animation:k846-rise .9s cubic-bezier(.16,1,.3,1) both}
@@ -93,6 +102,30 @@
         try { k846Standalone = sessionStorage.getItem('k846-app-mode-override') === '1' } catch (e) {}
       }
       if (k846Standalone) document.documentElement.setAttribute('data-app-launch', '');
+
+      // The website's cover is the hall of the week -- the same room the
+      // entrance is about to open in, chosen the same way it chooses it
+      // (royal-welcome-2/index.html, the K846_HALL block). Duplicated rather
+      // than shared because that file is the front door's own document and
+      // this has to run before anything of ours has loaded; the rotation is a
+      // date and a list, and both read the same list.
+      if (!k846Standalone) {
+        var halls = ['sapphire', 'coronation', 'moonlit', 'embers', 'cathedral',
+                     'storm', 'dragongate', 'warcamp', 'celestial'];
+        var asked = new URLSearchParams(window.location.search).get('theme');
+        var hall = (asked && halls.indexOf(asked) !== -1) ? asked : null;
+        if (!hall) {
+          // Monday 24 Aug 2026 -- the week the rotation started, on Sapphire.
+          var week = Math.floor((Date.now() - Date.UTC(2026, 7, 24)) / 604800000);
+          hall = halls[((week % halls.length) + halls.length) % halls.length];
+        }
+        var src = '/royal-welcome-2/assets/hall-' + hall + '.webp';
+        document.documentElement.style.setProperty('--k846-hall', "url('" + src + "')");
+        document.documentElement.setAttribute('data-hall', hall);
+        var pre = document.createElement('link');
+        pre.rel = 'preload'; pre.as = 'image'; pre.href = src;
+        document.head.appendChild(pre);
+      }
     } catch (e) {}
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />

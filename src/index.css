@@ -191,6 +191,10 @@
 @media (prefers-reduced-motion: reduce) {
   .shimmer-text, .ember, .aurora-border::before, .drift-slow, .badge-shine::after { animation: none !important; }
   .reveal, .reveal-clip { opacity: 1 !important; clip-path: none !important; animation: none !important; }
+  /* .stagger-in starts at opacity 0 and relies on its animation to become
+     visible, so switching the animation off alone would leave the content
+     invisible. It has to be forced visible in the same rule. */
+  .stagger-in { opacity: 1 !important; transform: none !important; animation: none !important; }
 }
 
 /* ===== Splash Screen ===== */
@@ -344,6 +348,13 @@
 .stagger-in:nth-child(6) { animation-delay: .40s; }
 .stagger-in:nth-child(7) { animation-delay: .47s; }
 .stagger-in:nth-child(8) { animation-delay: .54s; }
+/* Everything past the eighth. Without this a ninth item matches no delay rule,
+   so it starts at 0s and lands BEFORE the eight above it -- which is exactly
+   what a roster or a ranking table hits. They share one delay rather than
+   continuing to cascade, because a 40-row list should not take three seconds
+   to finish arriving. Lists that need a true unbounded cascade use
+   staggerIn() from src/lib/motion.js instead. */
+.stagger-in:nth-child(n+9) { animation-delay: .60s; }
 @keyframes stagger-up {
   from { opacity: 0; transform: translateY(16px); }
   to { opacity: 1; transform: translateY(0); }

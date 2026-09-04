@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { ArtImage } from '../components/ui'
 import Icon from '../components/Icon'
 import { Modal } from '../components/RosterPending'
@@ -6,6 +6,7 @@ import { useSiteData } from '../context/SiteDataContext'
 import { buildSchedule } from '../data/kingdom'
 import PageHeader from '../components/PageHeader'
 import { apiJson } from '../lib/api'
+import { useStaggerIn } from '../lib/motion'
 
 const colorMap = {
   gold: { ring: 'ring-gold/40', text: 'text-gold', bg: 'bg-gold/10', grad: 'from-gold/30 to-gold/5' },
@@ -23,6 +24,8 @@ export default function Alliances() {
   const { data } = useSiteData()
   const alliances = data.alliances
   const [active, setActive] = useState(null)
+  const cardGrid = useRef(null)
+  useStaggerIn(cardGrid, [alliances?.length ?? 0])
   const activeColor = active ? (colorMap[active.color] || colorMap.blue) : colorMap.blue
 
   /* The times that will actually be pushed.
@@ -56,7 +59,12 @@ export default function Alliances() {
         art="./assets/hero-council.webp"
       />
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      {/* The cards arrive one after another rather than all at once. This uses
+          staggerIn rather than the .stagger-in class because the class only
+          carries delays for the first eight children, and the alliance roll is
+          driven by data -- a fifth alliance would land before the four above
+          it. */}
+      <div ref={cardGrid} className="grid gap-4 lg:grid-cols-2">
         {alliances.map((a) => {
           const c = colorMap[a.color] || colorMap.blue
           return (

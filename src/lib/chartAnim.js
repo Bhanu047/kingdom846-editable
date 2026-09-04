@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
+import { animate } from 'animejs'
+import { prefersReducedMotion } from './motion'
 
 // Flips true one paint after mount, so a CSS transition has a real "from"
 // state to animate away from instead of the element popping in fully
@@ -14,22 +16,35 @@ export function useReveal() {
   return on
 }
 
-// Eases a number up from 0 to target over `duration`ms via rAF, for
-// KPI-style figures that should count up on reveal instead of appearing
-// instantly. Caller formats the returned raw number as needed.
+// Eases a number up from 0 to target over `duration`ms, for KPI-style figures
+// that should count up on reveal instead of appearing instantly. Caller formats
+// the returned raw number as needed.
+//
+// This used to run its own rAF loop with a hand-written cubic ease. anime.js
+// does the tweening now, which brings two things the loop did not have: a
+// visitor who has asked for reduced motion gets the final number immediately
+// rather than a 900ms animation, and the tween is driven by one shared engine
+// clock instead of a private rAF per counter -- a battle-lab result panel
+// renders half a dozen of these at once.
 export function useCountUp(target, duration = 900) {
-  const [v, setV] = useState(0)
+  const [v, setV] = useState(() => (prefersReducedMotion() ? target : 0))
   useEffect(() => {
-    let raf, start
-    const step = (ts) => {
-      if (!start) start = ts
-      const p = Math.min(1, (ts - start) / duration)
-      const eased = 1 - Math.pow(1 - p, 3)
-      setV(target * eased)
-      if (p < 1) raf = requestAnimationFrame(step)
+    if (prefersReducedMotion()) {
+      setV(target)
+      return
     }
-    raf = requestAnimationFrame(step)
-    return () => cancelAnimationFrame(raf)
+    // anime.js tweens object properties, so the number is carried on one.
+    const carrier = { n: 0 }
+    const animation = animate(carrier, {
+      n: target,
+      duration,
+      ease: 'outCubic',
+      onUpdate: () => setV(carrier.n),
+      // A tween that is paused mid-flight would otherwise leave the figure
+      // short of its target, which for a power total reads as wrong data.
+      onComplete: () => setV(target),
+    })
+    return () => { try { animation.pause() } catch {} }
   }, [target, duration])
   return v
 }

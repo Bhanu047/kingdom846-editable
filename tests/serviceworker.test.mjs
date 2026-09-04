@@ -220,11 +220,13 @@ test('the website waits in the hall it is about to open in', () => {
 
 test('the entrance takes the welcome screen away when it has painted', () => {
   const src = fs.readFileSync(path.join(here, '..', 'src', 'components', 'SplashScreen.jsx'), 'utf8')
-  // Whoever drops the veil must dismiss the screen above it too, or the site
-  // sits behind a crest until the 6-second safety line.
-  const reveal = src.slice(src.indexOf('const reveal ='), src.indexOf('const reveal =') + 400)
-  assert.match(reveal, /__k846DropVeil/)
-  assert.match(reveal, /__k846DismissLaunch/)
+  // Whoever drops the cover must dismiss the app's screen above it too, or the
+  // site sits behind a crest until the 6-second safety line.
+  const at = src.indexOf('const revealNow =')
+  assert.ok(at !== -1, 'the reveal is its own step')
+  const revealNow = src.slice(at, at + 400)
+  assert.match(revealNow, /__k846DropVeil/)
+  assert.match(revealNow, /__k846DismissLaunch/)
 })
 
 /* The front door is an iframe, and an iframe load is a navigation.
@@ -277,4 +279,38 @@ test('the crest falls back when the webp fails to load', () => {
   assert.match(img[0], /onerror=/, 'a failed load has somewhere to go')
   assert.match(img[0], /crest\.png\?retry=1/, 'to the png, under a name no cache entry answers to')
   assert.match(img[0], /dataset\.retried/, 'once, not in a loop')
+})
+
+/* One welcome screen, not two.
+ *
+ * The shell re-renders every second -- the header carries a live clock -- and
+ * hands SplashScreen a new onEnter each time. With onEnter in the effect's
+ * dependencies the whole effect tore down and re-ran once a second, and every
+ * teardown released and re-applied the scroll lock and dropped the cover over
+ * the page. Dropped inside the first second, while the entrance behind it was
+ * still fetching a crest of the better part of a megabyte: the door half-built,
+ * and then the door. Reported as "what is this 2 layers of welcome screen".
+ */
+test('the splash effect runs once, not once a second', () => {
+  const src = fs.readFileSync(path.join(here, '..', 'src', 'components', 'SplashScreen.jsx'), 'utf8')
+  assert.match(src, /const onEnterRef = useRef\(onEnter\)/, 'onEnter is held in a ref')
+  assert.ok(!/\}, \[onEnter\]\)/.test(src), 'and is not a dependency of the effect')
+  assert.match(src, /\}, \[\]\)/, 'the effect runs once')
+  // The cleanup drops the cover, so it must only run when the screen really goes.
+  assert.match(src, /onEnterRef\.current\?\.\(\)/, 'the handler reads it through the ref')
+})
+
+test('the cover waits for the entrance to be furnished, not just loaded', () => {
+  const src = fs.readFileSync(path.join(here, '..', 'src', 'components', 'SplashScreen.jsx'), 'utf8')
+  // iframe `load` means the document is ready; the crest is still on its way.
+  assert.match(src, /querySelector\('img\.crest'\)/, 'the crest is what it waits on')
+  assert.match(src, /crest\.complete && crest\.naturalWidth > 0/, 'decoded, not merely requested')
+  assert.match(src, /REVEAL_CAP/, 'and the wait is capped')
+  assert.match(src, /addEventListener\('error', finish\)/, 'a crest that fails still opens the door')
+})
+
+test('a crest that fails both sources is hidden, not left as a grey box', () => {
+  const entrance = fs.readFileSync(path.join(here, '..', 'public', 'royal-welcome-2', 'index.html'), 'utf8')
+  const img = entrance.match(/<img class="crest"[^>]*>/)[0]
+  assert.match(img, /visibility='hidden'/, 'the second failure hides it')
 })

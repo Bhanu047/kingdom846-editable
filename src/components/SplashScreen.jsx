@@ -1,8 +1,21 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 export default function SplashScreen({ onEnter }) {
   const [opening, setOpening] = useState(false)
   const [ready, setReady] = useState(false)
+
+  // The shell re-renders every second -- the header carries a live clock -- and
+  // hands this component a brand-new onEnter each time. The effect below used
+  // to depend on it, so it tore down and re-ran once a second, and every one of
+  // those teardowns ran its cleanup: the scroll lock was released and
+  // re-applied, and the cover over the page was dropped.
+  //
+  // Dropped, in the first second, while the entrance behind it was still
+  // fetching its crest. That is the "2 layers of welcome screen" -- the door
+  // half-built, then the door. Hold onEnter in a ref and let the effect run
+  // exactly once, so its cleanup means what it says: this screen is going away.
+  const onEnterRef = useRef(onEnter)
+  onEnterRef.current = onEnter
 
   useEffect(() => {
     // Lock the page properly, not just with body{overflow:hidden}.
@@ -57,7 +70,7 @@ export default function SplashScreen({ onEnter }) {
       setOpening(true)
       setTimeout(() => {
         unlock()
-        onEnter?.()
+        onEnterRef.current?.()
       }, 120)
     }
     window.addEventListener('message', handleMessage)
@@ -67,7 +80,9 @@ export default function SplashScreen({ onEnter }) {
       try { window.__k846DropVeil?.() } catch { /* veil already gone */ }
       try { window.__k846DismissLaunch?.() } catch { /* already gone */ }
     }
-  }, [onEnter])
+    // Once. See the ref above -- a dependency here is a cleanup every second.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // The front door is /royal-welcome-2/ -- the nine halls, one per week.
   // It was /perplexity-welcome/, a single fixed room, which is why the nine
@@ -78,14 +93,50 @@ export default function SplashScreen({ onEnter }) {
   // comes down when the entrance has actually painted, not when React decides
   // to render -- an iframe that has not loaded yet is an empty rectangle, and
   // dropping the veil against it is what let the app behind show through.
-  // The welcome screen in index.html is what the visitor has actually been
-  // looking at while the bundle and then this iframe loaded. It comes down at
-  // the same moment as the veil and for the same reason: the entrance has
-  // painted, so there is finally something better to show than a crest.
-  const reveal = () => {
+  // The cover in index.html -- the hall of the week -- is what the visitor has
+  // been looking at while the bundle and then this iframe loaded. It comes down
+  // here, and the timing is the whole point.
+  //
+  // `load` on the iframe means its DOCUMENT is ready, not that the room is
+  // furnished: the crest is the better part of a megabyte and is still on its
+  // way. Revealing on `load` therefore showed the entrance twice -- once as a
+  // dark rectangle with a hole where the crest goes, then again complete.
+  // Reported exactly that way: "what is this 2 layers of welcome screen".
+  //
+  // So wait for the crest to actually decode before handing the screen over.
+  // Same origin, so we can simply ask it. The wait is capped: a crest that will
+  // not come is not a reason to stand in the doorway for ever, and the frame
+  // underneath is no worse than what the cover was showing anyway.
+  const REVEAL_CAP = 4000
+
+  const revealNow = () => {
     setReady(true)
     try { window.__k846DropVeil?.() } catch { /* veil already gone */ }
     try { window.__k846DismissLaunch?.() } catch { /* already gone */ }
+  }
+
+  const reveal = (event) => {
+    const frame = event?.currentTarget
+    let doc
+    // Cross-origin one day, or a frame torn down mid-load: reveal and move on.
+    try { doc = frame?.contentDocument } catch { doc = null }
+    const crest = doc?.querySelector('img.crest')
+    if (!crest || (crest.complete && crest.naturalWidth > 0)) { revealNow(); return }
+
+    let done = false
+    const finish = () => {
+      if (done) return
+      done = true
+      clearTimeout(cap)
+      crest.removeEventListener('load', finish)
+      crest.removeEventListener('error', finish)
+      revealNow()
+    }
+    const cap = setTimeout(finish, REVEAL_CAP)
+    crest.addEventListener('load', finish)
+    // An error is a finish too: the crest has its own fallback inside the
+    // entrance, and either way the door is as ready as it is going to get.
+    crest.addEventListener('error', finish)
   }
 
   return (

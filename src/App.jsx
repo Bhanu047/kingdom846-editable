@@ -28,20 +28,6 @@ import { SiteDataProvider, useSiteData } from './context/SiteDataContext'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { nav, timeline, guides, news } from './data/kingdom'
 
-function useESTClock() {
-  const [time, setTime] = useState('')
-  useEffect(() => {
-    function update() {
-      const now = new Date()
-      const utc = new Date(now.toLocaleString('en-US', { timeZone: 'UTC' }))
-      setTime(`${String(utc.getHours()).padStart(2,'0')}:${String(utc.getMinutes()).padStart(2,'0')}:${String(utc.getSeconds()).padStart(2,'0')} UTC`)
-    }
-    update()
-    const id = setInterval(update, 1000)
-    return () => clearInterval(id)
-  }, [])
-  return time
-}
 
 const Dashboard = lazy(() => import('./pages/Dashboard'))
 const About = lazy(() => import('./pages/About'))
@@ -124,7 +110,6 @@ function Placeholder({ title, icon = 'bell', note }) {
 
 function Shell() {
   const { user, signOut, isAdmin } = useAuth()
-  const estTime = useESTClock()
   // Fixed for the life of the shell: display-mode cannot change without the
   // document being reloaded into a different window, and re-rendering the whole
   // app because a media query flickered would be worse than being one launch
@@ -323,7 +308,6 @@ function Shell() {
             page={page}
             title={titles[page] || 'Page'}
             appMode={appMode}
-            estTime={estTime}
             isAdmin={isAdmin}
             user={user}
             sidebarUser={sidebarUser}

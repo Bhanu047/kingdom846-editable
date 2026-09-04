@@ -129,7 +129,7 @@ export default function Dashboard({ onNavigate }) {
           </div>
           <div className="relative flex min-h-[19rem] flex-col items-center justify-center px-6 py-8 text-center md:min-h-0 md:h-full md:px-10 md:py-0">
             <img
-              src="./assets/crest-846.webp"
+              src="./assets/crest-846-md.webp"
               alt=""
               className="hero-crest mb-2.5 h-[4.5rem] w-auto sm:h-24 md:h-36"
             />

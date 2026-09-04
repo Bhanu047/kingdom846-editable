@@ -132,7 +132,7 @@ export default function BirthdayToast() {
       <div className="bday-card gold-corners has-banner">
         {banner && (
           <div className="bday-banner" aria-hidden="true">
-            <img src={banner} alt="" />
+            <img src={banner} alt="" loading="lazy" decoding="async" />
             <span className="bday-banner-scrim" />
           </div>
         )}

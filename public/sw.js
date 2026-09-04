@@ -26,7 +26,11 @@ const KEEP = new Set([SHELL_CACHE, ASSET_CACHE, FONT_CACHE])
 // seconds. Fetched at that moment it does not arrive in time and the screen
 // shows its dark ground with no crest on it -- reported as "a black screen,
 // then the home page, no welcome screen". Precached, it is already local.
-const SHELL_URLS = ['/', '/index.html', '/manifest.webmanifest', '/app-icons/icon-192.png', '/assets/crest-846.webp']
+const SHELL_URLS = ['/', '/index.html', '/manifest.webmanifest', '/app-icons/icon-192.png',
+  // Both crests the shell draws: the 448px plate on the launch screen and the
+  // 192px mark in the header. Together they are a third of the single 600x900
+  // file that used to serve both, and each is now the size it is drawn at.
+  '/assets/crest-846-md.webp', '/assets/crest-846-sm.webp']
 
 // Runtime-cacheable file types. index.html is excluded on purpose — it is
 // served no-store so the versioned ?v= script URLs inside it stay honest.

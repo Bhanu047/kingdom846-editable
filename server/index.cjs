@@ -1,10 +1,28 @@
 const express = require('express')
+const compression = require('compression')
 const Database = require('better-sqlite3')
 const crypto = require('crypto')
 const path = require('path')
 const XLSX = require('xlsx')
 
 const app = express()
+
+// Nothing text-shaped was compressed before this line. The stylesheet alone is
+// 131 kB on the wire and 25 kB gzipped, the main bundle 249 kB against 79 kB,
+// and every JSON response went out in full -- so a phone on a mobile connection
+// was downloading roughly three and a half times what it needed before the
+// first frame could be drawn. gzip costs a few milliseconds of CPU per response
+// on a server that is otherwise idle.
+//
+// Images are excluded: PNG, JPEG and WebP are already compressed, and running
+// them through gzip burns CPU to make the response very slightly larger.
+app.use(compression({
+  filter: (req, res) => {
+    const type = res.getHeader('Content-Type')
+    if (typeof type === 'string' && /^(image|video|audio)\//.test(type)) return false
+    return compression.filter(req, res)
+  },
+}))
 app.use(express.json({ limit: '1mb' }))
 
 // --- Database (path configurable for cloud persistent volumes) ---
@@ -3155,14 +3173,86 @@ const PORT = process.env.PORT || 5000
 const fs = require('fs')
 const distPublic = path.join(process.cwd(), 'dist')
 const isProduction = process.env.NODE_ENV === 'production'
+
+/**
+ * Serve the WebP twin of a PNG or JPEG when the browser can take one.
+ *
+ * The art in public/assets was 58 MB of PNG -- individual banners at three
+ * megabytes, a dozen of them on a single page. On a phone that is both a long
+ * download and a long decode, and it is the single largest reason the site
+ * took so long to become usable. The same images as WebP are 5.6 MB in total.
+ *
+ * The twins are served by negotiation rather than by renaming the files,
+ * because these paths are not all in the source: guide and news artwork is
+ * stored in the database as `./assets/guide-strategy.png`, admins paste asset
+ * paths into the editor, and old rows would have gone on pointing at names
+ * that no longer existed. Every reference keeps working and quietly gets the
+ * smaller file; a browser that cannot read WebP still gets its PNG.
+ *
+ * The set of twins is read once at boot -- these are build artefacts, not
+ * uploads, so an fs.existsSync per image request would be a syscall to learn
+ * something that cannot change while the process is running.
+ */
+function buildWebpIndex(root) {
+  const twins = new Set()
+  const walk = (dir, prefix) => {
+    let entries
+    try { entries = fs.readdirSync(dir, { withFileTypes: true }) } catch { return }
+    for (const e of entries) {
+      if (e.name.startsWith('.') || e.name === 'node_modules') continue
+      if (e.isDirectory()) { walk(path.join(dir, e.name), `${prefix}/${e.name}`); continue }
+      if (e.name.endsWith('.webp')) twins.add(`${prefix}/${e.name}`)
+    }
+  }
+  walk(root, '')
+  return twins
+}
+
+function webpNegotiation(root) {
+  const twins = buildWebpIndex(root)
+  console.log(`[assets] ${twins.size} WebP variants available for negotiation`)
+  return (req, res, next) => {
+    if (req.method !== 'GET' && req.method !== 'HEAD') return next()
+    const pathname = req.path
+    if (!/\.(png|jpe?g)$/i.test(pathname)) return next()
+    // Vary regardless of the outcome: a proxy that cached the PNG for a client
+    // without WebP support must not hand that same copy to one that has it,
+    // and vice versa.
+    res.setHeader('Vary', 'Accept')
+    if (!(req.headers.accept || '').includes('image/webp')) return next()
+    const twin = pathname.replace(/\.(png|jpe?g)$/i, '.webp')
+    if (!twins.has(twin)) return next()
+    req.url = twin + (req.url.slice(pathname.length) || '')
+    next()
+  }
+}
+
 ;(async () => {
   if (isProduction && fs.existsSync(distPublic)) {
+    app.use(webpNegotiation(distPublic))
     // index.html references versioned (?v=<hash>) script URLs for cache-busting —
     // if the browser caches index.html itself, it keeps requesting old versions
     // forever, so index.html must never be cached while the hashed/versioned
     // assets it points to are safe to cache normally.
     app.use(express.static(distPublic, {
       setHeaders: (res, filePath) => {
+        const rel = path.relative(distPublic, filePath).split(path.sep).join('/')
+        // Vite's build output is content-hashed, so a change to any of these
+        // files changes its name. They can be cached permanently, which is what
+        // makes a repeat visit cost nothing. Everything else -- the media, the
+        // hand-written scripts in public/ -- keeps its name across deploys, so
+        // it gets a day of freshness and then revalidates.
+        //
+        // Before this there were no Cache-Control headers at all on any of it.
+        // express.static falls back to ETags, which means the browser still had
+        // to make a conditional request for every asset on the page before it
+        // could reuse a single one -- dozens of round trips to Oregon on every
+        // load, over a mobile connection, just to be told nothing had changed.
+        if (/^assets\/[^/]+-[A-Za-z0-9_-]{8,}\.(js|css)$/.test(rel)) {
+          res.setHeader('Cache-Control', 'public, max-age=31536000, immutable')
+        } else if (/\.(png|jpe?g|webp|gif|svg|ico|woff2?|ttf|otf|mp3|wav|ogg|mp4)$/i.test(rel)) {
+          res.setHeader('Cache-Control', 'public, max-age=86400, stale-while-revalidate=604800')
+        }
         if (filePath.endsWith('index.html')) res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate')
         // The service worker is the one file that can never be served stale:
         // a cached worker keeps serving the build it was shipped with, and no
@@ -3181,6 +3271,10 @@ const isProduction = process.env.NODE_ENV === 'production'
   } else {
     const { createServer: createViteServer } = require('vite')
     const vite = await createViteServer({ server: { middlewareMode: true }, appType: 'spa' })
+    // Same negotiation in dev, against public/ rather than dist/, so an image
+    // that only exists as a PNG shows up as a missing twin here rather than in
+    // production.
+    app.use(webpNegotiation(path.join(process.cwd(), 'public')))
     app.use(vite.middlewares)
   }
   app.listen(PORT, '0.0.0.0', () => {

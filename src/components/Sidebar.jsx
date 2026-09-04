@@ -48,7 +48,7 @@ export default function Sidebar({ active, onNavigate, onLogin, onSignOut, user, 
             }}
           />
           <img
-            src="./assets/crest-846.webp"
+            src="./assets/crest-846-sm.webp"
             alt="Kingdom 846 crest"
             className="sidebar-crest relative h-[66px] w-[66px] object-contain float-anim"
             style={{

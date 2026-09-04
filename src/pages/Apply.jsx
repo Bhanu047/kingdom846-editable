@@ -36,7 +36,7 @@ export default function Apply({ type, onNavigate }) {
         <div className="grid gap-4 sm:grid-cols-2">
           <button onClick={() => onNavigate('apply-chief')} className="panel lift-glow gold-border-hover img-zoom group relative overflow-hidden text-left stagger-in flex flex-col">
             <div className="relative h-32 overflow-hidden">
-              <img src="./assets/hero-apply-chief.webp" alt="Chief Minister" className="h-full w-full object-cover opacity-80 transition" />
+              <img src="./assets/hero-apply-chief.webp" alt="Chief Minister" decoding="async" className="h-full w-full object-cover opacity-80 transition" />
               <div className="absolute inset-0 bg-gradient-to-t from-ink to-transparent" />
             </div>
             <div className="p-4">
@@ -47,7 +47,7 @@ export default function Apply({ type, onNavigate }) {
           </button>
           <button onClick={() => onNavigate('apply-noble')} className="panel lift-glow gold-border-hover img-zoom group relative overflow-hidden text-left stagger-in flex flex-col">
             <div className="relative h-32 overflow-hidden">
-              <img src="./assets/hero-apply-noble.webp" alt="Noble Advisor" className="h-full w-full object-cover opacity-80 transition" />
+              <img src="./assets/hero-apply-noble.webp" alt="Noble Advisor" decoding="async" className="h-full w-full object-cover opacity-80 transition" />
               <div className="absolute inset-0 bg-gradient-to-t from-ink to-transparent" />
             </div>
             <div className="p-4">

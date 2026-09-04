@@ -22,7 +22,13 @@
 <link rel="icon" href="assets/favicon-32.png" sizes="32x32" />
 <link rel="icon" href="assets/icon-512.png" sizes="512x512" />
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
-<link rel="preload" as="image" href="assets/crest.webp" fetchpriority="high" />
+<!-- The phone gets the 820px crest, the desktop the full plate. imagesrcset
+     on the preload has to mirror the <picture> below exactly, or the two
+     disagree and the browser fetches both -- a megabyte spent twice on the
+     first screen. -->
+<link rel="preload" as="image" href="assets/crest.webp"
+      imagesrcset="assets/crest-820.webp 820w, assets/crest.webp 1024w"
+      imagesizes="(max-width: 820px) 265px, 350px" fetchpriority="high" />
 <link rel="preload" as="image" href="assets/hall-sapphire.webp" fetchpriority="high" id="pre-bg" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -266,7 +272,7 @@ body.preview .hud.right button{font-size:8px;padding:8px 10px;}
     <div class="crest-stack">
       <div class="crest-wrap">
         <div class="halo"></div>
-        <picture><source srcset="assets/crest.webp" type="image/webp"><img class="crest" src="assets/crest.png" width="1024" height="1536" alt="Kingdom 846 crest" fetchpriority="high" /></picture>
+        <picture><source type="image/webp" srcset="assets/crest-820.webp 820w, assets/crest.webp 1024w" sizes="(max-width: 820px) 265px, 350px"><img class="crest" src="assets/crest.png" width="1024" height="1536" alt="Kingdom 846 crest" fetchpriority="high" /></picture>
         <div class="sheen"></div>
       </div>
       <div class="reflection" aria-hidden="true"><picture><source srcset="assets/crest.webp" type="image/webp"><img src="assets/crest.png" alt="" /></picture></div>

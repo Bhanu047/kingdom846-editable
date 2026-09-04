@@ -89,7 +89,12 @@ export default function LiveHall({ src, hall, className = '', onFallback }) {
 
     let texRes = [1, 1], loaded = false
     const img = new Image()
-    img.crossOrigin = 'anonymous'
+    // No crossOrigin. The plate is served from this app's own origin, so CORS
+    // buys nothing -- and a CORS-mode request has a different HTTP cache key
+    // from a plain one, so this fetched the hall a second time even though the
+    // page's own boot veil had already downloaded the identical file. 280 kB,
+    // twice, on the first screen. The canvas is only ever drawn to, never read
+    // back, so there is no tainting to avoid either.
     img.onload = () => {
       gl.bindTexture(gl.TEXTURE_2D, tex)
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, img)

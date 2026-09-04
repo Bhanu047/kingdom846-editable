@@ -31,7 +31,7 @@ function readRequestedTool() {
 function ToolCard({ tool, onOpen }) {
   return (
     <button type="button" onClick={() => onOpen(tool.id)} className="tilt tool-tile group relative isolate min-h-[290px] overflow-hidden rounded-[24px] bg-ink text-left md:min-h-[350px]">
-      <img src={tool.image} alt="" style={tool.imagePosition ? { objectPosition: tool.imagePosition } : undefined} className="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-[1.035]" />
+      <img src={tool.image} alt="" loading="lazy" decoding="async" style={tool.imagePosition ? { objectPosition: tool.imagePosition } : undefined} className="absolute inset-0 h-full w-full object-cover transition duration-700 group-hover:scale-[1.035]" />
       <div className={`absolute inset-0 bg-gradient-to-t ${tool.accent}`} />
       <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/25 to-black/5" />
       <div className="absolute inset-x-0 top-0 flex items-start justify-between p-5 md:p-6">
@@ -72,7 +72,7 @@ export default function BattleLabHub() {
   return (
     <div className="space-y-6">
       <section className="relative min-h-[250px] overflow-hidden rounded-[26px] border border-gold/25 bg-ink shadow-[0_20px_70px_rgba(0,0,0,.34)] md:min-h-[310px]">
-        <img src={tool.image} alt="" style={tool.imagePosition ? { objectPosition: tool.imagePosition } : undefined} className="absolute inset-0 h-full w-full object-cover" />
+        <img src={tool.image} alt="" loading="lazy" decoding="async" style={tool.imagePosition ? { objectPosition: tool.imagePosition } : undefined} className="absolute inset-0 h-full w-full object-cover" />
         <div className={`absolute inset-0 bg-gradient-to-r ${tool.accent}`} />
         <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-black/20" />
         <div className="relative flex min-h-[250px] flex-col justify-between p-5 md:min-h-[310px] md:p-8">

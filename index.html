@@ -122,9 +122,11 @@
         var src = '/royal-welcome-2/assets/hall-' + hall + '.webp';
         document.documentElement.style.setProperty('--k846-hall', "url('" + src + "')");
         document.documentElement.setAttribute('data-hall', hall);
-        var pre = document.createElement('link');
-        pre.rel = 'preload'; pre.as = 'image'; pre.href = src;
-        document.head.appendChild(pre);
+        // No preload link here. There used to be one, injected on the very next
+        // line after the two above -- but those two lines are what put the hall
+        // on #boot-veil, so the fetch is already under way by the time a
+        // preload for the same URL could be appended. All it did was ask for
+        // the same 280 kB a second time, in parallel, on the first screen.
       }
     } catch (e) {}
   </script>
@@ -180,7 +182,11 @@
 <body>
   <div id="boot-veil" aria-hidden="true"></div>
   <div id="k846-launch" aria-label="Kingdom 846 starting">
-    <img src="/assets/crest-846.webp" alt="" />
+    <!-- The 448px crest. This renders at min(38vw,148px) -- 444 device
+         pixels on a 3x phone -- and the full 600x900 plate was 227 kB for it.
+         It is precached by the service worker (SHELL_URLS in public/sw.js), so
+         on an installed app it is already local when this screen is drawn. -->
+    <img src="/assets/crest-846-md.webp" alt="" width="148" height="222" />
     <div class="k846-word">KINGDOM 846</div>
     <div class="k846-rule"></div>
     <div class="k846-foot">One Crown &middot; Four Alliances</div>
@@ -233,8 +239,27 @@
     (() => {
       const entranceImpact = new Audio('./assets/enter-sound.wav')
       const royalFanfare = new Audio('./assets/fanfare.wav')
-      entranceImpact.preload = 'auto'
-      royalFanfare.preload = 'auto'
+      // Half a megabyte of uncompressed WAV, and it used to be preload='auto'
+      // -- so the two of them were downloading in parallel with the entrance's
+      // own artwork, on the first paint, for a sound nobody can trigger until
+      // they press a button that is still animating in. On a phone that is
+      // half a megabyte of contention against the images the visitor is
+      // actually waiting to see.
+      //
+      // They are fetched once the page has finished loading instead. The
+      // entrance runs several seconds of animation before ENTER THE REALM can
+      // be pressed, so the audio is still there in time; it just no longer
+      // competes for the bandwidth that decides how fast the door appears.
+      entranceImpact.preload = 'none'
+      royalFanfare.preload = 'none'
+      const warmAudio = () => {
+        entranceImpact.preload = 'auto'
+        royalFanfare.preload = 'auto'
+        entranceImpact.load()
+        royalFanfare.load()
+      }
+      if (document.readyState === 'complete') setTimeout(warmAudio, 400)
+      else window.addEventListener('load', () => setTimeout(warmAudio, 400), { once: true })
       entranceImpact.volume = 0.52
       royalFanfare.volume = 0.28
       entranceImpact.playsInline = true

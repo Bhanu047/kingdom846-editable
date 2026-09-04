@@ -64,16 +64,24 @@ export function installReveal() {
   // unobserved it. That is how the whole welcome screen could end up rendered
   // at opacity 0. React does not manage data attributes it did not set, so
   // `data-k846-rev` survives the re-render that a class does not.
-  const scan = () => {
-    for (const el of document.querySelectorAll(TARGETS)) {
-      if (el.dataset.k846Rev) continue
-      if (el.closest(EXCLUDE)) continue
-      if (reduced) { el.dataset.k846Rev = 'in'; continue }
-      // Elements already in view on first paint still animate -- that is the
-      // page's entrance -- but everything below the fold waits for the scroll.
-      el.dataset.k846Rev = 'wait'
-      observer.observe(el)
-    }
+  const tag = (el) => {
+    if (el.dataset.k846Rev) return
+    if (el.closest(EXCLUDE)) return
+    if (reduced) { el.dataset.k846Rev = 'in'; return }
+    // Elements already in view on first paint still animate -- that is the
+    // page's entrance -- but everything below the fold waits for the scroll.
+    el.dataset.k846Rev = 'wait'
+    observer.observe(el)
+  }
+
+  // `root` narrows the search. The mutation observer below knows exactly which
+  // subtrees were just added, and walking only those is the difference between
+  // matching five selectors against a handful of new nodes and matching them
+  // against every element on a Battle Lab result page -- which it did on every
+  // DOM change the app made, several thousand elements at a time.
+  const scan = (root = document) => {
+    if (root !== document && root.matches?.(TARGETS)) tag(root)
+    for (const el of root.querySelectorAll(TARGETS)) tag(el)
   }
 
   // Safety net.
@@ -106,25 +114,61 @@ export function installReveal() {
     sweepPending = requestAnimationFrame(() => { sweepPending = 0; sweep() })
   }
   document.addEventListener('scroll', onScroll, { capture: true, passive: true })
-  const sweepTimer = setInterval(sweep, 800)
+
+  // The safety net used to be a setInterval running every 800ms for the life
+  // of the tab -- a full-document querySelectorAll plus a getBoundingClientRect
+  // per match, forever, whether or not anything had changed. Every one of those
+  // rect reads forces a layout, so the site was paying for a synchronous layout
+  // pass more than once a second while sitting perfectly still.
+  //
+  // What it was actually guarding is a missed observer callback just after new
+  // content mounts. That is a moment in time, not a steady state, so the sweep
+  // is scheduled off the events that create it -- a scan, a scroll -- and runs
+  // in idle time. Anything a sweep would have caught later, the scroll handler
+  // catches the instant the reader moves.
+  let sweepQueued = 0
+  const idle = window.requestIdleCallback || ((fn) => setTimeout(fn, 200))
+  const cancelIdle = window.cancelIdleCallback || clearTimeout
+  const queueSweep = () => {
+    if (sweepQueued) return
+    sweepQueued = idle(() => { sweepQueued = 0; sweep() }, { timeout: 900 })
+  }
 
   scan()
+  queueSweep()
 
   // The app is a client-rendered SPA: routes swap whole subtrees in, and the
   // Battle Lab injects result sections after a calculation. A MutationObserver
   // keeps those covered without every page having to call anything.
-  const mo = new MutationObserver(() => {
-    if (mo._t) return
-    mo._t = requestAnimationFrame(() => { mo._t = 0; scan() })
+  let added = []
+  const mo = new MutationObserver((records) => {
+    for (const rec of records) {
+      for (const node of rec.addedNodes) {
+        if (node.nodeType === 1) added.push(node)
+      }
+    }
+    if (!added.length || mo._t) return
+    mo._t = requestAnimationFrame(() => {
+      mo._t = 0
+      const batch = added
+      added = []
+      for (const node of batch) {
+        // A node added and then removed again before the frame ran has nothing
+        // to reveal, and observing it would leak an entry that never fires.
+        if (node.isConnected) scan(node)
+      }
+      queueSweep()
+    })
   })
   mo.observe(document.body, { childList: true, subtree: true })
 
   const teardown = () => {
     observer?.disconnect()
     mo.disconnect()
-    clearInterval(sweepTimer)
     document.removeEventListener('scroll', onScroll, { capture: true })
     if (sweepPending) cancelAnimationFrame(sweepPending)
+    if (sweepQueued) cancelIdle(sweepQueued)
+    if (mo._t) cancelAnimationFrame(mo._t)
     delete window.__k846Reveal
   }
   window.__k846Reveal = teardown

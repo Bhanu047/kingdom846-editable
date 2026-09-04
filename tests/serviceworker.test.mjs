@@ -118,24 +118,36 @@ test('the launch screen is precached, crest and all', async () => {
   const { api } = loadWorker({ fetchImpl: async () => freshShell })
   // The screen is on for 1.32s. Anything it needs that is fetched at that
   // moment does not arrive, and it paints as a bare dark rectangle.
-  assert.ok(api.SHELL_URLS.includes('/assets/crest-846.webp'),
+  assert.ok(api.SHELL_URLS.includes('/assets/crest-846-md.webp'),
     'the crest must be local before the launch screen is drawn')
 })
 
-test('the app pulls one crest, and a small one', () => {
+test('every crest the app pulls is the size it is drawn at', () => {
   const root = path.join(here, '..')
-  const webp = fs.statSync(path.join(root, 'public', 'assets', 'crest-846.webp')).size
-  assert.ok(webp < 300 * 1024, `the crest is ${(webp / 1024).toFixed(0)} KB`)
+  const sizeOf = (name) => fs.statSync(path.join(root, 'public', 'assets', name)).size
 
-  // Two different crest files means the app downloads both. The report
-  // exporters in public/ keep the PNG deliberately -- they run on demand, long
-  // after launch -- so only the app's own source is checked here.
-  const appFiles = ['src/components/AppLaunch.jsx', 'src/components/AppHeader.jsx',
-    'src/components/Sidebar.jsx', 'src/index.css']
+  // One file served every crest in the app, from a 32px header mark to the
+  // launch screen -- a quarter of a megabyte for something the size of a
+  // favicon. There are now three, each budgeted for the largest place it is
+  // drawn, and the two the shell needs come to less than the one it replaced.
+  assert.ok(sizeOf('crest-846-sm.webp') < 40 * 1024,
+    `the header crest is ${(sizeOf('crest-846-sm.webp') / 1024).toFixed(0)} KB`)
+  assert.ok(sizeOf('crest-846-md.webp') < 130 * 1024,
+    `the launch crest is ${(sizeOf('crest-846-md.webp') / 1024).toFixed(0)} KB`)
+  assert.ok(sizeOf('crest-846-sm.webp') + sizeOf('crest-846-md.webp') < sizeOf('crest-846.webp'),
+    'the two shell crests together must cost less than the single plate they replaced')
+
+  // The 600x900 plate and the PNG are both still on disk -- the report
+  // exporters in public/ use the PNG deliberately, since they run on demand
+  // long after launch -- but nothing the app draws may reach for either.
+  const appFiles = ['src/components/AppHeader.jsx', 'src/components/Sidebar.jsx',
+    'src/pages/Dashboard.jsx', 'src/index.css', 'index.html']
   for (const rel of appFiles) {
     const text = fs.readFileSync(path.join(root, rel), 'utf8')
     assert.ok(!text.includes('crest-846.png'),
       `${rel} pulls the 956 KB crest; the app should use the webp`)
+    assert.ok(!/crest-846\.webp/.test(text),
+      `${rel} pulls the full 600x900 crest where a sized variant would do`)
   }
 })
 

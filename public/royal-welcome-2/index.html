@@ -964,8 +964,9 @@ body[data-theme="celestial"]{--disp:'Italiana',serif;--disp-w:400;--disp-track:.
              So on failure, drop the <source> and take the png -- smaller, and
              under a name the service worker has not cached, so a poisoned entry
              cannot answer it. Once only: a crest that will not load twice is
-             better absent than blinking. -->
-        <picture><source srcset="assets/crest.webp" type="image/webp"><img class="crest" src="assets/crest.png" width="1024" height="1536" alt="Kingdom 846 crest" fetchpriority="high" onerror="if(!this.dataset.retried){this.dataset.retried='1';var s=this.parentNode.querySelector('source');if(s)s.remove();this.src='assets/crest.png?retry=1';}" /></picture>
+             hidden rather than left as a labelled grey box in the middle of the
+             door -- the name is written underneath it in any case. -->
+        <picture><source srcset="assets/crest.webp" type="image/webp"><img class="crest" src="assets/crest.png" width="1024" height="1536" alt="Kingdom 846 crest" fetchpriority="high" onerror="if(!this.dataset.retried){this.dataset.retried='1';var s=this.parentNode.querySelector('source');if(s)s.remove();this.src='assets/crest.png?retry=1';}else{this.style.visibility='hidden';}" /></picture>
       </div>
     </div>
 

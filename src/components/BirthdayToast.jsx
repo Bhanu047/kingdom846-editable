@@ -31,6 +31,19 @@ const SETUP_SELECTOR = '.setup-veil'
 const SETUP_POLL_MS = 1500
 const SETUP_GIVE_UP_MS = 2 * 60 * 1000
 
+/* When to look again.
+ *
+ * Checking once at startup was not enough, and the first real use showed why:
+ * Sparta learned a birthday, opened the console, saved it -- and the app it was
+ * already running never looked again, so no card appeared. Nobody restarts an
+ * app to see whether something they just entered worked.
+ *
+ * So it also looks when the app comes back to the foreground, which is what a
+ * member does after the notification buzzes, and immediately when a birthday is
+ * saved in the console, which is what Sparta does.
+ */
+export const BIRTHDAYS_CHANGED = 'k846:birthdays-changed'
+
 export default function BirthdayToast() {
   const [people, setPeople] = useState([])
   const [open, setOpen] = useState(false)
@@ -38,31 +51,49 @@ export default function BirthdayToast() {
 
   useEffect(() => {
     let cancelled = false
-    const timers = []
+    let timers = []
+    let showing = false
 
-    apiJson('/api/birthdays/today').then((data) => {
-      if (cancelled || !data?.people?.length) return
-      let seen = null
-      try { seen = localStorage.getItem(SEEN_KEY) } catch { /* private mode */ }
-      if (seen === data.date) return
-      setPeople(data.people)
+    const check = () => {
+      if (cancelled || showing) return
+      apiJson('/api/birthdays/today').then((data) => {
+        if (cancelled || showing || !data?.people?.length) return
+        let seen = null
+        try { seen = localStorage.getItem(SEEN_KEY) } catch { /* private mode */ }
+        if (seen === data.date) return
+        setPeople(data.people)
 
-      // A beat after landing. Appearing in the same frame as the page paints
-      // reads as a bug; arriving just after reads as the kingdom noticing.
-      const waitedFrom = Date.now()
-      const show = () => {
-        if (cancelled) return
-        const setupUp = typeof document !== 'undefined' && document.querySelector(SETUP_SELECTOR)
-        if (setupUp && Date.now() - waitedFrom < SETUP_GIVE_UP_MS) {
-          timers.push(setTimeout(show, SETUP_POLL_MS))
-          return
+        // A beat after landing. Appearing in the same frame as the page paints
+        // reads as a bug; arriving just after reads as the kingdom noticing.
+        const waitedFrom = Date.now()
+        const show = () => {
+          if (cancelled) return
+          const setupUp = typeof document !== 'undefined' && document.querySelector(SETUP_SELECTOR)
+          if (setupUp && Date.now() - waitedFrom < SETUP_GIVE_UP_MS) {
+            timers.push(setTimeout(show, SETUP_POLL_MS))
+            return
+          }
+          showing = true
+          setOpen(true)
         }
-        setOpen(true)
-      }
-      timers.push(setTimeout(show, 1200))
-    }).catch(() => {})
+        timers.push(setTimeout(show, 900))
+      }).catch(() => {})
+    }
 
-    return () => { cancelled = true; timers.forEach(clearTimeout) }
+    check()
+
+    const onVisible = () => { if (document.visibilityState === 'visible') check() }
+    document.addEventListener('visibilitychange', onVisible)
+    window.addEventListener('focus', check)
+    window.addEventListener(BIRTHDAYS_CHANGED, check)
+
+    return () => {
+      cancelled = true
+      timers.forEach(clearTimeout)
+      document.removeEventListener('visibilitychange', onVisible)
+      window.removeEventListener('focus', check)
+      window.removeEventListener(BIRTHDAYS_CHANGED, check)
+    }
   }, [])
 
   function dismiss() {

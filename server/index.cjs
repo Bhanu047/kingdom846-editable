@@ -1230,6 +1230,16 @@ const BACKUP_KEEP = Math.max(1, Number(process.env.BACKUP_KEEP) || 14)
 const BACKUP_MAX_BYTES = Number(process.env.BACKUP_MAX_BYTES) || 300 * 1024 * 1024
 const BACKUP_NAME_RE = /^k846-\d{4}-\d{2}-\d{2}(-\d{6})?\.db$/
 
+// Off-box copies. Null unless BACKUP_S3_* are configured, in which case every
+// verified backup is also PUT to object storage. See server/backup-offsite.cjs.
+const { createOffsiteBackup } = require('./backup-offsite.cjs')
+const offsiteBackup = createOffsiteBackup(process.env)
+if (offsiteBackup) {
+  console.log(`[backup] off-box copies on — ${offsiteBackup.bucket}/${offsiteBackup.prefix} at ${offsiteBackup.endpoint}`)
+} else {
+  console.warn('[backup] off-box copies OFF — backups live only on this disk, beside the database they protect')
+}
+
 function backupStamp(date, withTime) {
   const iso = date.toISOString()
   return withTime
@@ -1318,7 +1328,24 @@ async function runBackup({ manual = false } = {}) {
     const pruned = pruneBackups()
     const ms = Date.now() - started
     console.log(`[backup] ${name} — ${(bytes / 1024).toFixed(0)} KB, ${check.users} users, ${check.roster_members} roster rows, ${ms}ms${pruned.length ? `, pruned ${pruned.length}` : ''}`)
-    return { ok: true, name, bytes, ms, verified: check, pruned }
+
+    // Copy it off the box. Everything above this line writes to the same disk
+    // the database lives on, so it survives a bad write but not a lost disk.
+    // A failure here is reported and does not fail the backup: a verified local
+    // copy is still strictly better than none.
+    let offsite = null
+    if (offsiteBackup) {
+      try {
+        const up = await offsiteBackup.upload(target)
+        offsite = { ok: true, ...up }
+        console.log(`[backup] copied off-box to ${offsiteBackup.bucket}/${up.key}`)
+      } catch (err) {
+        offsite = { ok: false, error: err.message }
+        console.error('[backup] off-box copy failed:', err.message)
+      }
+    }
+
+    return { ok: true, name, bytes, ms, verified: check, pruned, offsite }
   } catch (err) {
     try { backupFs.unlinkSync(temp) } catch {}
     console.error('[backup] failed:', err.message)
@@ -1343,6 +1370,9 @@ app.get('/api/admin/backups', auth, adminOnly, (_req, res) => {
   res.json({
     directory: BACKUP_DIR,
     keep: BACKUP_KEEP,
+    offsite: offsiteBackup
+      ? { enabled: true, bucket: offsiteBackup.bucket, prefix: offsiteBackup.prefix, endpoint: offsiteBackup.endpoint }
+      : { enabled: false },
     total_bytes: files.reduce((sum, f) => sum + f.bytes, 0),
     database_bytes: (() => { try { return backupFs.statSync(DB_PATH).size } catch { return null } })(),
     backups: files,

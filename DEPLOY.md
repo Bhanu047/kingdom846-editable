@@ -104,3 +104,39 @@ This is a larger change — ask and I'll wire it up.
 
 Log in as Sparta (`sparta` / `SpartaAdmin_846!`) → Master Console → reset every
 leader and your own admin password. Default credentials are only meant for first login.
+
+---
+
+## Off-box backups (recommended)
+
+Backups are written to `BACKUP_DIR`, which defaults to a folder **beside the
+database on the same disk**. That protects against a bad write or a deleted
+row, but not against losing the disk — the copy and the original die together.
+
+Set these four and every verified backup is also uploaded to object storage:
+
+| Variable | Example | Notes |
+|---|---|---|
+| `BACKUP_S3_ENDPOINT` | `https://<account>.r2.cloudflarestorage.com` | No bucket in the URL |
+| `BACKUP_S3_BUCKET` | `kingdom846-backups` | Create it first |
+| `BACKUP_S3_KEY` | *access key id* | |
+| `BACKUP_S3_SECRET` | *secret access key* | Set it as a secret, never in `render.yaml` |
+| `BACKUP_S3_REGION` | `auto` | Optional. `auto` for R2, a real region for AWS |
+| `BACKUP_S3_PREFIX` | `kingdom846` | Optional folder inside the bucket |
+
+Any S3-compatible provider works — Cloudflare R2, Backblaze B2, Wasabi, AWS S3,
+MinIO. R2 and B2 both have free tiers far larger than this database needs.
+
+Leave them unset and nothing changes: the server logs a warning at boot that
+backups live only on this disk, and carries on as before. An upload that fails
+is logged but never fails the backup — a verified local copy still beats none.
+
+Check it is on: `GET /api/admin/backups` reports an `offsite` block, and the
+boot log prints the bucket.
+
+## The Royal Advisor's model fallback (optional)
+
+Set `GEMINI_API_KEY` to a Google AI Studio key and questions the advisor's own
+corpus cannot match get a grounded answer instead of "I am not sure". It is
+only consulted after the built-in stages fail, so common questions still cost
+nothing. Unset, the advisor behaves exactly as it always has.

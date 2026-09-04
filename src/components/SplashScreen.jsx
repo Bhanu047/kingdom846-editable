@@ -65,6 +65,7 @@ export default function SplashScreen({ onEnter }) {
       window.removeEventListener('message', handleMessage)
       unlock()
       try { window.__k846DropVeil?.() } catch { /* veil already gone */ }
+      try { window.__k846DismissLaunch?.() } catch { /* already gone */ }
     }
   }, [onEnter])
 
@@ -77,9 +78,14 @@ export default function SplashScreen({ onEnter }) {
   // comes down when the entrance has actually painted, not when React decides
   // to render -- an iframe that has not loaded yet is an empty rectangle, and
   // dropping the veil against it is what let the app behind show through.
+  // The welcome screen in index.html is what the visitor has actually been
+  // looking at while the bundle and then this iframe loaded. It comes down at
+  // the same moment as the veil and for the same reason: the entrance has
+  // painted, so there is finally something better to show than a crest.
   const reveal = () => {
     setReady(true)
     try { window.__k846DropVeil?.() } catch { /* veil already gone */ }
+    try { window.__k846DismissLaunch?.() } catch { /* already gone */ }
   }
 
   return (

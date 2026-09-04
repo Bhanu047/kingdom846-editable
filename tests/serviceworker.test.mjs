@@ -21,6 +21,7 @@ const source = fs.readFileSync(path.join(here, '..', 'public', 'sw.js'), 'utf8')
 /** Load sw.js against stand-in browser globals and hand back its internals. */
 function loadWorker({ fetchImpl }) {
   const stores = new Map()
+  const added = []
   const caches = {
     async open(name) {
       if (!stores.has(name)) stores.set(name, new Map())
@@ -28,7 +29,7 @@ function loadWorker({ fetchImpl }) {
       return {
         async match(key) { return store.get(String(key)) || undefined },
         async put(key, value) { store.set(String(key), value) },
-        async add() {},
+        async add(key) { added.push(String(key)); store.set(String(key), { body: 'fetched' }) },
       }
     },
     async keys() { return [...stores.keys()] },
@@ -36,8 +37,8 @@ function loadWorker({ fetchImpl }) {
   }
   const self = { addEventListener() {}, skipWaiting() {}, clients: { claim() {} }, registration: {} }
   const factory = new Function('self', 'caches', 'fetch', 'URL', 'Response',
-    `${source}\n;return { shellFirst, networkFirst, CACHE_VERSION, SHELL_URLS };`)
-  return { api: factory(self, caches, fetchImpl, URL, class {}), caches, stores }
+    `${source}\n;return { shellFirst, networkFirst, primeBuild, CACHE_VERSION, SHELL_URLS };`)
+  return { api: factory(self, caches, fetchImpl, URL, class {}), caches, stores, added }
 }
 
 const cachedShell = { ok: true, body: 'cached shell', clone() { return this } }
@@ -98,7 +99,7 @@ test('the shell the app opens from is precached at install', async () => {
 test('the cache version was bumped with the rule change', () => {
   // sw.js says so in its own header: stale entries under an old policy are how
   // a fix fails to reach the phones that need it.
-  assert.equal(loadWorker({ fetchImpl: async () => freshShell }).api.CACHE_VERSION, 'v4')
+  assert.equal(loadWorker({ fetchImpl: async () => freshShell }).api.CACHE_VERSION, 'v5')
 })
 
 test('the fonts do not hold up the first paint', () => {
@@ -155,4 +156,59 @@ test('what reveals the welcome screen runs before any stylesheet', () => {
   assert.ok(firstSheet > 0, 'expected at least one stylesheet link')
   assert.ok(setter < firstSheet,
     'the script that reveals the welcome screen must come before the first stylesheet')
+})
+
+/* The build the new shell asks for, pulled while nobody is waiting.
+ *
+ * shellFirst hands over the cached shell instantly and refreshes it behind the
+ * visit -- so the deploy lands on the NEXT open, and that open had to fetch a
+ * quarter of a megabyte of freshly-named JS before it could draw anything.
+ * Priming the assets alongside the shell is what makes that open local too.
+ */
+test('a fresh shell brings its build in with it', async () => {
+  const html = `<!doctype html><html><head>
+    <script type="module" crossorigin src="./assets/index-Ce8CVWka.js"></script>
+    <link rel="stylesheet" href="./assets/index-3BqRtSbR.css">
+  </head><body></body></html>`
+  const { api, added } = loadWorker({ fetchImpl: async () => ({ ok: true }) })
+  await api.primeBuild({ text: async () => html })
+  // Relative in the built HTML, absolute in the cache: the paths the browser
+  // will actually ask for.
+  assert.deepEqual(added.sort(), ['/assets/index-3BqRtSbR.css', '/assets/index-Ce8CVWka.js'])
+})
+
+test('priming asks for nothing that is already local', async () => {
+  const html = '<script src="./assets/index-abc.js"></script>'
+  const { api, added, stores } = loadWorker({ fetchImpl: async () => ({ ok: true }) })
+  await api.primeBuild({ text: async () => html })
+  assert.deepEqual(added, ['/assets/index-abc.js'], 'first visit fetches it')
+  added.length = 0
+  await api.primeBuild({ text: async () => html })
+  assert.deepEqual(added, [], 'the second finds it cached')
+  assert.ok(stores.size)
+})
+
+/* The website's share of the welcome screen.
+ *
+ * Reported as a black rectangle at kingdom846.com with nothing on it. The
+ * entrance is an iframe inside the React bundle, so it cannot paint until the
+ * bundle has landed AND the iframe has loaded; until then #boot-veil covered
+ * the document with a flat #060810 and the welcome screen -- already in the
+ * HTML, already painted -- was held at display:none because it was "the app's".
+ */
+test('the welcome screen is not gated on app mode', () => {
+  const html = fs.readFileSync(path.join(here, '..', 'index.html'), 'utf8')
+  const rule = html.match(/#k846-launch\{[^}]*\}/)
+  assert.ok(rule, 'the launch screen has its own rule')
+  assert.ok(!/display:none/.test(rule[0]), 'it must be on screen from the first frame, on the site as well')
+  assert.ok(!/html\[data-app-launch\]\s*#k846-launch/.test(html), 'and not behind an app-mode gate')
+})
+
+test('the entrance takes the welcome screen away when it has painted', () => {
+  const src = fs.readFileSync(path.join(here, '..', 'src', 'components', 'SplashScreen.jsx'), 'utf8')
+  // Whoever drops the veil must dismiss the screen above it too, or the site
+  // sits behind a crest until the 6-second safety line.
+  const reveal = src.slice(src.indexOf('const reveal ='), src.indexOf('const reveal =') + 400)
+  assert.match(reveal, /__k846DropVeil/)
+  assert.match(reveal, /__k846DismissLaunch/)
 })

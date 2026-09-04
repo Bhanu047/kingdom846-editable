@@ -43,12 +43,18 @@
      before a single pixel of it exists. Reported three times as "black screen,
      white screen, then the home page, no welcome screen": the screen was real,
      it just could not be drawn yet. Here it is markup and inline CSS, on screen
-     in the first frame, before a line of JS runs. React only takes it away. */
-  #k846-launch{position:fixed;inset:0;height:100vh;height:100dvh;z-index:10001;display:none;
+     in the first frame, before a line of JS runs. React only takes it away.
+
+     It shows on the website as well, and that is not a change of mind about the
+     entrance -- the entrance is an iframe that cannot paint until the bundle has
+     landed AND the iframe itself has loaded, and until then something has to be
+     on screen. That something used to be #boot-veil: a plain black rectangle
+     with nothing on it. Reported as "the website is black and nothing works".
+     A crest is the same cover doing the same job with the lights on. */
+  #k846-launch{position:fixed;inset:0;height:100vh;height:100dvh;z-index:10001;display:flex;
     flex-direction:column;align-items:center;justify-content:center;gap:.85rem;
     background:radial-gradient(120% 80% at 50% 38%,#141d33 0%,#0a0e1c 58%,#060810 100%);
     transition:opacity .42s ease;opacity:1}
-  html[data-app-launch] #k846-launch{display:flex}
   #k846-launch.gone{opacity:0;pointer-events:none}
   #k846-launch img{width:min(38vw,148px);height:auto;filter:drop-shadow(0 10px 32px rgba(0,0,0,.75));
     animation:k846-rise .9s cubic-bezier(.16,1,.3,1) both}
@@ -164,7 +170,7 @@
       setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 460);
       document.documentElement.removeAttribute('data-app-launch');
     };
-    setTimeout(window.__k846DismissLaunch, 9000);
+    setTimeout(window.__k846DismissLaunch, 6000);
   </script>
   <div id="root"></div>
   <script src="/battle-lab-fresh-session.js"></script>

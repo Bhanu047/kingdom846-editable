@@ -58,16 +58,30 @@ function scheduleAt(slug, event, when, days) {
     .run(slug, event, hhmm, days)
 }
 
+const ALL_EVENTS = ['Bear Hunt -1', 'Bear Hunt-2', 'Vikings Vengeance Tuesday', 'Vikings Vengeance Thursday',
+  'Tri-Alliance Clash Legion-1', 'Tri-Alliance Clash Legion-2', 'Swordland Showdown Legion-1', 'Swordland Showdown Legion-2']
+
 // Clear anything the seeded defaults would fire on its own during a test.
 function quietEverything() {
   db.prepare("UPDATE alliance_schedules SET event_time=''").run()
   for (const slug of db.prepare('SELECT slug FROM alliances').all().map((a) => a.slug)) {
-    for (const ev of ['Bear Hunt -1', 'Bear Hunt-2', 'Vikings Vengeance Tuesday', 'Vikings Vengeance Thursday',
-      'Tri-Alliance Clash Legion-1', 'Tri-Alliance Clash Legion-2', 'Swordland Showdown Legion-1', 'Swordland Showdown Legion-2']) {
+    for (const ev of ALL_EVENTS) {
       db.prepare(`INSERT INTO alliance_schedules (alliance_slug,event_name,event_time,event_days) VALUES (?,?,'','')
         ON CONFLICT(alliance_slug,event_name) DO UPDATE SET event_time=''`).run(slug, ev)
     }
   }
+  // And the kingdom's repeat rules, which are a separate gate from the time.
+  //
+  // Without this these tests only passed on the right day of the cycle: the
+  // seeded default for Bear Hunt is every two days from 3 September, so a suite
+  // that was green all through the 3rd went red at midnight on the 4th with
+  // nothing changed. A test whose result depends on the date it runs is not
+  // testing what it claims to. Every event runs every day unless the test
+  // itself says otherwise -- the two that are about the repeat rule set their
+  // own after calling this.
+  const daily = Object.fromEntries(ALL_EVENTS.map((ev) => [ev, { type: 'weekdays', days: [0, 1, 2, 3, 4, 5, 6] }]))
+  db.prepare('INSERT OR REPLACE INTO app_settings (key, value) VALUES (?,?)')
+    .run('event_repeat', JSON.stringify(daily))
 }
 
 test('days default to the day named in the event, and to daily otherwise', () => {

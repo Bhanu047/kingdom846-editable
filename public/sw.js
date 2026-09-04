@@ -157,7 +157,14 @@ async function primeBuild(response) {
 // build assets and fonts, which are either immutable or change rarely.
 async function staleWhileRevalidate(request, cacheName) {
   const cache = await caches.open(cacheName)
-  const cached = await cache.match(request)
+  const stored = await cache.match(request)
+  // A stored response that is not ok is worse than none at all. This is
+  // cache-first, so a bad entry -- a put that ran out of quota half way, an
+  // error page saved during a deploy -- is handed back for ever, and a broken
+  // image never heals itself. Opaque cross-origin responses report status 0 and
+  // are legitimate; only a real failure status is thrown away.
+  const cached = stored && (stored.ok || stored.type === 'opaque' || stored.status === 0) ? stored : undefined
+  if (stored && !cached) await cache.delete(request).catch(() => {})
   const network = fetch(request)
     .then((response) => {
       // Opaque cross-origin responses report status 0; they are still worth
@@ -194,10 +201,17 @@ self.addEventListener('fetch', (event) => {
 
   if (url.origin !== self.location.origin) return
 
-  // Navigations: network first so a deploy is picked up immediately, with the
-  // cached shell as the offline answer. Hash routing means every in-app route
-  // resolves to the same document, so one cached shell covers the whole site.
-  if (request.mode === 'navigate') {
+  // Navigations: the cached shell first, so the first paint never waits on the
+  // network. Hash routing means every in-app route resolves to the same
+  // document, so one cached shell covers the whole site.
+  //
+  // The tab's own navigation, and only that. A frame loading inside the page is
+  // a navigation too, and the website's entrance -- the nine halls -- is an
+  // iframe: served the shell, the front door would have the app behind it.
+  // `destination` is what tells them apart, 'document' against 'iframe'; where
+  // it is not implemented it reads as '' and the mode alone decides, which is
+  // the behaviour this had before.
+  if (request.mode === 'navigate' && request.destination !== 'iframe' && request.destination !== 'frame') {
     event.respondWith(shellFirst(request, SHELL_CACHE, '/index.html'))
     return
   }

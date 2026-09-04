@@ -30,6 +30,7 @@ function loadWorker({ fetchImpl }) {
         async match(key) { return store.get(String(key)) || undefined },
         async put(key, value) { store.set(String(key), value) },
         async add(key) { added.push(String(key)); store.set(String(key), { body: 'fetched' }) },
+        async delete(key) { return store.delete(String(key)) },
       }
     },
     async keys() { return [...stores.keys()] },
@@ -37,7 +38,7 @@ function loadWorker({ fetchImpl }) {
   }
   const self = { addEventListener() {}, skipWaiting() {}, clients: { claim() {} }, registration: {} }
   const factory = new Function('self', 'caches', 'fetch', 'URL', 'Response',
-    `${source}\n;return { shellFirst, networkFirst, primeBuild, CACHE_VERSION, SHELL_URLS };`)
+    `${source}\n;return { shellFirst, networkFirst, staleWhileRevalidate, primeBuild, CACHE_VERSION, SHELL_URLS };`)
   return { api: factory(self, caches, fetchImpl, URL, class {}), caches, stores, added }
 }
 
@@ -224,4 +225,56 @@ test('the entrance takes the welcome screen away when it has painted', () => {
   const reveal = src.slice(src.indexOf('const reveal ='), src.indexOf('const reveal =') + 400)
   assert.match(reveal, /__k846DropVeil/)
   assert.match(reveal, /__k846DismissLaunch/)
+})
+
+/* The front door is an iframe, and an iframe load is a navigation.
+ *
+ * shellFirst answers navigations with the app's cached shell. Applied to the
+ * entrance -- /royal-welcome-2/index.html, loaded in a frame -- that puts the
+ * app inside the front door. Only the tab's own navigation gets the shell.
+ */
+test('the entrance iframe is not answered with the app shell', () => {
+  const handler = source.slice(source.indexOf("request.mode === 'navigate'"))
+  const guard = handler.slice(0, handler.indexOf('\n'))
+  assert.match(guard, /destination !== 'iframe'/, 'a frame is not the tab')
+  assert.match(guard, /destination !== 'frame'/)
+})
+
+/* A bad cached entry, on a cache-first path, is served for ever.
+ *
+ * Reported from an iPhone with forty tabs open: the entrance drawn, the hall
+ * behind it, and the broken-image icon where the crest goes -- on every reload.
+ * Media is served cache-first, so a put that ran out of quota half way is the
+ * answer to every later request for that file.
+ */
+test('a failed response in the cache is thrown away, not served', async () => {
+  let fetched = 0
+  const { api, caches: store } = loadWorker({
+    fetchImpl: async () => { fetched += 1; return { ok: true, status: 200, body: 'the real crest', clone: () => ({ body: 'the real crest' }) } },
+  })
+  const cache = await store.open('k846-assets-test')
+  await cache.put('/royal-welcome-2/assets/crest.webp', { ok: false, status: 503, body: 'half a crest' })
+  const out = await api.staleWhileRevalidate('/royal-welcome-2/assets/crest.webp', 'k846-assets-test')
+  assert.equal(out.body, 'the real crest', 'the network answers, not the poisoned entry')
+  assert.equal(fetched, 1)
+})
+
+test('a good cached entry is still served without a round trip', async () => {
+  let fetched = 0
+  const { api, caches: store } = loadWorker({
+    fetchImpl: async () => { fetched += 1; return { ok: true, status: 200, body: 'network', clone: () => ({ body: 'network' }) } },
+  })
+  const cache = await store.open('k846-assets-test')
+  await cache.put('/assets/hall.webp', { ok: true, status: 200, body: 'cached' })
+  assert.equal((await api.staleWhileRevalidate('/assets/hall.webp', 'k846-assets-test')).body, 'cached')
+})
+
+/* <picture> chooses a source on type support alone and never reconsiders. */
+test('the crest falls back when the webp fails to load', () => {
+  const entrance = fs.readFileSync(path.join(here, '..', 'public', 'royal-welcome-2', 'index.html'), 'utf8')
+  const img = entrance.match(/<img class="crest"[^>]*>/)
+  assert.ok(img, 'the crest is an img')
+  assert.match(img[0], /onerror=/, 'a failed load has somewhere to go')
+  assert.match(img[0], /crest\.png\?retry=1/, 'to the png, under a name no cache entry answers to')
+  assert.match(img[0], /dataset\.retried/, 'once, not in a loop')
 })

@@ -3103,42 +3103,37 @@ html[data-app-mode] .page-enter { animation: app-page-in .28s cubic-bezier(0.22,
 .chronicle-line svg { display: block; overflow: visible }
 
 
-/* ---- The forged pointer -------------------------------------------------- */
-/* A custom cursor, asked for by name. Two rules kept it from being the mistake
-   the gilt ring was:
+/* ---- The kingdom's blade ------------------------------------------------- */
+/* The pointer is a sword, tip first.
 
-   It is still an ARROW. The silhouette is the one every pointer has had for
-   forty years -- tip at the top left, tail to the bottom right -- so it is read
-   as a pointer before it is read as an ornament. Only the metal is ours: dark
-   iron with a gilt rim, and the same blade in gold over anything you can act
-   on, with a gem at its shoulder.
+   The arrow that was here read as a gold arrow rather than as anything of
+   this kingdom's, which is what was asked to change. A blade earns the swap:
+   it keeps the one property a pointer cannot lose -- a single sharp point,
+   here at the top left, exactly where the arrow's was -- and everything the
+   arrow spent on being an arrow it now spends on being from this hall. Dark
+   iron with a gilt edge; over anything you can act on, the same blade in gold
+   with a crimson gem in the pommel, the red of the hall's own curtains.
 
-   And it yields. Every rule carries the native keyword as its fallback, so a
-   browser that will not draw an SVG cursor simply keeps its own; text fields
-   keep the I-beam, because an arrow over a text box is a lie about what will
-   happen when you click; and under forced-colours -- the high-contrast modes
-   people use because they need them -- the whole thing steps aside.
-
-   Pointer devices only. A cursor rule does nothing on a touch screen, but
-   stating it keeps the intent honest. */
+   It yields where it should: every rule keeps the native keyword as its
+   fallback, text fields keep the I-beam because a blade over a text box lies
+   about what clicking will do, and under forced-colours -- the high-contrast
+   modes people use because they need them -- the whole thing steps aside.
+   Pointer devices only; a cursor rule does nothing on a touch screen. */
 @media (hover: hover) and (pointer: fine) {
-  html, body { cursor: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='28'%20height='28'%20viewBox='0%200%2028%2028'%3E%3Cpath%20d='M3%202.2%20L3%2021.4%20L8.2%2016.7%20L11.7%2025%20L15.3%2023.4%20L11.9%2015.5%20L19.1%2015.5%20Z'%20fill='%230B0E16'%20stroke='%23E8C766'%20stroke-width='1.5'%20stroke-linejoin='round'/%3E%3Cpath%20d='M4.8%206.1%20L4.8%2017.3%20L8.5%2013.9%20Z'%20fill='%23E8C766'%20opacity='0.5'/%3E%3C/svg%3E") 3 2, auto; }
+  html, body { cursor: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='32'%20height='32'%20viewBox='0%200%2032%2032'%3E%3Cg%20transform='translate(3.0,3.0)%20rotate(-45)%20scale(1.2)'%3E%3Cpath%20d='M0%200%20L3.1%208%20L3.1%2018%20L-3.1%2018%20L-3.1%208%20Z'%20fill='%230B0E16'%20stroke='%23E8C766'%20stroke-width='1.4'%20stroke-linejoin='round'/%3E%3Cpath%20d='M0%205.5%20L0%2016.5'%20stroke='%23E8C766'%20stroke-width='1'%20opacity='.5'/%3E%3Cpath%20d='M-6.6%2018%20L6.6%2018%20L5.2%2021.4%20L-5.2%2021.4%20Z'%20fill='%23E8C766'%20stroke='%230B0E16'%20stroke-width='1'%20stroke-linejoin='round'/%3E%3Crect%20x='-1.9'%20y='21.4'%20width='3.8'%20height='5.4'%20fill='%230B0E16'%20stroke='%23E8C766'%20stroke-width='1'/%3E%3Cpath%20d='M0%2025.2%20L2.7%2027.9%20L0%2030.6%20L-2.7%2027.9%20Z'%20fill='%23FFF6DA'%20stroke='%230B0E16'%20stroke-width='.9'%20stroke-linejoin='round'/%3E%3C/g%3E%3C/svg%3E") 3 3, auto; }
 
   a, button, [role="button"], summary, label[for], .tilt-tile, select,
   .nav-item, [tabindex]:not([tabindex="-1"]) {
-    cursor: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='30'%20height='30'%20viewBox='0%200%2030%2030'%3E%3Cpath%20d='M3%202.2%20L3%2021.4%20L8.2%2016.7%20L11.7%2025%20L15.3%2023.4%20L11.9%2015.5%20L19.1%2015.5%20Z'%20fill='%23E8C766'%20stroke='%230B0E16'%20stroke-width='1.5'%20stroke-linejoin='round'/%3E%3Cpath%20d='M4.8%206.1%20L4.8%2017.3%20L8.5%2013.9%20Z'%20fill='%23FFF6DA'/%3E%3Ccircle%20cx='23.5'%20cy='6.5'%20r='2.4'%20fill='%23FFF6DA'%20stroke='%230B0E16'%20stroke-width='1'/%3E%3C/svg%3E") 3 2, pointer;
+    cursor: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='32'%20height='32'%20viewBox='0%200%2032%2032'%3E%3Cg%20transform='translate(3.0,3.0)%20rotate(-45)%20scale(1.2)'%3E%3Cpath%20d='M0%200%20L3.1%208%20L3.1%2018%20L-3.1%2018%20L-3.1%208%20Z'%20fill='%23E8C766'%20stroke='%230B0E16'%20stroke-width='1.4'%20stroke-linejoin='round'/%3E%3Cpath%20d='M0%205.5%20L0%2016.5'%20stroke='%230B0E16'%20stroke-width='1'%20opacity='.35'/%3E%3Cpath%20d='M-6.6%2018%20L6.6%2018%20L5.2%2021.4%20L-5.2%2021.4%20Z'%20fill='%23FFF6DA'%20stroke='%230B0E16'%20stroke-width='1'%20stroke-linejoin='round'/%3E%3Crect%20x='-1.9'%20y='21.4'%20width='3.8'%20height='5.4'%20fill='%230B0E16'%20stroke='%23FFF6DA'%20stroke-width='1'/%3E%3Cpath%20d='M0%2025.2%20L2.7%2027.9%20L0%2030.6%20L-2.7%2027.9%20Z'%20fill='%23B0362F'%20stroke='%230B0E16'%20stroke-width='.9'%20stroke-linejoin='round'/%3E%3C/g%3E%3C/svg%3E") 3 3, pointer;
   }
 
-  /* The caret says "you can type here"; no blade says it better. */
   input, textarea, [contenteditable="true"] { cursor: text; }
   input[type="checkbox"], input[type="radio"], input[type="range"], input[type="submit"] {
-    cursor: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='30'%20height='30'%20viewBox='0%200%2030%2030'%3E%3Cpath%20d='M3%202.2%20L3%2021.4%20L8.2%2016.7%20L11.7%2025%20L15.3%2023.4%20L11.9%2015.5%20L19.1%2015.5%20Z'%20fill='%23E8C766'%20stroke='%230B0E16'%20stroke-width='1.5'%20stroke-linejoin='round'/%3E%3Cpath%20d='M4.8%206.1%20L4.8%2017.3%20L8.5%2013.9%20Z'%20fill='%23FFF6DA'/%3E%3Ccircle%20cx='23.5'%20cy='6.5'%20r='2.4'%20fill='%23FFF6DA'%20stroke='%230B0E16'%20stroke-width='1'/%3E%3C/svg%3E") 3 2, pointer;
+    cursor: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='32'%20height='32'%20viewBox='0%200%2032%2032'%3E%3Cg%20transform='translate(3.0,3.0)%20rotate(-45)%20scale(1.2)'%3E%3Cpath%20d='M0%200%20L3.1%208%20L3.1%2018%20L-3.1%2018%20L-3.1%208%20Z'%20fill='%23E8C766'%20stroke='%230B0E16'%20stroke-width='1.4'%20stroke-linejoin='round'/%3E%3Cpath%20d='M0%205.5%20L0%2016.5'%20stroke='%230B0E16'%20stroke-width='1'%20opacity='.35'/%3E%3Cpath%20d='M-6.6%2018%20L6.6%2018%20L5.2%2021.4%20L-5.2%2021.4%20Z'%20fill='%23FFF6DA'%20stroke='%230B0E16'%20stroke-width='1'%20stroke-linejoin='round'/%3E%3Crect%20x='-1.9'%20y='21.4'%20width='3.8'%20height='5.4'%20fill='%230B0E16'%20stroke='%23FFF6DA'%20stroke-width='1'/%3E%3Cpath%20d='M0%2025.2%20L2.7%2027.9%20L0%2030.6%20L-2.7%2027.9%20Z'%20fill='%23B0362F'%20stroke='%230B0E16'%20stroke-width='.9'%20stroke-linejoin='round'/%3E%3C/g%3E%3C/svg%3E") 3 3, pointer;
   }
   :disabled, [aria-disabled="true"] { cursor: not-allowed; }
 }
 
-/* Anyone who has asked their system for high contrast gets their own pointer
-   back: ours is a fixed two-colour drawing and cannot answer that request. */
 @media (forced-colors: active) {
   html, body, a, button, [role="button"], summary, .nav-item { cursor: auto; }
 }

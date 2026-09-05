@@ -2,7 +2,7 @@ import { useState, useMemo, lazy, Suspense, useEffect, useRef, useCallback } fro
 import { trackPage, trackAction, installOutboundTracking } from './lib/analytics'
 import { installSurfaceTracking } from './lib/surface'
 import { installReveal } from './lib/reveal'
-import { installStagger, playPageTransition, installTorch, scrambleHeading, drawHeaderRule, installNavMark } from './lib/motion'
+import { installStagger, playPageTransition, installTorch, scrambleHeading, drawHeaderRule, installNavMark, openOverlay } from './lib/motion'
 import { installPressFeedback } from './lib/press'
 import Sidebar from './components/Sidebar'
 import AppHeader from './components/AppHeader'
@@ -190,6 +190,26 @@ function Shell() {
   }, [showSplash])
   useEffect(() => installTorch(), [])
   useEffect(() => installNavMark('nav'), [])
+
+  /* The two overlays open rather than appear. On a phone the drawer is the
+     most-used thing on the site and was the one place nothing moved at all. */
+  useEffect(() => {
+    if (!mobileNav) return undefined
+    const root = document.querySelector('.k846-drawer')
+    return openOverlay(root?.querySelector('.k846-overlay-panel'), {
+      backdrop: root?.querySelector('.k846-overlay-backdrop'),
+      from: 'left',
+      cascade: '.nav-item',
+    })
+  }, [mobileNav])
+
+  useEffect(() => {
+    if (!searchOpen) return undefined
+    const root = document.querySelector('.k846-search-overlay')
+    return openOverlay(root?.querySelector('.k846-overlay-panel'), {
+      backdrop: root?.querySelector('.k846-overlay-backdrop'),
+    })
+  }, [searchOpen])
   useEffect(() => installPressFeedback(), [])
 
   // A hash that matches no route silently falls through to the dashboard, so a
@@ -331,9 +351,9 @@ function Shell() {
         </div>
 
         {mobileNav && (
-          <div className="fixed inset-0 z-[70] md:hidden" onClick={() => setMobileNav(false)}>
-            <div className="absolute inset-0 bg-ink/70" />
-            <div className="absolute left-0 top-0 h-full" onClick={(e) => e.stopPropagation()}>
+          <div className="k846-drawer fixed inset-0 z-[70] md:hidden" onClick={() => setMobileNav(false)}>
+            <div className="k846-overlay-backdrop absolute inset-0 bg-ink/70" />
+            <div className="k846-overlay-panel absolute left-0 top-0 h-full" onClick={(e) => e.stopPropagation()}>
               <Sidebar active={page} onNavigate={navigate} user={sidebarUser} onLogin={() => { setMobileNav(false); setLoginMode('admin'); setLoginOpen(true) }} onSignOut={handleSignOut} isAdmin={isAdmin} />
             </div>
           </div>
@@ -375,8 +395,11 @@ function Shell() {
         </main>
 
         {searchOpen && (
-          <div className="fixed inset-0 z-[80] flex items-start justify-center bg-ink/80 p-4 pt-[12vh]" onClick={() => setSearchOpen(false)}>
-            <div className="w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
+          <div className="k846-search-overlay fixed inset-0 z-[80] flex items-start justify-center p-4 pt-[12vh]" onClick={() => setSearchOpen(false)}>
+            {/* The wash is its own element now: fading the flex parent would
+                fade the panel with it, and the panel has its own arrival. */}
+            <div className="k846-overlay-backdrop absolute inset-0 bg-ink/80" />
+            <div className="k846-overlay-panel relative w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
               <div className="panel panel-glow overflow-hidden">
                 <div className="flex items-center gap-2 border-b border-gold/15 p-3"><Icon name="search" size={16} className="text-gold" /><input autoFocus value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search pages, timeline, guides, news…" className="w-full bg-transparent text-sm text-parchment outline-none placeholder:text-parchment/40" /><button onClick={() => setSearchOpen(false)} className="text-parchment/40 hover:text-parchment text-xs">Esc</button></div>
                 <div className="max-h-80 overflow-y-auto p-2">

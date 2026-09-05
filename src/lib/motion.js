@@ -1158,3 +1158,74 @@ export function strikePodium(root, selector = '.rank-badge') {
     for (const b of badges) { b.style.transform = ''; b.style.opacity = '' }
   }
 }
+
+/**
+ * An overlay opens instead of appearing.
+ *
+ * The drawer and the search panel were mounted straight in at full size, which
+ * on a phone is the single most-used interaction on the site and the one place
+ * where nothing moved at all. They open now: the backdrop washes in, the panel
+ * itself springs, and whatever it contains cascades after it.
+ *
+ * The drawer opens along its own hinge -- scaleX from its left edge -- rather
+ * than sliding in from off-screen. A panel that travels sideways across the
+ * page is the motion this site keeps taking out; a door that swings open from
+ * the edge it is attached to is the same idea without the sweep.
+ *
+ * @param {Element} panel
+ * @param {{ backdrop?: Element, from?: 'left'|'centre', cascade?: string }} opts
+ */
+export function openOverlay(panel, { backdrop, from = 'centre', cascade } = {}) {
+  if (!panel || prefersReducedMotion()) return () => {}
+
+  const runs = []
+  try {
+    if (backdrop) {
+      runs.push(animate(backdrop, { opacity: { from: 0, to: 1 }, duration: 260, ease: 'outQuad' }))
+    }
+
+    if (from === 'left') {
+      panel.style.transformOrigin = 'left center'
+      runs.push(animate(panel, {
+        scaleX: { from: 0.94, to: 1 },
+        opacity: { from: 0, to: 1 },
+        ease: motion.spring.section(),
+      }))
+    } else {
+      runs.push(animate(panel, {
+        scale: { from: 0.94, to: 1 },
+        translateY: { from: -12, to: 0 },
+        opacity: { from: 0, to: 1 },
+        ease: motion.spring.element(),
+      }))
+    }
+
+    if (cascade) {
+      const items = [...panel.querySelectorAll(cascade)]
+      if (items.length) {
+        runs.push(animate(items, {
+          opacity: { from: 0, to: 1 },
+          translateY: { from: motion.rise.sm, to: 0 },
+          delay: stagger(28, { start: 90 }),
+          ease: motion.spring.element(),
+        }))
+      }
+    }
+  } catch (err) {
+    console.error('[motion] overlay failed, showing it', err)
+    panel.style.opacity = ''
+    panel.style.transform = ''
+  }
+
+  return () => {
+    for (const run of runs) { try { run.pause() } catch {} }
+    // An overlay closed mid-open must not leave anything invisible behind it.
+    panel.style.opacity = ''
+    panel.style.transform = ''
+    panel.style.transformOrigin = ''
+    if (backdrop) backdrop.style.opacity = ''
+    if (cascade) {
+      for (const el of panel.querySelectorAll(cascade)) { el.style.opacity = ''; el.style.transform = '' }
+    }
+  }
+}

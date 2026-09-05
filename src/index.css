@@ -3155,3 +3155,37 @@ html[data-app-mode] .page-enter { animation: app-page-in .28s cubic-bezier(0.22,
 }
 html.k846-js-nav .nav-item.active::after { display: none; }
 @media (prefers-reduced-motion: reduce) { .nav-mark { display: none } }
+
+/* ---- The scroll filament ------------------------------------------------- */
+/* Driven by installScrollProgress as a transform, not a width: a width
+   animation relayouts this fixed bar on every scroll frame, and a scroll is
+   the one moment on the page with nothing to spare. */
+.k846-scroll-progress {
+  position: fixed; top: 0; left: 0;
+  width: 100%; height: 2px;
+  z-index: 50;
+  transform: scaleX(0);
+  transform-origin: 0 50%;
+  background: linear-gradient(90deg, #D4AF37, #E8C766, #D4AF37);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .6);
+  opacity: 0;
+  transition: opacity .3s ease;
+  pointer-events: none;
+  will-change: transform;
+}
+
+/* The tab bar's mark travels the same way the rail's does, along its own axis.
+   The per-tab bars stand down while it is running. */
+.app-tab-slider {
+  position: absolute;
+  left: 0; top: 0;
+  height: 2px;
+  border-radius: 0 0 3px 3px;
+  background: linear-gradient(90deg, rgba(243,232,204,.35), #E8C766 45%, #D4AF37 70%, rgba(156,122,36,.5));
+  box-shadow: 0 0 10px rgba(232,199,102,.55);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+html.k846-js-nav .app-tab .app-tab-mark { display: none; }
+@media (prefers-reduced-motion: reduce) { .app-tab-slider { display: none } }

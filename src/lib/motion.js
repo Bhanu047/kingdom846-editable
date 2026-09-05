@@ -1066,39 +1066,45 @@ export function installChronicle({ pane = '.app-scroll', line = '.chronicle-path
  * CSS keeps its own per-item bar until this is installed, so a rail whose
  * JavaScript never arrives still shows which page you are on.
  */
-export function installNavMark(selector = 'nav') {
+export function installNavMark(selector = 'nav', {
+  item = '.nav-item', activeClass = 'active', markClass = 'nav-mark', axis = 'y', span = 0.62,
+} = {}) {
   if (typeof window === 'undefined' || prefersReducedMotion()) return () => {}
   const nav = document.querySelector(selector)
   if (!nav) return () => {}
 
   const mark = document.createElement('span')
-  mark.className = 'nav-mark'
+  mark.className = markClass
   mark.setAttribute('aria-hidden', 'true')
   nav.appendChild(mark)
   document.documentElement.classList.add('k846-js-nav')
 
+  const vertical = axis === 'y'
   let landed = false
   const place = () => {
-    const active = nav.querySelector('.nav-item.active')
+    const active = nav.querySelector(`${item}.${activeClass}`)
     if (!active) { mark.style.opacity = '0'; return }
 
-    // offsetTop is measured against nav itself, which is already positioned.
-    const height = Math.round(active.offsetHeight * 0.62)
-    const top = Math.round(active.offsetTop + (active.offsetHeight - height) / 2)
-    mark.style.height = `${height}px`
+    // offsets are measured against nav itself, which is already positioned.
+    const size = Math.round((vertical ? active.offsetHeight : active.offsetWidth) * span)
+    const start = Math.round(
+      (vertical ? active.offsetTop : active.offsetLeft) +
+      ((vertical ? active.offsetHeight : active.offsetWidth) - size) / 2
+    )
+    mark.style[vertical ? 'height' : 'width'] = `${size}px`
 
     if (!landed) {
       landed = true
-      mark.style.transform = `translateY(${top}px)`
+      mark.style.transform = vertical ? `translateY(${start}px)` : `translateX(${start}px)`
       animate(mark, {
         opacity: { from: 0, to: 1 },
-        scaleY: { from: 0, to: 1 },
+        [vertical ? 'scaleY' : 'scaleX']: { from: 0, to: 1 },
         ease: motion.spring.accent(),
       })
       return
     }
     animate(mark, {
-      translateY: top,
+      [vertical ? 'translateY' : 'translateX']: start,
       opacity: 1,
       ease: motion.spring.section(),
     })
@@ -1302,5 +1308,76 @@ export function rollDigit(el, { subtle = false } = {}) {
       : { translateY: { from: -8, to: 0 }, opacity: { from: 0.3, to: 1 }, duration: 280, ease: 'outExpo', onComplete: clear })
   } catch (err) {
     clear()
+  }
+}
+
+/**
+ * The scroll progress filament.
+ *
+ * This one was not slow or dull, it was DEAD: the bar measured
+ * `document.querySelector('main')`, and main is the flex column with
+ * overflow-hidden -- its scrollTop is always 0 and its scrollHeight always
+ * equals its clientHeight, so the width was permanently 0%. The app scrolls an
+ * inner pane; reveal.js has documented that since the first reveal bug.
+ *
+ * It is a transform now rather than a width. A width animation relayouts the
+ * fixed bar on every scroll frame, which is the one moment on the page where
+ * there is nothing to spare; a scaleX rides the compositor.
+ *
+ * Deliberately NOT gated on reduced motion: this is an indicator of where you
+ * are in a document, not an ornament, and it moves only in answer to a scroll
+ * the reader is already making.
+ */
+export function installScrollProgress(bar, { pane = '.app-scroll' } = {}) {
+  if (!bar || typeof window === 'undefined') return () => {}
+  const scroller = document.querySelector(pane)
+  if (!scroller) return () => {}
+
+  let frame = 0
+  const paint = () => {
+    frame = 0
+    const travel = scroller.scrollHeight - scroller.clientHeight
+    const p = travel > 0 ? Math.min(1, Math.max(0, scroller.scrollTop / travel)) : 0
+    bar.style.transform = `scaleX(${p.toFixed(4)})`
+    // Hidden at the very top: a filament of zero length is still a bright dot
+    // in the corner of every freshly opened page.
+    bar.style.opacity = p > 0.002 ? '1' : '0'
+  }
+  const onScroll = () => { if (!frame) frame = requestAnimationFrame(paint) }
+
+  scroller.addEventListener('scroll', onScroll, { passive: true })
+  const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(paint) : null
+  ro?.observe(scroller)
+  paint()
+
+  return () => {
+    scroller.removeEventListener('scroll', onScroll)
+    ro?.disconnect()
+    cancelAnimationFrame(frame)
+  }
+}
+
+/**
+ * A refusal shakes.
+ *
+ * The wrong password put a line of red text under the field and left the panel
+ * sitting there, which is the quietest possible way to say no. This is the
+ * gesture everyone already knows -- and it is the one place a sideways
+ * movement belongs on this site, because the meaning IS the sideways movement.
+ * Small and quick: 7px, three passes, done in under half a second.
+ */
+export function denyShake(el) {
+  if (!el || prefersReducedMotion()) return
+  try {
+    animate(el, {
+      translateX: [
+        { to: -7, duration: 60 }, { to: 7, duration: 90 }, { to: -5, duration: 80 },
+        { to: 4, duration: 70 }, { to: 0, duration: 90 },
+      ],
+      ease: 'inOutQuad',
+      onComplete: () => { el.style.transform = '' },
+    })
+  } catch (err) {
+    el.style.transform = ''
   }
 }

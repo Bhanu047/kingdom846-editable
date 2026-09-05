@@ -1,37 +1,16 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef } from 'react'
+import { installScrollProgress } from '../lib/motion'
 
 /**
- * Gold scroll progress bar at top of viewport.
+ * The gilt filament along the top of the page, showing how far down you are.
+ *
+ * It measured `main` before, which is the flex column carrying overflow-hidden:
+ * its scrollTop is always 0 and its scrollHeight always equals its clientHeight,
+ * so the bar sat at 0% for every visitor since it was written. The app scrolls
+ * an inner pane, and installScrollProgress reads that one.
  */
 export default function ScrollProgress() {
-  const [progress, setProgress] = useState(0)
-
-  useEffect(() => {
-    function onScroll() {
-      const el = document.querySelector('main')
-      if (!el) return
-      const scrollTop = el.scrollTop
-      const scrollHeight = el.scrollHeight - el.clientHeight
-      setProgress(scrollHeight > 0 ? (scrollTop / scrollHeight) * 100 : 0)
-    }
-
-    const el = document.querySelector('main')
-    if (el) el.addEventListener('scroll', onScroll, { passive: true })
-
-    return () => {
-      if (el) el.removeEventListener('scroll', onScroll)
-    }
-  }, [])
-
-  return (
-    <div
-      className="fixed top-0 left-0 z-50 h-[2px] transition-[width] duration-100 ease-out"
-      data-html2canvas-ignore="true"
-      style={{
-        width: `${progress}%`,
-        background: 'linear-gradient(90deg, #D4AF37, #E8C766, #D4AF37)',
-        boxShadow: '0 1px 3px rgba(0,0,0,.6)',
-      }}
-    />
-  )
+  const bar = useRef(null)
+  useEffect(() => installScrollProgress(bar.current), [])
+  return <div ref={bar} className="k846-scroll-progress" data-html2canvas-ignore="true" aria-hidden="true" />
 }

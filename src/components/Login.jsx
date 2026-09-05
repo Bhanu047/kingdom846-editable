@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../context/AuthContext'
 import Icon from './Icon'
+import { openOverlay, denyShake } from '../lib/motion'
 
 // mode: 'admin' (Sparta master via Royal Access) | 'leader' (top-right Login)
 export default function Login({ onClose, onSuccess, mode = 'leader' }) {
@@ -15,6 +16,13 @@ export default function Login({ onClose, onSuccess, mode = 'leader' }) {
   const [newPw, setNewPw] = useState('')
   const [confirmPw, setConfirmPw] = useState('')
   const [pwSaving, setPwSaving] = useState(false)
+
+  /* The door opens rather than appears, and a refusal shakes it. Both panels
+     below share these: only one of them is ever mounted. */
+  const panel = useRef(null)
+  const backdrop = useRef(null)
+  useEffect(() => openOverlay(panel.current, { backdrop: backdrop.current }), [needSetPw])
+  useEffect(() => { if (error) denyShake(panel.current) }, [error])
 
   const isAdmin = mode === 'admin'
 
@@ -61,8 +69,9 @@ export default function Login({ onClose, onSuccess, mode = 'leader' }) {
   // --- Force Change Password Screen ---
   if (needSetPw) {
     return (
-      <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/70 p-4" onClick={onClose}>
-        <div className="page-enter panel aurora-border w-full max-w-sm p-6" onClick={(e) => e.stopPropagation()}>
+      <div className="fixed inset-0 z-[90] flex items-center justify-center p-4" onClick={onClose}>
+        <div ref={backdrop} className="absolute inset-0 bg-black/70" />
+        <div ref={panel} className="panel aurora-border relative w-full max-w-sm p-6" onClick={(e) => e.stopPropagation()}>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-gold">
               <Icon name="shield" size={18} />
@@ -115,8 +124,9 @@ export default function Login({ onClose, onSuccess, mode = 'leader' }) {
 
   // --- Normal Login Screen ---
   return (
-    <div className="fixed inset-0 z-[90] flex items-center justify-center bg-black/70  p-4" onClick={onClose}>
-      <div className="page-enter panel aurora-border w-full max-w-sm p-6" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 z-[90] flex items-center justify-center p-4" onClick={onClose}>
+      <div ref={backdrop} className="absolute inset-0 bg-black/70" />
+      <div ref={panel} className="panel aurora-border relative w-full max-w-sm p-6" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-gold">
             <Icon name={isAdmin ? 'crown' : 'shield'} size={18} />

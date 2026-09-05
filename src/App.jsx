@@ -190,6 +190,15 @@ function Shell() {
   }, [showSplash])
   useEffect(() => installTorch(), [])
   useEffect(() => installNavMark('nav'), [])
+  /* The tab bar's mark travels along its own axis, the same way the rail's
+     does. Keyed on the splash too: the bar is only mounted once the front door
+     has gone, so an install at mount finds nothing to mark. */
+  useEffect(() => {
+    if (!appMode || showSplash) return undefined
+    return installNavMark('.app-tabbar', {
+      item: '.app-tab', activeClass: 'is-active', markClass: 'app-tab-slider', axis: 'x', span: 0.46,
+    })
+  }, [appMode, showSplash])
 
   /* The two overlays open rather than appear. On a phone the drawer is the
      most-used thing on the site and was the one place nothing moved at all. */

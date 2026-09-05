@@ -3041,35 +3041,6 @@ html[data-app-mode] .page-enter { animation: app-page-in .28s cubic-bezier(0.22,
   100% { opacity: .94 }
 }
 
-/* ---- The ember lattice --------------------------------------------------- */
-/* A grid of embers behind the hero with a wave running through it -- from the
-   centre on arrival, and from wherever you touch it after that. The cells are
-   built and animated by installEmberLattice; the count comes down from it as
-   custom properties, because the field is denser on a desktop hero than on a
-   phone's, where the same density would only read as noise.
-
-   Empty and invisible without JavaScript, deliberately: there is nothing here
-   to look at until something animates it. */
-.ember-lattice {
-  position: absolute; inset: 0;
-  display: grid;
-  grid-template-columns: repeat(var(--lattice-cols, 22), 1fr);
-  grid-template-rows: repeat(var(--lattice-rows, 8), 1fr);
-  place-items: center;
-  /* Under the crest and the wordmark, over the hall and its scrims. */
-  z-index: 1;
-  pointer-events: none;
-}
-.lattice-dot {
-  width: 3px; height: 3px;
-  border-radius: 50%;
-  background: #E8C766;
-  box-shadow: 0 0 6px rgba(232, 199, 102, .55);
-  opacity: .1;
-  will-change: transform, opacity;
-}
-@media (prefers-reduced-motion: reduce) { .ember-lattice { display: none } }
-
 /* splitText wraps each word of the motto in a clipping mask so the words can
    rise out of the line rather than fade in over it. anime.js sets the word's
    own display and the mask's overflow inline; this only asks the compositor to
@@ -3190,13 +3161,6 @@ html.k846-js-nav .nav-item.active::after { display: none; }
 html.k846-js-nav .app-tab .app-tab-mark { display: none; }
 @media (prefers-reduced-motion: reduce) { .app-tab-slider { display: none } }
 
-/* The lattice band in a page header. No z-index: DOM order alone puts it over
-   the artwork and under the words, and a z-index here would lift it over the
-   copy instead. Shorter and sparser than the home hero's -- the band is about a
-   third of that height, and the same density would read as static. */
-.ph-lattice { z-index: auto; }
-.ph-lattice .lattice-dot { opacity: .08; }
-
 /* ---- The tap ripple ------------------------------------------------------ */
 /* One fixed layer for every ring: nothing is ever inserted into the button you
    pressed, which would shift a flex row's layout and be clipped by any
@@ -3219,3 +3183,67 @@ html.k846-js-nav .app-tab .app-tab-mark { display: none; }
   will-change: transform, opacity;
 }
 @media (prefers-reduced-motion: reduce) { .k846-ripple-layer { display: none } }
+
+/* ---- The title's letters ------------------------------------------------- */
+/* bloomHeading splits the page title into characters and releases them outward
+   from its centre. Each character has to carry the gilt itself: .gilt-display
+   paints a gradient and clips it to the heading's own text, and a transformed
+   child paints into its own layer -- dropping out of that clip and vanishing.
+   The hero wordmark solved this the same way, and index.css has carried the
+   warning since the welcome screen hit it. */
+.k846-bloom-title { perspective: 900px; }
+.k846-char {
+  display: inline-block;
+  transform-origin: 50% 100%;
+  background-image: linear-gradient(176deg,
+    #2E2206 0%, #6B5414 13%, #A8842A 26%, #E8C766 39%, #FFF9E6 48%,
+    #FFFFFF 51%, #F2DC9A 55%, #C9A238 68%, #7A5C13 84%, #3A2B08 100%);
+  background-size: 100% 260%;
+  background-position: 50% 46%;
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent; color: transparent;
+  filter: drop-shadow(0 1px 0 rgba(0,0,0,.85)) drop-shadow(0 3px 10px rgba(0,0,0,.9));
+  will-change: transform, opacity;
+}
+
+/* ---- The crest's ring and the hall's answer ------------------------------ */
+/* The ring opens from where the crest lands; the bloom opens from where you
+   touch. Both are light -- `screen` can only lighten, so neither can dim the
+   crest or the wordmark it passes under -- and both live inside the hero, so
+   the hero's own frame clips them. Light spilling across the page would read
+   as a bug rather than a flare. */
+.k846-crest-ring {
+  position: absolute;
+  width: 300px; height: 300px;
+  margin: -150px 0 0 -150px;
+  border-radius: 50%;
+  /* Two pixels and a wash inside it, not a hairline: this opens over the
+     brightest part of the hall, and a 1px rim at half opacity disappeared
+     into the chandelier entirely. */
+  border: 2px solid rgba(255, 240, 200, .9);
+  background: radial-gradient(circle closest-side,
+    rgba(255, 226, 158, .1) 0%, rgba(255, 200, 110, .05) 55%, transparent 78%);
+  box-shadow: 0 0 40px rgba(232, 199, 102, .5), inset 0 0 40px rgba(232, 199, 102, .25);
+  mix-blend-mode: screen;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 2;
+}
+.k846-hero-bloom {
+  position: absolute;
+  width: 360px; height: 360px;
+  margin: -180px 0 0 -180px;
+  border-radius: 50%;
+  background: radial-gradient(circle closest-side,
+    rgba(255, 226, 158, .3) 0%,
+    rgba(255, 186, 86, .17) 26%,
+    rgba(226, 148, 50, .07) 48%,
+    transparent 74%);
+  mix-blend-mode: screen;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 2;
+}
+@media (prefers-reduced-motion: reduce) {
+  .k846-crest-ring, .k846-hero-bloom { display: none }
+}

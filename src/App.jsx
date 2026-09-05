@@ -2,7 +2,7 @@ import { useState, useMemo, lazy, Suspense, useEffect, useRef, useCallback } fro
 import { trackPage, trackAction, installOutboundTracking } from './lib/analytics'
 import { installSurfaceTracking } from './lib/surface'
 import { installReveal } from './lib/reveal'
-import { installStagger, playPageTransition, installTorch, scrambleHeading, drawHeaderRule, installNavMark, openOverlay, installHeaderLattice, installTapRipple } from './lib/motion'
+import { installStagger, playPageTransition, installTorch, bloomHeading, drawHeaderRule, installNavMark, openOverlay, installTapRipple } from './lib/motion'
 import { installPressFeedback } from './lib/press'
 import Sidebar from './components/Sidebar'
 import AppHeader from './components/AppHeader'
@@ -64,14 +64,9 @@ function PageStage({ page, children }) {
     // Both wait for the lazily-loaded page to actually mount before they touch
     // anything -- see whenPageReady in motion.js.
     const stopBlocks = playPageTransition(ref.current)
-    const stopScramble = scrambleHeading(ref.current)
+    const stopBloom = bloomHeading(ref.current)
     const stopRule = drawHeaderRule(ref.current)
-
-    // The header's lattice band -- it waits for the page the same way the rest
-    // of the arrival does.
-    const stopLattice = installHeaderLattice(ref.current)
-
-    return () => { stopBlocks(); stopScramble(); stopRule(); stopLattice() }
+    return () => { stopBlocks(); stopBloom(); stopRule() }
   }, [page])
   return (
     <div key={page} ref={ref} className="k846-page page-enter mx-auto max-w-6xl">

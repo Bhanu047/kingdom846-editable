@@ -6,7 +6,7 @@ import { useSiteData } from '../context/SiteDataContext'
 import { buildSchedule } from '../data/kingdom'
 import PageHeader from '../components/PageHeader'
 import { apiJson } from '../lib/api'
-import { useStaggerIn } from '../lib/motion'
+import { turnCards, installCardTilt } from '../lib/motion'
 
 const colorMap = {
   gold: { ring: 'ring-gold/40', text: 'text-gold', bg: 'bg-gold/10', grad: 'from-gold/30 to-gold/5' },
@@ -25,7 +25,10 @@ export default function Alliances() {
   const alliances = data.alliances
   const [active, setActive] = useState(null)
   const cardGrid = useRef(null)
-  useStaggerIn(cardGrid, [alliances?.length ?? 0])
+  // The banners turn to face you as they arrive, and lean toward the cursor
+  // once they have. Re-runs when the roster loads and the grid actually fills.
+  useEffect(() => turnCards(cardGrid.current), [alliances?.length ?? 0])
+  useEffect(() => installCardTilt('.royal-grid-card', { max: 10, lift: 14 }), [alliances?.length ?? 0])
   const activeColor = active ? (colorMap[active.color] || colorMap.blue) : colorMap.blue
 
   /* The times that will actually be pushed.

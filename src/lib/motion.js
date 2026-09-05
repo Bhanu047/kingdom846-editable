@@ -574,102 +574,73 @@ export function installTorch() {
 }
 
 /**
- * The page title decodes into place on arrival.
+ * The page title blooms out of its own centre, a letter at a time.
  *
- * anime.js's scrambleText drives a numeric tween through a modifier that
- * renders each frame as characters, so the heading churns through noise and
- * resolves. It happens IN PLACE -- nothing travels, nothing crosses the
- * content -- which is why it suits this site where a horizontal wipe did not.
+ * What was here decoded the heading out of random characters. It read as a
+ * terminal booting rather than as a kingdom, and it was the first thing to go
+ * when it was seen in place -- so the noise is gone and the movement is not.
  *
- * It also earns its place thematically: a kingdom portal whose pages announce
- * themselves by resolving out of static reads as a war console rather than a
- * brochure.
+ * splitText gives every character its own element, and `stagger` ordered
+ * `from: 'center'` releases them outward in both directions at once: the title
+ * opens the way the rule under it does, rather than travelling across the page.
+ * Each letter arrives tipped back and springs upright, which is the wordmark's
+ * own gesture carried onto every other page.
  *
- * Two things decide whether a heading gets this, and both are guards rather
- * than preferences:
- *
- * - It waits for the page itself. Every page here is lazy, so on a first visit
- *   the heading does not exist yet when the route changes. This used to run a
- *   frame after mount and quietly find nothing, which is why the decode only
- *   ever showed on the handful of pages whose chunk was already cached.
- *
- * - The heading must be PURE TEXT. scrambleText writes textContent, so a title
- *   containing an icon or per-letter spans would have those children flattened
- *   into a string and destroyed. That is also what keeps this off the home
- *   hero, whose wordmark is split into spans and has its own entrance.
+ * The characters must carry the gilt themselves. `.gilt-display` paints a
+ * gradient and clips it to the heading's text -- and a transformed child paints
+ * into its own layer, dropping out of that clip and vanishing. index.css has
+ * carried that warning since the welcome screen hit it; `.k846-char` is the
+ * answer, the same one the hero wordmark uses.
  */
-export function scrambleHeading(root) {
+export function bloomHeading(root) {
   if (!root || prefersReducedMotion()) return () => {}
 
-  let anim = null
-  let el = null
-  let original = ''
-  let browAnim = null
-  let browEl = null
-  let browOriginal = ''
-
+  let split = null
   const stopWait = whenPageReady(root, () => {
-    // Any h1 the page put at its head -- PageHeader's gilt title, Battle Lab's
-    // own, the console's. Not a specific class: the pages do not agree on one,
-    // and the ones that were left out were the ones that carried a plain h1.
-    for (const h of root.querySelectorAll('h1')) {
-      if (h.children.length > 0) continue                 // not pure text
-      const text = (h.textContent || '').trim()
-      if (!text || text.length > 60) continue
-      el = h
-      original = h.textContent
-      break
-    }
-    if (!el) return
+    const el = root.querySelector('h1.gilt-display')
+    if (!el || el.children.length > 0) return                 // not pure text
+    const text = (el.textContent || '').trim()
+    if (!text || text.length > 60) return
 
     try {
-      anim = animate(el, {
-        // 'A-Z0-9' keeps the noise in the kingdom's own alphabet: a title made
-        // of lowercase and punctuation reads as a glitch rather than a cipher.
-        textContent: animeText.scrambleText({ chars: 'A-Z0-9' }),
-        duration: 900,
-        ease: 'outQuad',
-        onComplete: () => { el.textContent = original },
+      el.classList.add('k846-bloom-title')
+      split = animeText.splitText(el, { chars: { class: 'k846-char' }, words: false })
+      animate(split.chars, {
+        opacity: { from: 0, to: 1 },
+        scale: { from: 0.62, to: 1 },
+        translateY: { from: 16, to: 0 },
+        rotateX: { from: -58, to: 0 },
+        delay: stagger(26, { from: 'center' }),
+        ease: motion.spring.accent(),
       })
     } catch (err) {
-      console.error('[motion] heading scramble failed', err)
-      el.textContent = original
-    }
-
-    /* The label above it resolves too, a beat later and quicker. One line
-       decoding on its own reads as an effect on the title; the pair reads as
-       the page itself coming through, which is the whole idea. Same guards --
-       pure text only, and short. */
-    const brow = root.querySelector('.ph-copy .eyebrow')
-    if (brow && brow.children.length === 0) {
-      const browText = brow.textContent
-      if (browText && browText.trim() && browText.length <= 40) {
-        browOriginal = browText
-        browEl = brow
-        try {
-          browAnim = animate(brow, {
-            textContent: animeText.scrambleText({ chars: 'A-Z0-9' }),
-            duration: 620,
-            delay: 180,
-            ease: 'outQuad',
-            onComplete: () => { brow.textContent = browText },
-          })
-        } catch (err) {
-          brow.textContent = browText
-        }
-      }
+      console.error('[motion] title bloom failed, showing it', err)
+      try { split?.revert() } catch {}
+      el.classList.remove('k846-bloom-title')
+      split = null
     }
   })
 
   return () => {
     stopWait()
-    try { anim?.pause() } catch {}
-    try { browAnim?.pause() } catch {}
-    // Whatever frame they were on, the reader gets the real words back.
-    if (el) el.textContent = original
-    if (browEl) browEl.textContent = browOriginal
+    // Hand the heading back whole: a reverted split leaves the original text.
+    try { split?.revert() } catch {}
+    root.querySelector('h1.gilt-display')?.classList.remove('k846-bloom-title')
   }
 }
+
+/* ---------------------------------------------------------------------------
+ * Spectacle.
+ *
+ * Everything above is craft you feel without noticing: springs instead of
+ * curves, a cascade instead of a fade. That was the right first move and it is
+ * also, fairly, invisible -- the kingdom asked for anime.js because of what
+ * anime.js is FAMOUS for, and none of it was here.
+ *
+ * These four are. Each one is a thing anime.js does that nothing else does as
+ * well, and each is tied to something this site already is: a torch-lit hall
+ * with a crest, a motto and a war record.
+ * ------------------------------------------------------------------------- */
 
 /**
  * Hold an entrance until the visitor is actually looking at the page.
@@ -709,101 +680,6 @@ export function whenEntered(fn, timeout = 9000) {
   return () => { done = true; off() }
 }
 
-/* ---------------------------------------------------------------------------
- * Spectacle.
- *
- * Everything above is craft you feel without noticing: springs instead of
- * curves, a cascade instead of a fade. That was the right first move and it is
- * also, fairly, invisible -- the kingdom asked for anime.js because of what
- * anime.js is FAMOUS for, and none of it was here.
- *
- * These four are. Each one is a thing anime.js does that nothing else does as
- * well, and each is tied to something this site already is: a torch-lit hall
- * with a crest, a motto and a war record.
- * ------------------------------------------------------------------------- */
-
-/**
- * The ember lattice: a grid of embers with a wave running through it.
- *
- * This is anime.js's signature -- `stagger` with a `grid`, which orders the
- * delay by distance through a matrix rather than along a list, so a single call
- * sends a ripple across two dimensions. The hall already has embers drifting up
- * it in CSS; this is the same fire, arranged, and it answers you: the wave
- * starts from wherever you touched.
- *
- * The dots are 3px and animate transform and opacity only, so a wave across the
- * whole field is one composited pass. The grid is smaller on a phone -- 84
- * cells rather than 176 -- because the hero is a third of the width there and a
- * denser field would only read as noise.
- */
-export function installEmberLattice(host, opts = {}) {
-  if (!host || typeof window === 'undefined' || prefersReducedMotion()) return () => {}
-
-  const narrow = window.matchMedia('(max-width: 640px)').matches
-  const cols = opts.cols || (narrow ? 14 : 22)
-  const rows = opts.rows || (narrow ? 6 : 8)
-
-  host.style.setProperty('--lattice-cols', cols)
-  host.style.setProperty('--lattice-rows', rows)
-
-  /* Scattered inside the grid, not sitting on it. The stagger's grid maths is
-     by INDEX, so nudging each ember off its cell centre costs the wave nothing
-     and is the whole difference between embers in a hall and a tech lattice.
-     The offset is a margin rather than a transform: anime.js owns transform
-     here, and a second writer would simply overwrite the first. */
-  const cellW = host.clientWidth / cols
-  const cellH = host.clientHeight / rows
-  const jitter = (extent) => (Math.random() - 0.5) * extent * 0.7
-
-  const cells = []
-  const frag = document.createDocumentFragment()
-  for (let i = 0; i < cols * rows; i++) {
-    const dot = document.createElement('span')
-    dot.className = 'lattice-dot'
-    const size = 2 + Math.random() * 2.4
-    dot.style.width = dot.style.height = `${size.toFixed(1)}px`
-    dot.style.marginLeft = `${jitter(cellW).toFixed(1)}px`
-    dot.style.marginTop = `${jitter(cellH).toFixed(1)}px`
-    frag.appendChild(dot)
-    cells.push(dot)
-  }
-  host.replaceChildren(frag)
-
-  let running = null
-  const wave = (from) => {
-    try { running?.pause() } catch {}
-    running = animate(cells, {
-      // Two keyframes: the ember catches, then falls back to its resting glow.
-      opacity: [{ to: 0.9, duration: 190 }, { to: 0.1, duration: 700 }],
-      scale: [{ to: 2.6, duration: 210 }, { to: 1, duration: 720, ease: motion.spring.accent() }],
-      // The grid is the whole point -- delay by distance through the matrix.
-      delay: stagger(34, { grid: [cols, rows], from }),
-    })
-  }
-
-  // Which cell is under a point, so the wave starts where the hand landed.
-  const cellAt = (x, y) => {
-    const r = host.getBoundingClientRect()
-    const cx = Math.min(cols - 1, Math.max(0, Math.floor(((x - r.left) / r.width) * cols)))
-    const cy = Math.min(rows - 1, Math.max(0, Math.floor(((y - r.top) / r.height) * rows)))
-    return cy * cols + cx
-  }
-
-  const hero = host.parentElement || host
-  const onPoint = (e) => wave(cellAt(e.clientX, e.clientY))
-  hero.addEventListener('pointerdown', onPoint, { passive: true })
-
-  // First wave comes out of the middle, under the crest, on arrival.
-  const hello = setTimeout(() => wave('center'), 420)
-
-  return () => {
-    clearTimeout(hello)
-    hero.removeEventListener('pointerdown', onPoint)
-    try { running?.pause() } catch {}
-    host.replaceChildren()
-  }
-}
-
 /**
  * The hero is scrubbed by the scroll, not triggered by it.
  *
@@ -832,7 +708,6 @@ export function installHeroScrub({ pane = '.app-scroll', hero = '.hero-frame' } 
   const crest = pick('.hero-crest')
   const word = pick('.hero-wordmark')
   const motto = pick('.hero-motto')
-  const lattice = pick('.ember-lattice')
   if (!crest && !word) return () => {}
 
   let tl = null
@@ -858,7 +733,6 @@ export function installHeroScrub({ pane = '.app-scroll', hero = '.hero-frame' } 
     if (crest) tl.add(crest, { translateY: -150, scale: 0.78, opacity: 0.05 }, 0)
     if (word) tl.add(word, { translateY: -70, scale: 0.94, opacity: 0.3 }, 0)
     if (motto) tl.add(motto, { translateY: -34, opacity: 0 }, 0)
-    if (lattice) tl.add(lattice, { translateY: -46, opacity: 0.25 }, 0)
   } catch (err) {
     console.error('[motion] hero scrub failed', err)
     return () => {}
@@ -866,7 +740,7 @@ export function installHeroScrub({ pane = '.app-scroll', hero = '.hero-frame' } 
 
   return () => {
     try { tl?.revert?.() } catch {}
-    for (const el of [crest, word, motto, lattice]) {
+    for (const el of [crest, word, motto]) {
       if (el) { el.style.transform = ''; el.style.opacity = '' }
     }
   }
@@ -1478,27 +1352,159 @@ export function installTapRipple({
 }
 
 /**
- * The lattice band in a page header.
+ * The crest lands, and the room answers.
  *
- * Same field as the home hero's, in a strip: a wave crosses it when the page
- * arrives, and again wherever the header is touched. Fewer rows, because the
- * band is about a third of the hero's height and the hero's density would read
- * as static rather than as embers.
- *
- * Waits for the page like everything else that runs on arrival -- the header
- * does not exist until the lazily-loaded route has mounted.
+ * The hero's arrival had letters and a motto, and nothing at its centre: the
+ * crest simply existed. It is struck now -- dropped from above on the loose
+ * spring -- and a single gilt ring opens out from where it lands and fades.
+ * One ring, drawn as light, in place of the field of dots that used to react
+ * here: it says the same thing (the room felt that) without turning the hall
+ * into a grid.
  */
-export function installHeaderLattice(root) {
-  if (!root || typeof window === 'undefined' || prefersReducedMotion()) return () => {}
+export function strikeCrest(host) {
+  if (!host || typeof window === 'undefined' || prefersReducedMotion()) return () => {}
+  const crest = host.querySelector('.hero-crest')
+  if (!crest) return () => {}
 
-  let stopLattice = () => {}
-  const stopWait = whenPageReady(root, () => {
-    const narrow = window.matchMedia('(max-width: 640px)').matches
-    stopLattice = installEmberLattice(root.querySelector('.ph-lattice'), {
-      cols: narrow ? 14 : 24,
-      rows: narrow ? 4 : 5,
+  const ring = document.createElement('span')
+  ring.className = 'k846-crest-ring'
+  ring.setAttribute('aria-hidden', 'true')
+
+  const place = () => {
+    // Centred on the crest, inside the hero band, measured rather than assumed:
+    // the crest is a different size at every breakpoint.
+    const h = host.getBoundingClientRect()
+    const c = crest.getBoundingClientRect()
+    ring.style.left = `${c.left - h.left + c.width / 2}px`
+    ring.style.top = `${c.top - h.top + c.height / 2}px`
+  }
+
+  host.appendChild(ring)
+  place()
+
+  let runs = []
+  try {
+    runs.push(animate(crest, {
+      opacity: { from: 0, to: 1 },
+      scale: { from: 0.64, to: 1 },
+      translateY: { from: -38, to: 0 },
+      ease: motion.spring.accent(),
+      onComplete: () => { crest.style.opacity = ''; crest.style.transform = '' },
+    }))
+    runs.push(animate(ring, {
+      scale: [{ from: 0.18, to: 1.5 }],
+      opacity: [{ to: 0.85, duration: 150 }, { to: 0, duration: 1000 }],
+      delay: 140,
+      ease: 'outExpo',
+      onComplete: () => ring.remove(),
+    }))
+  } catch (err) {
+    console.error('[motion] crest strike failed, showing it', err)
+    crest.style.opacity = ''
+    crest.style.transform = ''
+    ring.remove()
+  }
+
+  return () => {
+    for (const run of runs) { try { run.pause() } catch {} }
+    crest.style.opacity = ''
+    crest.style.transform = ''
+    ring.remove()
+  }
+}
+
+/**
+ * Touch the hall and light blooms where your hand landed.
+ *
+ * This is what the lattice was reaching for and got wrong: the hero answering
+ * a touch. A grid of dots rippling was the wrong instrument for a torch-lit
+ * room -- so the answer is light. A warm pool opens at the point of contact,
+ * swells past its own size and fades, in `screen` blend, which can only
+ * lighten. It cannot dim the crest or the wordmark it passes under.
+ *
+ * The bloom is added to the hero itself rather than a fixed layer, so it is
+ * clipped by the hero's own frame: light spilling over the panel edge and
+ * across the page would read as a bug, not as a flare.
+ */
+export function installHeroBloom(host) {
+  if (!host || typeof window === 'undefined' || prefersReducedMotion()) return () => {}
+
+  const onDown = (e) => {
+    const r = host.getBoundingClientRect()
+    const bloom = document.createElement('span')
+    bloom.className = 'k846-hero-bloom'
+    bloom.setAttribute('aria-hidden', 'true')
+    bloom.style.left = `${e.clientX - r.left}px`
+    bloom.style.top = `${e.clientY - r.top}px`
+    host.appendChild(bloom)
+
+    // A drummed hero must not stack blooms faster than they fade.
+    const blooms = host.querySelectorAll('.k846-hero-bloom')
+    if (blooms.length > 4) blooms[0].remove()
+
+    try {
+      animate(bloom, {
+        scale: { from: 0.28, to: 1 },
+        opacity: [{ to: 0.85, duration: 130 }, { to: 0, duration: 760 }],
+        ease: 'outExpo',
+        onComplete: () => bloom.remove(),
+      })
+    } catch (err) {
+      bloom.remove()
+    }
+  }
+
+  host.addEventListener('pointerdown', onDown, { passive: true })
+
+  return () => {
+    host.removeEventListener('pointerdown', onDown)
+    for (const b of host.querySelectorAll('.k846-hero-bloom')) b.remove()
+  }
+}
+
+/**
+ * The alliance banners turn to face you.
+ *
+ * They arrived on the same generic cascade as any list of panels -- which is
+ * fine, and says nothing about what they are. Four alliance cards, each
+ * carrying a banner, are the closest thing this site has to standards on a
+ * field: so they swing in on their own hinge, tipped away and turning flat,
+ * one after another.
+ *
+ * The perspective goes on the GRID, not on each card. Per-card perspective
+ * gives every one its own vanishing point, and four cards each turning toward
+ * a different centre reads as four separate accidents rather than one rank
+ * turning together.
+ */
+export function turnCards(container, selector = '.royal-grid-card') {
+  if (!container || prefersReducedMotion()) return () => {}
+  const cards = [...container.querySelectorAll(selector)]
+  if (!cards.length) return () => {}
+
+  const show = () => {
+    container.style.perspective = ''
+    for (const c of cards) { c.style.opacity = ''; c.style.transform = '' }
+  }
+
+  let anim = null
+  try {
+    container.style.perspective = '1600px'
+    anim = animate(cards, {
+      opacity: { from: 0, to: 1 },
+      rotateY: { from: -38, to: 0 },
+      translateY: { from: 22, to: 0 },
+      scale: { from: 0.94, to: 1 },
+      delay: stagger(90),
+      ease: motion.spring.section(),
+      onComplete: show,
     })
-  })
+  } catch (err) {
+    console.error('[motion] card turn failed, showing them', err)
+    show()
+  }
 
-  return () => { stopWait(); stopLattice() }
+  return () => {
+    try { anim?.pause() } catch {}
+    show()
+  }
 }

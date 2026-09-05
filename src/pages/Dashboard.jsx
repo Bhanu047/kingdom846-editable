@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { animateWordmark, animateMotto, installEmberLattice, installHeroScrub, installCardTilt, installCountUps, whenEntered } from '../lib/motion'
+import { animateWordmark, animateMotto, strikeCrest, installHeroBloom, installHeroScrub, installCardTilt, installCountUps, whenEntered } from '../lib/motion'
 import { Panel, SectionTitle, Pill, ArtImage } from '../components/ui'
 import Icon from '../components/Icon'
 import { RoyalSectionHeader, GraphicTile } from '../components/VisualElements'
@@ -88,11 +88,14 @@ export default function Dashboard({ onNavigate }) {
     // Held until the front door opens -- see whenEntered. All of this used to
     // play, and finish, behind the welcome screen.
     const stopWait = whenEntered(() => {
-      // The hero's arrival: letters land, the motto rises out of its own line,
-      // and a wave crosses the ember lattice underneath them.
+      // The hero's arrival: the crest is struck and the room answers it, the
+      // letters land, the motto rises out of its own line.
+      const hero = document.querySelector('.hero-measure')
       animateWordmark(document.querySelector('.hero-wordmark'))
+      stops.push(strikeCrest(hero))
       stops.push(animateMotto(document.querySelector('.hero-motto')))
-      stops.push(installEmberLattice(document.querySelector('.ember-lattice')))
+      // And it answers a touch with light rather than with a grid of dots.
+      stops.push(installHeroBloom(hero))
       // Then the scroll takes over: the whole hero is scrubbed by it, not
       // merely triggered once. The lattice must exist before this looks for it.
       stops.push(installHeroScrub({ pane: '.app-scroll' }))
@@ -151,11 +154,6 @@ export default function Dashboard({ onNavigate }) {
             <span className="ember" style={{ left: '25%', animationDelay: '2s' }} />
             <span className="ember" style={{ left: '65%', animationDelay: '6s' }} />
           </div>
-          {/* Filled by installEmberLattice: a grid of embers with a wave
-              running through it, from the middle on arrival and from wherever
-              you touch it after that. Empty without JS, which is correct --
-              there is nothing here to see until something animates it. */}
-          <div className="ember-lattice" aria-hidden="true" />
           <div className="relative flex min-h-[19rem] flex-col items-center justify-center px-6 py-8 text-center md:min-h-0 md:h-full md:px-10 md:py-0">
             <img
               src="./assets/crest-846-md.webp"

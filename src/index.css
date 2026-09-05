@@ -1766,23 +1766,13 @@ html:not(.k846-js-reveal) [data-k846-rev="in"] > :nth-child(n+8) { animation-del
 .kv-live [data-k846-rev] > *, .k846-v2 [data-k846-rev] > * { animation: none !important; opacity: 1 !important; transform: none !important }
 
 /* ---- Page transition ----------------------------------------------------- */
-/* The gilt edge that crosses the content on every route change, and the
-   perspective its blocks are tipped in. playPageTransition builds and removes
-   the bar itself; this is only what it looks like. */
+/* The perspective the incoming page's blocks are tipped in.
+   A gilt edge used to sweep left to right across the content here as well; it
+   was removed because a horizontal wipe cuts across the reading direction and
+   pulls the eye sideways exactly when the reader is trying to start at the top
+   of a new page. */
 .k846-page { perspective: 1400px; }
-.k846-sweep {
-  position: absolute; top: 0; bottom: 0; left: 0;
-  width: 42%;
-  pointer-events: none;
-  z-index: 5;
-  background: linear-gradient(100deg,
-    transparent 0%,
-    rgba(212,175,55,.05) 30%,
-    rgba(232,199,102,.28) 50%,
-    rgba(212,175,55,.05) 70%,
-    transparent 100%);
-  filter: blur(2px);
-}
+
 /* When anime.js is driving the change, its own rise stands down -- otherwise
    both run and the page arrives twice. */
 .k846-js-page .page-enter { animation: none; }

@@ -392,16 +392,19 @@ export function animateWordmark(el) {
  * repaint. This is deliberately theatrical, because a kingdom portal should
  * feel like doors opening rather than a div swapping.
  *
- * A gilt edge sweeps the width of the content while the incoming page's blocks
- * arrive from below, tipped back in 3D and springing flat. Fires on every
- * navigation, which is the point: it is the motion the reader meets most.
+ * The incoming page's blocks arrive from below, tipped back in 3D and springing
+ * flat, one after another. Fires on every navigation.
+ *
+ * There was a gilt edge sweeping left to right across the content here too. It
+ * was removed: a horizontal wipe cuts across the reading direction and drags
+ * the eye sideways at the exact moment the reader is trying to start at the top
+ * of a new page. The vertical arrival does not fight them that way.
  */
 export function playPageTransition(container) {
   if (!container || prefersReducedMotion()) return () => {}
 
   let cancelled = false
   let tl = null
-  let sweep = null
   let blocks = []
   let host = null
   let safety = 0
@@ -413,7 +416,6 @@ export function playPageTransition(container) {
      opacity of 0, which is invisible content. Clearing is unconditional. */
   const show = () => {
     clearTimeout(safety)
-    sweep?.remove()
     if (host) host.style.perspective = ''
     for (const b of blocks) { b.style.opacity = ''; b.style.transform = '' }
   }
@@ -435,21 +437,9 @@ export function playPageTransition(container) {
     }
     blocks = [...host.children]
 
-    sweep = document.createElement('div')
-    sweep.className = 'k846-sweep'
-    sweep.setAttribute('aria-hidden', 'true')
-    container.appendChild(sweep)
-
     try {
       host.style.perspective = '1400px'
       tl = createTimeline()
-      tl.add(sweep, {
-        translateX: ['-120%', '120%'],
-        duration: 700,
-        ease: 'inOutQuad',
-        onComplete: () => sweep?.remove(),
-      }, 0)
-
       if (blocks.length) {
         tl.add(blocks, {
           opacity: { from: 0, to: 1 },
@@ -459,7 +449,7 @@ export function playPageTransition(container) {
           delay: stagger(60),
           ease: motion.spring.section(),
           onComplete: show,
-        }, 90)
+        }, 0)
       } else {
         show()
       }

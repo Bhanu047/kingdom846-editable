@@ -13,7 +13,7 @@
  * Bump CACHE_VERSION on any change to this file's caching rules; the activate
  * handler deletes every cache that doesn't match, so old entries never linger.
  */
-const CACHE_VERSION = 'v5'
+const CACHE_VERSION = 'v6'
 const SHELL_CACHE = `k846-shell-${CACHE_VERSION}`
 const ASSET_CACHE = `k846-assets-${CACHE_VERSION}`
 const FONT_CACHE = `k846-fonts-${CACHE_VERSION}`
@@ -74,6 +74,24 @@ self.addEventListener('activate', (event) => {
 // the user close every tab before a new version can take over.
 self.addEventListener('message', (event) => {
   if (event.data === 'skip-waiting') self.skipWaiting()
+
+  /* Drop the cached shell so the next load fetches a fresh one.
+   *
+   * Needed because of shellFirst below: when a NEW BUILD is live but this
+   * worker is unchanged -- which is the usual case, since a deploy almost never
+   * touches this file -- there is no waiting worker to activate, and a plain
+   * reload would be served the same stale index.html and land right back on the
+   * build the visitor is trying to leave. Reloading is only honest once the
+   * cached copy is gone.
+   */
+  if (event.data === 'refresh-shell') {
+    const done = () => event.ports?.[0]?.postMessage('ok')
+    event.waitUntil(
+      caches.open(SHELL_CACHE)
+        .then((cache) => Promise.all(['/', '/index.html'].map((u) => cache.delete(u))))
+        .then(done, done)
+    )
+  }
 })
 
 async function networkFirst(request, cacheName, fallbackUrl) {

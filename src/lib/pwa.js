@@ -113,6 +113,7 @@ export function registerServiceWorker() {
 
       // Catch a build deployed while the app sat open in a background tab.
       setInterval(() => registration.update().catch(() => {}), 60 * 60 * 1000)
+
     } catch {
       // An unavailable worker costs offline support and nothing else; the site
       // works exactly as it did before, so this is never worth an error to the user.
@@ -121,12 +122,117 @@ export function registerServiceWorker() {
 
   if (document.readyState === 'complete') start()
   else window.addEventListener('load', start, { once: true })
+
+  /* Deliberately NOT behind that gate.
+   *
+   * `load` waits for every subresource, the welcome iframe and its own fonts
+   * included, and a third-party stylesheet that hangs rather than fails can
+   * hold it for a long time -- measured here never firing at all inside eight
+   * seconds. Registration can afford to wait for that; telling someone their
+   * app is out of date cannot, because it is the whole reason they are looking
+   * at a version that no longer exists. It costs one small request against an
+   * endpoint the worker does not touch.
+   */
+  startBuildWatch()
+}
+
+function startBuildWatch() {
+  // A beat after first paint, so it never competes with the shell.
+  setTimeout(() => checkBuild(), 2500)
+  // And whenever the app is brought back to the foreground -- which is exactly
+  // what someone does after being told a fix has shipped.
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') checkBuild()
+  })
+}
+
+/* Is the build on the server the one this page is running?
+ *
+ * The worker's `updatefound` only fires when public/sw.js itself changes bytes,
+ * and a deploy almost never touches that file -- so the "a new version is
+ * ready" prompt has been sitting behind an event that a normal deploy does not
+ * raise. Meanwhile the shell is served from cache, so the app someone has open
+ * is the PREVIOUS build until they happen to open it twice. Live fix, stale
+ * phone, and nothing on screen to say so: reported as a bug that had already
+ * been fixed an hour earlier.
+ *
+ * So the page asks the server directly. /api/ bypasses the worker, so the
+ * answer is always the network's, and the entry module's hashed name is the
+ * build identity -- if it differs from the one this document loaded, there is
+ * something newer to reload into.
+ *
+ * Never noisier than every ten minutes, and silent on any failure: being
+ * offline must not look like being out of date.
+ */
+const BUILD_CHECK_INTERVAL = 10 * 60 * 1000
+let lastBuildCheck = 0
+
+const assetPath = (el, attr) => {
+  const raw = el?.getAttribute(attr)
+  if (!raw) return null
+  try { return new URL(raw, window.location.href).pathname } catch { return null }
+}
+
+function loadedBuild() {
+  return {
+    build: assetPath(document.querySelector('script[type="module"][src*="assets/index-"]'), 'src'),
+    style: assetPath(document.querySelector('link[rel="stylesheet"][href*="assets/index-"]'), 'href'),
+  }
+}
+
+async function checkBuild() {
+  if (waitingRegistration) return                       // already asking
+  const now = Date.now()
+  if (now - lastBuildCheck < BUILD_CHECK_INTERVAL) return
+  lastBuildCheck = now
+
+  const mine = loadedBuild()
+  if (!mine.build && !mine.style) return
+  try {
+    const res = await fetch('/api/version', { cache: 'no-store' })
+    if (!res.ok) return
+    const live = await res.json()
+    // A null value means the server could not read that part of its own shell
+    // -- unknown, which is not the same as stale. Only a value that is present
+    // AND different counts.
+    const stale = (key) => Boolean(live[key] && mine[key] && live[key] !== mine[key])
+    // A sentinel rather than a registration: there is no waiting worker in this
+    // case, and applyUpdate resolves one itself if there turns out to be.
+    if (stale('build') || stale('style')) setWaiting({ staleBuild: true })
+  } catch {
+    // Offline, or the request was blocked. Nothing to report.
+  }
 }
 
 /** Activate the waiting worker and reload into it. */
-export function applyUpdate(registration) {
-  const waiting = registration?.waiting
-  if (!waiting) { window.location.reload(); return }
+export async function applyUpdate(registration) {
+  let reg = registration
+  // The build check hands over a sentinel, not a registration -- so look for a
+  // waiting worker before concluding there is none.
+  if (!reg?.waiting) {
+    try { reg = (await navigator.serviceWorker?.ready) || reg } catch {}
+  }
+  const waiting = reg?.waiting
+  if (!waiting) {
+    // No waiting worker: this is a new build behind the same worker, so the
+    // stale shell has to go before reloading -- otherwise the reload is served
+    // the cached index.html and lands back on the build being left behind.
+    try {
+      const active = reg?.active
+      if (active) {
+        await new Promise((resolve) => {
+          const channel = new MessageChannel()
+          channel.port1.onmessage = resolve
+          active.postMessage('refresh-shell', [channel.port2])
+          // Never let a worker that does not answer strand the visitor on a
+          // button that does nothing.
+          setTimeout(resolve, 1500)
+        })
+      }
+    } catch {}
+    window.location.reload()
+    return
+  }
   // controllerchange fires once the new worker takes over; reloading before
   // that would just load the old version again.
   let reloaded = false

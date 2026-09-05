@@ -569,6 +569,46 @@ app.get('/.well-known/assetlinks.json', (_req, res) => {
 
 app.get('/api/health', (_req, res) => res.json({ ok: true, ts: Date.now() }))
 
+/* Which build is live right now.
+ *
+ * The app is served shell-first by the service worker, so a returning visitor
+ * gets the cached index.html and therefore the PREVIOUS build's JavaScript; the
+ * new one arrives an open later. The prompt that is meant to cover that gap was
+ * wired to the service worker's own `updatefound`, which fires only when
+ * public/sw.js changes bytes -- and sw.js barely ever changes. So a deploy
+ * changed the app and told nobody: the fix was live on the server and the
+ * phone in someone's hand kept running the old one, with no way to know.
+ *
+ * This is the missing half. The page asks what build is current and compares it
+ * with the one it is actually running; different means there is something to
+ * reload into. Read fresh on every request rather than cached at boot -- a
+ * container that has been up since before the deploy would otherwise answer
+ * with the build it started on.
+ *
+ * /api/ is excluded from the service worker's fetch handler, so this answer
+ * always comes from the network.
+ */
+app.get('/api/version', (_req, res) => {
+  res.set('Cache-Control', 'no-store')
+  try {
+    const html = fs.readFileSync(path.join(process.cwd(), 'dist', 'index.html'), 'utf8')
+    // Vite writes exactly one hashed entry module into the shell.
+    // The shell references its own assets relatively (./assets/...), so match
+    // that shape and normalise -- the page compares against pathnames.
+    const norm = (m) => (m ? '/' + m[1] : null)
+    const build = norm(html.match(/<script[^>]+src="\.?\/?(assets\/index-[^"]+\.js)"/))
+    // The stylesheet as well as the script: Vite extracts the css into its own
+    // hashed file and links it from the shell, so a css-only deploy leaves the
+    // entry module's hash untouched and would otherwise never be noticed.
+    const style = norm(html.match(/<link[^>]+href="\.?\/?(assets\/index-[^"]+\.css)"/))
+    res.json({ build, style })
+  } catch {
+    // Dev, or a tree with no build in it: nothing to compare against, and the
+    // page must treat that as "no update", never as "you are stale".
+    res.json({ build: null })
+  }
+})
+
 // Public collector. Never returns data, never sets a cookie, and accepts a
 // beacon body (sendBeacon posts text/plain, so the JSON parser may not have
 // run). Fails silently: analytics must never break a page.

@@ -27,9 +27,12 @@ function SkeletonGrid({ count = 4 }) {
   )
 }
 
+/* The placeholder a lazily-loaded page shows while its chunk is still on the
+   wire. The marker is not decoration: motion.js waits for this to leave before
+   it animates anything, so an entrance is never spent on the skeleton. */
 export function PageSkeleton() {
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" data-page-skeleton="">
       <Skeleton className="h-64 w-full" />
       <div className="grid gap-4 sm:grid-cols-2">
         <Skeleton className="h-20 w-full" />

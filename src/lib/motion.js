@@ -386,6 +386,63 @@ export function animateWordmark(el) {
 }
 
 /**
+ * Run `fn` once the routed page has actually mounted.
+ *
+ * Pages are lazy-loaded behind Suspense, so at mount the stage holds
+ * PageSkeleton and nothing else. Waiting a single frame is enough only when
+ * that page's chunk is already cached; on a first visit it is still on the
+ * wire, and a frame later there is still nothing there but the placeholder. So
+ * the entrance was spent animating the skeleton, and the real page arrived with
+ * no entrance at all -- which is exactly why the title decode appeared on some
+ * pages and not others. It was never the heading. It was whichever chunks
+ * happened to be warm.
+ *
+ * The observer's callback runs as a microtask, before the browser paints the
+ * newly inserted content, so an animation started from here still owns the
+ * first frame: nothing flashes in at full opacity and then re-animates.
+ *
+ * @param {Element} container   the page stage
+ * @param {() => void} fn       runs once, when the real page is in the DOM
+ * @returns {() => void}        cancel, safe to call at any point
+ */
+function whenPageReady(container, fn) {
+  if (!container) return () => {}
+
+  let done = false
+  let raf = 0
+  let timer = 0
+  let mo = null
+
+  const stop = () => {
+    done = true
+    cancelAnimationFrame(raf)
+    clearTimeout(timer)
+    try { mo?.disconnect() } catch {}
+  }
+
+  const ready = () =>
+    container.children.length > 0 && !container.querySelector('[data-page-skeleton]')
+
+  const check = () => {
+    if (done || !ready()) return
+    stop()
+    fn()
+  }
+
+  // Already mounted -- a warm chunk, or a route that was never lazy.
+  if (ready()) { fn(); return () => {} }
+
+  mo = new MutationObserver(check)
+  mo.observe(container, { childList: true, subtree: true })
+  raf = requestAnimationFrame(check)
+  // A chunk that never arrives leaves nothing to animate; give up quietly
+  // rather than hold an observer on the page for the rest of the session.
+  timer = setTimeout(stop, 8000)
+
+  return stop
+}
+
+/**
  * The gates open: a full page-change sequence.
  *
  * A route change was a .72s rise -- correct, and small enough to read as a
@@ -420,11 +477,12 @@ export function playPageTransition(container) {
     for (const b of blocks) { b.style.opacity = ''; b.style.transform = '' }
   }
 
-  /* Wait a frame before touching anything. Pages are lazy-loaded behind
-     Suspense, so at mount the stage still holds the skeleton -- animating that
+  /* Wait for the real page, not for a frame. Pages are lazy-loaded behind
+     Suspense, so at mount the stage holds the skeleton -- animating that
      staggers a placeholder and then leaves inline styles on nodes React is
-     about to replace. One frame later the real page is mounted. */
-  const raf = requestAnimationFrame(() => {
+     about to replace. On a cold chunk it is still the skeleton a frame later,
+     which is why this used to do nothing at all on a page's first visit. */
+  const stopWait = whenPageReady(container, () => {
     if (cancelled) return
 
     // The routed page is usually one wrapper div holding every panel, so the
@@ -466,7 +524,7 @@ export function playPageTransition(container) {
 
   return () => {
     cancelled = true
-    cancelAnimationFrame(raf)
+    stopWait()
     try { tl?.pause() } catch {}
     show()
   }
@@ -568,38 +626,59 @@ export function installTorch() {
  * themselves by resolving out of static reads as a war console rather than a
  * brochure.
  *
- * Only ever applied to a heading that is PURE TEXT. scrambleText writes
- * textContent, so a title containing an icon or a span would have those
- * children flattened into a string and destroyed. The guard is not optional.
+ * Two things decide whether a heading gets this, and both are guards rather
+ * than preferences:
+ *
+ * - It waits for the page itself. Every page here is lazy, so on a first visit
+ *   the heading does not exist yet when the route changes. This used to run a
+ *   frame after mount and quietly find nothing, which is why the decode only
+ *   ever showed on the handful of pages whose chunk was already cached.
+ *
+ * - The heading must be PURE TEXT. scrambleText writes textContent, so a title
+ *   containing an icon or per-letter spans would have those children flattened
+ *   into a string and destroyed. That is also what keeps this off the home
+ *   hero, whose wordmark is split into spans and has its own entrance.
  */
 export function scrambleHeading(root) {
   if (!root || prefersReducedMotion()) return () => {}
 
-  const el = root.querySelector('h1.gilt-display')
-  if (!el) return () => {}
-  if (el.children.length > 0) return () => {}          // not pure text -- leave it alone
-  const original = el.textContent
-  if (!original || original.length > 60) return () => {}
-
   let anim = null
-  try {
-    anim = animate(el, {
-      // 'A-Z0-9' keeps the noise in the kingdom's own alphabet: a title made of
-      // lowercase and punctuation reads as a glitch rather than a cipher.
-      textContent: animeText.scrambleText({ chars: 'A-Z0-9' }),
-      duration: 900,
-      ease: 'outQuad',
-      onComplete: () => { el.textContent = original },
-    })
-  } catch (err) {
-    console.error('[motion] heading scramble failed', err)
-    el.textContent = original
-    return () => {}
-  }
+  let el = null
+  let original = ''
+
+  const stopWait = whenPageReady(root, () => {
+    // Any h1 the page put at its head -- PageHeader's gilt title, Battle Lab's
+    // own, the console's. Not a specific class: the pages do not agree on one,
+    // and the ones that were left out were the ones that carried a plain h1.
+    for (const h of root.querySelectorAll('h1')) {
+      if (h.children.length > 0) continue                 // not pure text
+      const text = (h.textContent || '').trim()
+      if (!text || text.length > 60) continue
+      el = h
+      original = h.textContent
+      break
+    }
+    if (!el) return
+
+    try {
+      anim = animate(el, {
+        // 'A-Z0-9' keeps the noise in the kingdom's own alphabet: a title made
+        // of lowercase and punctuation reads as a glitch rather than a cipher.
+        textContent: animeText.scrambleText({ chars: 'A-Z0-9' }),
+        duration: 900,
+        ease: 'outQuad',
+        onComplete: () => { el.textContent = original },
+      })
+    } catch (err) {
+      console.error('[motion] heading scramble failed', err)
+      el.textContent = original
+    }
+  })
 
   return () => {
+    stopWait()
     try { anim?.pause() } catch {}
     // Whatever frame it was on, the reader gets the real title back.
-    el.textContent = original
+    if (el) el.textContent = original
   }
 }

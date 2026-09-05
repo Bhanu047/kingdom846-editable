@@ -61,11 +61,11 @@ function PageStage({ page, children }) {
   const ref = useRef(null)
   useEffect(() => {
     document.documentElement.classList.add('k846-js-page')
+    // Both wait for the lazily-loaded page to actually mount before they touch
+    // anything -- see whenPageReady in motion.js.
     const stopBlocks = playPageTransition(ref.current)
-    let stopScramble = () => {}
-    // A frame later, so the lazily-loaded page has actually mounted its header.
-    const id = requestAnimationFrame(() => { stopScramble = scrambleHeading(ref.current) })
-    return () => { cancelAnimationFrame(id); stopBlocks(); stopScramble() }
+    const stopScramble = scrambleHeading(ref.current)
+    return () => { stopBlocks(); stopScramble() }
   }, [page])
   return (
     <div key={page} ref={ref} className="k846-page page-enter mx-auto max-w-6xl">

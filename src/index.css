@@ -498,13 +498,20 @@ html:not(.k846-js-stagger) .stagger-in:nth-child(n+9) { animation-delay: .60s; }
 
 /* ===== MORE GRAPHICS & ANIMATION LAYER 2 ===== */
 
-/* Animated sidebar crest glow */
+/* Animated sidebar crest glow.
+   The lift below -- the contrast and the two black drop-shadows that sit the
+   crest off the rail -- used to be written inline on the <img>, where it did
+   nothing at all: sidebar-glow animates `filter`, a running css animation
+   outranks an inline style, and the animation's own filter replaced the whole
+   chain on every frame. So it lives here, on the element AND in both
+   keyframes, and the glow is added to it rather than substituted for it. */
 .sidebar-crest {
+  filter: brightness(1.14) saturate(1.14) contrast(1.06) drop-shadow(0 2px 3px rgba(0,0,0,.85)) drop-shadow(0 8px 14px rgba(0,0,0,.6));
   animation: sidebar-glow 4s ease-in-out infinite;
 }
 @keyframes sidebar-glow {
-  0%, 100% { filter: drop-shadow(0 0 3px rgba(212,175,55,.3)); }
-  50% { filter: drop-shadow(0 0 15px rgba(212,175,55,.6)) drop-shadow(0 0 30px rgba(212,175,55,.2)); }
+  0%, 100% { filter: brightness(1.14) saturate(1.14) contrast(1.06) drop-shadow(0 2px 3px rgba(0,0,0,.85)) drop-shadow(0 8px 14px rgba(0,0,0,.6)) drop-shadow(0 0 3px rgba(212,175,55,.3)); }
+  50% { filter: brightness(1.14) saturate(1.14) contrast(1.06) drop-shadow(0 2px 3px rgba(0,0,0,.85)) drop-shadow(0 8px 14px rgba(0,0,0,.6)) drop-shadow(0 0 15px rgba(212,175,55,.6)) drop-shadow(0 0 30px rgba(212,175,55,.2)); }
 }
 
 /* Nav item hover slide */
@@ -2503,6 +2510,20 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
 }
 @keyframes hero-crest-float { 0%, 100% { transform: none } 50% { transform: translateY(-7px) } }
 
+/* The same handoff the wordmark uses, and for the same reason: a running css
+   animation beats an inline style, so hero-crest-in (fill-mode both, holding
+   opacity 1 and transform none for ever) and the infinite hero-crest-float
+   were silently discarding everything JS wrote onto this element -- the strike
+   on arrival and the scroll scrub's fade both. The crest was the one piece of
+   the hero that never moved. While JS owns it, css lets go; when the strike
+   finishes it gets the breathe back, with no entrance left to replay. Without
+   JS neither class is ever added and the original animation runs untouched. */
+.hero-crest.k846-js-crest { animation: none }
+.hero-crest.k846-js-crest-rest { animation: hero-crest-float 8s ease-in-out infinite }
+/* The scrub drives this wrapper rather than the image, so the breathe above and
+   the scroll fade can both be live without fighting over transform. */
+.hero-crest-hold { display: block; will-change: transform, opacity }
+
 /* letter-spacing is set !important on .eyebrow, and !important beats an
    animation -- so this resolves out of blur instead of opening its tracking. */
 .hero-rise { animation: hero-rise-in .6s cubic-bezier(.22,.61,.36,1) var(--d, 0s) both }
@@ -3200,6 +3221,13 @@ html.k846-js-nav .app-tab .app-tab-mark { display: none; }
    The hero wordmark solved this the same way, and index.css has carried the
    warning since the welcome screen hit it. */
 .k846-bloom-title { perspective: 900px; }
+/* A title that is not gilt keeps its own colour: the split needs the geometry
+   and nothing else from .k846-char below. */
+.k846-char-plain {
+  display: inline-block;
+  transform-origin: 50% 100%;
+  will-change: transform, opacity;
+}
 .k846-char {
   display: inline-block;
   transform-origin: 50% 100%;

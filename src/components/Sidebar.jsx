@@ -55,7 +55,8 @@ export default function Sidebar({ active, onNavigate, onLogin, onSignOut, user, 
               background: 'transparent',
               border: 0,
               borderRadius: 0,
-              filter: 'brightness(1.14) saturate(1.14) contrast(1.06) drop-shadow(0 2px 3px rgba(0,0,0,.85)) drop-shadow(0 8px 14px rgba(0,0,0,.6))',
+              /* The filter that used to sit here is in .sidebar-crest now --
+                 sidebar-glow animates `filter`, so an inline one never applied. */
             }}
           />
         </div>

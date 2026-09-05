@@ -623,15 +623,24 @@ export function bloomHeading(root) {
   if (!root || prefersReducedMotion()) return () => {}
 
   let split = null
+  let title = null
   const stopWait = whenPageReady(root, () => {
-    const el = root.querySelector('h1.gilt-display')
+    /* Any page title, not only a gilt one. Requiring .gilt-display was the last
+       of the "I can see it only on a few pages" bug: Battle Lab and its six
+       tools set their own parchment heading, so they were skipped in silence.
+       A heading that is NOT gilt is split with a class that carries the
+       geometry alone -- .k846-char forces the gold gradient, which is right for
+       .gilt-display and would repaint every other title. */
+    const gilt = root.querySelector('h1.gilt-display')
+    const el = gilt || root.querySelector('h1')
     if (!el || el.children.length > 0) return                 // not pure text
     const text = (el.textContent || '').trim()
     if (!text || text.length > 60) return
+    title = el
 
     try {
       el.classList.add('k846-bloom-title')
-      split = animeText.splitText(el, { chars: { class: 'k846-char' }, words: false })
+      split = animeText.splitText(el, { chars: { class: gilt ? 'k846-char' : 'k846-char-plain' }, words: false })
       animate(split.chars, {
         opacity: { from: 0, to: 1 },
         scale: { from: 0.62, to: 1 },
@@ -645,6 +654,7 @@ export function bloomHeading(root) {
       try { split?.revert() } catch {}
       el.classList.remove('k846-bloom-title')
       split = null
+      title = null
     }
   })
 
@@ -652,7 +662,7 @@ export function bloomHeading(root) {
     stopWait()
     // Hand the heading back whole: a reverted split leaves the original text.
     try { split?.revert() } catch {}
-    root.querySelector('h1.gilt-display')?.classList.remove('k846-bloom-title')
+    title?.classList.remove('k846-bloom-title')
   }
 }
 
@@ -732,7 +742,10 @@ export function installHeroScrub({ pane = '.app-scroll', hero = '.hero-frame' } 
   if (!heroEl || !paneEl) return () => {}
 
   const pick = (sel) => document.querySelector(sel)
-  const crest = pick('.hero-crest')
+  /* The holder, not the image: .hero-crest carries an infinite CSS animation
+     and a fill-mode:both one, and a running CSS animation outranks an inline
+     style -- writing transform/opacity onto the image itself is discarded. */
+  const crest = pick('.hero-crest-hold') || pick('.hero-crest')
   const word = pick('.hero-wordmark')
   const motto = pick('.hero-motto')
   if (!crest && !word) return () => {}
@@ -1393,6 +1406,14 @@ export function strikeCrest(host) {
   const crest = host.querySelector('.hero-crest')
   if (!crest) return () => {}
 
+  // css lets go of the crest for as long as this owns it -- see
+  // .k846-js-crest in index.css.
+  crest.classList.add('k846-js-crest')
+  const release = () => {
+    crest.classList.remove('k846-js-crest')
+    crest.classList.add('k846-js-crest-rest')
+  }
+
   const ring = document.createElement('span')
   ring.className = 'k846-crest-ring'
   ring.setAttribute('aria-hidden', 'true')
@@ -1416,7 +1437,7 @@ export function strikeCrest(host) {
       scale: { from: 0.64, to: 1 },
       translateY: { from: -38, to: 0 },
       ease: motion.spring.accent(),
-      onComplete: () => { crest.style.opacity = ''; crest.style.transform = '' },
+      onComplete: () => { crest.style.opacity = ''; crest.style.transform = ''; release() },
     }))
     runs.push(animate(ring, {
       scale: [{ from: 0.18, to: 1.5 }],
@@ -1429,6 +1450,7 @@ export function strikeCrest(host) {
     console.error('[motion] crest strike failed, showing it', err)
     crest.style.opacity = ''
     crest.style.transform = ''
+    release()
     ring.remove()
   }
 
@@ -1436,6 +1458,7 @@ export function strikeCrest(host) {
     for (const run of runs) { try { run.pause() } catch {} }
     crest.style.opacity = ''
     crest.style.transform = ''
+    release()
     ring.remove()
   }
 }

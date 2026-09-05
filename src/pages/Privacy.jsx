@@ -1,4 +1,4 @@
-import { RoyalSectionHeader } from '../components/VisualElements'
+import PageHeader from '../components/PageHeader'
 import { trackingDisabled } from '../lib/analytics'
 
 // Written to be read, not to be a shield. Every claim here is one the code
@@ -16,7 +16,16 @@ function Block({ title, children }) {
 export default function Privacy() {
   return (
     <div className="space-y-5">
-      <RoyalSectionHeader title="Privacy" subtitle="What this site records, and what it deliberately cannot" />
+      {/* The page header every other page uses. This one had a SECTION header
+          standing in for its title, which left the page with no h1 at all --
+          nothing for a screen reader to land on, and the one title on the site
+          the arrival animation could never find. No artwork: a page about what
+          is not collected should stay quiet. */}
+      <PageHeader
+        eyebrow="The Realm's Word"
+        title="Privacy"
+        subtitle="What this site records, and what it deliberately cannot"
+      />
 
       <div className="rounded-2xl border border-emerald-300/20 bg-emerald-300/[.04] p-5">
         <p className="text-sm leading-relaxed text-emerald-100/80">

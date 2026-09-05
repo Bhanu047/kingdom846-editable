@@ -155,11 +155,20 @@ export default function Dashboard({ onNavigate }) {
             <span className="ember" style={{ left: '65%', animationDelay: '6s' }} />
           </div>
           <div className="relative flex min-h-[19rem] flex-col items-center justify-center px-6 py-8 text-center md:min-h-0 md:h-full md:px-10 md:py-0">
-            <img
-              src="./assets/crest-846-md.webp"
-              alt=""
-              className="hero-crest mb-2.5 h-[4.5rem] w-auto sm:h-24 md:h-36"
-            />
+            {/* The crest is wrapped because the scrub and the CSS breathe were
+                fighting over the same element: an infinite CSS animation
+                (hero-crest-float) and a fill-mode:both one (hero-crest-in) both
+                outrank inline styles, so the scrub's transform and opacity were
+                written and then discarded -- the crest alone stayed put while
+                the rest of the hero receded. The wrapper carries the scrub, the
+                image keeps its own animations, and nothing overlaps. */}
+            <div className="hero-crest-hold mb-2.5">
+              <img
+                src="./assets/crest-846-md.webp"
+                alt=""
+                className="hero-crest h-[4.5rem] w-auto sm:h-24 md:h-36"
+              />
+            </div>
             <div className="eyebrow text-glow hero-rise" style={{ '--d': '.18s' }}>Royal Portal</div>
             {/* Split per letter so the wordmark rises the way the welcome
                 screen's does. Each span carries its own gilt gradient -- see

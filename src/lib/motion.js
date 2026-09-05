@@ -122,13 +122,30 @@ export function installStagger(opts = {}) {
     return stop
   }
 
-  const done = new WeakSet()
+  /* Two sets, and the difference between them is a bug that reached the live
+     site. `played` marks a group whose cascade has run; `revealed` marks the
+     individual elements that have actually been made visible.
 
-  const run = (group) => {
-    if (done.has(group)) return
-    done.add(group)
-    const children = [...group.children].filter((c) => c.classList.contains('stagger-in'))
+     Tracking only the group is what broke the War Room. CSS holds every
+     .stagger-in at opacity 0 for JavaScript to bring in. The roster's rows
+     carry that class, so when a leader pressed "+ Add Whale" React appended a
+     new row to a group that had already played -- the observer had long since
+     stopped watching it, nothing revealed the new row, and it sat at opacity 0
+     forever. The row WAS added. It was invisible. Pressing the button again
+     added another invisible row.
+
+     So a late arrival is revealed on its own the moment it appears. Its group
+     is on screen by definition -- it played once already -- so there is nothing
+     to wait for. */
+  const played = new WeakSet()
+  const revealed = new WeakSet()
+
+  const kidsOf = (group) =>
+    [...group.children].filter((c) => c.classList.contains('stagger-in'))
+
+  const reveal = (children) => {
     if (!children.length) return
+    for (const child of children) revealed.add(child)
     try {
       animate(children, {
         opacity: { from: 0, to: 1 },
@@ -141,6 +158,11 @@ export function installStagger(opts = {}) {
       console.error('[motion] stagger failed, showing content', err)
       show(children)
     }
+  }
+
+  const run = (group) => {
+    played.add(group)
+    reveal(kidsOf(group).filter((c) => !revealed.has(c)))
   }
 
   const io = new IntersectionObserver((entries) => {
@@ -157,7 +179,12 @@ export function installStagger(opts = {}) {
     for (const el of document.querySelectorAll('.stagger-in')) {
       if (el.parentElement) groups.add(el.parentElement)
     }
-    for (const g of groups) if (!done.has(g)) io.observe(g)
+    for (const g of groups) {
+      if (!played.has(g)) { io.observe(g); continue }
+      // Already played: anything here that has never been revealed arrived
+      // after the cascade, and no observer will ever call back for it.
+      reveal(kidsOf(g).filter((c) => !revealed.has(c)))
+    }
   }
   scan()
 

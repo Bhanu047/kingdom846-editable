@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { animate, stagger, spring } from 'animejs'
+import { animate, stagger, spring, createTimeline } from 'animejs'
 
 // Orchestrated motion, on top of anime.js.
 //
@@ -304,7 +304,7 @@ export function installHeroParallax({ pane, layers } = {}) {
  * slightly on its way back to flat, which is what makes it feel sprung rather
  * than merely reset.
  */
-export function installCardTilt(selector, { max = 7, lift = 6 } = {}) {
+export function installCardTilt(selector, { max = 16, lift = 22 } = {}) {
   if (typeof window === 'undefined' || prefersReducedMotion()) return () => {}
   // A touch screen has no hovering cursor to lean toward, and binding this
   // there only means a card stuck mid-tilt after a tap.
@@ -367,9 +367,10 @@ export function animateWordmark(el) {
   try {
     animate(letters, {
       opacity: { from: 0, to: 1 },
-      translateY: { from: 26, to: 0 },
-      scale: { from: 0.86, to: 1 },
-      delay: stagger(38, { start: 120 }),
+      translateY: { from: 72, to: 0 },
+      rotateX: { from: -70, to: 0 },
+      scale: { from: 0.45, to: 1 },
+      delay: stagger(52, { start: 120 }),
       ease: motion.spring.accent(),
       onComplete: () => {
         // Hand the letters back to CSS with no inline transform left to fight.
@@ -381,5 +382,102 @@ export function animateWordmark(el) {
     console.error('[motion] wordmark failed, showing it', err)
     for (const l of letters) { l.style.opacity = '1'; l.style.transform = 'none' }
     release()
+  }
+}
+
+/**
+ * The gates open: a full page-change sequence.
+ *
+ * A route change was a .72s rise -- correct, and small enough to read as a
+ * repaint. This is deliberately theatrical, because a kingdom portal should
+ * feel like doors opening rather than a div swapping.
+ *
+ * A gilt edge sweeps the width of the content while the incoming page's blocks
+ * arrive from below, tipped back in 3D and springing flat. Fires on every
+ * navigation, which is the point: it is the motion the reader meets most.
+ */
+export function playPageTransition(container) {
+  if (!container || prefersReducedMotion()) return () => {}
+
+  let cancelled = false
+  let tl = null
+  let sweep = null
+  let blocks = []
+  let host = null
+  let safety = 0
+
+  /* Always leaves the page readable, whatever happened.
+     This is the whole reason the function is shaped this way: every failure
+     mode here -- a timeline that throws, a route change mid-flight, React
+     swapping the subtree under us -- ends with blocks holding an inline
+     opacity of 0, which is invisible content. Clearing is unconditional. */
+  const show = () => {
+    clearTimeout(safety)
+    sweep?.remove()
+    if (host) host.style.perspective = ''
+    for (const b of blocks) { b.style.opacity = ''; b.style.transform = '' }
+  }
+
+  /* Wait a frame before touching anything. Pages are lazy-loaded behind
+     Suspense, so at mount the stage still holds the skeleton -- animating that
+     staggers a placeholder and then leaves inline styles on nodes React is
+     about to replace. One frame later the real page is mounted. */
+  const raf = requestAnimationFrame(() => {
+    if (cancelled) return
+
+    // The routed page is usually one wrapper div holding every panel, so the
+    // stage's own children are a single block with no cascade in them.
+    host = container
+    for (let depth = 0; depth < 3 && host.children.length === 1; depth++) {
+      const only = host.firstElementChild
+      if (!only || !only.children.length) break
+      host = only
+    }
+    blocks = [...host.children]
+
+    sweep = document.createElement('div')
+    sweep.className = 'k846-sweep'
+    sweep.setAttribute('aria-hidden', 'true')
+    container.appendChild(sweep)
+
+    try {
+      host.style.perspective = '1400px'
+      tl = createTimeline()
+      tl.add(sweep, {
+        translateX: ['-120%', '120%'],
+        duration: 700,
+        ease: 'inOutQuad',
+        onComplete: () => sweep?.remove(),
+      }, 0)
+
+      if (blocks.length) {
+        tl.add(blocks, {
+          opacity: { from: 0, to: 1 },
+          translateY: { from: 70, to: 0 },
+          rotateX: { from: -26, to: 0 },
+          scale: { from: 0.93, to: 1 },
+          delay: stagger(60),
+          ease: motion.spring.section(),
+          onComplete: show,
+        }, 90)
+      } else {
+        show()
+      }
+    } catch (err) {
+      console.error('[motion] page transition failed, showing content', err)
+      show()
+      return
+    }
+
+    // Belt and braces. If the timeline never completes -- paused, interrupted,
+    // a spring that never settles -- this still hands the page back.
+    safety = setTimeout(show, 2200)
+  })
+
+  return () => {
+    cancelled = true
+    cancelAnimationFrame(raf)
+    try { tl?.pause() } catch {}
+    show()
   }
 }

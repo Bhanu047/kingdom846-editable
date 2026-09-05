@@ -1766,6 +1766,27 @@ html:not(.k846-js-reveal) [data-k846-rev="in"] > :nth-child(n+8) { animation-del
 .kv-live [data-k846-rev] > *, .k846-v2 [data-k846-rev] > * { animation: none !important; opacity: 1 !important; transform: none !important }
 
 /* ---- Page transition ----------------------------------------------------- */
+/* The gilt edge that crosses the content on every route change, and the
+   perspective its blocks are tipped in. playPageTransition builds and removes
+   the bar itself; this is only what it looks like. */
+.k846-page { perspective: 1400px; }
+.k846-sweep {
+  position: absolute; top: 0; bottom: 0; left: 0;
+  width: 42%;
+  pointer-events: none;
+  z-index: 5;
+  background: linear-gradient(100deg,
+    transparent 0%,
+    rgba(212,175,55,.05) 30%,
+    rgba(232,199,102,.28) 50%,
+    rgba(212,175,55,.05) 70%,
+    transparent 100%);
+  filter: blur(2px);
+}
+/* When anime.js is driving the change, its own rise stands down -- otherwise
+   both run and the page arrives twice. */
+.k846-js-page .page-enter { animation: none; }
+
 /* A route change used to be a 0.45s fade -- indistinguishable from a repaint.
    Now the outgoing view drops away, a gilt edge sweeps the content area, and
    the incoming view rises through it. */
@@ -2459,6 +2480,9 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
    that is already in place. Without JS the class is never added and the
    original entrance runs untouched. */
 .hero-wordmark.k846-js-letters span { animation: none; }
+/* Depth for the letters' tip. Without a perspective a rotateX just squashes
+   the glyph vertically instead of tilting it away from the reader. */
+.hero-wordmark.k846-js-letters { perspective: 900px; }
 /* opacity and transform ONLY -- no filter.
    The welcome screen's letters resolve out of blur, and copying that here was
    the obvious move and the wrong one. Blur cannot be composited: it repaints

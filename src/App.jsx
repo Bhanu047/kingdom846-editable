@@ -2,7 +2,7 @@ import { useState, useMemo, lazy, Suspense, useEffect, useRef, useCallback } fro
 import { trackPage, trackAction, installOutboundTracking } from './lib/analytics'
 import { installSurfaceTracking } from './lib/surface'
 import { installReveal } from './lib/reveal'
-import { installStagger } from './lib/motion'
+import { installStagger, playPageTransition } from './lib/motion'
 import { installPressFeedback } from './lib/press'
 import Sidebar from './components/Sidebar'
 import AppHeader from './components/AppHeader'
@@ -51,6 +51,23 @@ const Privacy = lazy(() => import('./pages/Privacy'))
 const titles = {
   dashboard: 'Home', about: 'About Kingdom', kingdom: 'Kingdom', alliances: 'Alliances', events: 'Events', timeline: 'Timeline', news: 'News', guides: 'Guides', rankings: 'Rankings', transfer: 'Transfer', 'battle-lab': 'Battle Lab',
   'apply-chief': 'Apply · Chief Minister', 'apply-noble': 'Apply · Noble Advisor', apply: 'Apply', admin: 'Admin Editor', console: 'Master Console', settings: 'Settings', 'leader-portal': 'Event Schedule', 'war-room': 'War Room'
+}
+
+/* Wraps the routed view so a page change is a sequence rather than a swap.
+   Keyed on `page`, so React remounts it on every navigation and the effect
+   runs each time. The teardown matters: navigating again mid-flight must not
+   leave the outgoing blocks stranded at opacity 0. */
+function PageStage({ page, children }) {
+  const ref = useRef(null)
+  useEffect(() => {
+    document.documentElement.classList.add('k846-js-page')
+    return playPageTransition(ref.current)
+  }, [page])
+  return (
+    <div key={page} ref={ref} className="k846-page page-enter mx-auto max-w-6xl">
+      {children}
+    </div>
+  )
 }
 
 function getPageFromHash() {
@@ -328,7 +345,7 @@ function Shell() {
               className="pull-shift"
               style={pull > 0 ? { transform: `translateY(${pull * 0.42}px)`, transition: refreshing ? 'transform .2s ease' : 'none' } : undefined}
             >
-              <div key={page} className="page-enter mx-auto max-w-6xl">{render()}</div>
+              <PageStage page={page}>{render()}</PageStage>
             <footer className="site-footer mt-12 pt-6 pb-4 relative">
               <div className="flex flex-col items-center gap-2 text-center">
                 <div className="flex items-center gap-3"><span className="text-gold-bright float-anim"><Icon name="crown" size={20} /></span><span className="font-serif text-lg tracking-wider gradient-gold font-bold">Kingdom 846</span><span className="text-gold-bright float-anim" style={{ animationDelay: '2s' }}><Icon name="crown" size={20} /></span></div>

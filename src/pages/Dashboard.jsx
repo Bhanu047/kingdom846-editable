@@ -90,8 +90,8 @@ export default function Dashboard({ onNavigate }) {
       layers: [
         // The crest moves most, the wordmark less, so the hero has depth
         // rather than scrolling away as one flat picture.
-        { selector: '.hero-crest', rate: -0.20, fade: 900 },
-        { selector: '.hero-wordmark', rate: -0.10 },
+        { selector: '.hero-crest', rate: -0.55, fade: 620 },
+        { selector: '.hero-wordmark', rate: -0.28 },
       ],
     })
     const stopTilt = installCardTilt('.tilt-tile')

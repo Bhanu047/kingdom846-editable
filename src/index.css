@@ -3348,35 +3348,43 @@ html.k846-js-nav .app-tab .app-tab-mark { display: none; }
   border-radius: 50%;
   border: 1px solid rgba(212, 175, 55, .14);
 }
+/* The target is a castle now rather than a third gold dot. Sized in one place,
+   centred by translate rather than by negative margins so the size can change
+   without the centring having to be recomputed. */
 .wr-field-core {
   position: absolute;
   left: 50%; top: 50%;
-  width: 14px; height: 14px;
-  margin: -7px 0 0 -7px;
-  border-radius: 50%;
-  background: var(--wr, #D4AF37);
-  box-shadow: 0 0 14px var(--wr-glow, rgba(212,175,55,.3));
+  width: 34px; height: 28px;
+  translate: -50% -50%;
+  color: var(--wr, #D4AF37);
+  filter: drop-shadow(0 0 9px var(--wr-glow, rgba(212,175,55,.3)));
 }
+.wr-castle-art { display: block; width: 100%; height: 100%; overflow: visible }
 
 /* A march. The element is placed at the field's origin and moved by transform,
    so its own box never enters the layout maths. */
 .wr-march {
   position: absolute;
   left: 0; top: 0;
-  display: grid;
-  place-items: center;
-  margin: -5px 0 0 -5px;
+  margin: 0;
+  color: var(--wr, #D4AF37);
   will-change: transform;
 }
-.wr-march-dot {
-  width: 10px; height: 10px;
-  border-radius: 50%;
-  background: var(--wr, #D4AF37);
-  box-shadow: 0 0 10px var(--wr-glow, rgba(212,175,55,.35));
-  transition: opacity .3s ease, transform .3s ease;
+/* Centred on the march's own point by translate, so the banner can be any size
+   without the transform anime drives on the parent having to know. */
+.wr-march-mark {
+  position: absolute;
+  left: 0; top: 0;
+  width: 13px; height: 18px;
+  translate: -50% -50%;
+  filter: drop-shadow(0 0 7px var(--wr-glow, rgba(212,175,55,.35)));
+  transition: opacity .3s ease, scale .3s ease;
 }
+.wr-rally-art { display: block; width: 100%; height: 100%; overflow: visible }
 .wr-march-name {
   position: absolute;
+  left: 0;
+  translate: -50% 0;
   top: 12px;
   font-family: 'JetBrains Mono', ui-monospace, monospace;
   font-size: 8px;
@@ -3386,11 +3394,14 @@ html.k846-js-nav .app-tab .app-tab-mark { display: none; }
   pointer-events: none;
 }
 /* Waiting marches are present but quiet: the eye should find the ones moving. */
-.wr-march[data-state="waiting"] .wr-march-dot { opacity: .32; transform: scale(.7) }
+/* scale, not transform: the mark is centred with `translate`, and a transform
+   here would replace that and throw the banner off its own point. */
+.wr-march[data-state="waiting"] .wr-march-mark { opacity: .34; scale: .78 }
 .wr-march[data-state="waiting"] .wr-march-name { color: rgba(232, 216, 184, .28) }
-.wr-march[data-state="flying"] .wr-march-dot { opacity: 1; transform: scale(1) }
-.wr-march[data-state="landed"] .wr-march-dot { opacity: .5; transform: scale(.55) }
-.wr-march[data-state="landed"] .wr-march-name { opacity: .35 }
+.wr-march[data-state="flying"]  .wr-march-mark { opacity: 1; scale: 1 }
+/* Landed: it is inside the walls, so it stands down rather than vanishing. */
+.wr-march[data-state="landed"]  .wr-march-mark { opacity: .45; scale: .6 }
+.wr-march[data-state="landed"]  .wr-march-name { opacity: .35 }
 
 .wr-impact {
   position: absolute;
@@ -3404,6 +3415,6 @@ html.k846-js-nav .app-tab .app-tab-mark { display: none; }
   pointer-events: none;
 }
 @media (prefers-reduced-motion: reduce) {
-  .wr-march-dot, .wr-march-name { transition: none }
+  .wr-march-mark, .wr-march-name { transition: none }
   .wr-impact { display: none }
 }

@@ -130,7 +130,7 @@ export default function RallyApproach({ sequence, now, impactAt, phase = 'HOLD' 
         <span className="wr-field-ring" style={{ '--k': 1 }} />
         <span className="wr-field-ring" style={{ '--k': 0.66 }} />
         <span className="wr-field-ring" style={{ '--k': 0.33 }} />
-        <span className="wr-field-core" />
+        <span className="wr-field-core"><CastleMark /></span>
 
         {lanes.map((lane) => (
           <span
@@ -140,12 +140,59 @@ export default function RallyApproach({ sequence, now, impactAt, phase = 'HOLD' 
             data-state="waiting"
             title={lane.name}
           >
-            <span className="wr-march-dot" />
+            <span className="wr-march-mark"><RallyMark /></span>
             <span className="wr-march-name">{lane.name}</span>
           </span>
         ))}
       </div>
     </div>
+  )
+}
+
+/* What the field is made of.
+ *
+ * Two gold dots and a third gold dot: the map said "six things move toward a
+ * seventh thing" and left you to remember which was the castle. So the target
+ * is a castle and the marches are rally banners -- the two shapes anyone who
+ * plays this reads without a legend, and the only two things on the field.
+ *
+ * Both are drawn in currentColor, which the console sets from --wr, so they
+ * turn with the phase for free: gold on hold, amber on standby, red on the
+ * call, green on launch. Nothing here knows about any of that.
+ *
+ * Kept deliberately quiet -- thin strokes, a low fill, no flags flying off the
+ * keep. At 30px a detailed castle is a smudge, and the movement is meant to be
+ * the thing you watch.
+ */
+function CastleMark() {
+  return (
+    <svg viewBox="0 0 24 20" className="wr-castle-art" aria-hidden="true" focusable="false">
+      <g fill="currentColor" fillOpacity=".24" stroke="currentColor" strokeWidth="1.05"
+         strokeLinejoin="round" strokeLinecap="round">
+        {/* Two flanking towers and a taller keep, each crenellated. */}
+        <path d="M1.6 19V5h1.4v1.4h0.9V5h1.4v1.4h0.9V5h1.4v14z" />
+        <path d="M8.6 19V2.2h1.6v1.6h1v-1.6h1.6v1.6h1v-1.6h1.6V19z" />
+        <path d="M16.4 19V5h1.4v1.4h0.9V5h1.4v1.4h0.9V5h1.4v14z" />
+      </g>
+      {/* The gate, open -- stroke only, so the keep reads as a way in rather
+          than a solid block. */}
+      <path d="M10.3 19v-3.5a1.7 1.7 0 0 1 3.4 0V19" fill="none"
+            stroke="currentColor" strokeWidth="1.05" strokeLinecap="round" />
+      <path d="M0.9 19.3h22.2" fill="none" stroke="currentColor" strokeWidth="1.05"
+            strokeOpacity=".55" strokeLinecap="round" />
+    </svg>
+  )
+}
+
+function RallyMark() {
+  return (
+    <svg viewBox="0 0 14 19" className="wr-rally-art" aria-hidden="true" focusable="false">
+      {/* A rally is a march under its own banner, so that is what it is. */}
+      <path d="M4 18V2.4" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
+      <circle cx="4" cy="1.5" r="1.15" fill="currentColor" />
+      <path d="M4.9 3.1 12 5.6 4.9 8.1z" fill="currentColor" stroke="currentColor"
+            strokeWidth="0.9" strokeLinejoin="round" />
+    </svg>
   )
 }
 

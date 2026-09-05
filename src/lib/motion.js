@@ -173,6 +173,51 @@ export function installStagger(opts = {}) {
     }
   }, { threshold: 0.05, rootMargin: '0px 0px -5% 0px' })
 
+  /* The guarantee.
+   *
+   * Everything above is an optimisation: reveal a group as it scrolls into
+   * view, reveal a late arrival on its own. Both have now failed in the field,
+   * in three different lists, because they depend on a particular interleaving
+   * of React renders, observer callbacks and scrolls -- and CSS holds every
+   * .stagger-in at opacity 0 until one of them fires, so when they miss, the
+   * content is not late, it is GONE. A roster row, then a settings row, then
+   * the rally call order: rows 2, 4 and 6 blank while 1, 3 and 5 showed.
+   *
+   * So this stops being the thing that makes content visible and goes back to
+   * being the thing that makes it arrive nicely. Anything on screen and still
+   * invisible a beat after it appeared is simply shown. Off-screen elements are
+   * left alone -- they still get their cascade when scrolled to, which is the
+   * whole point of the effect -- and the sweep re-arms only while something
+   * somewhere is still waiting, so an idle page does no work.
+   */
+  const WATCHDOG_MS = 900
+  let sweepTimer = 0
+
+  const onScreen = (el) => {
+    const r = el.getBoundingClientRect()
+    if (r.width === 0 && r.height === 0) return false
+    return r.top < (window.innerHeight || 0) && r.bottom > 0
+  }
+
+  const sweep = () => {
+    sweepTimer = 0
+    const all = [...document.querySelectorAll('.stagger-in')]
+    const waiting = all.filter((el) => !revealed.has(el))
+    const late = waiting.filter(onScreen)
+    if (late.length) {
+      // Their group is on screen, so there is nothing left to wait for.
+      for (const el of late) { const g = el.parentElement; if (g) played.add(g) }
+      reveal(late)
+    }
+    // Re-arm only while something is still held back.
+    if (waiting.length > late.length) armSweep()
+  }
+
+  const armSweep = () => {
+    if (sweepTimer) return
+    sweepTimer = setTimeout(sweep, WATCHDOG_MS)
+  }
+
   // Groups are found by their children, since the container carries no class.
   const scan = () => {
     const groups = new Set()
@@ -185,6 +230,7 @@ export function installStagger(opts = {}) {
       // after the cascade, and no observer will ever call back for it.
       reveal(kidsOf(g).filter((c) => !revealed.has(c)))
     }
+    armSweep()
   }
   scan()
 
@@ -193,9 +239,16 @@ export function installStagger(opts = {}) {
   const mo = new MutationObserver(scan)
   mo.observe(document.body, { childList: true, subtree: true })
 
+  // A scroll can bring a held-back element on screen without any DOM change to
+  // wake the scan, so the sweep listens too. Passive: it never blocks a scroll.
+  const onScroll = () => armSweep()
+  window.addEventListener('scroll', onScroll, { passive: true, capture: true })
+
   const stop = () => {
     io.disconnect()
     mo.disconnect()
+    window.removeEventListener('scroll', onScroll, { capture: true })
+    if (sweepTimer) clearTimeout(sweepTimer)
     root.classList.remove(JS_FLAG)
     window.__k846Stagger = null
   }

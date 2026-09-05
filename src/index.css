@@ -1803,8 +1803,15 @@ html:not(.k846-js-reveal) [data-k846-rev="in"] > :nth-child(n+8) { animation-del
   from { opacity: 0; transform: translateY(26px) scale(.992); filter: saturate(.7) }
   to   { opacity: 1; transform: none;                          filter: none }
 }
+/* left/right 0, not -4vw: the bleed put this 4vw past each edge of the page
+   column, and with animation-fill-mode: both it HOLDS its last keyframe --
+   scaleX(1.05) -- for ever. So a decorative 2px line that has already faded to
+   nothing left the scroll pane 9px wider than the screen on every page, which
+   is enough for a phone to let the whole page be dragged and rubber-banded
+   sideways. Measured: pane scrollWidth 399 against a 390 viewport, on all
+   twelve routes; 390 with this line contained. */
 .page-enter::before {
-  content: ""; position: absolute; left: -4vw; right: -4vw; top: -2vh; height: 2px;
+  content: ""; position: absolute; left: 0; right: 0; top: -2vh; height: 2px;
   pointer-events: none; z-index: 40;
   background: linear-gradient(90deg, transparent, rgba(212,175,55,.5) 18%, #FFF6DA 50%, rgba(212,175,55,.5) 82%, transparent);
   animation: page-sweep .95s cubic-bezier(.62,.02,.2,1) both;
@@ -2382,7 +2389,42 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
    run edge to edge behind the notch and the home indicator. That is a promise
    to inset the CONTENT ourselves -- nothing did, so on any iPhone with a home
    indicator the bottom of the scrolling pane sat underneath it. */
+/* THE PAGE MOVING SIDEWAYS UNDER YOUR THUMB.
+ *
+ * Reported as "Moving", with two screenshots two seconds apart showing the
+ * whole War Room shifted sideways and the app header riding up under the iOS
+ * status bar -- which is what a zoomed visual viewport looks like, not a
+ * layout bug.
+ *
+ * iOS Safari zooms the entire page in when a form control smaller than 16px
+ * takes focus, and once zoomed the page pans freely under any thumb movement.
+ * The roster's name and march-time inputs are text-sm -- 14px -- so every tap
+ * on a whale's name zoomed the room and then slid it around. The zoom is never
+ * undone on blur either, so it persists for the rest of the visit.
+ *
+ * 16px is the threshold, so 16px is the rule, on touch pointers only: the
+ * desktop sizes are untouched. The alternative -- maximum-scale=1 on the
+ * viewport -- would also stop it, by taking pinch-zoom away from everyone who
+ * needs it. That is not a trade worth making for a text field.
+ */
+@media (pointer: coarse) {
+  /* Specific enough to beat the styled controls' own sizes: select.royal-select
+     sets 0.875rem, and a bare element selector loses to it. */
+  input:not([type="checkbox"]):not([type="radio"]),
+  select,
+  textarea,
+  select.royal-select,
+  input.royal-input,
+  textarea.royal-input {
+    font-size: 16px;
+  }
+}
+
 .app-scroll {
+  /* Nothing decorative may make the page draggable sideways -- see
+     .page-enter::before, which bled 4vw past both edges and left the pane
+     permanently 9px wider than the screen. */
+  overscroll-behavior-x: none;
   padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
   padding-left: calc(1rem + env(safe-area-inset-left, 0px));
   padding-right: calc(1rem + env(safe-area-inset-right, 0px));

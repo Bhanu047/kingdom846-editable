@@ -162,7 +162,12 @@ export default function About() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
-        <Panel className="lg:col-span-2">
+        {/* min-w-0: a grid item's default min-width is auto, so it refuses to
+            shrink below its content's minimum -- and the six-column table below
+            has a minimum of about 428px. On a 390px phone that pushed this
+            whole panel 54px past the screen and the right-hand columns were
+            simply cut off, with no way to reach them. */}
+        <Panel className="min-w-0 lg:col-span-2">
           <SectionTitle eyebrow="War Record" title="Kingdom vs Kingdom History" />
           <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
             <Stat label="Total KvKs" value={total} tone="gold" />
@@ -172,7 +177,9 @@ export default function About() {
             <Stat label="Invasions" value={tracker846.kvk.invasions} share={share(tracker846.kvk.invasions)} />
           </div>
           <div className="mt-4 gold-divider" />
-          <div className="mt-4 overflow-hidden rounded-lg border border-gold/15">
+          {/* The table keeps its six columns and scrolls inside its own box,
+              rather than dragging the page sideways with it. */}
+          <div className="mt-4 overflow-x-auto overflow-y-hidden rounded-lg border border-gold/15">
             <table className="w-full text-[13px]">
               <thead className="bg-white/5 text-left text-[10px] uppercase tracking-wider text-parchment/50">
                 <tr>

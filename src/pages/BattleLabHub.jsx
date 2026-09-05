@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import { turnCards, installCardTilt } from '../lib/motion'
 import Icon from '../components/Icon'
 import BearSuite from './BearSuite.jsx'
 import MysticSuite from './MysticSuite.jsx'
@@ -47,6 +48,12 @@ function ToolCard({ tool, onOpen }) {
 }
 
 export default function BattleLabHub() {
+  const tools = useRef(null)
+  // The five tools turn in like the alliance banners, and lean toward the
+  // cursor once they have -- they are the same kind of object: a plate with a
+  // picture on it that you choose between.
+  useEffect(() => turnCards(tools.current, '.tool-tile'), [])
+  useEffect(() => installCardTilt('.tool-tile', { max: 9, lift: 12 }), [])
   const [activeTool, setActiveTool] = useState(readRequestedTool)
   const tool = TOOLS.find((item) => item.id === activeTool)
   const Dedicated = DEDICATED[activeTool]
@@ -64,7 +71,7 @@ export default function BattleLabHub() {
             <p className="mx-auto mt-3 max-w-2xl text-sm text-parchment/75 drop-shadow md:text-base">Five tactical tools. Choose your mission.</p>
           </div>
         </section>
-        <section className="grid gap-4 md:grid-cols-2 md:gap-5">{TOOLS.map((item) => <ToolCard key={item.id} tool={item} onOpen={setActiveTool} />)}</section>
+        <section ref={tools} className="grid gap-4 md:grid-cols-2 md:gap-5">{TOOLS.map((item) => <ToolCard key={item.id} tool={item} onOpen={setActiveTool} />)}</section>
       </div>
     )
   }

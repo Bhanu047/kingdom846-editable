@@ -1603,7 +1603,7 @@ export function popToast(el) {
  * @param {String} selector
  * @param {{ step?: number, origin?: 'left'|'right' }} [opts]
  */
-export function fillBars(container, selector = '.k846-bar', { step = 90, origin = 'left' } = {}) {
+export function fillBars(container, selector = '.k846-bar', { step = 140, origin = 'left' } = {}) {
   if (!container || prefersReducedMotion()) return () => {}
   const bars = [...container.querySelectorAll(selector)]
   if (!bars.length) return () => {}
@@ -1618,7 +1618,12 @@ export function fillBars(container, selector = '.k846-bar', { step = 90, origin 
     anim = animate(bars, {
       scaleX: { from: 0, to: 1 },
       delay: stagger(step),
-      ease: motion.spring.snappy(),
+      /* The section spring, not the snappy one. Snappy reaches 90% of its
+         travel in 108ms, and three short bars 90ms apart were over inside a
+         third of a second -- correct, and invisible. This one takes about
+         150ms each and lands them 140ms apart, so the row fills as something
+         you can actually watch happen. */
+      ease: motion.spring.section(),
       onComplete: clear,
     })
   } catch (err) {

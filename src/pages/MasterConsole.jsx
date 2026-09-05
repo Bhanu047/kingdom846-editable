@@ -163,7 +163,7 @@ export default function MasterConsole() {
         <SectionTitle eyebrow="Leaders" title="Alliance Leader Logins" icon="users" />
         <div className="space-y-2">
           {leaders.map((l) => (
-            <div key={l.id} className="lift flex items-center gap-3 rounded-lg border border-gold/15 bg-white/5 px-3 py-2.5">
+            <div key={l.id} className="stagger-in lift flex items-center gap-3 rounded-lg border border-gold/15 bg-white/5 px-3 py-2.5">
               <img
                 src={l.role === 'admin' ? './assets/avatars/spartan.webp' : ({
                   'ryo': './assets/avatars/ryo-lord.webp',

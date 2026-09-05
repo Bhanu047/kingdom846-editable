@@ -3430,13 +3430,16 @@ html.k846-js-nav .app-tab .app-tab-mark { display: none; }
 .wr-march[data-state="flying"]  .wr-march-mark { opacity: 1; scale: 1 }
 /* Landed: it is inside the walls, so it stands down rather than vanishing. */
 .wr-march[data-state="landed"]  .wr-march-mark { opacity: .45; scale: .6 }
-/* The name goes, though. Every march converges on the same point, so six names
-   held at the centre stack into an unreadable pile at the exact instant the
-   screen exists for -- measured with a full rally: "Sparta", "Abs", "Nom",
-   "MM" and "Little M" all printed over each other on the castle. Who landed is
-   already on the rail above; what this field has to say at impact is that
-   everything is in. */
-.wr-march[data-state="landed"]  .wr-march-name { opacity: 0 }
+/* The name STAYS. These are typed into the roster by hand, one per whale, and
+   they are how the caller knows who is where -- dropping them at impact threw
+   away the thing the field is labelled with. The pile they made was real, but
+   the answer was to spread them, not delete them: RallyApproach walks each
+   label outward along its own bearing as its march closes, so at impact they
+   ring the castle instead of stacking on it. */
+.wr-march[data-state="landed"]  .wr-march-name { opacity: .6 }
+/* The label is positioned by transform every frame, so it must not animate the
+   same property -- only the fade between states belongs here. */
+.wr-march-name { transition: opacity .3s ease, color .3s ease }
 
 .wr-impact {
   position: absolute;

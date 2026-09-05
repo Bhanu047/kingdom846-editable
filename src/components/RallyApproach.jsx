@@ -28,6 +28,13 @@ import { prefersReducedMotion } from '../lib/motion'
 
 const RIM = 0.92          // where a waiting march sits, as a fraction of the radius
 const CORE = 0.06         // how close to the centre a landed march gets
+/* Where a march's NAME ends up once it has landed, as a fraction of the radius.
+   The marks all converge on one point -- that is the whole picture -- so their
+   labels cannot converge with them or they print on top of each other. Instead
+   each name drifts outward along its own bearing as its march closes, and at
+   impact they stand in a ring around the struck castle: still readable, and
+   still on the line its march came in on. */
+const LABEL_RING = 0.42
 
 /** The live square size of the field, so bearings can be resolved in pixels. */
 function useSquare(ref) {
@@ -103,6 +110,15 @@ export default function RallyApproach({ sequence, now, impactAt, phase = 'HOLD' 
       if (el) {
         el.dataset.state = p >= 1 ? 'landed' : started >= 0 ? 'flying' : 'waiting'
         el.style.setProperty('--p', p.toFixed(3))
+
+        // The name, walked out along the bearing as the march comes in. At
+        // p = 0 this is zero, so a waiting march's label sits under it exactly
+        // as before; by p = 1 the labels are a ring and nothing overlaps.
+        const rLabel = r * (1 - p) + radius * LABEL_RING * p
+        const dx = half + Math.cos(lane.angle) * rLabel - x
+        const dy = half + Math.sin(lane.angle) * rLabel - y
+        const nameEl = el.querySelector('.wr-march-name')
+        if (nameEl) nameEl.style.transform = `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px)`
       }
 
       // The hit. Once per march, when it actually reaches the middle.

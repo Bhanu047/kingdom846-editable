@@ -1,0 +1,196 @@
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { createAnimatable, animate, stagger, utils } from 'animejs'
+import { prefersReducedMotion } from '../lib/motion'
+
+/* The approach.
+ *
+ * The console answers who to call and when everything lands. It never showed
+ * the thing a synced rally actually IS: several marches leaving at different
+ * moments, at different speeds, arriving on one target together. That picture
+ * is the whole point of the offsets, and until now it lived only in the
+ * caller's head.
+ *
+ * So this is the war map. The target sits at the centre; every march comes in
+ * on its own bearing, starting at the rim and closing as its own march time
+ * says it should. A whale that has not been called yet waits on the rim, dim.
+ * The instant it is called it starts moving, and because offset was chosen as
+ * (longest march - own march), all of them touch the centre on the same frame.
+ * When they do, the target takes the hit.
+ *
+ * Why anime.js drives it rather than React: the console re-renders at 20fps on
+ * purpose -- a 60fps re-render of that whole tree on a phone is more work than
+ * the eye can use. But a marker that HOPS at 20fps reads as a stutter, so each
+ * one is handed to createAnimatable, which is built for exactly this: a value
+ * driven continuously from an input rather than played as a timeline. React
+ * says where the march should be five times a second; anime carries it there
+ * smoothly in between.
+ */
+
+const RIM = 0.92          // where a waiting march sits, as a fraction of the radius
+const CORE = 0.06         // how close to the centre a landed march gets
+
+/** The live square size of the field, so bearings can be resolved in pixels. */
+function useSquare(ref) {
+  const [size, setSize] = useState(0)
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return undefined
+    const read = () => setSize((s) => (Math.abs(s - el.clientWidth) < 1 ? s : el.clientWidth))
+    read()
+    if (!window.ResizeObserver) {
+      window.addEventListener('resize', read)
+      return () => window.removeEventListener('resize', read)
+    }
+    const ro = new ResizeObserver(read)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [ref])
+  return size
+}
+
+export default function RallyApproach({ sequence, now, impactAt, phase = 'HOLD' }) {
+  const field = useRef(null)
+  const size = useSquare(field)
+  const markers = useRef(new Map())
+  const drivers = useRef(new Map())
+  const landed = useRef(new Set())
+
+  // A bearing each, evenly spread, starting at the top and going clockwise.
+  const lanes = useMemo(() => {
+    const n = Math.max(1, sequence.length)
+    return sequence.map((w, i) => ({ ...w, angle: (i / n) * Math.PI * 2 - Math.PI / 2 }))
+  }, [sequence])
+
+  // One animatable per marker, rebuilt when the roster changes.
+  useEffect(() => {
+    if (!size || prefersReducedMotion()) return undefined
+    const made = []
+    for (const lane of lanes) {
+      const el = markers.current.get(lane.id)
+      if (!el) continue
+      // 220ms of smoothing: long enough to bridge the 50ms React tick without
+      // the marker visibly lagging the number beside it.
+      const driver = createAnimatable(el, { x: { duration: 220 }, y: { duration: 220 }, ease: 'out(2)' })
+      drivers.current.set(lane.id, driver)
+      made.push(driver)
+    }
+    return () => {
+      for (const d of made) { try { d.revert?.() } catch {} }
+      drivers.current.clear()
+    }
+  }, [lanes, size])
+
+  // Position every march for the current instant.
+  useEffect(() => {
+    if (!size) return
+    const half = size / 2
+    const radius = half - 18
+
+    for (const lane of lanes) {
+      const march = lane.marchSec || 0
+      const started = now - lane.offset
+      // Before the call it holds the rim; after it, it closes at its own pace.
+      const p = march > 0 ? utils.clamp(started / march, 0, 1) : (started >= 0 ? 1 : 0)
+      const r = radius * (RIM - (RIM - CORE) * p)
+      const x = half + Math.cos(lane.angle) * r
+      const y = half + Math.sin(lane.angle) * r
+
+      const el = markers.current.get(lane.id)
+      const driver = drivers.current.get(lane.id)
+      if (driver) { driver.x(x); driver.y(y) }
+      else if (el) el.style.transform = `translate(${x}px, ${y}px)`
+
+      if (el) {
+        el.dataset.state = p >= 1 ? 'landed' : started >= 0 ? 'flying' : 'waiting'
+        el.style.setProperty('--p', p.toFixed(3))
+      }
+
+      // The hit. Once per march, when it actually reaches the middle.
+      if (p >= 1 && !landed.current.has(lane.id)) {
+        landed.current.add(lane.id)
+        burst(field.current)
+      }
+      if (p < 1 && landed.current.has(lane.id)) landed.current.delete(lane.id)  // rewound
+    }
+  }, [lanes, now, size])
+
+  return (
+    <div className="wr-console k-plate p-4" data-phase={phase}>
+      <div className="flex items-baseline justify-between">
+        <div className="eyebrow">The Approach</div>
+        <div className="font-mono text-[10px] uppercase tracking-[.14em] text-parchment/40">
+          {lanes.filter((l) => now - l.offset >= (l.marchSec || 0)).length}
+          <span className="text-parchment/25"> / {lanes.length}</span> landed
+        </div>
+      </div>
+
+      <div ref={field} className="wr-field mt-3">
+        {/* The target's rings. Static: the movement is the marches, and a
+            pulsing target underneath them is two things competing. */}
+        <span className="wr-field-ring" style={{ '--k': 1 }} />
+        <span className="wr-field-ring" style={{ '--k': 0.66 }} />
+        <span className="wr-field-ring" style={{ '--k': 0.33 }} />
+        <span className="wr-field-core" />
+
+        {lanes.map((lane) => (
+          <span
+            key={lane.id}
+            ref={(el) => { if (el) markers.current.set(lane.id, el); else markers.current.delete(lane.id) }}
+            className="wr-march"
+            data-state="waiting"
+            title={lane.name}
+          >
+            <span className="wr-march-dot" />
+            <span className="wr-march-name">{lane.name}</span>
+          </span>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+/** A ring out of the centre when a march lands. */
+function burst(host) {
+  if (!host || prefersReducedMotion()) return
+  const ring = document.createElement('span')
+  ring.className = 'wr-impact'
+  ring.setAttribute('aria-hidden', 'true')
+  host.appendChild(ring)
+  try {
+    animate(ring, {
+      scale: [{ from: 0.05, to: 1 }],
+      opacity: [{ to: 0.75, duration: 120 }, { to: 0, duration: 700 }],
+      ease: 'outExpo',
+      onComplete: () => ring.remove(),
+    })
+  } catch (err) {
+    ring.remove()
+  }
+}
+
+/**
+ * The plan, played through before anyone commits to it.
+ *
+ * A caller reading a list of offsets has to believe the arithmetic. Watching
+ * the whole rally run in four seconds -- every march leaving on its own count
+ * and the field converging on one instant -- is the same information, checked
+ * rather than trusted.
+ */
+export function useApproachPreview(impactAt) {
+  const [clock, setClock] = useState(null)
+
+  const play = useMemo(() => () => {
+    if (!impactAt || prefersReducedMotion()) return
+    const state = { t: 0 }
+    setClock(0)
+    animate(state, {
+      t: impactAt + 0.4,
+      duration: 4200,
+      ease: 'inOutQuad',
+      onUpdate: () => setClock(state.t),
+      onComplete: () => setTimeout(() => setClock(null), 900),
+    })
+  }, [impactAt])
+
+  return [clock, play]
+}

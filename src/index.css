@@ -3255,3 +3255,85 @@ html.k846-js-nav .app-tab .app-tab-mark { display: none; }
 @media (prefers-reduced-motion: reduce) {
   .k846-crest-ring, .k846-hero-bloom { display: none }
 }
+
+/* ---- The War Room's approach field --------------------------------------- */
+/* The target at the centre, every march closing on it from its own bearing.
+   Positions are driven in pixels by RallyApproach -- the rings are the only
+   part CSS owns, so the two can never disagree about where the middle is. */
+.wr-field {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  max-height: 20rem;
+  margin: 0 auto;
+  max-width: 20rem;
+}
+.wr-field-ring {
+  position: absolute;
+  left: 50%; top: 50%;
+  width: calc(100% * var(--k));
+  height: calc(100% * var(--k));
+  margin-left: calc(-50% * var(--k));
+  margin-top: calc(-50% * var(--k));
+  border-radius: 50%;
+  border: 1px solid rgba(212, 175, 55, .14);
+}
+.wr-field-core {
+  position: absolute;
+  left: 50%; top: 50%;
+  width: 14px; height: 14px;
+  margin: -7px 0 0 -7px;
+  border-radius: 50%;
+  background: var(--wr, #D4AF37);
+  box-shadow: 0 0 14px var(--wr-glow, rgba(212,175,55,.3));
+}
+
+/* A march. The element is placed at the field's origin and moved by transform,
+   so its own box never enters the layout maths. */
+.wr-march {
+  position: absolute;
+  left: 0; top: 0;
+  display: grid;
+  place-items: center;
+  margin: -5px 0 0 -5px;
+  will-change: transform;
+}
+.wr-march-dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: var(--wr, #D4AF37);
+  box-shadow: 0 0 10px var(--wr-glow, rgba(212,175,55,.35));
+  transition: opacity .3s ease, transform .3s ease;
+}
+.wr-march-name {
+  position: absolute;
+  top: 12px;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 8px;
+  letter-spacing: .04em;
+  white-space: nowrap;
+  color: rgba(232, 216, 184, .5);
+  pointer-events: none;
+}
+/* Waiting marches are present but quiet: the eye should find the ones moving. */
+.wr-march[data-state="waiting"] .wr-march-dot { opacity: .32; transform: scale(.7) }
+.wr-march[data-state="waiting"] .wr-march-name { color: rgba(232, 216, 184, .28) }
+.wr-march[data-state="flying"] .wr-march-dot { opacity: 1; transform: scale(1) }
+.wr-march[data-state="landed"] .wr-march-dot { opacity: .5; transform: scale(.55) }
+.wr-march[data-state="landed"] .wr-march-name { opacity: .35 }
+
+.wr-impact {
+  position: absolute;
+  left: 50%; top: 50%;
+  width: 100%; height: 100%;
+  margin: -50% 0 0 -50%;
+  border-radius: 50%;
+  border: 2px solid var(--wr, #D4AF37);
+  box-shadow: 0 0 30px var(--wr-glow, rgba(212,175,55,.35));
+  opacity: 0;
+  pointer-events: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .wr-march-dot, .wr-march-name { transition: none }
+  .wr-impact { display: none }
+}

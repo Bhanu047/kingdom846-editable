@@ -4,6 +4,7 @@ import { RoyalSectionHeader } from '../components/VisualElements'
 import Icon from '../components/Icon'
 import { useAuth } from '../context/AuthContext'
 import RallyConsole from '../components/RallyConsole'
+import RallyApproach, { useApproachPreview } from '../components/RallyApproach'
 import { parseMarchTime, normalizeMarchTime } from '../lib/marchTime'
 
 const STORAGE_KEY = 'k846-shoni-war-room-v1'
@@ -29,6 +30,16 @@ export default function WarRoom() {
     } catch {}
   }, [])
   const sequence = useMemo(() => { const chosen = whales.filter(w => selected[w.id]).map(w => ({...w, marchSec: parseMarchTime(w.march)})); if (!chosen.length) return []; const longest = Math.max(...chosen.map(w => w.marchSec)); return chosen.map(w => ({...w, offset: Math.max(0, longest-w.marchSec)})).sort((a,b)=>a.offset-b.offset||a.name.localeCompare(b.name)) }, [whales,selected])
+
+  // Every march lands together, so impact is the longest one -- the same
+  // number the console lands on, computed here for the preview.
+  const impactAt = useMemo(
+    () => sequence.reduce((max, w) => Math.max(max, w.offset + (w.marchSec || 0)), 0),
+    [sequence],
+  )
+  // Watching the plan run in four seconds is the same information as reading
+  // the offsets, checked rather than trusted.
+  const [preview, playPreview] = useApproachPreview(impactAt)
   if(!isAdmin && user?.username?.toLowerCase()!=='shoni') return <div className="grid place-items-center py-20"><Panel glow className="max-w-lg text-center"><Icon name="shieldCheck" size={34} className="mx-auto text-gold mb-3"/><h1 className="font-display text-2xl font-bold text-parchment">Private War Room</h1><p className="mt-2 text-sm text-parchment/50">This command room is reserved for Sparta admin and Shoni.</p></Panel></div>
   function addWhale(){setWhales(p=>[...p,{id:newId(),name:'New Whale',march:'0:30',status:'Undeployed'}]);setSaved(false)}
   function updateWhale(id,field,value){setWhales(p=>p.map(w=>w.id===id?{...w,[field]:value}:w));setSaved(false)}
@@ -55,6 +66,7 @@ export default function WarRoom() {
       </div>
     </Panel>
     {!running?<><Panel><div className="flex items-center justify-between gap-3 mb-4"><div><div className="eyebrow">Whale Roster</div><div className="text-xs text-parchment/40 mt-1">March time format: M:SS</div></div><button onClick={addWhale} className="btn-primary !py-1.5 !text-xs">+ Add Whale</button></div><div className="space-y-2">{whales.map(w=><div key={w.id} className="stagger-in royal-plaque flex flex-wrap items-center gap-2"><input type="checkbox" checked={!!selected[w.id]} onChange={()=>setSelected(s=>({...s,[w.id]:!s[w.id]}))} className="h-4 w-4 accent-[#D4AF37]"/><input value={w.name} onChange={e=>updateWhale(w.id,'name',e.target.value)} className="min-w-32 flex-1 rounded-md border border-gold/20 bg-ink/60 px-2 py-1.5 text-sm text-parchment outline-none focus:border-gold/60"/><input value={w.march} onChange={e=>updateWhale(w.id,'march',e.target.value)} onBlur={e=>normalizeMarch(w.id,e.target.value)} aria-label="March time" className="w-20 rounded-md border border-gold/20 bg-ink/60 px-2 py-1.5 text-sm font-mono text-parchment outline-none focus:border-gold/60"/><select value={w.status} onChange={e=>updateWhale(w.id,'status',e.target.value)} className="royal-select">{STATUS_OPTIONS.map(s=><option key={s} value={s}>{s}</option>)}</select><Pill tone={STATUS_TONE[w.status]||'muted'}>{w.status}</Pill><button onClick={()=>removeWhale(w.id)} className="rounded-md border border-rose-500/25 px-2 py-1 text-xs text-rose-300 hover:bg-rose-500/10">Delete</button></div>)}{!whales.length&&<div className="py-8 text-center text-sm text-parchment/40">No whales saved yet.</div>}</div><div className="mt-4 flex items-center justify-between gap-3 border-t border-gold/10 pt-4"><span className="text-xs text-parchment/45">{saved?'Roster saved on this device.':`${sequence.length} selected for rally`}</span><button onClick={saveRoster} className="rounded-lg border border-gold/30 px-3 py-1.5 text-xs font-semibold text-gold hover:bg-gold/10">Save Roster</button></div></Panel>
-    {sequence.length>0&&<Panel><div className="eyebrow mb-3">Synchronized Call Order</div><div className="space-y-2">{sequence.map((w,i)=><div key={w.id} className="stagger-in royal-plaque flex items-center gap-3"><span className="grid h-8 w-8 place-items-center rounded-full border border-gold/30 text-xs font-bold text-gold">{i+1}</span><span className="flex-1 font-semibold text-parchment">{w.name}</span><span className="font-mono text-xs text-parchment/50">march {w.march}</span><span className="font-mono text-xs text-gold">call +{w.offset}s</span></div>)}</div></Panel>}<button onClick={startRally} disabled={!sequence.length} className="btn-primary w-full !py-4 !text-base disabled:opacity-30">Start Synced Rally {sequence.length?`(${sequence.length})`:''}</button></>:<RallyConsole sequence={sequence} startAt={startRef.current} onAbort={stopRally} onComplete={stopRally}/>}
+    {sequence.length>0&&<RallyApproach sequence={sequence} now={preview ?? 0} impactAt={impactAt} phase="HOLD" />}
+    {sequence.length>0&&<Panel><div className="flex items-center justify-between gap-3 mb-3"><div className="eyebrow">Synchronized Call Order</div><button onClick={playPreview} className="rounded-lg border border-gold/30 px-3 py-1.5 font-mono text-[10px] font-bold uppercase tracking-[.14em] text-gold transition hover:bg-gold/10">Preview the approach</button></div><div className="space-y-2">{sequence.map((w,i)=><div key={w.id} className="stagger-in royal-plaque flex items-center gap-3"><span className="grid h-8 w-8 place-items-center rounded-full border border-gold/30 text-xs font-bold text-gold">{i+1}</span><span className="flex-1 font-semibold text-parchment">{w.name}</span><span className="font-mono text-xs text-parchment/50">march {w.march}</span><span className="font-mono text-xs text-gold">call +{w.offset}s</span></div>)}</div></Panel>}<button onClick={startRally} disabled={!sequence.length} className="btn-primary w-full !py-4 !text-base disabled:opacity-30">Start Synced Rally {sequence.length?`(${sequence.length})`:''}</button></>:<RallyConsole sequence={sequence} startAt={startRef.current} onAbort={stopRally} onComplete={stopRally}/>}
   </div>
 }

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import Icon from './Icon'
 import { edgeGeometry } from '../lib/edgeTrace'
+import RallyApproach from './RallyApproach'
 
 // The live half of the War Room.
 //
@@ -190,6 +191,10 @@ export default function RallyConsole({ sequence, startAt, onAbort, onComplete })
           <span className="wr-head" style={{ left: `${progress}%` }} />
         </div>
       </div>
+
+      {/* THE APPROACH. The marches themselves, closing on one target. The
+          console above says who and when; this says where everything is. */}
+      <RallyApproach sequence={sequence} now={now} impactAt={impactAt} phase={phase} />
 
       {/* THE CALL. One name, one number, one state -- identifiable by colour
           before a single word is read. */}

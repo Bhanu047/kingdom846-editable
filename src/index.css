@@ -3189,3 +3189,33 @@ html.k846-js-nav .nav-item.active::after { display: none; }
 }
 html.k846-js-nav .app-tab .app-tab-mark { display: none; }
 @media (prefers-reduced-motion: reduce) { .app-tab-slider { display: none } }
+
+/* The lattice band in a page header. No z-index: DOM order alone puts it over
+   the artwork and under the words, and a z-index here would lift it over the
+   copy instead. Shorter and sparser than the home hero's -- the band is about a
+   third of that height, and the same density would read as static. */
+.ph-lattice { z-index: auto; }
+.ph-lattice .lattice-dot { opacity: .08; }
+
+/* ---- The tap ripple ------------------------------------------------------ */
+/* One fixed layer for every ring: nothing is ever inserted into the button you
+   pressed, which would shift a flex row's layout and be clipped by any
+   overflow: hidden on it. pointer-events stays off end to end, so a ring can
+   never eat the click it is answering. */
+.k846-ripple-layer {
+  position: fixed; inset: 0;
+  pointer-events: none;
+  z-index: 2147481000;
+}
+.k846-ripple {
+  position: absolute;
+  width: 92px; height: 92px;
+  margin: -46px 0 0 -46px;
+  border-radius: 50%;
+  border: 1px solid rgba(232, 199, 102, .85);
+  box-shadow: 0 0 18px rgba(232, 199, 102, .35), inset 0 0 12px rgba(232, 199, 102, .18);
+  opacity: 0;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+@media (prefers-reduced-motion: reduce) { .k846-ripple-layer { display: none } }

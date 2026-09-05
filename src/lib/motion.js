@@ -604,6 +604,9 @@ export function scrambleHeading(root) {
   let anim = null
   let el = null
   let original = ''
+  let browAnim = null
+  let browEl = null
+  let browOriginal = ''
 
   const stopWait = whenPageReady(root, () => {
     // Any h1 the page put at its head -- PageHeader's gilt title, Battle Lab's
@@ -632,13 +635,39 @@ export function scrambleHeading(root) {
       console.error('[motion] heading scramble failed', err)
       el.textContent = original
     }
+
+    /* The label above it resolves too, a beat later and quicker. One line
+       decoding on its own reads as an effect on the title; the pair reads as
+       the page itself coming through, which is the whole idea. Same guards --
+       pure text only, and short. */
+    const brow = root.querySelector('.ph-copy .eyebrow')
+    if (brow && brow.children.length === 0) {
+      const browText = brow.textContent
+      if (browText && browText.trim() && browText.length <= 40) {
+        browOriginal = browText
+        browEl = brow
+        try {
+          browAnim = animate(brow, {
+            textContent: animeText.scrambleText({ chars: 'A-Z0-9' }),
+            duration: 620,
+            delay: 180,
+            ease: 'outQuad',
+            onComplete: () => { brow.textContent = browText },
+          })
+        } catch (err) {
+          brow.textContent = browText
+        }
+      }
+    }
   })
 
   return () => {
     stopWait()
     try { anim?.pause() } catch {}
-    // Whatever frame it was on, the reader gets the real title back.
+    try { browAnim?.pause() } catch {}
+    // Whatever frame they were on, the reader gets the real words back.
     if (el) el.textContent = original
+    if (browEl) browEl.textContent = browOriginal
   }
 }
 
@@ -1380,4 +1409,96 @@ export function denyShake(el) {
   } catch (err) {
     el.style.transform = ''
   }
+}
+
+/**
+ * Every press sends a ring out from the point of contact.
+ *
+ * The lattice answers a touch in one place, on the home hero. This is the same
+ * idea everywhere: press anything you can act on and a gilt ring opens from
+ * exactly where your finger or the blade's tip landed. On a phone, where there
+ * is no hover to tell you anything is alive, a press is the ONLY conversation
+ * the page gets -- and it was silent.
+ *
+ * One fixed layer holds the rings, so nothing is ever inserted into the button
+ * you just pressed: a child appearing inside a flex row shifts its layout, and
+ * `overflow: hidden` on the button would clip the ring anyway. The layer is
+ * pointer-events: none from end to end, so it can never eat the click it is
+ * responding to.
+ *
+ * Singleton, like the other installers.
+ */
+export function installTapRipple({
+  selector = 'a, button, [role="button"], .tilt-tile, .nav-item, .app-tab, summary',
+} = {}) {
+  if (typeof window === 'undefined' || prefersReducedMotion()) return () => {}
+  if (window.__k846Ripple) return window.__k846Ripple
+
+  const layer = document.createElement('div')
+  layer.className = 'k846-ripple-layer'
+  layer.setAttribute('aria-hidden', 'true')
+  document.body.appendChild(layer)
+
+  const onDown = (e) => {
+    // Only the primary button: a right-click opens a menu, it does not strike.
+    if (e.button != null && e.button !== 0) return
+    const hit = e.target.closest?.(selector)
+    if (!hit || hit.disabled) return
+
+    const ring = document.createElement('span')
+    ring.className = 'k846-ripple'
+    ring.style.left = `${e.clientX}px`
+    ring.style.top = `${e.clientY}px`
+    layer.appendChild(ring)
+
+    // A drummed button must not pile up rings faster than they can fade.
+    while (layer.childElementCount > 6) layer.firstElementChild.remove()
+
+    try {
+      animate(ring, {
+        scale: { from: 0.25, to: 1 },
+        opacity: [{ to: 0.6, duration: 90 }, { to: 0, duration: 520 }],
+        ease: 'outExpo',
+        onComplete: () => ring.remove(),
+      })
+    } catch (err) {
+      ring.remove()
+    }
+  }
+
+  window.addEventListener('pointerdown', onDown, { passive: true })
+
+  const stop = () => {
+    window.removeEventListener('pointerdown', onDown)
+    layer.remove()
+    window.__k846Ripple = null
+  }
+  window.__k846Ripple = stop
+  return stop
+}
+
+/**
+ * The lattice band in a page header.
+ *
+ * Same field as the home hero's, in a strip: a wave crosses it when the page
+ * arrives, and again wherever the header is touched. Fewer rows, because the
+ * band is about a third of the hero's height and the hero's density would read
+ * as static rather than as embers.
+ *
+ * Waits for the page like everything else that runs on arrival -- the header
+ * does not exist until the lazily-loaded route has mounted.
+ */
+export function installHeaderLattice(root) {
+  if (!root || typeof window === 'undefined' || prefersReducedMotion()) return () => {}
+
+  let stopLattice = () => {}
+  const stopWait = whenPageReady(root, () => {
+    const narrow = window.matchMedia('(max-width: 640px)').matches
+    stopLattice = installEmberLattice(root.querySelector('.ph-lattice'), {
+      cols: narrow ? 14 : 24,
+      rows: narrow ? 4 : 5,
+    })
+  })
+
+  return () => { stopWait(); stopLattice() }
 }

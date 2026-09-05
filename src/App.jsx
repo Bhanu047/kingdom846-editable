@@ -2,7 +2,7 @@ import { useState, useMemo, lazy, Suspense, useEffect, useRef, useCallback } fro
 import { trackPage, trackAction, installOutboundTracking } from './lib/analytics'
 import { installSurfaceTracking } from './lib/surface'
 import { installReveal } from './lib/reveal'
-import { installStagger, playPageTransition, installTorch, scrambleHeading, drawHeaderRule, installNavMark, openOverlay } from './lib/motion'
+import { installStagger, playPageTransition, installTorch, scrambleHeading, drawHeaderRule, installNavMark, openOverlay, installHeaderLattice, installTapRipple } from './lib/motion'
 import { installPressFeedback } from './lib/press'
 import Sidebar from './components/Sidebar'
 import AppHeader from './components/AppHeader'
@@ -66,7 +66,12 @@ function PageStage({ page, children }) {
     const stopBlocks = playPageTransition(ref.current)
     const stopScramble = scrambleHeading(ref.current)
     const stopRule = drawHeaderRule(ref.current)
-    return () => { stopBlocks(); stopScramble(); stopRule() }
+
+    // The header's lattice band -- it waits for the page the same way the rest
+    // of the arrival does.
+    const stopLattice = installHeaderLattice(ref.current)
+
+    return () => { stopBlocks(); stopScramble(); stopRule(); stopLattice() }
   }, [page])
   return (
     <div key={page} ref={ref} className="k846-page page-enter mx-auto max-w-6xl">
@@ -189,6 +194,7 @@ function Shell() {
     window.dispatchEvent(new Event('k846:entered'))
   }, [showSplash])
   useEffect(() => installTorch(), [])
+  useEffect(() => installTapRipple(), [])
   useEffect(() => installNavMark('nav'), [])
   /* The tab bar's mark travels along its own axis, the same way the rail's
      does. Keyed on the splash too: the bar is only mounted once the front door

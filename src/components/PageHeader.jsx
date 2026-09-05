@@ -56,6 +56,12 @@ export default function PageHeader({
         <div className="ember-field" aria-hidden="true">
           {EMBERS.map((e) => <span key={e.left} className="ember" style={{ left: e.left, animationDelay: e.delay }} />)}
         </div>
+        {/* The same lattice the home hero carries, in a band across every other
+            page: a wave crosses it when the page arrives, and again wherever
+            the header is touched. Filled by installEmberLattice; no z-index of
+            its own, so DOM order alone puts it over the artwork and under the
+            words. */}
+        <div className="ember-lattice ph-lattice" aria-hidden="true" />
 
         {/* In flow, not absolutely positioned inside a fixed box — the same fix
             the home hero needed, so the band grows to whatever the copy needs

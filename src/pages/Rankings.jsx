@@ -4,6 +4,7 @@ import Icon from '../components/Icon'
 import { apiJson } from '../lib/api'
 import { useSiteData } from '../context/SiteDataContext'
 import { BANNERS } from '../data/kingdom'
+import { strikePodium } from '../lib/motion'
 import PageHeader from '../components/PageHeader'
 
 const PODIUM = {
@@ -19,6 +20,10 @@ export default function Rankings() {
   const [source, setSource] = useState('curated')
 
   useEffect(() => { setList(data.players) }, [data.players])
+
+  // The top three are struck whenever the board changes -- including the swap
+  // from the curated list to an uploaded roster, which is a new podium.
+  useEffect(() => strikePodium(document.querySelector('.rankings-board')), [list])
 
   useEffect(() => {
     let active = true
@@ -53,7 +58,7 @@ export default function Rankings() {
         {list.length === 0 ? (
           <div className="grid place-items-center py-16"><div className="text-center"><div className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-gold/10 text-gold/60"><Icon name="trophy" size={22} /></div><p className="mt-3 text-sm text-parchment/50">No rankings available yet.</p><p className="text-xs text-parchment/40">Alliance leaders can upload rosters to populate the leaderboard.</p></div></div>
         ) : (
-          <div className="space-y-2.5">
+          <div className="rankings-board space-y-2.5">
             {list.map((p) => {
               const s = PODIUM[p.rank]
               const isTop3 = !!s
@@ -62,7 +67,7 @@ export default function Rankings() {
                 <div key={`${p.slug}-${p.rank}`} data-testid={`rank-row-${p.rank}`} className={`lift relative overflow-hidden rounded-xl ring-1 ${isTop3 ? s.ring + ' ' + s.grad : 'ring-gold/15'} bg-gradient-to-r p-3 transition hover:ring-gold/40`}>
                   <div className="absolute inset-0 z-0"><img src={banner} alt={`${p.alliance} banner`} className="h-full w-full object-cover opacity-25" loading="lazy" /><div className="absolute inset-0 bg-gradient-to-r from-ink via-ink/85 to-ink/40" /></div>
                   <div className="relative z-10 flex items-center gap-3">
-                    <div className={`badge-shine relative grid h-10 w-10 flex-shrink-0 place-items-center rounded-lg font-display text-base font-bold ${isTop3 ? s.badge : 'border border-gold/30 bg-ink/70 text-parchment/80'}`}>{isTop3 && s.crown && <Icon name="crown" size={12} className="absolute -top-2 left-1/2 -translate-x-1/2 text-gold" />}{p.rank}</div>
+                    <div className={`rank-badge badge-shine relative grid h-10 w-10 flex-shrink-0 place-items-center rounded-lg font-display text-base font-bold ${isTop3 ? s.badge : 'border border-gold/30 bg-ink/70 text-parchment/80'}`}>{isTop3 && s.crown && <Icon name="crown" size={12} className="absolute -top-2 left-1/2 -translate-x-1/2 text-gold" />}{p.rank}</div>
                     <div className="flex-shrink-0"><img src={`./assets/avatars/${p.avatar || 'warrior'}.webp`} alt={p.name} className="h-10 w-10 rounded-lg object-cover ring-1 ring-gold/30" loading="lazy" /></div>
                     <div className="min-w-0 flex-1"><div className={`truncate font-display text-base font-bold ${isTop3 ? s.label : 'text-parchment'}`}><span className="text-gold/80">{p.tag}</span>{p.name}</div><div className="truncate text-[11px] text-parchment/50">{p.alliance}</div></div>
                     <div className={`hidden flex-shrink-0 text-right sm:block ${isTop3 ? s.label : 'text-parchment/40'}`}><div className="text-[10px] uppercase tracking-wider">Position</div><div className="font-display text-sm font-bold">#{p.rank}</div></div>

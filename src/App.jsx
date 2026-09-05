@@ -2,7 +2,7 @@ import { useState, useMemo, lazy, Suspense, useEffect, useRef, useCallback } fro
 import { trackPage, trackAction, installOutboundTracking } from './lib/analytics'
 import { installSurfaceTracking } from './lib/surface'
 import { installReveal } from './lib/reveal'
-import { installStagger, playPageTransition, installTorch, scrambleHeading, drawHeaderRule } from './lib/motion'
+import { installStagger, playPageTransition, installTorch, scrambleHeading, drawHeaderRule, installNavMark } from './lib/motion'
 import { installPressFeedback } from './lib/press'
 import Sidebar from './components/Sidebar'
 import AppHeader from './components/AppHeader'
@@ -189,6 +189,7 @@ function Shell() {
     window.dispatchEvent(new Event('k846:entered'))
   }, [showSplash])
   useEffect(() => installTorch(), [])
+  useEffect(() => installNavMark('nav'), [])
   useEffect(() => installPressFeedback(), [])
 
   // A hash that matches no route silently falls through to the dashboard, so a

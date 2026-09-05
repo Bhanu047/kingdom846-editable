@@ -3101,3 +3101,62 @@ html[data-app-mode] .page-enter { animation: app-page-in .28s cubic-bezier(0.22,
    what the insets stretch; the SVG inside fills it and its stroke does not
    scale with the box (vector-effect on the path). */
 .chronicle-line svg { display: block; overflow: visible }
+
+
+/* ---- The forged pointer -------------------------------------------------- */
+/* A custom cursor, asked for by name. Two rules kept it from being the mistake
+   the gilt ring was:
+
+   It is still an ARROW. The silhouette is the one every pointer has had for
+   forty years -- tip at the top left, tail to the bottom right -- so it is read
+   as a pointer before it is read as an ornament. Only the metal is ours: dark
+   iron with a gilt rim, and the same blade in gold over anything you can act
+   on, with a gem at its shoulder.
+
+   And it yields. Every rule carries the native keyword as its fallback, so a
+   browser that will not draw an SVG cursor simply keeps its own; text fields
+   keep the I-beam, because an arrow over a text box is a lie about what will
+   happen when you click; and under forced-colours -- the high-contrast modes
+   people use because they need them -- the whole thing steps aside.
+
+   Pointer devices only. A cursor rule does nothing on a touch screen, but
+   stating it keeps the intent honest. */
+@media (hover: hover) and (pointer: fine) {
+  html, body { cursor: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='28'%20height='28'%20viewBox='0%200%2028%2028'%3E%3Cpath%20d='M3%202.2%20L3%2021.4%20L8.2%2016.7%20L11.7%2025%20L15.3%2023.4%20L11.9%2015.5%20L19.1%2015.5%20Z'%20fill='%230B0E16'%20stroke='%23E8C766'%20stroke-width='1.5'%20stroke-linejoin='round'/%3E%3Cpath%20d='M4.8%206.1%20L4.8%2017.3%20L8.5%2013.9%20Z'%20fill='%23E8C766'%20opacity='0.5'/%3E%3C/svg%3E") 3 2, auto; }
+
+  a, button, [role="button"], summary, label[for], .tilt-tile, select,
+  .nav-item, [tabindex]:not([tabindex="-1"]) {
+    cursor: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='30'%20height='30'%20viewBox='0%200%2030%2030'%3E%3Cpath%20d='M3%202.2%20L3%2021.4%20L8.2%2016.7%20L11.7%2025%20L15.3%2023.4%20L11.9%2015.5%20L19.1%2015.5%20Z'%20fill='%23E8C766'%20stroke='%230B0E16'%20stroke-width='1.5'%20stroke-linejoin='round'/%3E%3Cpath%20d='M4.8%206.1%20L4.8%2017.3%20L8.5%2013.9%20Z'%20fill='%23FFF6DA'/%3E%3Ccircle%20cx='23.5'%20cy='6.5'%20r='2.4'%20fill='%23FFF6DA'%20stroke='%230B0E16'%20stroke-width='1'/%3E%3C/svg%3E") 3 2, pointer;
+  }
+
+  /* The caret says "you can type here"; no blade says it better. */
+  input, textarea, [contenteditable="true"] { cursor: text; }
+  input[type="checkbox"], input[type="radio"], input[type="range"], input[type="submit"] {
+    cursor: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='30'%20height='30'%20viewBox='0%200%2030%2030'%3E%3Cpath%20d='M3%202.2%20L3%2021.4%20L8.2%2016.7%20L11.7%2025%20L15.3%2023.4%20L11.9%2015.5%20L19.1%2015.5%20Z'%20fill='%23E8C766'%20stroke='%230B0E16'%20stroke-width='1.5'%20stroke-linejoin='round'/%3E%3Cpath%20d='M4.8%206.1%20L4.8%2017.3%20L8.5%2013.9%20Z'%20fill='%23FFF6DA'/%3E%3Ccircle%20cx='23.5'%20cy='6.5'%20r='2.4'%20fill='%23FFF6DA'%20stroke='%230B0E16'%20stroke-width='1'/%3E%3C/svg%3E") 3 2, pointer;
+  }
+  :disabled, [aria-disabled="true"] { cursor: not-allowed; }
+}
+
+/* Anyone who has asked their system for high contrast gets their own pointer
+   back: ours is a fixed two-colour drawing and cannot answer that request. */
+@media (forced-colors: active) {
+  html, body, a, button, [role="button"], summary, .nav-item { cursor: auto; }
+}
+
+/* ---- The travelling nav mark --------------------------------------------- */
+/* installNavMark puts one of these in the rail and springs it between items.
+   While it is running, the per-item bar below stands down -- two marks for one
+   position is just a bug with a light on it. */
+.nav-mark {
+  position: absolute;
+  left: 0; top: 0;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: linear-gradient(180deg, rgba(243,232,204,.35), #E8C766 45%, #D4AF37 70%, rgba(156,122,36,.5));
+  box-shadow: 0 0 10px rgba(232,199,102,.55);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+html.k846-js-nav .nav-item.active::after { display: none; }
+@media (prefers-reduced-motion: reduce) { .nav-mark { display: none } }

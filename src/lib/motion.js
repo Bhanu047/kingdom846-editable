@@ -1050,3 +1050,111 @@ export function installChronicle({ pane = '.app-scroll', line = '.chronicle-path
 
   return () => { try { tl?.revert?.() } catch {} }
 }
+
+/**
+ * One gilt mark that travels between nav items.
+ *
+ * The active item drew its own 3px bar and grew it in place, so every
+ * navigation was a bar vanishing here and a different bar appearing there. A
+ * single mark that SLIDES says what those two never could: that this is one
+ * rail, and you have moved along it.
+ *
+ * It watches for the class React toggles rather than being told where to go,
+ * so it stays right no matter which button did the navigating -- the sidebar,
+ * a link in the page, the browser's back button, or a hash typed by hand.
+ *
+ * CSS keeps its own per-item bar until this is installed, so a rail whose
+ * JavaScript never arrives still shows which page you are on.
+ */
+export function installNavMark(selector = 'nav') {
+  if (typeof window === 'undefined' || prefersReducedMotion()) return () => {}
+  const nav = document.querySelector(selector)
+  if (!nav) return () => {}
+
+  const mark = document.createElement('span')
+  mark.className = 'nav-mark'
+  mark.setAttribute('aria-hidden', 'true')
+  nav.appendChild(mark)
+  document.documentElement.classList.add('k846-js-nav')
+
+  let landed = false
+  const place = () => {
+    const active = nav.querySelector('.nav-item.active')
+    if (!active) { mark.style.opacity = '0'; return }
+
+    // offsetTop is measured against nav itself, which is already positioned.
+    const height = Math.round(active.offsetHeight * 0.62)
+    const top = Math.round(active.offsetTop + (active.offsetHeight - height) / 2)
+    mark.style.height = `${height}px`
+
+    if (!landed) {
+      landed = true
+      mark.style.transform = `translateY(${top}px)`
+      animate(mark, {
+        opacity: { from: 0, to: 1 },
+        scaleY: { from: 0, to: 1 },
+        ease: motion.spring.accent(),
+      })
+      return
+    }
+    animate(mark, {
+      translateY: top,
+      opacity: 1,
+      ease: motion.spring.section(),
+    })
+  }
+
+  place()
+
+  // React re-renders the buttons with a new className; that is the signal.
+  const mo = new MutationObserver(place)
+  mo.observe(nav, { attributes: true, attributeFilter: ['class'], subtree: true, childList: true })
+
+  // The rail scrolls and the window resizes; the mark is positioned in pixels.
+  const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(place) : null
+  ro?.observe(nav)
+
+  return () => {
+    mo.disconnect()
+    ro?.disconnect()
+    mark.remove()
+    document.documentElement.classList.remove('k846-js-nav')
+  }
+}
+
+/**
+ * The podium is struck, not revealed.
+ *
+ * Ranks one, two and three carry the kingdom's names, and they arrived on the
+ * same cascade as rank forty. Each badge now lands on the loose spring -- from
+ * small and turned, overshooting once -- so the top of the board reads as
+ * something awarded rather than something listed.
+ *
+ * Only the first three, deliberately: a whole page of struck badges is a page
+ * with no podium.
+ */
+export function strikePodium(root, selector = '.rank-badge') {
+  if (!root || prefersReducedMotion()) return () => {}
+  const badges = [...root.querySelectorAll(selector)].slice(0, 3)
+  if (!badges.length) return () => {}
+
+  let anim = null
+  try {
+    anim = animate(badges, {
+      scale: { from: 0.45, to: 1 },
+      rotate: { from: -18, to: 0 },
+      opacity: { from: 0, to: 1 },
+      delay: stagger(110, { start: 120 }),
+      ease: motion.spring.accent(),
+      onComplete: () => { for (const b of badges) { b.style.transform = ''; b.style.opacity = '' } },
+    })
+  } catch (err) {
+    console.error('[motion] podium failed, showing the badges', err)
+    for (const b of badges) { b.style.transform = ''; b.style.opacity = '' }
+  }
+
+  return () => {
+    try { anim?.pause() } catch {}
+    for (const b of badges) { b.style.transform = ''; b.style.opacity = '' }
+  }
+}

@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { animate, stagger, spring, createTimeline, createAnimatable, onScroll, text as animeText } from 'animejs'
+import { animate, stagger, spring, createTimeline, createAnimatable, onScroll, svg as animeSvg, text as animeText } from 'animejs'
 
 // Orchestrated motion, on top of anime.js.
 //
@@ -953,4 +953,100 @@ export function installCountUps(root) {
     // Never leave a stat mid-count.
     for (const el of els) if (el.dataset.counted) el.dataset.counted = ''
   }
+}
+
+/**
+ * The page's heraldic rule draws itself outward from its own centre.
+ *
+ * createDrawable animates a path's stroke the way an engraver cuts one -- and
+ * `draw` takes a START and an END along the path, so drawing it from '0.5 0.5'
+ * to '0 1' opens it from the middle in both directions at once rather than
+ * wiping across. That direction matters here: a rule that sweeps left to right
+ * drags the eye across the reading direction at the exact moment the reader is
+ * starting the page, which is why the old gilt sweep was taken out.
+ *
+ * The gem is struck first, on the loose spring, and the rule opens from under
+ * it. Without JavaScript the rule is simply drawn and the gem is simply there,
+ * so a header that never animates is still a header.
+ */
+export function drawHeaderRule(root) {
+  if (!root || prefersReducedMotion()) return () => {}
+
+  let tl = null
+  const stopWait = whenPageReady(root, () => {
+    const host = root.querySelector('.ph-flourish')
+    const line = host?.querySelector('.ph-flourish-line')
+    const gem = host?.querySelector('.ph-flourish-gem')
+    if (!line) return
+
+    try {
+      const [drawn] = animeSvg.createDrawable(line)
+      tl = createTimeline()
+      if (gem) {
+        tl.add(gem, {
+          scale: { from: 0, to: 1 },
+          rotate: { from: -120, to: 45 },
+          opacity: { from: 0, to: 1 },
+          duration: 700,
+          ease: motion.spring.accent(),
+        }, 0)
+      }
+      tl.add(drawn, {
+        // start and end along the path: shut in the middle, then opened.
+        draw: ['0.5 0.5', '0 1'],
+        duration: 820,
+        ease: 'inOutQuad',
+      }, 90)
+    } catch (err) {
+      console.error('[motion] header rule failed, leaving it drawn', err)
+    }
+  })
+
+  return () => {
+    stopWait()
+    try { tl?.revert?.() } catch {}
+  }
+}
+
+/**
+ * The chronicle draws itself as you read down it.
+ *
+ * The timeline's spine was a gradient div. It is an SVG path now, and its
+ * stroke is drawn by the SCROLL rather than on a timer: the line reaches
+ * exactly as far as you have read, stops when you stop, and retreats when you
+ * scroll back up. Of everything here this is the one that is genuinely about
+ * the content -- the kingdom's history writing itself out at the speed you take
+ * it in.
+ *
+ * Thresholds again read CONTAINER edge first, then TARGET edge.
+ */
+export function installChronicle({ pane = '.app-scroll', line = '.chronicle-path', target = '.chronicle-scope' } = {}) {
+  if (typeof window === 'undefined' || prefersReducedMotion()) return () => {}
+  const paneEl = document.querySelector(pane)
+  const lineEl = document.querySelector(line)
+  const targetEl = document.querySelector(target)
+  if (!paneEl || !lineEl || !targetEl) return () => {}
+
+  let tl = null
+  try {
+    const [drawn] = animeSvg.createDrawable(lineEl)
+    tl = createTimeline({
+      defaults: { ease: 'linear' },
+      autoplay: onScroll({
+        container: paneEl,
+        target: targetEl,
+        enter: 'bottom top',      // container bottom meets the chronicle's top
+        leave: 'bottom bottom',   // container bottom meets its end
+        /* Smoothed, but not so smoothed that a short page never finishes the
+           line while the reader sits at the bottom of it waiting. */
+        sync: 0.85,
+      }),
+    })
+    tl.add(drawn, { draw: ['0 0', '0 1'] }, 0)
+  } catch (err) {
+    console.error('[motion] chronicle failed, leaving the line drawn', err)
+    return () => {}
+  }
+
+  return () => { try { tl?.revert?.() } catch {} }
 }

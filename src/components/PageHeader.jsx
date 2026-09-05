@@ -69,6 +69,15 @@ export default function PageHeader({
               </div>
             )}
             <h1 className="gilt-display mt-2.5 font-display text-[1.7rem] font-black leading-[1.12] sm:text-4xl">{title}</h1>
+            {/* Drawn outward from its own centre on arrival by drawHeaderRule.
+                Fully drawn in CSS, so a header whose JS never runs still has
+                its rule rather than an empty gap. */}
+            <div className="ph-flourish" aria-hidden="true">
+              <svg viewBox="0 0 600 2" preserveAspectRatio="none">
+                <path className="ph-flourish-line" d="M0 1 L600 1" fill="none" stroke="currentColor" strokeWidth="1" vectorEffect="non-scaling-stroke" />
+              </svg>
+              <span className="ph-flourish-gem" />
+            </div>
             {subtitle && (
               <p className="mt-2.5 max-w-2xl text-sm leading-relaxed text-parchment/80 text-glow">{subtitle}</p>
             )}

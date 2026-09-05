@@ -2,7 +2,7 @@ import { useState, useMemo, lazy, Suspense, useEffect, useRef, useCallback } fro
 import { trackPage, trackAction, installOutboundTracking } from './lib/analytics'
 import { installSurfaceTracking } from './lib/surface'
 import { installReveal } from './lib/reveal'
-import { installStagger, playPageTransition, installTorch, scrambleHeading } from './lib/motion'
+import { installStagger, playPageTransition, installTorch, scrambleHeading, drawHeaderRule } from './lib/motion'
 import { installPressFeedback } from './lib/press'
 import Sidebar from './components/Sidebar'
 import AppHeader from './components/AppHeader'
@@ -65,7 +65,8 @@ function PageStage({ page, children }) {
     // anything -- see whenPageReady in motion.js.
     const stopBlocks = playPageTransition(ref.current)
     const stopScramble = scrambleHeading(ref.current)
-    return () => { stopBlocks(); stopScramble() }
+    const stopRule = drawHeaderRule(ref.current)
+    return () => { stopBlocks(); stopScramble(); stopRule() }
   }, [page])
   return (
     <div key={page} ref={ref} className="k846-page page-enter mx-auto max-w-6xl">

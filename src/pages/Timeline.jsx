@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Panel, Pill } from '../components/ui'
 import Icon from '../components/Icon'
 import { timeline, countdownTo, kingdom, hasPassed } from '../data/kingdom'
 import PageHeader from '../components/PageHeader'
+import { installChronicle } from '../lib/motion'
 
 const catTone = {
   Heroes: 'gold', Pets: 'green', Truegold: 'blue', Feature: 'muted', PvP: 'red', Anniversary: 'gold'
@@ -20,6 +21,10 @@ function timelineArt(item) {
 }
 
 export default function Timeline() {
+  // The spine is drawn by the scroll rather than on arrival: the line reaches
+  // as far down the kingdom's history as the reader has got.
+  useEffect(() => installChronicle(), [])
+
   const [filter, setFilter] = useState('Upcoming')
 
   const items = timeline.filter((t) => {
@@ -72,8 +77,40 @@ export default function Timeline() {
       </div>
 
       <Panel className="p-0">
-        <div className="relative px-4 py-5 sm:px-6">
-          <div className="absolute left-[26px] top-4 bottom-4 w-px bg-gradient-to-b from-gold/40 via-gold/20 to-transparent sm:left-[30px]" />
+        <div className="chronicle-scope relative px-4 py-5 sm:px-6">
+          {/* The chronicle's spine. Drawn by the scroll -- installChronicle --
+              so the line reaches exactly as far down the history as you have
+              read. The gradient that used to fade its tail is a stop on the
+              stroke now, so the drawn end fades the same way. */}
+          <div
+            className="chronicle-line absolute left-[26px] top-4 bottom-4 w-px sm:left-[30px]"
+            aria-hidden="true"
+          >
+            {/* The SVG is a replaced element: given top and bottom insets it
+                keeps its own aspect ratio instead of stretching between them,
+                which is a spine of zero height. The wrapper takes the insets
+                and the SVG simply fills it. */}
+            <svg className="h-full w-full" viewBox="0 0 1 100" preserveAspectRatio="none">
+              <defs>
+                {/* userSpaceOnUse, not the default: a vertical line's bounding
+                    box has zero width, and a gradient in objectBoundingBox
+                    units collapses on it and paints nothing at all. */}
+                <linearGradient id="chronicle-gilt" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="100">
+                  <stop offset="0%" stopColor="rgba(212,175,55,.55)" />
+                  <stop offset="55%" stopColor="rgba(212,175,55,.3)" />
+                  <stop offset="100%" stopColor="rgba(212,175,55,0)" />
+                </linearGradient>
+              </defs>
+              <path
+                className="chronicle-path"
+                d="M0.5 0 L0.5 100"
+                fill="none"
+                stroke="url(#chronicle-gilt)"
+                strokeWidth="1"
+                vectorEffect="non-scaling-stroke"
+              />
+            </svg>
+          </div>
           <ul className="space-y-1">
             {items.map((t, i) => {
               const isPast = t.status === 'past' || hasPassed(t.date)

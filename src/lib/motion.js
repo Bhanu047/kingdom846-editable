@@ -243,3 +243,143 @@ export function revealElement(el) {
     for (const k of el.children) { k.style.opacity = '1'; k.style.transform = 'none' }
   }
 }
+
+/* ---------------------------------------------------------------------------
+ * Presence.
+ *
+ * Everything above answers "how does a thing arrive". None of it answers what
+ * the site DOES while you are looking at it, and that is the actual gap: this
+ * page reveals things and then stops, where the motion worth copying keeps
+ * responding to the reader. These three respond -- to scroll, and to the
+ * cursor -- rather than playing once and finishing.
+ * ------------------------------------------------------------------------- */
+
+/**
+ * The hero drifts as you scroll: crest, wordmark and tagline move at different
+ * rates, so the room has depth instead of scrolling as one flat picture.
+ *
+ * Tied to scroll POSITION, not fired once on entry -- that is what makes it
+ * feel connected to the reader rather than at them. The app scrolls an inner
+ * pane, so the listener goes there; reveal.js documents why (scroll events from
+ * that pane do not bubble to the document).
+ */
+export function installHeroParallax({ pane, layers } = {}) {
+  if (typeof window === 'undefined' || prefersReducedMotion()) return () => {}
+  const scroller = typeof pane === 'string' ? document.querySelector(pane) : pane
+  if (!scroller || !layers?.length) return () => {}
+
+  const found = layers
+    .map(({ selector, rate, fade }) => ({ el: document.querySelector(selector), rate, fade }))
+    .filter((l) => l.el)
+  if (!found.length) return () => {}
+
+  let frame = 0
+  const paint = () => {
+    frame = 0
+    const y = scroller.scrollTop
+    for (const { el, rate, fade } of found) {
+      // Transform and opacity only: both composite, so this costs no layout on
+      // a scroll that is already the busiest moment on the page.
+      el.style.transform = `translate3d(0, ${(y * rate).toFixed(2)}px, 0)`
+      if (fade) el.style.opacity = String(Math.max(0, 1 - (y / fade)))
+    }
+  }
+  const onScrollPane = () => { if (!frame) frame = requestAnimationFrame(paint) }
+  scroller.addEventListener('scroll', onScrollPane, { passive: true })
+  paint()
+
+  return () => {
+    scroller.removeEventListener('scroll', onScrollPane)
+    cancelAnimationFrame(frame)
+    for (const { el } of found) { el.style.transform = ''; el.style.opacity = '' }
+  }
+}
+
+/**
+ * Cards lean toward the cursor and spring back when it leaves.
+ *
+ * The lean itself is set directly rather than tweened -- a tween chasing a
+ * pointer always lags behind it, which reads as sluggish. anime.js takes over
+ * for the release, where a spring is exactly right: the card overshoots
+ * slightly on its way back to flat, which is what makes it feel sprung rather
+ * than merely reset.
+ */
+export function installCardTilt(selector, { max = 7, lift = 6 } = {}) {
+  if (typeof window === 'undefined' || prefersReducedMotion()) return () => {}
+  // A touch screen has no hovering cursor to lean toward, and binding this
+  // there only means a card stuck mid-tilt after a tap.
+  if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return () => {}
+
+  const cards = [...document.querySelectorAll(selector)]
+  if (!cards.length) return () => {}
+
+  const cleanups = cards.map((card) => {
+    card.style.transformStyle = 'preserve-3d'
+    const onMove = (e) => {
+      const r = card.getBoundingClientRect()
+      const px = (e.clientX - r.left) / r.width - 0.5
+      const py = (e.clientY - r.top) / r.height - 0.5
+      card.style.transform =
+        `perspective(700px) rotateY(${(px * max).toFixed(2)}deg) rotateX(${(-py * max).toFixed(2)}deg) translateZ(${lift}px)`
+    }
+    const onLeave = () => {
+      animate(card, {
+        rotateX: 0, rotateY: 0, translateZ: 0,
+        ease: motion.spring.accent(),
+        onComplete: () => { card.style.transform = '' },
+      })
+    }
+    card.addEventListener('pointermove', onMove)
+    card.addEventListener('pointerleave', onLeave)
+    return () => {
+      card.removeEventListener('pointermove', onMove)
+      card.removeEventListener('pointerleave', onLeave)
+      card.style.transform = ''
+      card.style.transformStyle = ''
+    }
+  })
+
+  return () => cleanups.forEach((fn) => fn())
+}
+
+/**
+ * The wordmark lands letter by letter, on springs.
+ *
+ * Those letters carry TWO css animations: the entrance, and gilt-tilt, an
+ * infinite tilt that keeps the metal alive. A running CSS animation beats an
+ * inline style, so anime.js and gilt-tilt would fight over transform for as
+ * long as both were live. The handoff avoids that entirely: CSS holds both
+ * animations back while the class is on the element, anime.js springs the
+ * letters, and only when it finishes is the class dropped so gilt-tilt takes
+ * over a wordmark that is already in place.
+ *
+ * Transform and opacity only, deliberately. index.css records that a filter
+ * animation here dropped rAF from 49ms to 658ms during the hero mount.
+ */
+export function animateWordmark(el) {
+  if (!el || prefersReducedMotion()) return
+  const letters = [...el.querySelectorAll('span')].filter((s) => !s.classList.contains('sp'))
+  if (!letters.length) return
+
+  el.classList.add('k846-js-letters')
+  const release = () => el.classList.remove('k846-js-letters')
+
+  try {
+    animate(letters, {
+      opacity: { from: 0, to: 1 },
+      translateY: { from: 26, to: 0 },
+      scale: { from: 0.86, to: 1 },
+      delay: stagger(38, { start: 120 }),
+      ease: motion.spring.accent(),
+      onComplete: () => {
+        // Hand the letters back to CSS with no inline transform left to fight.
+        for (const l of letters) { l.style.transform = ''; l.style.opacity = '' }
+        release()
+      },
+    })
+  } catch (err) {
+    console.error('[motion] wordmark failed, showing it', err)
+    for (const l of letters) { l.style.opacity = '1'; l.style.transform = 'none' }
+    release()
+  }
+}

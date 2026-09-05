@@ -2450,6 +2450,15 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
 /* A space cannot be clipped to a gradient and has no glyph to rise, so it is
    drawn as width rather than a character. */
 .hero-wordmark span.sp { width: .3em }
+
+/* The handoff. While anime.js is springing the letters this holds BOTH css
+   animations back -- the entrance and the infinite gilt-tilt -- because a
+   running css animation beats an inline style and the two would otherwise
+   fight over transform for as long as both were live. animateWordmark drops
+   the class the moment its spring finishes, so gilt-tilt takes over a wordmark
+   that is already in place. Without JS the class is never added and the
+   original entrance runs untouched. */
+.hero-wordmark.k846-js-letters span { animation: none; }
 /* opacity and transform ONLY -- no filter.
    The welcome screen's letters resolve out of blur, and copying that here was
    the obvious move and the wrong one. Blur cannot be composited: it repaints

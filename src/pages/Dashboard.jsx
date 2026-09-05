@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { animateWordmark, installHeroParallax, installCardTilt } from '../lib/motion'
 import { Panel, SectionTitle, Pill, ArtImage } from '../components/ui'
 import Icon from '../components/Icon'
 import { RoyalSectionHeader, GraphicTile } from '../components/VisualElements'
@@ -78,6 +79,24 @@ export default function Dashboard({ onNavigate }) {
   const NEXT_KING_CHANGE = nextRecurringDate(KING_CHANGE_ANCHOR, 14)
   const kc = countdownTo(NEXT_KING_CHANGE)
   const nextKingChangeLabel = new Date(NEXT_KING_CHANGE + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+
+  // Motion with presence: the wordmark lands on springs, the hero drifts as the
+  // reader scrolls, and the nav tiles lean toward the cursor. Each installer
+  // returns its own teardown and no-ops under reduced motion.
+  useEffect(() => {
+    animateWordmark(document.querySelector('.hero-wordmark'))
+    const stopParallax = installHeroParallax({
+      pane: '.app-scroll',
+      layers: [
+        // The crest moves most, the wordmark less, so the hero has depth
+        // rather than scrolling away as one flat picture.
+        { selector: '.hero-crest', rate: -0.20, fade: 900 },
+        { selector: '.hero-wordmark', rate: -0.10 },
+      ],
+    })
+    const stopTilt = installCardTilt('.tilt-tile')
+    return () => { stopParallax(); stopTilt() }
+  }, [])
 
   // Easter egg: click Kingdom Status panel 3x
   const statusEgg = useEgg({ clicks: 3, message: 'The kingdom is strong, but the throne is always watchful. — Kingdom 846' })

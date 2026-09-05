@@ -55,7 +55,7 @@ export function GraphicTile({ image, label, sublabel, icon, onClick, badge }) {
   return (
     <button
       onClick={onClick}
-      className="lift-glow gold-border-hover img-zoom group relative overflow-hidden rounded-lg border border-gold/20 text-left"
+      className="tilt-tile lift-glow gold-border-hover img-zoom group relative overflow-hidden rounded-lg border border-gold/20 text-left"
     >
       <div className="relative h-28 sm:h-32">
         <img src={image} alt={label} className="h-full w-full object-cover" loading="lazy" />

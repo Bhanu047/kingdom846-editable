@@ -473,38 +473,44 @@ export function playPageTransition(container) {
 }
 
 /**
- * A cursor for the kingdom: a gilt ring that trails the pointer, and a dot that
- * does not.
+ * The torch: the pointer carries light through the hall.
  *
- * Two targets at different speeds is the whole trick. The dot is pinned to the
- * pointer with no easing so aiming stays honest, while the ring is animated
- * toward the same coordinates with a longer duration, so it swings, overshoots
- * slightly and settles. createAnimatable is built for exactly this -- a value
- * driven continuously from an input rather than played as a timeline.
+ * What was here before was a gilt ring that replaced the mouse pointer, and it
+ * was wrong twice over. A ring-and-dot cursor is a design-studio idiom -- it
+ * belongs on a portfolio site, not in a torch-lit hall -- and replacing the
+ * native pointer is a genuine accessibility cost: a custom cursor ignores the
+ * visitor's own pointer size, high-contrast and inverted-colour settings, and
+ * on magnification it is the one thing on screen that does not scale.
  *
- * Desktop only, and deliberately. A touch screen has no pointer to follow, and
- * hiding the native cursor there would hide nothing while leaving two ornaments
- * stuck at the last tap.
+ * So the pointer is the visitor's own again, and the kingdom's contribution is
+ * light: a warm, faintly flickering pool that follows a step behind the hand,
+ * as a carried torch does. It sits in `screen` blend, which can only lighten --
+ * so it warms the ink it passes over and can never dim the text.
+ *
+ * The lag is the same trick the ring used and the only part worth keeping:
+ * createAnimatable drives the position continuously from the pointer rather
+ * than playing a timeline, so the light swings after the hand and settles.
+ *
+ * Desktop only. A touch screen has no hovering pointer for a light to follow,
+ * and a torch stranded at the last tap is just a smudge.
  */
-export function installCursor() {
+export function installTorch() {
   if (typeof window === 'undefined' || prefersReducedMotion()) return () => {}
   if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return () => {}
-  if (window.__k846Cursor) return window.__k846Cursor
+  if (window.__k846Torch) return window.__k846Torch
 
-  const ring = document.createElement('div')
-  const dot = document.createElement('div')
-  ring.className = 'k846-cursor-ring'
-  dot.className = 'k846-cursor-dot'
-  for (const el of [ring, dot]) {
-    el.setAttribute('aria-hidden', 'true')
-    document.body.appendChild(el)
-  }
-  document.documentElement.classList.add('k846-cursor-on')
+  // Two elements on purpose: anime.js owns the outer one's transform, CSS owns
+  // the inner one's. One element could not carry both a driven translate and a
+  // transitioned scale without them overwriting each other.
+  const torch = document.createElement('div')
+  const flame = document.createElement('div')
+  torch.className = 'k846-torch'
+  flame.className = 'k846-torch-flame'
+  torch.setAttribute('aria-hidden', 'true')
+  torch.appendChild(flame)
+  document.body.appendChild(torch)
 
-  // The ring lags; the dot does not. Both are transform-only, so following the
-  // pointer costs no layout.
-  const ringA = createAnimatable(ring, { x: { duration: 380 }, y: { duration: 380 }, ease: 'out(3)' })
-  const dotA = createAnimatable(dot, { x: { duration: 0 }, y: { duration: 0 } })
+  const light = createAnimatable(torch, { x: { duration: 260 }, y: { duration: 260 }, ease: 'out(3)' })
 
   let raf = 0
   let px = 0
@@ -513,28 +519,20 @@ export function installCursor() {
   const onMove = (e) => {
     px = e.clientX
     py = e.clientY
-    if (!moved) { moved = true; document.documentElement.classList.add('k846-cursor-live') }
-    if (!raf) raf = requestAnimationFrame(() => {
-      raf = 0
-      ringA.x(px); ringA.y(py)
-      dotA.x(px); dotA.y(py)
-    })
+    if (!moved) { moved = true; document.documentElement.classList.add('k846-torch-live') }
+    // One write per frame, transform only: following the pointer costs no layout.
+    if (!raf) raf = requestAnimationFrame(() => { raf = 0; light.x(px); light.y(py) })
   }
 
-  // Over something you can act on, the ring opens up and the dot shrinks into
-  // it -- the pointer reads as a target rather than an ornament.
-  const INTERACTIVE = 'a, button, [role="button"], .tilt-tile, input, select, textarea, summary'
+  // Over something you can act on, the light leans in -- the hover cue the
+  // element already has, answered by the room rather than by an ornament.
+  const INTERACTIVE = 'a, button, [role="button"], .tilt-tile, summary'
   const onOver = (e) => {
-    const hit = e.target.closest?.(INTERACTIVE)
-    ring.classList.toggle('is-active', !!hit)
-    // Text fields keep the native caret: an I-beam says "you can type here" and
-    // a gold ring does not.
-    const typing = hit && /^(INPUT|TEXTAREA)$/.test(hit.tagName)
-    document.documentElement.classList.toggle('k846-cursor-text', !!typing)
+    torch.classList.toggle('is-near', !!e.target.closest?.(INTERACTIVE))
   }
-  const onDown = () => ring.classList.add('is-down')
-  const onUp = () => ring.classList.remove('is-down')
-  const onLeave = () => document.documentElement.classList.remove('k846-cursor-live')
+  const onDown = () => torch.classList.add('is-lit')
+  const onUp = () => torch.classList.remove('is-lit')
+  const onLeave = () => document.documentElement.classList.remove('k846-torch-live')
 
   window.addEventListener('pointermove', onMove, { passive: true })
   window.addEventListener('pointerover', onOver, { passive: true })
@@ -549,12 +547,12 @@ export function installCursor() {
     window.removeEventListener('pointerdown', onDown)
     window.removeEventListener('pointerup', onUp)
     document.removeEventListener('pointerleave', onLeave)
-    try { ringA.revert?.(); dotA.revert?.() } catch {}
-    ring.remove(); dot.remove()
-    document.documentElement.classList.remove('k846-cursor-on', 'k846-cursor-live', 'k846-cursor-text')
-    window.__k846Cursor = null
+    try { light.revert?.() } catch {}
+    torch.remove()
+    document.documentElement.classList.remove('k846-torch-live')
+    window.__k846Torch = null
   }
-  window.__k846Cursor = stop
+  window.__k846Torch = stop
   return stop
 }
 

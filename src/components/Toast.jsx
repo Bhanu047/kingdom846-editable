@@ -1,5 +1,6 @@
-import { createContext, useContext, useState, useCallback } from 'react'
+import { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react'
 import Icon from './Icon'
+import { popToast } from '../lib/motion'
 
 const ToastContext = createContext(null)
 
@@ -40,18 +41,29 @@ export function ToastProvider({ children }) {
       {children}
       <div className="fixed bottom-4 right-4 z-[100] flex flex-col gap-2">
         {toasts.map((t) => (
-          <div
-            key={t.id}
-            className={`page-enter flex items-center gap-2 rounded-lg border px-4 py-3  shadow-lg ${colors[t.type] || colors.info}`}
-          >
-            <Icon name={icons[t.type] || icons.info} size={16} />
-            <span className="text-sm font-medium">{t.message}</span>
-            <button onClick={() => dismiss(t.id)} className="ml-2 opacity-60 hover:opacity-100">
-              <Icon name="logout" size={14} />
-            </button>
-          </div>
+          <Toast key={t.id} toast={t} icon={icons[t.type] || icons.info} tone={colors[t.type] || colors.info} onDismiss={() => dismiss(t.id)} />
         ))}
       </div>
     </ToastContext.Provider>
+  )
+}
+
+/* One notice. Split out of the provider so each arrival gets its own element
+   and its own spring -- inside the map there was nowhere to hold a ref. */
+function Toast({ toast, icon, tone, onDismiss }) {
+  const el = useRef(null)
+  useEffect(() => { popToast(el.current) }, [])
+
+  return (
+    <div
+      ref={el}
+      className={`flex items-center gap-2 rounded-lg border px-4 py-3 shadow-lg ${tone}`}
+    >
+      <Icon name={icon} size={16} />
+      <span className="text-sm font-medium">{toast.message}</span>
+      <button onClick={onDismiss} className="ml-2 opacity-60 hover:opacity-100">
+        <Icon name="logout" size={14} />
+      </button>
+    </div>
   )
 }

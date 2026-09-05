@@ -1,15 +1,17 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Panel, Pill } from '../components/ui'
 import { Modal } from '../components/RosterPending'
 import Icon from '../components/Icon'
 import { apiJson } from '../lib/api'
 import PageHeader from '../components/PageHeader'
+import { turnPages } from '../lib/motion'
 
 function toneFor(c) {
   return { EVENT: 'gold', UPDATE: 'blue', PVP: 'red', FEATURE: 'muted', ANNOUNCEMENT: 'blue', GUIDE: 'gold' }[c] || 'muted'
 }
 
 export default function News() {
+  const list = useRef(null)
   const [active, setActive] = useState(null)
   const [synced, setSynced] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -21,6 +23,11 @@ export default function News() {
   }, [])
 
   const allNews = synced?.news || []
+
+  // Dispatches turn like leaves of the chronicle, once they have loaded. Below
+  // allNews, not above it: a hook that reads it from the top of the component
+  // hits the temporal dead zone and takes the whole page down with it.
+  useEffect(() => turnPages(list.current), [allNews.length])
 
   return (
     <div className="space-y-4">
@@ -38,9 +45,9 @@ export default function News() {
         </p>
       </PageHeader>
 
-      <div className="space-y-4">
+      <div ref={list} className="space-y-4">
         {allNews.map((n, i) => (
-          <Panel key={n.id} className="lift-glow gold-border-hover stagger-in" >
+          <Panel key={n.id} className="lift-glow gold-border-hover k846-leaf" >
             <div className="flex flex-wrap items-center gap-2">
               <Pill tone={toneFor(n.category)}>{n.category}</Pill>
               {n.date && <span className="text-[10px] text-parchment/40">{n.date}</span>}

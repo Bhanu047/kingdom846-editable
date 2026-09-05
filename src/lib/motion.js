@@ -1508,3 +1508,79 @@ export function turnCards(container, selector = '.royal-grid-card') {
     show()
   }
 }
+
+/**
+ * The chronicle's leaves fall open.
+ *
+ * Guides and news entries arrived on the same generic cascade as everything
+ * else. They are pages of a book, so they turn like one: each card hinged on
+ * its own top edge, tipped back and falling flat, one after another.
+ *
+ * The perspective goes on the list, not on each card -- the same reason the
+ * alliance banners share one: a hinge per card gives each its own vanishing
+ * point, and the stack stops reading as a single volume.
+ *
+ * Nothing here is left tilted if a tween throws. A page of leaves stuck at 70
+ * degrees is unreadable in a way a missing animation never is.
+ */
+export function turnPages(container, selector = '.k846-leaf') {
+  if (!container || prefersReducedMotion()) return () => {}
+  const leaves = [...container.querySelectorAll(selector)]
+  if (!leaves.length) return () => {}
+
+  const show = () => {
+    container.style.perspective = ''
+    for (const leaf of leaves) {
+      leaf.style.opacity = ''
+      leaf.style.transform = ''
+      leaf.style.transformOrigin = ''
+    }
+  }
+
+  let anim = null
+  try {
+    container.style.perspective = '1400px'
+    for (const leaf of leaves) leaf.style.transformOrigin = '50% 0%'
+    anim = animate(leaves, {
+      opacity: { from: 0, to: 1 },
+      rotateX: { from: -72, to: 0 },
+      translateY: { from: -10, to: 0 },
+      delay: stagger(70),
+      ease: motion.spring.section(),
+      onComplete: show,
+    })
+  } catch (err) {
+    console.error('[motion] page turn failed, showing them', err)
+    show()
+  }
+
+  return () => {
+    try { anim?.pause() } catch {}
+    show()
+  }
+}
+
+/**
+ * A toast arrives on a spring and is not simply there.
+ *
+ * These carry the only messages the site ever volunteers -- a birthday, a
+ * saved setting, a failed upload -- and they were mounted at full size with a
+ * CSS class doing the work. One element, one spring, and the same rise the
+ * rest of the site uses, so a notice reads as part of this room rather than as
+ * something the browser dropped in the corner.
+ */
+export function popToast(el) {
+  if (!el || prefersReducedMotion()) return
+  try {
+    animate(el, {
+      opacity: { from: 0, to: 1 },
+      translateY: { from: 18, to: 0 },
+      scale: { from: 0.92, to: 1 },
+      ease: motion.spring.element(),
+      onComplete: () => { el.style.opacity = ''; el.style.transform = '' },
+    })
+  } catch (err) {
+    el.style.opacity = ''
+    el.style.transform = ''
+  }
+}

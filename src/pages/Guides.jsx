@@ -3,6 +3,7 @@ import { Panel, Pill } from '../components/ui'
 import { apiJson } from '../lib/api'
 import Icon from '../components/Icon'
 import PageHeader from '../components/PageHeader'
+import { turnPages } from '../lib/motion'
 
 export default function Guides() {
   const [activeId, setActiveId] = useState(null)
@@ -10,6 +11,10 @@ export default function Guides() {
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('All')
   const activeRef = useRef(null)
+  const list = useRef(null)
+
+  // The leaves fall open once the guides have loaded and there is a list.
+  useEffect(() => turnPages(list.current), [filter, loading])
 
   useEffect(() => {
     let cancelled = false
@@ -55,7 +60,7 @@ export default function Guides() {
       )}
 
       {/* Compact list with inline expand */}
-      <div className="space-y-2">
+      <div ref={list} className="space-y-2">
         {loading && [1,2,3].map((i) => (
           <div key={i} className="panel p-3 animate-pulse">
             <div className="flex items-center gap-3">
@@ -72,11 +77,12 @@ export default function Guides() {
         )}
         {filteredGuides.map((g, i) => {
           const isActive = activeId === g.id
-          // No inline animationDelay here: installStagger drives .stagger-in
-          // with anime.js and supplies its own cascade, so a hand-set delay is
-          // inert. The nth-child delays in CSS still cover the no-JS fallback.
+          // k846-leaf, not stagger-in: these are pages of a book and turnPages
+          // hinges each one on its own top edge instead of sliding it up. The
+          // generic installStagger only looks for .stagger-in, so the two
+          // cannot both animate the same card.
           return (
-            <div key={g.id} ref={isActive ? activeRef : null} className="stagger-in">
+            <div key={g.id} ref={isActive ? activeRef : null} className="k846-leaf">
               <button
                 onClick={() => setActiveId(isActive ? null : g.id)}
                 className={`royal-plaque w-full flex items-center gap-3 text-left group ${isActive ? '!border-gold/50' : ''}`}

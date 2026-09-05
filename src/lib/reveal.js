@@ -1,3 +1,5 @@
+import { revealElement } from './motion'
+
 // Scroll choreography.
 //
 // The site already had a `.reveal` class, but it was written against
@@ -32,11 +34,19 @@ export function installReveal() {
 
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
+  // Tells the stylesheet that anime.js is driving the entrance, so its own
+  // transition stands down. Without JS the class is never added and the CSS
+  // version runs exactly as before -- these blocks start at opacity 0, so a
+  // bundle that fails to load must not leave them waiting for a spring that
+  // will never come.
+  if (!reduced) document.documentElement.classList.add('k846-js-reveal')
+
   const observer = reduced ? null : new IntersectionObserver(
     (entries) => {
       for (const e of entries) {
         if (!e.isIntersecting) continue
         e.target.dataset.k846Rev = 'in'
+        revealElement(e.target)
         // One-shot. Re-animating on every scroll past is the thing that makes
         // scroll-driven sites tiring to read.
         observer.unobserve(e.target)
@@ -101,6 +111,7 @@ export function installReveal() {
       const r = el.getBoundingClientRect()
       if (r.bottom > 0 && r.top < (window.innerHeight || 0)) {
         el.dataset.k846Rev = 'in'
+        revealElement(el)
         observer?.unobserve(el)
       }
     }

@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { animate, stagger } from 'animejs'
+import { animate, stagger, spring } from 'animejs'
 
 // Orchestrated motion, on top of anime.js.
 //
@@ -100,7 +100,9 @@ export function installStagger(opts = {}) {
   if (typeof window === 'undefined') return () => {}
   if (window.__k846Stagger) return window.__k846Stagger
 
-  const { step = 70, duration = 520, distance = 16 } = opts
+  // Defaults come from the motion system below, so the stagger shares its
+  // rhythm with the section reveal rather than carrying its own timing.
+  const { step = 45, distance = 8 } = opts
   const root = document.documentElement
   root.classList.add(JS_FLAG)
 
@@ -131,9 +133,8 @@ export function installStagger(opts = {}) {
       animate(children, {
         opacity: { from: 0, to: 1 },
         translateY: { from: distance, to: 0 },
-        duration,
         delay: stagger(step),
-        ease: 'outExpo',
+        ease: motion.spring.element(),
       })
     } catch (err) {
       // A reveal that throws must never leave the page invisible.
@@ -173,4 +174,72 @@ export function installStagger(opts = {}) {
   }
   window.__k846Stagger = stop
   return stop
+}
+
+/* The kingdom's motion system.
+ *
+ * The site had nine entrance durations, ten easing curves and five travel
+ * distances, each tuned where it was written. Every one was fine alone, and
+ * together they never settled into a feel.
+ *
+ * These springs replace them. A spring is not slower or faster than a curve --
+ * it is shaped differently. The old section reveal ran opacity .8s and
+ * transform .95s, so it took most of a second to look finished. These reach
+ * 90% of their travel in 130-200ms and then settle quietly, which is why they
+ * read as immediate without reading as abrupt.
+ *
+ * Measured, not guessed -- time to 90% of travel, and peak overshoot:
+ *   section 152ms, +2.8%   element 132ms, +4.4%
+ *   snappy  108ms, +4.0%   accent  108ms, +16%
+ *
+ * Overshoot is the whole character. Keep `accent` for things that should feel
+ * struck -- a number landing, a badge arriving -- and off everything else, or
+ * the page reads as restless rather than alive.
+ */
+export const motion = {
+  spring: {
+    section: () => spring({ stiffness: 300, damping: 26 }),
+    element: () => spring({ stiffness: 340, damping: 26 }),
+    snappy:  () => spring({ stiffness: 500, damping: 32 }),
+    accent:  () => spring({ stiffness: 320, damping: 18 }),
+  },
+  /* Two distances, not five. The old reveal travelled 30px, which is far
+     enough that the eye follows the movement instead of receiving the content. */
+  rise: { sm: 8, lg: 16 },
+  /* Tight enough to read as one gesture rather than a queue. */
+  stagger: { step: 45 },
+}
+
+/**
+ * Spring one revealed block into place.
+ *
+ * Called by installReveal when an element crosses into view. The observer, the
+ * sweep and the data attribute all stay exactly as they were -- that machinery
+ * encodes several hard-won fixes and is not what needed changing. Only the
+ * movement itself is different.
+ */
+export function revealElement(el) {
+  if (!el || prefersReducedMotion()) return
+  try {
+    animate(el, {
+      opacity: { from: 0, to: 1 },
+      translateY: { from: motion.rise.lg, to: 0 },
+      ease: motion.spring.section(),
+    })
+    const kids = [...el.children]
+    if (kids.length > 1) {
+      animate(kids, {
+        opacity: { from: 0, to: 1 },
+        translateY: { from: motion.rise.sm, to: 0 },
+        delay: stagger(motion.stagger.step),
+        ease: motion.spring.element(),
+      })
+    }
+  } catch (err) {
+    // Never leave a section stranded at opacity 0 because a tween threw.
+    console.error('[motion] reveal failed, showing content', err)
+    el.style.opacity = '1'
+    el.style.transform = 'none'
+    for (const k of el.children) { k.style.opacity = '1'; k.style.transform = 'none' }
+  }
 }

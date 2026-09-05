@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { Panel, Pill } from '../components/ui'
 import Icon from '../components/Icon'
 import { timeline, countdownTo, kingdom, hasPassed } from '../data/kingdom'
 import PageHeader from '../components/PageHeader'
-import { installChronicle } from '../lib/motion'
+import { installChronicle, rollDigit } from '../lib/motion'
 
 const catTone = {
   Heroes: 'gold', Pets: 'green', Truegold: 'blue', Feature: 'muted', PvP: 'red', Anniversary: 'gold'
@@ -149,9 +149,19 @@ export default function Timeline() {
 }
 
 function Count({ label, value }) {
+
+  // Rolls down into place whenever the figure changes -- the large counters
+  // only; forty digits flickering in a list is not motion, it is noise.
+  const ref = useRef(null)
+  const first = useRef(true)
+  useEffect(() => {
+    if (first.current) { first.current = false; return }
+    rollDigit(ref.current)
+  }, [value])
+
   return (
     <div className="rounded-lg border border-gold/25 bg-ink-3/70 px-3 py-1.5 text-center shadow-lg backdrop-blur-sm">
-      <div className="font-display text-xl font-bold text-gold-bright">{value}</div>
+      <div ref={ref} className="font-display text-xl font-bold text-gold-bright">{value}</div>
       <div className="text-[9px] uppercase tracking-wider text-parchment/50">{label}</div>
     </div>
   )

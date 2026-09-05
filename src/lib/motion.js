@@ -1229,3 +1229,78 @@ export function openOverlay(panel, { backdrop, from = 'centre', cascade } = {}) 
     }
   }
 }
+
+/**
+ * Artwork settles in when it arrives.
+ *
+ * Every hall, banner and hero plate on the site was popped in at full size the
+ * instant it decoded -- which on a slow connection is a hole in the page and
+ * then, abruptly, a picture. It now fades up from slightly oversized, so the
+ * image appears to settle into its frame rather than to be dropped into it.
+ *
+ * The listener matters more than the animation: images here are lazy, so most
+ * of them decode long after their component mounted, and a plain effect would
+ * animate a frame that is still empty. A cached image, whose load event has
+ * already been and gone, is handled by the `complete` check -- without it,
+ * everything already in the browser's cache would sit at opacity 0 forever.
+ */
+export function revealArt(img) {
+  if (!img || prefersReducedMotion()) return () => {}
+
+  let anim = null
+  const show = () => { img.style.opacity = ''; img.style.transform = '' }
+
+  const play = () => {
+    try {
+      anim = animate(img, {
+        opacity: { from: 0, to: 1 },
+        scale: { from: 1.06, to: 1 },
+        duration: 620,
+        ease: 'outExpo',
+        onComplete: show,
+      })
+    } catch (err) {
+      console.error('[motion] art reveal failed, showing it', err)
+      show()
+    }
+  }
+
+  // Already decoded (cache, or a re-render): play now, do not wait for a load
+  // event that will never fire again.
+  if (img.complete && img.naturalWidth > 0) {
+    play()
+    return () => { try { anim?.pause() } catch {} ; show() }
+  }
+
+  img.addEventListener('load', play, { once: true })
+  // A broken image must not be left invisible either.
+  img.addEventListener('error', show, { once: true })
+
+  return () => {
+    img.removeEventListener('load', play)
+    img.removeEventListener('error', show)
+    try { anim?.pause() } catch {}
+    show()
+  }
+}
+
+/**
+ * A countdown digit answers when it changes.
+ *
+ * Two weights, and the difference is the whole reason this is not annoying. A
+ * large counter -- the next event's own clock -- drops its new figure into
+ * place. The small ones in the event list only breathe: opacity alone, no
+ * travel. A dozen cards each dropping a seconds digit every second is not a
+ * page that feels alive, it is a page that flickers.
+ */
+export function rollDigit(el, { subtle = false } = {}) {
+  if (!el || prefersReducedMotion()) return
+  const clear = () => { el.style.transform = ''; el.style.opacity = '' }
+  try {
+    animate(el, subtle
+      ? { opacity: { from: 0.45, to: 1 }, duration: 200, ease: 'outQuad', onComplete: clear }
+      : { translateY: { from: -8, to: 0 }, opacity: { from: 0.3, to: 1 }, duration: 280, ease: 'outExpo', onComplete: clear })
+  } catch (err) {
+    clear()
+  }
+}

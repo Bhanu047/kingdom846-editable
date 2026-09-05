@@ -1,4 +1,6 @@
+import { useEffect, useRef } from 'react'
 import Icon from './Icon'
+import { revealArt } from '../lib/motion'
 
 export function Panel({ children, className = '', glow }) {
   return <div className={`panel p-5 ${glow ? 'panel-glow gold-corners' : ''} ${className}`}>{children}</div>
@@ -51,9 +53,15 @@ export function PlayerNameField({ value, onChange }) {
 }
 
 export function ArtImage({ src, alt, className = '', imagePosition }) {
+  // The plate settles into its frame as it decodes rather than popping in at
+  // full size. revealArt waits for the load event, because these are lazy and
+  // most of them arrive long after this component mounted.
+  const img = useRef(null)
+  useEffect(() => revealArt(img.current), [src])
+
   return (
     <div className={`relative overflow-hidden rounded-lg ${className}`}>
-      <img src={src} alt={alt} loading="lazy" style={imagePosition ? { objectPosition: imagePosition } : undefined} className="h-full w-full object-cover" />
+      <img ref={img} src={src} alt={alt} loading="lazy" style={imagePosition ? { objectPosition: imagePosition } : undefined} className="h-full w-full object-cover" />
       <div className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-gold/20" />
       <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-ink/70 via-transparent to-transparent" />
     </div>

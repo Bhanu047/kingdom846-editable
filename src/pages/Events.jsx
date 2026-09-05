@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
+import { rollDigit } from '../lib/motion'
 import { Panel, Pill, ArtImage, ArtCard } from '../components/ui'
 import { RoyalSectionHeader } from '../components/VisualElements'
 import { timeline, countdownTo, hasPassed } from '../data/kingdom'
@@ -139,9 +140,20 @@ export default function Events() {
 }
 
 function Count({ label, value, small }) {
+
+  // Answers whenever the figure changes. The compact ones in the list only
+  // breathe -- see rollDigit: a dozen cards dropping a seconds digit every
+  // second flickers, where a dozen cards brightening one reads as a clock.
+  const ref = useRef(null)
+  const first = useRef(true)
+  useEffect(() => {
+    if (first.current) { first.current = false; return }
+    rollDigit(ref.current, { subtle: small })
+  }, [value])
+
   return (
     <div className={`royal-count ${small ? 'px-2 py-1' : 'px-2 py-2'}`}>
-      <span className={`royal-count-num ${small ? 'text-sm' : 'text-2xl'}`}>{String(value).padStart(small ? 1 : 2, '0')}</span>
+      <span ref={ref} className={`royal-count-num ${small ? 'text-sm' : 'text-2xl'}`}>{String(value).padStart(small ? 1 : 2, '0')}</span>
       <span className="royal-count-label">{label}</span>
     </div>
   )

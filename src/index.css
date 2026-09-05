@@ -2987,3 +2987,54 @@ html[data-app-mode] .page-enter { animation: app-page-in .28s cubic-bezier(0.22,
 .bday-card > *:not(.bday-banner) { position: relative; }
 
 @media (prefers-reduced-motion: reduce) { .bday-banner img { animation: none } }
+
+
+/* ---- The kingdom's cursor ------------------------------------------------ */
+/* Desktop only; installCursor adds .k846-cursor-on and never runs on a touch
+   screen or under reduced motion. The elements are transform-driven by
+   createAnimatable, so nothing here sets position beyond the origin. */
+.k846-cursor-on,
+.k846-cursor-on a,
+.k846-cursor-on button,
+.k846-cursor-on [role="button"] { cursor: none; }
+/* Text fields keep the native caret: an I-beam says "you can type here". */
+.k846-cursor-text, .k846-cursor-text * { cursor: auto !important; }
+.k846-cursor-on input, .k846-cursor-on textarea { cursor: text; }
+
+.k846-cursor-ring, .k846-cursor-dot {
+  position: fixed; top: 0; left: 0;
+  pointer-events: none;
+  z-index: 2147483000;
+  opacity: 0;
+  will-change: transform;
+  transition: opacity .25s ease;
+}
+/* Not shown until the pointer has actually moved, so the ornaments never sit
+   parked in the top-left corner of a page nobody has touched yet. */
+.k846-cursor-live .k846-cursor-ring,
+.k846-cursor-live .k846-cursor-dot { opacity: 1; }
+
+.k846-cursor-ring {
+  width: 34px; height: 34px;
+  margin: -17px 0 0 -17px;
+  border-radius: 50%;
+  border: 1px solid rgba(212,175,55,.75);
+  box-shadow: 0 0 12px rgba(212,175,55,.28), inset 0 0 8px rgba(212,175,55,.16);
+  transition: width .22s cubic-bezier(.16,1,.3,1), height .22s cubic-bezier(.16,1,.3,1),
+              margin .22s cubic-bezier(.16,1,.3,1), border-color .22s ease,
+              background .22s ease, opacity .25s ease;
+}
+.k846-cursor-ring.is-active {
+  width: 54px; height: 54px; margin: -27px 0 0 -27px;
+  border-color: rgba(232,199,102,.95);
+  background: rgba(212,175,55,.10);
+}
+.k846-cursor-ring.is-down { width: 26px; height: 26px; margin: -13px 0 0 -13px; }
+
+.k846-cursor-dot {
+  width: 5px; height: 5px;
+  margin: -2.5px 0 0 -2.5px;
+  border-radius: 50%;
+  background: #E8C766;
+  box-shadow: 0 0 8px rgba(232,199,102,.9);
+}

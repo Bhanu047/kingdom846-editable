@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { animate, stagger, spring, createTimeline } from 'animejs'
+import { animate, stagger, spring, createTimeline, createAnimatable, utils } from 'animejs'
 
 // Orchestrated motion, on top of anime.js.
 //
@@ -480,4 +480,90 @@ export function playPageTransition(container) {
     try { tl?.pause() } catch {}
     show()
   }
+}
+
+/**
+ * A cursor for the kingdom: a gilt ring that trails the pointer, and a dot that
+ * does not.
+ *
+ * Two targets at different speeds is the whole trick. The dot is pinned to the
+ * pointer with no easing so aiming stays honest, while the ring is animated
+ * toward the same coordinates with a longer duration, so it swings, overshoots
+ * slightly and settles. createAnimatable is built for exactly this -- a value
+ * driven continuously from an input rather than played as a timeline.
+ *
+ * Desktop only, and deliberately. A touch screen has no pointer to follow, and
+ * hiding the native cursor there would hide nothing while leaving two ornaments
+ * stuck at the last tap.
+ */
+export function installCursor() {
+  if (typeof window === 'undefined' || prefersReducedMotion()) return () => {}
+  if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return () => {}
+  if (window.__k846Cursor) return window.__k846Cursor
+
+  const ring = document.createElement('div')
+  const dot = document.createElement('div')
+  ring.className = 'k846-cursor-ring'
+  dot.className = 'k846-cursor-dot'
+  for (const el of [ring, dot]) {
+    el.setAttribute('aria-hidden', 'true')
+    document.body.appendChild(el)
+  }
+  document.documentElement.classList.add('k846-cursor-on')
+
+  // The ring lags; the dot does not. Both are transform-only, so following the
+  // pointer costs no layout.
+  const ringA = createAnimatable(ring, { x: { duration: 380 }, y: { duration: 380 }, ease: 'out(3)' })
+  const dotA = createAnimatable(dot, { x: { duration: 0 }, y: { duration: 0 } })
+
+  let raf = 0
+  let px = 0
+  let py = 0
+  let moved = false
+  const onMove = (e) => {
+    px = e.clientX
+    py = e.clientY
+    if (!moved) { moved = true; document.documentElement.classList.add('k846-cursor-live') }
+    if (!raf) raf = requestAnimationFrame(() => {
+      raf = 0
+      ringA.x(px); ringA.y(py)
+      dotA.x(px); dotA.y(py)
+    })
+  }
+
+  // Over something you can act on, the ring opens up and the dot shrinks into
+  // it -- the pointer reads as a target rather than an ornament.
+  const INTERACTIVE = 'a, button, [role="button"], .tilt-tile, input, select, textarea, summary'
+  const onOver = (e) => {
+    const hit = e.target.closest?.(INTERACTIVE)
+    ring.classList.toggle('is-active', !!hit)
+    // Text fields keep the native caret: an I-beam says "you can type here" and
+    // a gold ring does not.
+    const typing = hit && /^(INPUT|TEXTAREA)$/.test(hit.tagName)
+    document.documentElement.classList.toggle('k846-cursor-text', !!typing)
+  }
+  const onDown = () => ring.classList.add('is-down')
+  const onUp = () => ring.classList.remove('is-down')
+  const onLeave = () => document.documentElement.classList.remove('k846-cursor-live')
+
+  window.addEventListener('pointermove', onMove, { passive: true })
+  window.addEventListener('pointerover', onOver, { passive: true })
+  window.addEventListener('pointerdown', onDown, { passive: true })
+  window.addEventListener('pointerup', onUp, { passive: true })
+  document.addEventListener('pointerleave', onLeave)
+
+  const stop = () => {
+    cancelAnimationFrame(raf)
+    window.removeEventListener('pointermove', onMove)
+    window.removeEventListener('pointerover', onOver)
+    window.removeEventListener('pointerdown', onDown)
+    window.removeEventListener('pointerup', onUp)
+    document.removeEventListener('pointerleave', onLeave)
+    try { ringA.revert?.(); dotA.revert?.() } catch {}
+    ring.remove(); dot.remove()
+    document.documentElement.classList.remove('k846-cursor-on', 'k846-cursor-live', 'k846-cursor-text')
+    window.__k846Cursor = null
+  }
+  window.__k846Cursor = stop
+  return stop
 }

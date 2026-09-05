@@ -2,7 +2,7 @@ import { useState, useMemo, lazy, Suspense, useEffect, useRef, useCallback } fro
 import { trackPage, trackAction, installOutboundTracking } from './lib/analytics'
 import { installSurfaceTracking } from './lib/surface'
 import { installReveal } from './lib/reveal'
-import { installStagger, playPageTransition } from './lib/motion'
+import { installStagger, playPageTransition, installCursor } from './lib/motion'
 import { installPressFeedback } from './lib/press'
 import Sidebar from './components/Sidebar'
 import AppHeader from './components/AppHeader'
@@ -173,6 +173,7 @@ function Shell() {
   useEffect(() => installSurfaceTracking(), [])
   useEffect(() => installReveal(), [])
   useEffect(() => installStagger(), [])
+  useEffect(() => installCursor(), [])
   useEffect(() => installPressFeedback(), [])
 
   // A hash that matches no route silently falls through to the dashboard, so a

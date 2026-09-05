@@ -2,7 +2,7 @@ import { useState, useMemo, lazy, Suspense, useEffect, useRef, useCallback } fro
 import { trackPage, trackAction, installOutboundTracking } from './lib/analytics'
 import { installSurfaceTracking } from './lib/surface'
 import { installReveal } from './lib/reveal'
-import { installStagger, playPageTransition, installCursor } from './lib/motion'
+import { installStagger, playPageTransition, installCursor, scrambleHeading } from './lib/motion'
 import { installPressFeedback } from './lib/press'
 import Sidebar from './components/Sidebar'
 import AppHeader from './components/AppHeader'
@@ -61,7 +61,11 @@ function PageStage({ page, children }) {
   const ref = useRef(null)
   useEffect(() => {
     document.documentElement.classList.add('k846-js-page')
-    return playPageTransition(ref.current)
+    const stopBlocks = playPageTransition(ref.current)
+    let stopScramble = () => {}
+    // A frame later, so the lazily-loaded page has actually mounted its header.
+    const id = requestAnimationFrame(() => { stopScramble = scrambleHeading(ref.current) })
+    return () => { cancelAnimationFrame(id); stopBlocks(); stopScramble() }
   }, [page])
   return (
     <div key={page} ref={ref} className="k846-page page-enter mx-auto max-w-6xl">

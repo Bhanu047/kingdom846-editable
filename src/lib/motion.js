@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { animate, stagger, spring, createTimeline, createAnimatable, utils } from 'animejs'
+import { animate, stagger, spring, createTimeline, createAnimatable, utils, text as animeText } from 'animejs'
 
 // Orchestrated motion, on top of anime.js.
 //
@@ -556,4 +556,52 @@ export function installCursor() {
   }
   window.__k846Cursor = stop
   return stop
+}
+
+/**
+ * The page title decodes into place on arrival.
+ *
+ * anime.js's scrambleText drives a numeric tween through a modifier that
+ * renders each frame as characters, so the heading churns through noise and
+ * resolves. It happens IN PLACE -- nothing travels, nothing crosses the
+ * content -- which is why it suits this site where a horizontal wipe did not.
+ *
+ * It also earns its place thematically: a kingdom portal whose pages announce
+ * themselves by resolving out of static reads as a war console rather than a
+ * brochure.
+ *
+ * Only ever applied to a heading that is PURE TEXT. scrambleText writes
+ * textContent, so a title containing an icon or a span would have those
+ * children flattened into a string and destroyed. The guard is not optional.
+ */
+export function scrambleHeading(root) {
+  if (!root || prefersReducedMotion()) return () => {}
+
+  const el = root.querySelector('h1.gilt-display')
+  if (!el) return () => {}
+  if (el.children.length > 0) return () => {}          // not pure text -- leave it alone
+  const original = el.textContent
+  if (!original || original.length > 60) return () => {}
+
+  let anim = null
+  try {
+    anim = animate(el, {
+      // 'A-Z0-9' keeps the noise in the kingdom's own alphabet: a title made of
+      // lowercase and punctuation reads as a glitch rather than a cipher.
+      textContent: animeText.scrambleText({ chars: 'A-Z0-9' }),
+      duration: 900,
+      ease: 'outQuad',
+      onComplete: () => { el.textContent = original },
+    })
+  } catch (err) {
+    console.error('[motion] heading scramble failed', err)
+    el.textContent = original
+    return () => {}
+  }
+
+  return () => {
+    try { anim?.pause() } catch {}
+    // Whatever frame it was on, the reader gets the real title back.
+    el.textContent = original
+  }
 }

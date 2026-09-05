@@ -72,8 +72,11 @@ export default function Guides() {
         )}
         {filteredGuides.map((g, i) => {
           const isActive = activeId === g.id
+          // No inline animationDelay here: installStagger drives .stagger-in
+          // with anime.js and supplies its own cascade, so a hand-set delay is
+          // inert. The nth-child delays in CSS still cover the no-JS fallback.
           return (
-            <div key={g.id} ref={isActive ? activeRef : null} className="stagger-in" style={{ animationDelay: `${Math.min(i * 0.03, 0.5)}s` }}>
+            <div key={g.id} ref={isActive ? activeRef : null} className="stagger-in">
               <button
                 onClick={() => setActiveId(isActive ? null : g.id)}
                 className={`royal-plaque w-full flex items-center gap-3 text-left group ${isActive ? '!border-gold/50' : ''}`}

@@ -219,25 +219,34 @@
 .lift:hover::before { left: 130%; }
 
 /* Staggered entrance animations */
-.stagger-in {
+/* Two drivers, one class.
+   installStagger() (src/lib/motion.js) puts .k846-js-stagger on <html> and
+   animates these with anime.js: an unbounded cascade that starts when the group
+   is actually scrolled into view. The rules below are the fallback for when
+   that never runs -- no JavaScript, or a bundle that failed to load -- because
+   a class that starts at opacity 0 and waits for a script it never gets is a
+   blank page. */
+html:not(.k846-js-stagger) .stagger-in {
   opacity: 0;
   animation: stagger-up .5s cubic-bezier(0.16,1,0.3,1) forwards;
 }
-.stagger-in:nth-child(1) { animation-delay: .05s; }
-.stagger-in:nth-child(2) { animation-delay: .12s; }
-.stagger-in:nth-child(3) { animation-delay: .19s; }
-.stagger-in:nth-child(4) { animation-delay: .26s; }
-.stagger-in:nth-child(5) { animation-delay: .33s; }
-.stagger-in:nth-child(6) { animation-delay: .40s; }
-.stagger-in:nth-child(7) { animation-delay: .47s; }
-.stagger-in:nth-child(8) { animation-delay: .54s; }
+/* JS driving: hidden until anime.js sets an inline opacity, which wins here. */
+.k846-js-stagger .stagger-in { opacity: 0; }
+html:not(.k846-js-stagger) .stagger-in:nth-child(1) { animation-delay: .05s; }
+html:not(.k846-js-stagger) .stagger-in:nth-child(2) { animation-delay: .12s; }
+html:not(.k846-js-stagger) .stagger-in:nth-child(3) { animation-delay: .19s; }
+html:not(.k846-js-stagger) .stagger-in:nth-child(4) { animation-delay: .26s; }
+html:not(.k846-js-stagger) .stagger-in:nth-child(5) { animation-delay: .33s; }
+html:not(.k846-js-stagger) .stagger-in:nth-child(6) { animation-delay: .40s; }
+html:not(.k846-js-stagger) .stagger-in:nth-child(7) { animation-delay: .47s; }
+html:not(.k846-js-stagger) .stagger-in:nth-child(8) { animation-delay: .54s; }
 /* Everything past the eighth. Without this a ninth item matches no delay rule,
    so it starts at 0s and lands BEFORE the eight above it -- which is exactly
    what a roster or a ranking table hits. They share one delay rather than
    continuing to cascade, because a 40-row list should not take three seconds
    to finish arriving. Lists that need a true unbounded cascade use
    staggerIn() from src/lib/motion.js instead. */
-.stagger-in:nth-child(n+9) { animation-delay: .60s; }
+html:not(.k846-js-stagger) .stagger-in:nth-child(n+9) { animation-delay: .60s; }
 @keyframes stagger-up {
   from { opacity: 0; transform: translateY(16px); }
   to { opacity: 1; transform: translateY(0); }

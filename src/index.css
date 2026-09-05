@@ -3375,7 +3375,10 @@ html.k846-js-nav .app-tab .app-tab-mark { display: none; }
 .wr-march-mark {
   position: absolute;
   left: 0; top: 0;
-  width: 13px; height: 18px;
+  /* Square, because the mark is: a tall narrow box shrank the swords to fit its
+     width and they dissolved. Every candidate shape wants the box its own
+     proportions need. */
+  width: 17px; height: 17px;
   translate: -50% -50%;
   filter: drop-shadow(0 0 7px var(--wr-glow, rgba(212,175,55,.35)));
   transition: opacity .3s ease, scale .3s ease;

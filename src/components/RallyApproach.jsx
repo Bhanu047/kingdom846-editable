@@ -186,12 +186,19 @@ function CastleMark() {
 
 function RallyMark() {
   return (
-    <svg viewBox="0 0 14 19" className="wr-rally-art" aria-hidden="true" focusable="false">
-      {/* A rally is a march under its own banner, so that is what it is. */}
-      <path d="M4 18V2.4" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" />
-      <circle cx="4" cy="1.5" r="1.15" fill="currentColor" />
-      <path d="M4.9 3.1 12 5.6 4.9 8.1z" fill="currentColor" stroke="currentColor"
-            strokeWidth="0.9" strokeLinejoin="round" />
+    <svg viewBox="0 0 20 20" className="wr-rally-art" aria-hidden="true" focusable="false">
+      {/* Crossed swords rather than a banner: these six are hitting the castle,
+          and a shield -- the other shape in the running -- says defence. It also
+          reads better against the keep. The castle is a solid blocky mass; an X
+          cuts across it, where a shield is another rounded solid and at 13px the
+          two start to rhyme. */}
+      <g fill="none" stroke="currentColor" strokeWidth="1.35" strokeLinecap="round">
+        <path d="M4.2 3.6 14.6 16.4" />
+        <path d="M15.8 3.6 5.4 16.4" />
+        {/* The two crossguards, which are what stop it reading as a plain X. */}
+        <path d="M3.1 15.2 6.3 18.4" />
+        <path d="M16.9 15.2 13.7 18.4" />
+      </g>
     </svg>
   )
 }

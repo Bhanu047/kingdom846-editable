@@ -19,6 +19,11 @@ const { MIN_CONFIDENCE } = require('./engine.cjs')
 const knowledge = require('./knowledge.json')
 
 const CASES = [
+  // Found by asking 62 questions the way a player types them and keeping the
+  // ones that fell through to "I am not sure". These were real misses.
+  ['how do i apply for minister', ['apply-role']],
+  ['how do i reserve a buff day', ['apply-role']],
+  ['is there a truce', ['nap']],
   ['what is kvk', ['kvk']],
   ['explain kingdom versus kingdom', ['kvk', 'kvk-season']],
   ['how do i win kvk', ['win-kvk', 'kvk']],

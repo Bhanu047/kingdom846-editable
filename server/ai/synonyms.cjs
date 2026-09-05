@@ -35,6 +35,11 @@ const PHRASES = [
 // might type; right column is the form the corpus uses.
 const WORDS = {
   // Alliances — tags, names and the nicknames players actually use
+  // A player asking about "a truce" means the NAP; asking about "the minister"
+  // means the Chief Minister reservation. Both topics existed and neither word
+  // reached them.
+  truce: 'nap', ceasefire: 'nap', armistice: 'nap',
+  minister: 'chiefminister', ministers: 'chiefminister',
   ryo: 'spiders', spider: 'spiders', kzk: 'karnival', kamilkazekarnival: 'karnival',
   sas: 'saints', saint: 'saints', sinner: 'saints', saintsandsinners: 'saints',
   ice: 'icehunters', icehunter: 'icehunters', hunter: 'icehunters',

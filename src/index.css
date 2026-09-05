@@ -3040,3 +3040,39 @@ html[data-app-mode] .page-enter { animation: app-page-in .28s cubic-bezier(0.22,
   81%  { opacity: .88 }
   100% { opacity: .94 }
 }
+
+/* ---- The ember lattice --------------------------------------------------- */
+/* A grid of embers behind the hero with a wave running through it -- from the
+   centre on arrival, and from wherever you touch it after that. The cells are
+   built and animated by installEmberLattice; the count comes down from it as
+   custom properties, because the field is denser on a desktop hero than on a
+   phone's, where the same density would only read as noise.
+
+   Empty and invisible without JavaScript, deliberately: there is nothing here
+   to look at until something animates it. */
+.ember-lattice {
+  position: absolute; inset: 0;
+  display: grid;
+  grid-template-columns: repeat(var(--lattice-cols, 22), 1fr);
+  grid-template-rows: repeat(var(--lattice-rows, 8), 1fr);
+  place-items: center;
+  /* Under the crest and the wordmark, over the hall and its scrims. */
+  z-index: 1;
+  pointer-events: none;
+}
+.lattice-dot {
+  width: 3px; height: 3px;
+  border-radius: 50%;
+  background: #E8C766;
+  box-shadow: 0 0 6px rgba(232, 199, 102, .55);
+  opacity: .1;
+  will-change: transform, opacity;
+}
+@media (prefers-reduced-motion: reduce) { .ember-lattice { display: none } }
+
+/* splitText wraps each word of the motto in a clipping mask so the words can
+   rise out of the line rather than fade in over it. anime.js sets the word's
+   own display and the mask's overflow inline; this only asks the compositor to
+   expect the movement. The words are marked with data-word, not a class -- the
+   library's own template does not add one. */
+.hero-motto [data-word] { will-change: transform }

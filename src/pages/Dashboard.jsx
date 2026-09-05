@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { animateWordmark, installHeroParallax, installCardTilt } from '../lib/motion'
+import { animateWordmark, animateMotto, installEmberLattice, installHeroScrub, installCardTilt, installCountUps, whenEntered } from '../lib/motion'
 import { Panel, SectionTitle, Pill, ArtImage } from '../components/ui'
 import Icon from '../components/Icon'
 import { RoyalSectionHeader, GraphicTile } from '../components/VisualElements'
@@ -84,18 +84,23 @@ export default function Dashboard({ onNavigate }) {
   // reader scrolls, and the nav tiles lean toward the cursor. Each installer
   // returns its own teardown and no-ops under reduced motion.
   useEffect(() => {
-    animateWordmark(document.querySelector('.hero-wordmark'))
-    const stopParallax = installHeroParallax({
-      pane: '.app-scroll',
-      layers: [
-        // The crest moves most, the wordmark less, so the hero has depth
-        // rather than scrolling away as one flat picture.
-        { selector: '.hero-crest', rate: -0.55, fade: 620 },
-        { selector: '.hero-wordmark', rate: -0.28 },
-      ],
+    const stops = []
+    // Held until the front door opens -- see whenEntered. All of this used to
+    // play, and finish, behind the welcome screen.
+    const stopWait = whenEntered(() => {
+      // The hero's arrival: letters land, the motto rises out of its own line,
+      // and a wave crosses the ember lattice underneath them.
+      animateWordmark(document.querySelector('.hero-wordmark'))
+      stops.push(animateMotto(document.querySelector('.hero-motto')))
+      stops.push(installEmberLattice(document.querySelector('.ember-lattice')))
+      // Then the scroll takes over: the whole hero is scrubbed by it, not
+      // merely triggered once. The lattice must exist before this looks for it.
+      stops.push(installHeroScrub({ pane: '.app-scroll' }))
+      // Stats in the first screenful would otherwise count up to a shut door.
+      stops.push(installCountUps(document.querySelector('.k846-page') || document))
     })
     const stopTilt = installCardTilt('.tilt-tile')
-    return () => { stopParallax(); stopTilt() }
+    return () => { stopWait(); for (const stop of stops) stop(); stopTilt() }
   }, [])
 
   // Easter egg: click Kingdom Status panel 3x
@@ -146,6 +151,11 @@ export default function Dashboard({ onNavigate }) {
             <span className="ember" style={{ left: '25%', animationDelay: '2s' }} />
             <span className="ember" style={{ left: '65%', animationDelay: '6s' }} />
           </div>
+          {/* Filled by installEmberLattice: a grid of embers with a wave
+              running through it, from the middle on arrival and from wherever
+              you touch it after that. Empty without JS, which is correct --
+              there is nothing here to see until something animates it. */}
+          <div className="ember-lattice" aria-hidden="true" />
           <div className="relative flex min-h-[19rem] flex-col items-center justify-center px-6 py-8 text-center md:min-h-0 md:h-full md:px-10 md:py-0">
             <img
               src="./assets/crest-846-md.webp"
@@ -171,7 +181,10 @@ export default function Dashboard({ onNavigate }) {
                 </span>
               ))}
             </h1>
-            <p className="mt-1.5 font-display text-sm tracking-[0.15em] text-gold md:text-base text-glow hero-rise" style={{ '--d': '.74s' }}>One Crown. Four Alliances. Endless Glory.</p>
+            {/* No hero-rise here: animateMotto splits this into words and
+                raises them out of their own line, so a CSS entrance on the
+                paragraph would only fade in over the top of it. */}
+            <p className="hero-motto mt-1.5 font-display text-sm tracking-[0.15em] text-gold md:text-base text-glow">One Crown. Four Alliances. Endless Glory.</p>
             <div className="mt-5 flex flex-wrap justify-center gap-2 hero-rise" style={{ '--d': '.88s' }}>
               <button onClick={() => onNavigate('alliances')} className="btn-primary btn-royal sparkle-btn"><Icon name="shield" size={14} /> View Alliances</button>
               <button onClick={() => onNavigate('about')} className="btn-secondary gold-border-hover"><Icon name="castle" size={14} /> Kingdom</button>
@@ -378,7 +391,7 @@ function KvKStat({ onClick, label, value, sub, icon }) {
         <Icon name={icon} size={14} className="text-gold/60" />
         <span className="text-[9px] uppercase tracking-wider text-parchment/30 transition group-hover:text-gold/60">About →</span>
       </div>
-      <div className="mt-2 font-display text-2xl font-bold text-parchment">{value}</div>
+      <div className="mt-2 font-display text-2xl font-bold text-parchment" data-count>{value}</div>
       <div className="text-[10px] uppercase tracking-wider text-parchment/50">{label}</div>
       {sub && <div className="text-[10px] text-gold/60">{sub}</div>}
     </button>

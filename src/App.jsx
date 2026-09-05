@@ -177,6 +177,16 @@ function Shell() {
   useEffect(() => installSurfaceTracking(), [])
   useEffect(() => installReveal(), [])
   useEffect(() => installStagger(), [])
+
+  /* The front door is an overlay and the app mounts behind it, so every
+     entrance on the first page was playing to a closed door and was over before
+     it opened. Anything that should be SEEN on arrival waits for this. */
+  useEffect(() => {
+    if (showSplash) return
+    window.__k846Entered = true
+    document.documentElement.classList.add('k846-entered')
+    window.dispatchEvent(new Event('k846:entered'))
+  }, [showSplash])
   useEffect(() => installTorch(), [])
   useEffect(() => installPressFeedback(), [])
 

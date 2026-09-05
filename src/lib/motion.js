@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { animate, stagger, spring, createTimeline, createAnimatable, utils, text as animeText } from 'animejs'
+import { animate, stagger, spring, createTimeline, createAnimatable, onScroll, text as animeText } from 'animejs'
 
 // Orchestrated motion, on top of anime.js.
 //
@@ -250,50 +250,9 @@ export function revealElement(el) {
  * Everything above answers "how does a thing arrive". None of it answers what
  * the site DOES while you are looking at it, and that is the actual gap: this
  * page reveals things and then stops, where the motion worth copying keeps
- * responding to the reader. These three respond -- to scroll, and to the
- * cursor -- rather than playing once and finishing.
+ * responding to the reader. These respond -- to the cursor here, to the scroll
+ * in the hero scrub below -- rather than playing once and finishing.
  * ------------------------------------------------------------------------- */
-
-/**
- * The hero drifts as you scroll: crest, wordmark and tagline move at different
- * rates, so the room has depth instead of scrolling as one flat picture.
- *
- * Tied to scroll POSITION, not fired once on entry -- that is what makes it
- * feel connected to the reader rather than at them. The app scrolls an inner
- * pane, so the listener goes there; reveal.js documents why (scroll events from
- * that pane do not bubble to the document).
- */
-export function installHeroParallax({ pane, layers } = {}) {
-  if (typeof window === 'undefined' || prefersReducedMotion()) return () => {}
-  const scroller = typeof pane === 'string' ? document.querySelector(pane) : pane
-  if (!scroller || !layers?.length) return () => {}
-
-  const found = layers
-    .map(({ selector, rate, fade }) => ({ el: document.querySelector(selector), rate, fade }))
-    .filter((l) => l.el)
-  if (!found.length) return () => {}
-
-  let frame = 0
-  const paint = () => {
-    frame = 0
-    const y = scroller.scrollTop
-    for (const { el, rate, fade } of found) {
-      // Transform and opacity only: both composite, so this costs no layout on
-      // a scroll that is already the busiest moment on the page.
-      el.style.transform = `translate3d(0, ${(y * rate).toFixed(2)}px, 0)`
-      if (fade) el.style.opacity = String(Math.max(0, 1 - (y / fade)))
-    }
-  }
-  const onScrollPane = () => { if (!frame) frame = requestAnimationFrame(paint) }
-  scroller.addEventListener('scroll', onScrollPane, { passive: true })
-  paint()
-
-  return () => {
-    scroller.removeEventListener('scroll', onScrollPane)
-    cancelAnimationFrame(frame)
-    for (const { el } of found) { el.style.transform = ''; el.style.opacity = '' }
-  }
-}
 
 /**
  * Cards lean toward the cursor and spring back when it leaves.
@@ -680,5 +639,318 @@ export function scrambleHeading(root) {
     try { anim?.pause() } catch {}
     // Whatever frame it was on, the reader gets the real title back.
     if (el) el.textContent = original
+  }
+}
+
+/**
+ * Hold an entrance until the visitor is actually looking at the page.
+ *
+ * The front door -- the nine halls and ENTER THE REALM -- is an overlay, and
+ * the app mounts behind it while it stands. So the hero's arrival was running
+ * the moment React rendered: measured, the motto was mid-flight at 2.0s and
+ * finished by 2.6s, with the door still shut over the top of it. Nobody had
+ * ever seen it. The animation was never the problem; the timing was.
+ *
+ * App.jsx raises `k846:entered` when the door opens (and sets the flag for
+ * anything mounting later). The timeout is the safety: an entrance that waits
+ * on an event which never comes is content that never appears.
+ *
+ * @param {() => void} fn
+ * @returns {() => void} cancel
+ */
+export function whenEntered(fn, timeout = 9000) {
+  if (typeof window === 'undefined') return () => {}
+  if (window.__k846Entered) { fn(); return () => {} }
+
+  let done = false
+  let timer = 0
+  const off = () => {
+    clearTimeout(timer)
+    window.removeEventListener('k846:entered', go)
+  }
+  const go = () => {
+    if (done) return
+    done = true
+    off()
+    fn()
+  }
+  timer = setTimeout(go, timeout)
+  window.addEventListener('k846:entered', go)
+
+  return () => { done = true; off() }
+}
+
+/* ---------------------------------------------------------------------------
+ * Spectacle.
+ *
+ * Everything above is craft you feel without noticing: springs instead of
+ * curves, a cascade instead of a fade. That was the right first move and it is
+ * also, fairly, invisible -- the kingdom asked for anime.js because of what
+ * anime.js is FAMOUS for, and none of it was here.
+ *
+ * These four are. Each one is a thing anime.js does that nothing else does as
+ * well, and each is tied to something this site already is: a torch-lit hall
+ * with a crest, a motto and a war record.
+ * ------------------------------------------------------------------------- */
+
+/**
+ * The ember lattice: a grid of embers with a wave running through it.
+ *
+ * This is anime.js's signature -- `stagger` with a `grid`, which orders the
+ * delay by distance through a matrix rather than along a list, so a single call
+ * sends a ripple across two dimensions. The hall already has embers drifting up
+ * it in CSS; this is the same fire, arranged, and it answers you: the wave
+ * starts from wherever you touched.
+ *
+ * The dots are 3px and animate transform and opacity only, so a wave across the
+ * whole field is one composited pass. The grid is smaller on a phone -- 84
+ * cells rather than 176 -- because the hero is a third of the width there and a
+ * denser field would only read as noise.
+ */
+export function installEmberLattice(host, opts = {}) {
+  if (!host || typeof window === 'undefined' || prefersReducedMotion()) return () => {}
+
+  const narrow = window.matchMedia('(max-width: 640px)').matches
+  const cols = opts.cols || (narrow ? 14 : 22)
+  const rows = opts.rows || (narrow ? 6 : 8)
+
+  host.style.setProperty('--lattice-cols', cols)
+  host.style.setProperty('--lattice-rows', rows)
+
+  /* Scattered inside the grid, not sitting on it. The stagger's grid maths is
+     by INDEX, so nudging each ember off its cell centre costs the wave nothing
+     and is the whole difference between embers in a hall and a tech lattice.
+     The offset is a margin rather than a transform: anime.js owns transform
+     here, and a second writer would simply overwrite the first. */
+  const cellW = host.clientWidth / cols
+  const cellH = host.clientHeight / rows
+  const jitter = (extent) => (Math.random() - 0.5) * extent * 0.7
+
+  const cells = []
+  const frag = document.createDocumentFragment()
+  for (let i = 0; i < cols * rows; i++) {
+    const dot = document.createElement('span')
+    dot.className = 'lattice-dot'
+    const size = 2 + Math.random() * 2.4
+    dot.style.width = dot.style.height = `${size.toFixed(1)}px`
+    dot.style.marginLeft = `${jitter(cellW).toFixed(1)}px`
+    dot.style.marginTop = `${jitter(cellH).toFixed(1)}px`
+    frag.appendChild(dot)
+    cells.push(dot)
+  }
+  host.replaceChildren(frag)
+
+  let running = null
+  const wave = (from) => {
+    try { running?.pause() } catch {}
+    running = animate(cells, {
+      // Two keyframes: the ember catches, then falls back to its resting glow.
+      opacity: [{ to: 0.9, duration: 190 }, { to: 0.1, duration: 700 }],
+      scale: [{ to: 2.6, duration: 210 }, { to: 1, duration: 720, ease: motion.spring.accent() }],
+      // The grid is the whole point -- delay by distance through the matrix.
+      delay: stagger(34, { grid: [cols, rows], from }),
+    })
+  }
+
+  // Which cell is under a point, so the wave starts where the hand landed.
+  const cellAt = (x, y) => {
+    const r = host.getBoundingClientRect()
+    const cx = Math.min(cols - 1, Math.max(0, Math.floor(((x - r.left) / r.width) * cols)))
+    const cy = Math.min(rows - 1, Math.max(0, Math.floor(((y - r.top) / r.height) * rows)))
+    return cy * cols + cx
+  }
+
+  const hero = host.parentElement || host
+  const onPoint = (e) => wave(cellAt(e.clientX, e.clientY))
+  hero.addEventListener('pointerdown', onPoint, { passive: true })
+
+  // First wave comes out of the middle, under the crest, on arrival.
+  const hello = setTimeout(() => wave('center'), 420)
+
+  return () => {
+    clearTimeout(hello)
+    hero.removeEventListener('pointerdown', onPoint)
+    try { running?.pause() } catch {}
+    host.replaceChildren()
+  }
+}
+
+/**
+ * The hero is scrubbed by the scroll, not triggered by it.
+ *
+ * The difference is the whole point. A trigger fires once and plays out at its
+ * own speed; a scrubbed timeline is bound to the scrollbar, so the crest rises
+ * and dims exactly as fast as you scroll, stops when you stop, and runs
+ * backwards when you scroll back up. anime.js's onScroll does it by driving the
+ * timeline's time from the scroll position -- `sync` smooths that so it glides
+ * rather than snapping frame to frame.
+ *
+ * This replaces a hand-written scroll listener that moved two layers by a fixed
+ * rate. Same idea, an order of magnitude more of it: five layers, each with its
+ * own travel, scale and fade, composed as one timeline.
+ *
+ * The app scrolls an inner pane, so the container is that pane and not the
+ * window -- reveal.js documents why (its scroll events never reach the
+ * document).
+ */
+export function installHeroScrub({ pane = '.app-scroll', hero = '.hero-frame' } = {}) {
+  if (typeof window === 'undefined' || prefersReducedMotion()) return () => {}
+  const heroEl = document.querySelector(hero)
+  const paneEl = document.querySelector(pane)
+  if (!heroEl || !paneEl) return () => {}
+
+  const pick = (sel) => document.querySelector(sel)
+  const crest = pick('.hero-crest')
+  const word = pick('.hero-wordmark')
+  const motto = pick('.hero-motto')
+  const lattice = pick('.ember-lattice')
+  if (!crest && !word) return () => {}
+
+  let tl = null
+  try {
+    tl = createTimeline({
+      defaults: { ease: 'linear' },
+      autoplay: onScroll({
+        container: paneEl,
+        target: heroEl,
+        /* Each threshold reads CONTAINER edge first, then TARGET edge -- not
+           the other way round. 'top bottom' is the container's top meeting the
+           hero's bottom, i.e. the hero fully gone. Written the other way it
+           resolves to an end offset BEFORE the start, the observer's travel is
+           zero, and the timeline sits at progress 0 forever: it looks exactly
+           like onScroll silently not working. */
+        enter: 'top top',      // container top meets hero top: it starts to leave
+        leave: 'top bottom',   // container top meets hero bottom: it is gone
+        sync: 0.65,            // smoothed, so it glides with the scroll
+      }),
+    })
+    // Different travels are what make it read as depth rather than as one
+    // picture sliding: the crest goes furthest and fades first.
+    if (crest) tl.add(crest, { translateY: -150, scale: 0.78, opacity: 0.05 }, 0)
+    if (word) tl.add(word, { translateY: -70, scale: 0.94, opacity: 0.3 }, 0)
+    if (motto) tl.add(motto, { translateY: -34, opacity: 0 }, 0)
+    if (lattice) tl.add(lattice, { translateY: -46, opacity: 0.25 }, 0)
+  } catch (err) {
+    console.error('[motion] hero scrub failed', err)
+    return () => {}
+  }
+
+  return () => {
+    try { tl?.revert?.() } catch {}
+    for (const el of [crest, word, motto, lattice]) {
+      if (el) { el.style.transform = ''; el.style.opacity = '' }
+    }
+  }
+}
+
+/**
+ * The motto arrives a word at a time, from behind its own line.
+ *
+ * splitText wraps each word in its own element -- with `wrap: 'clip'`, in a
+ * mask -- so the words can be animated up from below the line and appear to
+ * rise out of it rather than fade in on top of it. It is the one effect here
+ * that could not be written in CSS at all: the site does not know how the motto
+ * breaks into lines until the browser has laid it out.
+ *
+ * Deliberately late (start 760ms): the wordmark's letters are still landing
+ * before this, and the two reading in sequence is the point.
+ */
+export function animateMotto(el) {
+  if (!el || prefersReducedMotion()) return () => {}
+
+  let split = null
+  try {
+    split = animeText.splitText(el, { words: { wrap: 'clip' }, chars: false })
+    animate(split.words, {
+      y: [{ from: '110%' }],
+      opacity: [{ from: 0, to: 1 }],
+      duration: 900,
+      delay: stagger(80, { start: 760 }),
+      ease: motion.spring.section(),
+    })
+  } catch (err) {
+    console.error('[motion] motto failed, showing it', err)
+    try { split?.revert() } catch {}
+    return () => {}
+  }
+
+  return () => { try { split?.revert() } catch {} }
+}
+
+/**
+ * The war record counts up.
+ *
+ * A kingdom's rating, its KvK count, its dominations -- these are the numbers
+ * the page exists to show, and they were simply printed. Counting them up is
+ * the oldest trick there is and it still works, because the eye follows a
+ * moving number and reads a still one only if it was already looking.
+ *
+ * Honest about the value: it eases to the real figure and stops there. A spring
+ * would overshoot, and a rating that swings to 1.281 before settling on 1.234
+ * is a number the site just made up.
+ *
+ * Marked with data-count in the markup rather than found by selector, so a
+ * number that must not be animated (a date, a rank, a countdown that is already
+ * ticking) simply does not carry the attribute.
+ */
+export function installCountUps(root) {
+  if (!root || typeof window === 'undefined' || prefersReducedMotion()) return () => {}
+
+  const els = [...root.querySelectorAll('[data-count]')].filter((el) => !el.dataset.counted)
+  if (!els.length) return () => {}
+
+  const runs = []
+  const io = new IntersectionObserver((entries) => {
+    for (const e of entries) {
+      if (!e.isIntersecting) continue
+      io.unobserve(e.target)
+      run(e.target)
+    }
+  }, { threshold: 0.4 })
+
+  const run = (el) => {
+    const raw = (el.textContent || '').trim()
+    // prefix (#, +) / the number / suffix (%, x) -- all three are kept, only
+    // the middle is animated.
+    const m = raw.match(/^([^0-9-]*)(-?[\d,]*\.?\d+)(.*)$/)
+    if (!m) return
+    const [, prefix, numStr, suffix] = m
+    const grouped = numStr.includes(',')
+    const decimals = (numStr.split('.')[1] || '').length
+    const target = Number(numStr.replace(/,/g, ''))
+    if (!Number.isFinite(target)) return
+
+    el.dataset.counted = '1'
+    const format = (n) => {
+      const fixed = n.toFixed(decimals)
+      return prefix + (grouped ? Number(fixed).toLocaleString(undefined, {
+        minimumFractionDigits: decimals, maximumFractionDigits: decimals,
+      }) : fixed) + suffix
+    }
+
+    const state = { n: 0 }
+    el.textContent = format(0)
+    try {
+      runs.push(animate(state, {
+        n: target,
+        duration: 1500,
+        ease: 'outExpo',
+        onUpdate: () => { el.textContent = format(state.n) },
+        // Whatever the last frame rounded to, the real figure is what stays.
+        onComplete: () => { el.textContent = raw },
+      }))
+    } catch (err) {
+      console.error('[motion] count-up failed, showing the figure', err)
+      el.textContent = raw
+    }
+  }
+
+  for (const el of els) io.observe(el)
+
+  return () => {
+    io.disconnect()
+    for (const a of runs) { try { a.pause() } catch {} }
+    // Never leave a stat mid-count.
+    for (const el of els) if (el.dataset.counted) el.dataset.counted = ''
   }
 }

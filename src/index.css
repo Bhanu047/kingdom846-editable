@@ -121,14 +121,6 @@
 @keyframes spin-angle { to { --angle: 360deg; } }
 
 /* Gold shimmer sweep on titles */
-.shimmer-text {
-  background: linear-gradient(100deg, #C9A24A 0%, #F3E8CC 45%, #E8C766 50%, #C9A24A 100%);
-  background-size: 200% auto;
-  -webkit-background-clip: text; background-clip: text;
-  -webkit-text-fill-color: transparent;
-  animation: shimmer 5s linear infinite;
-}
-@keyframes shimmer { to { background-position: 200% center; } }
 
 /* Floating embers / gold dust */
 .ember-field { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
@@ -159,8 +151,6 @@
 }
 @keyframes reveal-fade { to { opacity: 1; } }
 
-.reveal-clip { opacity: 1; clip-path: none; animation: none; }
-
 /* Animated gold divider draw */
 .gold-divider.anim { animation: draw-line 1.2s cubic-bezier(0.16,1,0.3,1) both; }
 @keyframes draw-line { from { transform: scaleX(0); transform-origin: left; } to { transform: scaleX(1); } }
@@ -173,7 +163,6 @@
    made these headings mush on bright artwork, and glow has been rejected
    repeatedly. A struck object casts a shadow, it does not emit -- so this is
    now a cast shadow, which also does the legibility work the glow never did. */
-.glow-pulse { text-shadow: 0 1px 2px rgba(0,0,0,.8), 0 3px 14px rgba(0,0,0,.55); }
 
 /* Subtle parallax drift for hero art */
 .drift-slow { animation: drift 14s ease-in-out infinite alternate; }
@@ -188,9 +177,7 @@
 }
 @keyframes sweep { 0%,100% { left: -60%; } 50% { left: 110%; } }
 
-@media (prefers-reduced-motion: reduce) {
-  .shimmer-text, .ember, .aurora-border::before, .drift-slow, .badge-shine::after { animation: none !important; }
-  .reveal, .reveal-clip { opacity: 1 !important; clip-path: none !important; animation: none !important; }
+@media (prefers-reduced-motion: reduce) { .ember, .aurora-border::before, .drift-slow, .badge-shine::after{ animation: none !important; }.reveal{ opacity: 1 !important; clip-path: none !important; animation: none !important; }
   /* .stagger-in starts at opacity 0 and relies on its animation to become
      visible, so switching the animation off alone would leave the content
      invisible. It has to be forced visible in the same rule. */
@@ -271,27 +258,6 @@
 }
 
 /* Floating gold dust particles (ambient) */
-.ambient-particles {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-  overflow: hidden;
-}
-.ambient-particle {
-  position: absolute;
-  width: 2px; height: 2px;
-  background: rgba(232,199,102,.6);
-  border-radius: 50%;
-  box-shadow: 0 0 4px rgba(212,175,55,.4);
-  animation: float-up 12s linear infinite;
-}
-@keyframes float-up {
-  0% { transform: translateY(100vh) translateX(0); opacity: 0; }
-  10% { opacity: 0.6; }
-  90% { opacity: 0.3; }
-  100% { transform: translateY(-10vh) translateX(20px); opacity: 0; }
-}
 
 /* Ornate button shine */
 .btn-primary { position: relative; }
@@ -322,16 +288,6 @@
 }
 
 /* Stat card gold corner accent */
-.stat-card { position: relative; }
-.stat-card::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0;
-  width: 20px; height: 20px;
-  border-top: 2px solid rgba(212,175,55,.4);
-  border-left: 2px solid rgba(212,175,55,.4);
-  border-top-left-radius: 0.75rem;
-}
 
 /* Section title decorative line */
 .section-ornate {
@@ -347,17 +303,6 @@
 }
 
 /* Guide row hover accent */
-.guide-row { position: relative; overflow: hidden; }
-.guide-row::before {
-  content: '';
-  position: absolute;
-  left: 0; top: 0; bottom: 0;
-  width: 3px;
-  background: linear-gradient(180deg, transparent, #D4AF37, transparent);
-  transform: scaleY(0);
-  transition: transform .3s;
-}
-.guide-row:hover::before { transform: scaleY(1); }
 
 /* Richer page enter */
 .page-enter {
@@ -394,23 +339,8 @@
 }
 
 /* Glow pulse for important badges */
-.glow-badge {
-  animation: badge-pulse 2.5s ease-in-out infinite;
-}
-@keyframes badge-pulse {
-  0%, 100% { box-shadow: 0 0 4px rgba(212,175,55,.3), 0 0 0 1px rgba(212,175,55,.2); }
-  50% { box-shadow: 0 0 16px rgba(212,175,55,.5), 0 0 0 1px rgba(212,175,55,.4); }
-}
 
 /* 3D card tilt on hover */
-.tilt-card {
-  transition: transform .3s cubic-bezier(0.16,1,0.3,1), box-shadow .3s;
-  transform-style: preserve-3d;
-}
-.tilt-card:hover {
-  transform: perspective(800px) rotateX(2deg) rotateY(-2deg) translateY(-4px);
-  box-shadow: 0 20px 50px -20px rgba(0,0,0,.9), 0 0 40px -15px rgba(212,175,55,.4);
-}
 
 /* Ripple effect on click */
 .ripple {
@@ -437,35 +367,8 @@
 }
 
 /* Animated gold rune circle decoration */
-.rune-circle {
-  position: absolute;
-  width: 200px; height: 200px;
-  border: 1px solid rgba(212,175,55,.1);
-  border-radius: 50%;
-  pointer-events: none;
-  animation: rune-rotate 30s linear infinite;
-}
-.rune-circle::before {
-  content: '';
-  position: absolute;
-  inset: 20px;
-  border: 1px dashed rgba(212,175,55,.08);
-  border-radius: 50%;
-  animation: rune-rotate 20s linear infinite reverse;
-}
-@keyframes rune-rotate {
-  to { transform: rotate(360deg); }
-}
 
 /* Typewriter cursor for titles */
-.type-cursor::after {
-  content: '|';
-  color: rgba(212,175,55,.6);
-  animation: blink 1s steps(1) infinite;
-}
-@keyframes blink {
-  50% { opacity: 0; }
-}
 
 /* Floating animation for crests/badges */
 .float-anim {
@@ -477,16 +380,6 @@
 }
 
 /* Shimmer sweep on stat numbers */
-.stat-shimmer {
-  background: linear-gradient(90deg, #C9A24A 0%, #F3E8CC 50%, #C9A24A 100%);
-  background-size: 200% auto;
-  -webkit-background-clip: text; background-clip: text;
-  -webkit-text-fill-color: transparent;
-  animation: stat-shine 4s linear infinite;
-}
-@keyframes stat-shine {
-  to { background-position: 200% center; }
-}
 
 /* Glowing border pulse for active nav */
 .nav-glow {
@@ -526,62 +419,12 @@
 }
 
 /* Scroll progress gold bar */
-.scroll-progress {
-  position: fixed;
-  top: 0; left: 0;
-  height: 2px;
-  background: linear-gradient(90deg, #D4AF37, #E8C766, #D4AF37);
-  z-index: 100;
-  transition: width .1s;
-  box-shadow: 0 0 8px rgba(212,175,55,.5);
-}
 
 /* Animated underline for section titles */
-.title-underline {
-  position: relative;
-  display: inline-block;
-  padding-bottom: 6px;
-}
-.title-underline::after {
-  content: '';
-  position: absolute;
-  bottom: 0; left: 0;
-  width: 0; height: 2px;
-  background: linear-gradient(90deg, #D4AF37, transparent);
-  animation: underline-draw 1s cubic-bezier(0.16,1,0.3,1) 0.3s forwards;
-}
-@keyframes underline-draw {
-  to { width: 100%; }
-}
 
 /* Card entrance with 3D flip */
-.flip-in {
-  opacity: 0;
-  transform: perspective(800px) rotateY(-10deg) translateX(-20px);
-  animation: flip-enter .6s cubic-bezier(0.16,1,0.3,1) forwards;
-}
-@keyframes flip-enter {
-  to { opacity: 1; transform: perspective(800px) rotateY(0) translateX(0); }
-}
 
 /* Gold dust trail on card hover */
-.gold-trail {
-  position: relative;
-  overflow: visible;
-}
-.gold-trail::after {
-  content: '';
-  position: absolute;
-  top: 0; right: -30px;
-  width: 30px; height: 100%;
-  background: linear-gradient(90deg, rgba(212,175,55,.15), transparent);
-  opacity: 0;
-  transition: opacity .3s;
-  pointer-events: none;
-}
-.gold-trail:hover::after {
-  opacity: 1;
-}
 
 /* Pulse ring for important elements */
 .pulse-ring {
@@ -614,20 +457,6 @@
 }
 
 /* Ember burst on hover for hero panels */
-.ember-burst {
-  position: relative;
-}
-.ember-burst:hover .ember-burst-particle {
-  animation: ember-burst-anim 1s ease-out;
-}
-.ember-burst-particle {
-  position: absolute;
-  width: 4px; height: 4px;
-  background: radial-gradient(circle, rgba(232,199,102,.9), transparent);
-  border-radius: 50%;
-  opacity: 0;
-  pointer-events: none;
-}
 
 /* Glass panel effect (no backdrop-filter, pure CSS) */
 .glass-panel {
@@ -723,36 +552,14 @@
   box-shadow: 0 0 0 1px rgba(212,175,55,.3), 0 0 20px -5px rgba(212,175,55,.4), inset 0 1px 0 rgba(232,199,102,.1);
 }
 
-/* Animated gradient background for hero sections */
-.hero-gradient-anim {
-  background: linear-gradient(135deg, rgba(14,18,32,.95), rgba(20,14,32,.9), rgba(14,18,32,.95), rgba(18,14,28,.9));
-  background-size: 400% 400%;
-  animation: hero-bg-shift 12s ease infinite;
-}
-@keyframes hero-bg-shift {
-  0%, 100% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-}
-
-/* Same change as .glow-pulse: a shadow that seats the text on the art instead
+/* A shadow that seats the text on the art instead
    of a halo that dissolves into it. Eyebrows sit directly on hero images on
    half the pages in the site, and the halo was making them illegible. */
 .text-glow {
   text-shadow: 0 1px 2px rgba(0,0,0,.75), 0 2px 10px rgba(0,0,0,.5);
 }
-.text-glow-strong {
-  text-shadow: 0 1px 2px rgba(0,0,0,.85), 0 2px 6px rgba(0,0,0,.7), 0 4px 20px rgba(0,0,0,.5);
-}
 
 /* Loading shimmer */
-.shimmer-loading {
-  background: linear-gradient(90deg, rgba(255,255,255,.03) 25%, rgba(255,255,255,.08) 50%, rgba(255,255,255,.03) 75%);
-  background-size: 200% 100%;
-  animation: shimmer-slide 1.5s infinite;
-}
-@keyframes shimmer-slide {
-  to { background-position: -200% 0; }
-}
 
 /* Fire glow effect */
 .fire-glow {
@@ -799,21 +606,6 @@
 }
 
 /* Badge with rotating conic gradient */
-.badge-rotate {
-  position: relative;
-}
-.badge-rotate::before {
-  content: '';
-  position: absolute;
-  inset: -2px;
-  border-radius: inherit;
-  background: conic-gradient(from 0deg, rgba(212,175,55,.4), transparent 90deg, rgba(232,199,102,.3) 180deg, transparent 270deg, rgba(212,175,55,.4));
-  animation: badge-rotate 4s linear infinite;
-  z-index: -1;
-}
-@keyframes badge-rotate {
-  to { transform: rotate(360deg); }
-}
 
 /* Smooth scale on hover for images */
 .img-zoom {
@@ -836,15 +628,6 @@
 }
 
 /* Glow trail following scroll */
-.scroll-glow {
-  position: fixed;
-  top: 0; left: 0; right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, #D4AF37, #E8C766, #D4AF37);
-  transform-origin: left;
-  z-index: 100;
-  box-shadow: 0 0 10px rgba(212,175,55,.5);
-}
 
 /* Shimmer overlay for hero images */
 .hero-shimmer::after {
@@ -880,24 +663,6 @@
 @keyframes pulse-dot-ring {
   0% { transform: scale(0.5); opacity: 1; }
   100% { transform: scale(2); opacity: 0; }
-}
-
-/* Tab hover underline */
-.tab-underline {
-  position: relative;
-}
-.tab-underline::after {
-  content: '';
-  position: absolute;
-  bottom: -2px; left: 50%;
-  width: 0; height: 2px;
-  background: #D4AF37;
-  transform: translateX(-50%);
-  transition: width .3s;
-}
-.tab-underline:hover::after,
-.tab-underline.active::after {
-  width: 100%;
 }
 
 /* ===== LUXURY ROYAL OVERHAUL ===== */
@@ -1060,30 +825,8 @@ aside {
 }
 
 /* Premium stat card */
-.stat-card::before {
-  width: 24px; height: 24px;
-  border-width: 2px;
-  border-color: rgba(212,175,55,.5);
-}
-.stat-card {
-  position: relative;
-}
-.stat-card::after {
-  content: '';
-  position: absolute;
-  bottom: 0; right: 0;
-  width: 20px; height: 20px;
-  border-bottom: 2px solid rgba(212,175,55,.35);
-  border-right: 2px solid rgba(212,175,55,.35);
-  border-bottom-right-radius: 0.75rem;
-  pointer-events: none;
-}
 
 /* Premium ambient gold particles */
-.ambient-particle {
-  background: radial-gradient(circle, rgba(232,199,102,.8), rgba(212,175,55,.2) 40%, transparent 70%);
-  box-shadow: 0 0 6px rgba(212,175,55,.5);
-}
 
 /* Luxury footer */
 footer {
@@ -1124,47 +867,6 @@ input:focus, textarea:focus, select:focus {
 /* ===== ROYAL PAGE SYSTEM ===== */
 
 /* Royal page header — big title with crest glow */
-.royal-page-header {
-  position: relative;
-  padding: 1.5rem 0 1rem;
-  text-align: center;
-}
-.royal-page-header::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 50%;
-  transform: translateX(-50%);
-  width: 120px; height: 2px;
-  background: linear-gradient(90deg, transparent, rgba(212,175,55,.6), transparent);
-}
-.royal-page-header::after {
-  content: '';
-  position: absolute;
-  bottom: 0; left: 50%;
-  transform: translateX(-50%);
-  width: 200px; height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(212,175,55,.3), transparent);
-}
-.royal-page-title {
-  font-family: 'Cinzel', serif;
-  font-size: clamp(1.5rem, 4vw, 2.5rem);
-  font-weight: 700;
-  letter-spacing: 0.03em;
-  background: linear-gradient(135deg, #B8941E 0%, #E8C766 20%, #F3E8CC 40%, #E8C766 55%, #D4AF37 75%, #B8941E 100%);
-  background-size: 200% auto;
-  -webkit-background-clip: text; background-clip: text;
-  -webkit-text-fill-color: transparent;
-  animation: gradient-flow 6s linear infinite;
-  filter: drop-shadow(0 2px 4px rgba(0,0,0,.5));
-  margin: 0.5rem 0;
-}
-.royal-page-subtitle {
-  font-size: 0.85rem;
-  color: rgba(212,175,55,.5);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  font-weight: 600;
-}
 
 /* Royal plaque — for schedule items, list rows, info cards */
 .royal-plaque {
@@ -1228,21 +930,6 @@ input:focus, textarea:focus, select:focus {
 }
 
 /* Royal badge — for alliance tags like [RYO] */
-.royal-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  padding: 0.25rem 0.625rem;
-  border-radius: 0.375rem;
-  border: 1px solid rgba(212,175,55,.3);
-  background: linear-gradient(135deg, rgba(212,175,55,.1), rgba(212,175,55,.03));
-  font-family: 'Cinzel', serif;
-  font-size: 0.7rem;
-  font-weight: 700;
-  color: #E8C766;
-  letter-spacing: 0.08em;
-  text-shadow: 0 0 6px rgba(212,175,55,.2);
-}
 
 /* Royal event icon — circular gold-bordered icon container */
 .royal-icon-circle {
@@ -1448,7 +1135,6 @@ select.royal-select option {
    opacity only, which also means these stay cheap on a phone. */
 @keyframes settle-in   { from { opacity:0; transform: translateY(16px) scale(.975) } }
 @keyframes settle-pop  { from { opacity:0; transform: translateY(9px) scale(.9) } }
-@keyframes settle-grow { from { transform: scaleX(0) } }
 @keyframes edge-pass   { from { left:0; opacity:1 } to { left:100%; opacity:0 } }
 
 .chart-card {
@@ -1465,10 +1151,8 @@ select.royal-select option {
 }
 .chart-rise { animation: settle-in .7s cubic-bezier(.34,1.56,.64,1) both; }
 .chart-pop  { display:inline-block; animation: settle-pop .6s cubic-bezier(.34,1.56,.64,1) both; }
-.chart-sweep { transform-origin: left center; animation: settle-grow .85s cubic-bezier(.34,1.56,.64,1) both; }
 
-@media (prefers-reduced-motion: reduce) {
-  .chart-card, .chart-card::after, .chart-rise, .chart-pop, .chart-sweep {
+@media (prefers-reduced-motion: reduce) {.chart-card, .chart-card::after, .chart-rise, .chart-pop{
     animation: none !important;
   }
 }
@@ -1619,43 +1303,17 @@ select.royal-select option {
 }
 
 /* A slow gradient breath on primary surfaces, so even an idle page moves. */
-@keyframes surface-breathe {
-  0%, 100% { background-position: 0% 50% }
-  50%      { background-position: 100% 50% }
-}
 
 /* ---- Text ---------------------------------------------------------------- */
 /* Character-level entrance. Index is set inline as --i so one class covers any
    length of text. */
-@keyframes char-rise {
-  from { opacity: 0; transform: translateY(.5em) rotateX(-55deg); filter: blur(3px) }
-  to   { opacity: 1; transform: none;                             filter: none }
-}
-.split-char {
-  display: inline-block; white-space: pre;
-  animation: char-rise .62s cubic-bezier(.22,1,.36,1) both;
-  animation-delay: calc(var(--i) * 26ms);
-}
 /* A sheen that crosses a heading every few seconds rather than only on load. */
-@keyframes text-sheen { 0% { background-position: -120% center } 60%, 100% { background-position: 220% center } }
-.sheen-text {
-  background: linear-gradient(100deg,
-    var(--sheen-base, #E8C766) 0%, var(--sheen-base, #E8C766) 38%,
-    #FFF6DA 50%,
-    var(--sheen-base, #E8C766) 62%, var(--sheen-base, #E8C766) 100%);
-  background-size: 220% auto;
-  -webkit-background-clip: text; background-clip: text;
-  color: transparent;
-  animation: text-sheen 7s ease-in-out infinite;
-}
 
 /* ---- Reduced motion ------------------------------------------------------ */
 /* Everything above is decorative. Someone who asks for reduced motion gets the
    settled end state of all of it, not a still frame mid-animation. */
 @media (prefers-reduced-motion: reduce) {
   .aurora-ribbon { animation: none !important; opacity: .34 !important }
-  .split-char    { animation: none !important; opacity: 1 !important; transform: none !important; filter: none !important }
-  .sheen-text    { animation: none !important }
   .panel::before, .chart-card::before { transition: none !important }
 }
 
@@ -1731,18 +1389,6 @@ select.royal-select option {
   transition: width .85s cubic-bezier(.34,1.42,.52,1);
 }
 /* Vertical bars (podium, round chart) are lit from the left instead. */
-.k-seg--v {
-  background-color: var(--c);
-  background-image:
-    linear-gradient(90deg,
-      rgba(255,255,255,.32) 0%,
-      rgba(255,255,255,.12) 18%,
-      rgba(255,255,255,0)   48%,
-      rgba(0,0,0,0)         56%,
-      rgba(0,0,0,.10)       76%,
-      rgba(0,0,0,.20)      100%);
-  transition: height .85s cubic-bezier(.34,1.42,.52,1);
-}
 
 /* A highlight that travels along the leading entry, so the winner of a ranked
    chart keeps drawing the eye after the entrance animation is over.
@@ -1793,8 +1439,7 @@ select.royal-select option {
   text-shadow: 0 1px 0 rgba(255,255,255,.25);
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .k-seg, .k-seg--v { transition: none !important }
+@media (prefers-reduced-motion: reduce) {.k-seg{ transition: none !important }
   .k-sheen::after, .k-sheen-fill::after { animation: none !important; opacity: 0 !important }
 }
 
@@ -1889,12 +1534,6 @@ select.royal-select option {
 /* ---- Gilt rules ---------------------------------------------------------- */
 /* A single hairline reads as a border. A pair with a breath between them reads
    as bookbinding, which is the whole difference in tone. */
-.gilt-rule {
-  height: 3px; border: 0; position: relative;
-  background:
-    linear-gradient(90deg, transparent, rgba(212,175,55,.55) 22%, rgba(255,246,218,.85) 50%, rgba(212,175,55,.55) 78%, transparent) top/100% 1px no-repeat,
-    linear-gradient(90deg, transparent, rgba(212,175,55,.28) 30%, rgba(212,175,55,.45) 50%, rgba(212,175,55,.28) 70%, transparent) bottom/100% 1px no-repeat;
-}
 
 /* ---- Gilt text ----------------------------------------------------------- */
 /* Headings in leaf rather than paint: the ramp runs across the glyphs and a
@@ -2236,7 +1875,6 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
 }
 /* A ripple needs somewhere to live. Only applied where it is safe: a control
    that already clips its own content keeps clipping it. */
-.k-ripple-host { position: relative; overflow: hidden; }
 
 /* ---- Tool tiles ----------------------------------------------------------- */
 /* These are the biggest click targets on the site, so the press wants to be
@@ -3014,72 +2652,10 @@ html[data-app-mode] .page-enter { animation: app-page-in .28s cubic-bezier(0.22,
 }
 .app-launch.is-leaving { opacity: 0; pointer-events: none; }
 
-.app-launch-body { display: flex; flex-direction: column; align-items: center; gap: .85rem; }
-
-.app-launch-crest {
-  width: min(38vw, 148px);
-  height: auto;
-  filter: drop-shadow(0 10px 32px rgba(0, 0, 0, .75));
-  animation: app-launch-crest .9s cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-@keyframes app-launch-crest {
-  from { opacity: 0; transform: translateY(10px) scale(.9); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
-}
-
-.app-launch-word {
-  font-family: 'Cinzel', Georgia, serif;
-  font-weight: 800;
-  font-size: clamp(1.15rem, 6vw, 1.7rem);
-  letter-spacing: .18em;
-  background: linear-gradient(180deg, #F7E9B8, #D4AF37 62%, #A8842A);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  animation: app-launch-word .7s .18s cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-@keyframes app-launch-word {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
 /* A loading rule rather than a spinner: it says the app is working without
    borrowing an indicator from a web page waiting on a server. */
-.app-launch-rule {
-  width: min(46vw, 190px);
-  height: 1px;
-  overflow: hidden;
-  background: rgba(212, 175, 55, .16);
-}
-.app-launch-rule i {
-  display: block;
-  width: 42%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, #E8C766, transparent);
-  animation: app-launch-sweep 1.05s .2s ease-in-out infinite;
-}
-@keyframes app-launch-sweep {
-  from { transform: translateX(-110%); }
-  to { transform: translateX(280%); }
-}
 
-.app-launch-foot {
-  position: absolute;
-  bottom: calc(1.75rem + env(safe-area-inset-bottom, 0px));
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: .22em;
-  text-transform: uppercase;
-  color: rgba(212, 175, 55, .42);
-  animation: app-launch-word .7s .34s cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  html[data-app-mode] .page-enter,
-  .app-launch-crest,
-  .app-launch-word,
-  .app-launch-foot { animation: none !important; }
-  .app-launch-rule i { animation-duration: 3s; }
+@media (prefers-reduced-motion: reduce) {html[data-app-mode] .page-enter{ animation: none !important; }
   .app-tab-mark { transition: none; }
 }
 

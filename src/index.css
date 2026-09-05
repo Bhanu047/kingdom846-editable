@@ -3361,6 +3361,32 @@ html.k846-js-nav .app-tab .app-tab-mark { display: none; }
 }
 .wr-castle-art { display: block; width: 100%; height: 100%; overflow: visible }
 
+/* TAKEN. Until now the castle wore the phase colour like everything else, so
+   the one instant the whole screen exists for -- every march in, together --
+   looked exactly like the second before it. When the last one lands the castle
+   stops being the target and becomes the hit, and goes red and stays red.
+   Not the phase red: this is its own state, and it outlives the phase that
+   caused it. */
+.wr-field[data-struck="true"] .wr-field-core {
+  color: #E5484D;
+  filter: drop-shadow(0 0 16px rgba(229, 72, 77, .6));
+  animation: wr-castle-struck 620ms cubic-bezier(.2, 1.4, .35, 1) both;
+}
+/* One strike, no loop: a castle that keeps flashing reads as an alarm still
+   going off rather than a blow that has landed. Scale only -- nothing on this
+   site slides sideways. */
+@keyframes wr-castle-struck {
+  0%   { scale: 1 }
+  32%  { scale: 1.28 }
+  100% { scale: 1 }
+}
+.wr-struck-label { color: #E5484D; font-weight: 600 }
+
+@media (prefers-reduced-motion: reduce) {
+  /* The red is the information; the lunge is not. */
+  .wr-field[data-struck="true"] .wr-field-core { animation: none }
+}
+
 /* A march. The element is placed at the field's origin and moved by transform,
    so its own box never enters the layout maths. */
 .wr-march {
@@ -3404,7 +3430,13 @@ html.k846-js-nav .app-tab .app-tab-mark { display: none; }
 .wr-march[data-state="flying"]  .wr-march-mark { opacity: 1; scale: 1 }
 /* Landed: it is inside the walls, so it stands down rather than vanishing. */
 .wr-march[data-state="landed"]  .wr-march-mark { opacity: .45; scale: .6 }
-.wr-march[data-state="landed"]  .wr-march-name { opacity: .35 }
+/* The name goes, though. Every march converges on the same point, so six names
+   held at the centre stack into an unreadable pile at the exact instant the
+   screen exists for -- measured with a full rally: "Sparta", "Abs", "Nom",
+   "MM" and "Little M" all printed over each other on the castle. Who landed is
+   already on the rail above; what this field has to say at impact is that
+   everything is in. */
+.wr-march[data-state="landed"]  .wr-march-name { opacity: 0 }
 
 .wr-impact {
   position: absolute;

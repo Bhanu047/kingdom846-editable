@@ -114,17 +114,29 @@ export default function RallyApproach({ sequence, now, impactAt, phase = 'HOLD' 
     }
   }, [lanes, now, size])
 
+  // The moment the last march arrives. Every mark on this field is an attack,
+  // so when all of them are in, the castle stops being the thing being aimed at
+  // and becomes the thing that has been hit -- and says so, in red.
+  const landedCount = lanes.filter((l) => now - l.offset >= (l.marchSec || 0)).length
+  const struck = lanes.length > 0 && landedCount === lanes.length
+
   return (
     <div className="wr-console k-plate p-4" data-phase={phase}>
       <div className="flex items-baseline justify-between">
         <div className="eyebrow">The Approach</div>
         <div className="font-mono text-[10px] uppercase tracking-[.14em] text-parchment/40">
-          {lanes.filter((l) => now - l.offset >= (l.marchSec || 0)).length}
-          <span className="text-parchment/25"> / {lanes.length}</span> landed
+          {struck ? (
+            <span className="wr-struck-label">Castle struck</span>
+          ) : (
+            <>
+              {landedCount}
+              <span className="text-parchment/25"> / {lanes.length}</span> landed
+            </>
+          )}
         </div>
       </div>
 
-      <div ref={field} className="wr-field mt-3">
+      <div ref={field} className="wr-field mt-3" data-struck={struck ? 'true' : undefined}>
         {/* The target's rings. Static: the movement is the marches, and a
             pulsing target underneath them is two things competing. */}
         <span className="wr-field-ring" style={{ '--k': 1 }} />

@@ -1584,3 +1584,50 @@ export function popToast(el) {
     el.style.transform = ''
   }
 }
+
+/**
+ * A bar fills on a spring instead of easing its width.
+ *
+ * The Battle Lab's bars grew by animating `width`, which relayouts on every
+ * frame of every bar -- the one place on this site where a dozen of them run
+ * at once. The bar now carries its final width from the start and grows by
+ * scaleX from its own edge: same picture, no layout, and a spring at the end
+ * of it rather than a curve.
+ *
+ * Only for bars that own their track. A stacked composition row -- several
+ * segments sharing one track and summing to 100% -- keeps its width
+ * transition, because scaling those from zero leaves gaps between them while
+ * they grow, and a chart with holes in it is worse than a chart that eases.
+ *
+ * @param {Element} container
+ * @param {String} selector
+ * @param {{ step?: number, origin?: 'left'|'right' }} [opts]
+ */
+export function fillBars(container, selector = '.k846-bar', { step = 90, origin = 'left' } = {}) {
+  if (!container || prefersReducedMotion()) return () => {}
+  const bars = [...container.querySelectorAll(selector)]
+  if (!bars.length) return () => {}
+
+  const clear = () => {
+    for (const bar of bars) { bar.style.transform = ''; bar.style.transformOrigin = '' }
+  }
+
+  let anim = null
+  try {
+    for (const bar of bars) bar.style.transformOrigin = `${origin} center`
+    anim = animate(bars, {
+      scaleX: { from: 0, to: 1 },
+      delay: stagger(step),
+      ease: motion.spring.snappy(),
+      onComplete: clear,
+    })
+  } catch (err) {
+    console.error('[motion] bar fill failed, showing them', err)
+    clear()
+  }
+
+  return () => {
+    try { anim?.pause() } catch {}
+    clear()
+  }
+}

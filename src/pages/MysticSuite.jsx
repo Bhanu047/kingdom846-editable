@@ -1,5 +1,6 @@
-import { useEffect, useId, useMemo, useState } from 'react'
+import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { trackTool } from '../lib/analytics'
+import { fillBars } from '../lib/motion'
 import Icon from '../components/Icon'
 import { PlayerNameField } from '../components/ui'
 import { usePlayerName } from '../hooks/usePlayerName'
@@ -181,8 +182,15 @@ export function CompositionChart({ items, total }) {
 
 function ArmyCard({ side, label, border, glow, align, reveal, accent }) {
   const total = Math.max(0, side.infantry) + Math.max(0, side.cavalry) + Math.max(0, side.archers)
+  const card = useRef(null)
+  // Each of these owns its own track, so it can grow by scaleX with no layout
+  // and no gaps -- and from the edge its own side reads from.
+  useEffect(() => fillBars(card.current, '.k846-bar', {
+    step: 110, origin: align === 'text-right' ? 'right' : 'left',
+  }), [reveal, total, side.infantry, side.cavalry, side.archers])
+
   return (
-    <div className={`relative min-w-0 flex-1 overflow-hidden rounded-2xl border p-2.5 sm:p-4 ${border}`} >
+    <div ref={card} className={`relative min-w-0 flex-1 overflow-hidden rounded-2xl border p-2.5 sm:p-4 ${border}`} >
       <CornerAccents color={accent} />
       <div className={`text-[9px] font-bold uppercase tracking-wider text-parchment/50 ${align}`}>{label}</div>
       <div className={`badge-shine mt-0.5 rounded-lg font-mono text-base font-black tabular-nums text-parchment sm:text-2xl ${align}`}>{fmt(useCountUp(total))}</div>
@@ -190,7 +198,7 @@ function ArmyCard({ side, label, border, glow, align, reveal, accent }) {
         {TROOPS.map((t, i) => (
           <div key={t.key} className={`flex items-center gap-2 ${align === 'text-right' ? 'flex-row-reverse' : ''}`}>
             <Icon name={t.icon} size={12} style={{ color: TROOP_COLORS[t.key] }} />
-            <div className="k-track h-2.5 flex-1 overflow-hidden rounded-full"><div className="k-seg h-full rounded-full" style={{ width: reveal ? `${total > 0 ? Math.max(0, side[t.key]) / total * 100 : 0}%` : '0%', '--c': TROOP_COLORS[t.key], transitionDelay: `${i * 110}ms` }} /></div>
+            <div className="k-track h-2.5 flex-1 overflow-hidden rounded-full"><div className="k-seg k846-bar h-full rounded-full" style={{ width: `${total > 0 ? Math.max(0, side[t.key]) / total * 100 : 0}%`, '--c': TROOP_COLORS[t.key] }} /></div>
             <span className="w-[62px] shrink-0 font-mono text-[9px] tabular-nums text-parchment/55 sm:w-24 sm:text-[10px]" style={{ textAlign: align === 'text-right' ? 'left' : 'right' }}>{fmt(side[t.key])} <span className="text-parchment/35">({total > 0 ? Math.round(Math.max(0, side[t.key]) / total * 100) : 0}%)</span></span>
           </div>
         ))}

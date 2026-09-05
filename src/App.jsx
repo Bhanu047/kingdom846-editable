@@ -2,7 +2,7 @@ import { useState, useMemo, lazy, Suspense, useEffect, useRef, useCallback } fro
 import { trackPage, trackAction, installOutboundTracking } from './lib/analytics'
 import { installSurfaceTracking } from './lib/surface'
 import { installReveal } from './lib/reveal'
-import { installStagger, playPageTransition, installTorch, bloomHeading, drawHeaderRule, installNavMark, openOverlay, installTapRipple } from './lib/motion'
+import { installStagger, playPageTransition, installTorch, bloomHeading, drawHeaderRule, installNavMark, openOverlay, installTapRipple, staggerIn } from './lib/motion'
 import { installPressFeedback } from './lib/press'
 import Sidebar from './components/Sidebar'
 import AppHeader from './components/AppHeader'
@@ -220,6 +220,15 @@ function Shell() {
       backdrop: root?.querySelector('.k846-overlay-backdrop'),
     })
   }, [searchOpen])
+
+  /* Results cascade as they change. Every keystroke rewrites this list, so the
+     cascade is short and the travel small -- a queue that takes half a second
+     to settle is a search box you cannot type into. */
+  const searchList = useRef(null)
+  useEffect(() => {
+    if (!searchOpen) return undefined
+    return staggerIn(searchList.current, { step: 22, duration: 260, distance: 6 })
+  }, [searchOpen, search])
   useEffect(() => installPressFeedback(), [])
 
   // A hash that matches no route silently falls through to the dashboard, so a
@@ -412,7 +421,7 @@ function Shell() {
             <div className="k846-overlay-panel relative w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
               <div className="panel panel-glow overflow-hidden">
                 <div className="flex items-center gap-2 border-b border-gold/15 p-3"><Icon name="search" size={16} className="text-gold" /><input autoFocus value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search pages, timeline, guides, news…" className="w-full bg-transparent text-sm text-parchment outline-none placeholder:text-parchment/40" /><button onClick={() => setSearchOpen(false)} className="text-parchment/40 hover:text-parchment text-xs">Esc</button></div>
-                <div className="max-h-80 overflow-y-auto p-2">
+                <div ref={searchList} className="max-h-80 overflow-y-auto p-2">
                   {results.length === 0 ? <div className="p-6 text-center text-sm text-parchment/40">No results for "{search}"</div> : results.map((r, i) => <button key={i} onClick={() => { navigate(r.page); setSearchOpen(false); setSearch('') }} className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left hover:bg-white/5"><Icon name={r.icon} size={15} className="text-gold/70" /><span className="flex-1 text-sm text-parchment">{r.label}</span><span className="text-[10px] uppercase tracking-wider text-parchment/30">{r.type}</span></button>)}
                 </div>
               </div>

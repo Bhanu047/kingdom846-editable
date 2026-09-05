@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { trackTool } from '../lib/analytics'
 import Icon from '../components/Icon'
 import { TROOP_LABELS, optimizeFormation } from '../lib/combat/battleLabEngine'
 import { useReveal } from '../lib/chartAnim'
 import CountUp from '../components/CountUp'
+import { fillBars } from '../lib/motion'
 
 const TYPES = ['infantry', 'cavalry', 'archers']
 const TROOPS = [
@@ -37,8 +38,13 @@ function NumberField({ label, value, onChange, min = 0, suffix, compact = false 
 
 function FormationCards({ troops }) {
   const reveal = useReveal()
+  const cards = useRef(null)
+  // The bars grow by scaleX from their own edge rather than by easing width:
+  // same picture, no layout on any frame. See fillBars.
+  useEffect(() => fillBars(cards.current), [reveal, troops])
+
   return (
-    <div className="space-y-3">
+    <div ref={cards} className="space-y-3">
       {troops.map((troop, i) => (
         <div key={troop.type} className="stagger-in rounded-2xl border border-gold/15 bg-white/[0.035] p-4">
           <div className="flex items-center justify-between gap-4">
@@ -52,7 +58,7 @@ function FormationCards({ troops }) {
             </div>
           </div>
           <div className="mt-3 h-2 overflow-hidden rounded-full bg-ink/80">
-            <div className="h-full rounded-full bg-gradient-to-r from-gold/55 to-gold-bright" style={{ width: reveal ? `${Math.max(2, Math.min(100, troop.percent))}%` : '0%', transition: `width 1s cubic-bezier(.16,1,.3,1) ${i * 80}ms` }} />
+            <div className="k846-bar h-full rounded-full bg-gradient-to-r from-gold/55 to-gold-bright" style={{ width: `${Math.max(2, Math.min(100, troop.percent))}%` }} />
           </div>
         </div>
       ))}

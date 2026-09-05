@@ -55,7 +55,7 @@ export default function WarRoom() {
   return <div className="space-y-5">
     <Panel glow className="gold-corners overflow-hidden p-0">
       <div className="relative min-h-[250px] overflow-hidden">
-        <img src="./assets/strategy-war-academy.png" alt="Kingdom 846 royal war command room" className="absolute inset-0 h-full w-full object-cover drift-slow" />
+        <img src="./assets/strategy-war-academy.webp" alt="Kingdom 846 royal war command room" className="absolute inset-0 h-full w-full object-cover drift-slow" />
         <div className="absolute inset-0 bg-gradient-to-r from-ink via-ink/85 to-ink/35" />
         <div className="absolute inset-0" style={{background:'radial-gradient(circle at 72% 35%, rgba(212,175,55,.18), transparent 36%)'}} />
         <div className="relative z-10 flex min-h-[250px] max-w-3xl flex-col justify-center p-6 md:p-8">

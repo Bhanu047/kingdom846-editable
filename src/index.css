@@ -15,7 +15,7 @@
     margin: 0;
     background-color: #0E1220;
     background-image:
-      url('./assets/bg-site-texture.png'),
+      url('./assets/bg-site-texture.webp'),
       radial-gradient(900px 500px at 12% -8%, rgba(212,175,55,.10), transparent 60%),
       radial-gradient(900px 600px at 100% 0%, rgba(140,43,58,.12), transparent 55%),
       radial-gradient(600px 400px at 50% 100%, rgba(212,175,55,.06), transparent 60%),

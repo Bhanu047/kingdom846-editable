@@ -24,10 +24,10 @@ function milestoneDesc(t) {
 
 function resolveEventArt(item) {
   const title = item?.title || item?.name || ''
-  if (title === 'First Anniversary') return './assets/art-season-opening.png'
-  if (title === 'Generation 6 Heroes (Triton, Sophia, Yang)') return './assets/art-heroes.png'
-  if (title === 'First Flamedragon Tyrant Competition') return './assets/art-fire-tyrant.png'
-  return item?.art || './assets/art-kvk-prep.png'
+  if (title === 'First Anniversary') return './assets/art-season-opening.webp'
+  if (title === 'Generation 6 Heroes (Triton, Sophia, Yang)') return './assets/art-heroes.webp'
+  if (title === 'First Flamedragon Tyrant Competition') return './assets/art-fire-tyrant.webp'
+  return item?.art || './assets/art-kvk-prep.webp'
 }
 
 function buildUpcoming(events) {

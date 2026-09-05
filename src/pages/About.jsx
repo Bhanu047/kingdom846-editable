@@ -255,7 +255,7 @@ export default function About() {
 
       <Panel glow className="relative overflow-hidden p-0">
         <div className="relative h-56">
-          <ArtImage src="./assets/art-season-opening.png" alt="Kingdom 846 royal season artwork" className="h-full w-full" />
+          <ArtImage src="./assets/art-season-opening.webp" alt="Kingdom 846 royal season artwork" className="h-full w-full" />
           <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, rgba(14,18,32,0.85) 0%, rgba(14,18,32,0.6) 50%, rgba(14,18,32,0.9) 100%)' }} />
           <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-6">
             <div className="eyebrow text-gold-bright" style={{ textShadow: '0 2px 12px rgba(0,0,0,1)' }}>The Realm</div>

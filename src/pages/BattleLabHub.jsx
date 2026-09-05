@@ -11,10 +11,10 @@ const REQUEST_KEY = 'kingdom846.battleLab.requestedModule'
 const DEDICATED = { bear: BearSuite, mystic: MysticSuite, battle: PvPSuite, formation: FormationSuite, codex: CodexSuite }
 
 const TOOLS = [
-  { id: 'bear', title: 'Bear', icon: 'paw', image: './assets/art-bear-trap.png', imagePosition: '50% 15%', description: 'Build your Hunt Formation and measure Hunt Impact for your exact rally stats.', accent: 'from-amber-950/85 via-ink/45 to-transparent' },
-  { id: 'mystic', title: 'Mystic', icon: 'sparkles', image: './assets/art-hero-meta.png', description: 'Enter both sides of a Mystic Trial battle report and find the troop split that wins by the widest margin.', accent: 'from-violet-950/85 via-ink/45 to-transparent' },
-  { id: 'battle', title: 'PvP', icon: 'swords', image: './assets/art-castle-battle.png', description: 'Run a round-by-round battle between two armies and see who’s left standing.', accent: 'from-red-950/85 via-ink/45 to-transparent' },
-  { id: 'formation', title: 'Formation', icon: 'layers', image: './assets/strategy-war-academy.png', description: 'Build and compare tactical troop formations for different targets.', accent: 'from-emerald-950/85 via-ink/45 to-transparent' },
+  { id: 'bear', title: 'Bear', icon: 'paw', image: './assets/art-bear-trap.webp', imagePosition: '50% 15%', description: 'Build your Hunt Formation and measure Hunt Impact for your exact rally stats.', accent: 'from-amber-950/85 via-ink/45 to-transparent' },
+  { id: 'mystic', title: 'Mystic', icon: 'sparkles', image: './assets/art-hero-meta.webp', description: 'Enter both sides of a Mystic Trial battle report and find the troop split that wins by the widest margin.', accent: 'from-violet-950/85 via-ink/45 to-transparent' },
+  { id: 'battle', title: 'PvP', icon: 'swords', image: './assets/art-castle-battle.webp', description: 'Run a round-by-round battle between two armies and see who’s left standing.', accent: 'from-red-950/85 via-ink/45 to-transparent' },
+  { id: 'formation', title: 'Formation', icon: 'layers', image: './assets/strategy-war-academy.webp', description: 'Build and compare tactical troop formations for different targets.', accent: 'from-emerald-950/85 via-ink/45 to-transparent' },
   { id: 'codex', title: 'Codex', icon: 'book', image: './assets/royal-bg.jpg', description: 'The reasoning behind the formulas, verified test cases, and who deserves credit.', accent: 'from-cyan-950/85 via-ink/45 to-transparent' },
 ]
 
@@ -62,7 +62,7 @@ export default function BattleLabHub() {
     return (
       <div className="space-y-6">
         <section className="relative min-h-[300px] overflow-hidden rounded-[26px] border border-gold/25 bg-[#06101f] px-6 py-9 text-center shadow-[0_20px_70px_rgba(0,0,0,.32)] md:min-h-[360px] md:px-10 md:py-12">
-          <img src="./assets/strategy-war-academy.png" alt="" className="absolute inset-0 h-full w-full object-cover" />
+          <img src="./assets/strategy-war-academy.webp" alt="" className="absolute inset-0 h-full w-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-t from-[#030816]/90 via-[#06101f]/50 to-transparent" />
           <div className="absolute inset-0 bg-gradient-to-r from-black/35 via-transparent to-black/25" />
           <div className="relative flex min-h-[230px] flex-col items-center justify-center md:min-h-[280px]">

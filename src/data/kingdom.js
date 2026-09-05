@@ -163,7 +163,7 @@ export const alliances = [
     leader: 'Shoni', members: 312, lang: 'English', slug: 'ryo',
     tagline: 'First to muster, last to fall back.',
     desc: "The kingdom's founding alliance and current Castle leadership. Deep veteran core, strongest rally coordination in 846, and the backbone of every KVK matchmaking push.",
-    art: './assets/banner-spiders.png',
+    art: './assets/banner-spiders.webp',
     schedule: SCHEDULE_DEFAULT
   },
   {
@@ -171,7 +171,7 @@ export const alliances = [
     leader: 'Lovely Khaos', members: 288, lang: 'English & Turkish', slug: 'kzk',
     tagline: 'Loud, fast, and impossible to ignore.',
     desc: 'A high-tempo alliance built around aggressive rallying and constant event turnout. Known for filling every Bear Trap slot and never missing a Fire Tyrant window.',
-    art: './assets/banner-kamilkaze.png',
+    art: './assets/banner-kamilkaze.webp',
     schedule: SCHEDULE_DEFAULT
   },
   {
@@ -179,7 +179,7 @@ export const alliances = [
     leader: 'Lady Charlotte', members: 265, lang: 'English', slug: 'sas',
     tagline: 'Discipline on the field, chaos in Discord.',
     desc: 'A tightly organized alliance with a strong internal ranking system and rotating rally leads. Reliable second wave on every Castle Battle.',
-    art: './assets/banner-saints-sinners.png',
+    art: './assets/banner-saints-sinners.webp',
     schedule: SCHEDULE_DEFAULT
   },
   {
@@ -187,7 +187,7 @@ export const alliances = [
     leader: 'Dunngeon', members: 201, lang: 'English & Chinese', slug: 'ice',
     tagline: "The kingdom's night shift, always awake.",
     desc: 'A largely Asia-Pacific alliance that keeps 846 covered around the clock. Smaller roster, outsized presence in every off-hours event.',
-    art: './assets/banner-icehunters.png',
+    art: './assets/banner-icehunters.webp',
     schedule: SCHEDULE_ICE
   }
 ]
@@ -259,7 +259,7 @@ export const news = [
 // Generic strategy library (real Kingshot concepts) with real guide content.
 export const guides = [
   {
-    id: 'kvk-prep', title: 'KvK Preparation Checklist', category: 'Strategy', art: './assets/art-kvk-prep.png', read: '6 min',
+    id: 'kvk-prep', title: 'KvK Preparation Checklist', category: 'Strategy', art: './assets/art-kvk-prep.webp', read: '6 min',
     excerpt: 'What to save, when to spend, and how top kingdoms prepare for Kingdom of Power battles.',
     body: [
       '2 weeks before KvK: Stop spending speedups on anything non-essential. Stockpile troop training speedups, construction speedups, and research speedups.',
@@ -270,7 +270,7 @@ export const guides = [
     ].join('\n\n')
   },
   {
-    id: 'nap-rules', title: 'NAP Rules & Royal Decrees', category: 'Diplomacy', art: './assets/art-nap-rules.png', read: '5 min',
+    id: 'nap-rules', title: 'NAP Rules & Royal Decrees', category: 'Diplomacy', art: './assets/art-nap-rules.webp', read: '5 min',
     excerpt: 'How non-aggression pacts are registered, tracked, and enforced across the season.',
     body: [
       'A NAP (Non-Aggression Pact) is a formal agreement between alliances not to attack each other. NAPs are typically established at the kingdom level by the King and leading alliances.',
@@ -281,7 +281,7 @@ export const guides = [
     ].join('\n\n')
   },
   {
-    id: 'bear-trap', title: 'Bear Hunt Rally Guide', category: 'PvE', art: './assets/art-bear-trap.png', artPosition: '50% 15%', read: '6 min',
+    id: 'bear-trap', title: 'Bear Hunt Rally Guide', category: 'PvE', art: './assets/art-bear-trap.webp', artPosition: '50% 15%', read: '6 min',
     excerpt: 'Optimal trap formations and reward-maximizing math for the bear hunt.',
     body: [
       'The Bear Hunt is a PvE event where alliances rally to defeat a bear boss. Higher damage means better rewards for all participants.',
@@ -293,7 +293,7 @@ export const guides = [
     ].join('\n\n')
   },
   {
-    id: 'castle-battle', title: 'Castle Battle Tactics', category: 'PvP', art: './assets/art-castle-battle.png', read: '8 min',
+    id: 'castle-battle', title: 'Castle Battle Tactics', category: 'PvP', art: './assets/art-castle-battle.webp', read: '8 min',
     excerpt: 'Rally timing, garrison swaps, and reinforcement discipline for castle fights.',
     body: [
       'Castle Battles are won by coordination, not individual power. The strongest kingdom can lose if rallies are mistimed or reinforcements are slow.',
@@ -305,7 +305,7 @@ export const guides = [
     ].join('\n\n')
   },
   {
-    id: 'transfer-guide', title: 'Transfer Season Guide', category: 'Kingdom', art: './assets/art-transfer.png', read: '5 min',
+    id: 'transfer-guide', title: 'Transfer Season Guide', category: 'Kingdom', art: './assets/art-transfer.webp', read: '5 min',
     excerpt: 'How transfer groups, invitations, and kingdom capacity work.',
     body: [
       'Transfer events allow players to move between kingdoms during designated windows. Each kingdom is assigned to a Transfer Group based on age and power.',
@@ -316,7 +316,7 @@ export const guides = [
     ].join('\n\n')
   },
   {
-    id: 'hero-meta', title: 'Hero & Formation Meta', category: 'Combat', art: './assets/art-hero-meta.png', read: '7 min',
+    id: 'hero-meta', title: 'Hero & Formation Meta', category: 'Combat', art: './assets/art-hero-meta.webp', read: '7 min',
     excerpt: 'Building balanced marches and adapting to current hero generations.',
     body: [
       'A balanced march uses heroes whose skills complement each other. Don\'t just pick your three highest-power heroes — synergy matters more.',
@@ -371,7 +371,7 @@ export const timeline = [
   { name: '5th & 6th Masters Unlocked', date: '2026-07-20', category: 'Feature', status: 'past' },
   { name: 'Generation 6 Heroes (Triton, Sophia, Yang)', date: '2026-08-17', category: 'Heroes', status: 'past' },
   { name: 'Generation 6 Pets (Regal White Lion, Ironclad War Elephant)', date: '2026-08-17', category: 'Pets', status: 'past' },
-  { name: 'First Flamedragon Tyrant Competition', date: '2026-08-30', category: 'PvP', status: 'upcoming', art: './assets/art-fire-tyrant.png', featured: true },
+  { name: 'First Flamedragon Tyrant Competition', date: '2026-08-30', category: 'PvP', status: 'upcoming', art: './assets/art-fire-tyrant.webp', featured: true },
   { name: 'Generation 7 Heroes (Wee & Woo, Ava, Charles)', date: '2026-11-09', category: 'Heroes', status: 'future' },
   { name: 'Generation 7 Pets (Ironclad War Bear)', date: '2026-11-09', category: 'Pets', status: 'future' },
   { name: 'Advanced Truegold Research', date: '2026-12-21', category: 'Truegold', status: 'future' },
@@ -468,10 +468,10 @@ export function hasPassed(iso) {
 
 // Shared alliance banner lookup (used by Dashboard, Rankings, Transfer, etc.)
 export const BANNERS = {
-  ryo: './assets/banner-spiders.png',
-  kzk: './assets/banner-kamilkaze.png',
-  sas: './assets/banner-saints-sinners.png',
-  ice: './assets/banner-icehunters.png',
+  ryo: './assets/banner-spiders.webp',
+  kzk: './assets/banner-kamilkaze.webp',
+  sas: './assets/banner-saints-sinners.webp',
+  ice: './assets/banner-icehunters.webp',
 }
 
 export const nav = [

@@ -9,13 +9,13 @@ const FORMS = {
     title: 'Chief Minister Reservation',
     embed: 'https://docs.google.com/forms/d/e/1FAIpQLScM2_mDXcHPC6-rnvckvyDYBIjafHY5mP3STTRNbSBJGu295w/viewform?embedded=true',
     link: 'https://docs.google.com/forms/d/e/1FAIpQLScM2_mDXcHPC6-rnvckvyDYBIjafHY5mP3STTRNbSBJGu295w/viewform',
-    art: './assets/apply-chief-minister.png',
+    art: './assets/apply-chief-minister.webp',
   },
   noble_advisor: {
     title: 'Noble Advisor Reservation',
     embed: 'https://docs.google.com/forms/d/e/1FAIpQLSeiyP94snSb7NJ-Ke7weQAHOovdBFtaQBYJ26IsmJwtjMeYBg/viewform?embedded=true',
     link: 'https://docs.google.com/forms/d/e/1FAIpQLSeiyP94snSb7NJ-Ke7weQAHOovdBFtaQBYJ26IsmJwtjMeYBg/viewform',
-    art: './assets/apply-noble-advisor.png',
+    art: './assets/apply-noble-advisor.webp',
   },
 }
 

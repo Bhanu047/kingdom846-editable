@@ -54,7 +54,7 @@ export default function Dashboard({ onNavigate }) {
   // once a specific dated event passes.
   const upcomingTimeline = timeline.filter((t) => (t.status === 'upcoming' || t.status === 'future') && !hasPassed(t.date))
   const nextMilestone = upcomingTimeline.find((t) => t.featured) || upcomingTimeline[0]
-  const featured = events[0] || (nextMilestone && { title: nextMilestone.name, category: nextMilestone.category, art: nextMilestone.art || './assets/art-kvk-prep.png', date: nextMilestone.date })
+  const featured = events[0] || (nextMilestone && { title: nextMilestone.name, category: nextMilestone.category, art: nextMilestone.art || './assets/art-kvk-prep.webp', date: nextMilestone.date })
   const cd = featured ? countdownTo(featured.date) : { days: 0, hours: 0, mins: 0, secs: 0 }
   const top4 = alliances.slice(0, 4)
   const about = () => onNavigate('about')

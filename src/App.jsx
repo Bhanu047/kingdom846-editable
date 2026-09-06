@@ -132,7 +132,7 @@ function Placeholder({ title, icon = 'bell', note }) {
 }
 
 function Shell() {
-  const { user, signOut, isAdmin } = useAuth()
+  const { user, signOut, isAdmin, canUseWarRoom } = useAuth()
   // Fixed for the life of the shell: display-mode cannot change without the
   // document being reloaded into a different window, and re-rendering the whole
   // app because a media query flickered would be worse than being one launch
@@ -308,7 +308,6 @@ function Shell() {
   }, [])
   useBackToClose(overlayOpen, closeOverlays)
 
-  const canUseWarRoom = Boolean(isAdmin || user?.username?.toLowerCase() === 'shoni')
 
   function render() {
     const lazyEl = (() => {
@@ -330,7 +329,7 @@ function Shell() {
         case 'admin': return isAdmin ? <Admin /> : <Placeholder title="Admin Access" icon="shieldCheck" note="Only the Sparta account can access the website editor." />
         case 'console': return isAdmin ? <MasterConsole /> : <Placeholder title="Master Console" icon="crown" note="Only the Sparta master account can access the console." />
         case 'leader-portal': return user?.role === 'leader' ? <LeaderPortal /> : <Placeholder title="Leader Access" icon="clock" note="Only alliance leaders can manage event schedules. Log in with your leader account." />
-        case 'war-room': return canUseWarRoom ? <WarRoom /> : <Placeholder title="Private War Room" icon="shieldCheck" note="This command room is reserved for Sparta admin and Shoni." />
+        case 'war-room': return canUseWarRoom ? <WarRoom /> : <Placeholder title="Private War Room" icon="shieldCheck" note="This command room is reserved for Sparta admin and the war room crew." />
         case 'settings': return <Settings />
         default: return <Dashboard onNavigate={navigate} />
       }
@@ -338,7 +337,7 @@ function Shell() {
     return <ErrorBoundary key={page}><Suspense fallback={<PageSkeleton />}>{lazyEl}</Suspense></ErrorBoundary>
   }
 
-  const sidebarUser = user ? { name: user.display_name || user.username, username: user.username, role: user.role, alliance_slug: user.alliance_slug } : null
+  const sidebarUser = user ? { name: user.display_name || user.username, username: user.username, display_name: user.display_name, role: user.role, alliance_slug: user.alliance_slug } : null
   const handleSignOut = () => { signOut(); navigate('dashboard') }
 
   return (
@@ -366,14 +365,14 @@ function Shell() {
       )}
       <div className="app-shell flex overflow-hidden relative z-10">
         <div className="hidden md:flex">
-          <Sidebar active={page} onNavigate={navigate} user={sidebarUser} onLogin={() => { setMobileNav(false); setLoginMode('admin'); setLoginOpen(true) }} onSignOut={handleSignOut} isAdmin={isAdmin} />
+          <Sidebar active={page} onNavigate={navigate} user={sidebarUser} onLogin={() => { setMobileNav(false); setLoginMode('admin'); setLoginOpen(true) }} onSignOut={handleSignOut} isAdmin={isAdmin} canWarRoom={canUseWarRoom} />
         </div>
 
         {mobileNav && (
           <div className="k846-drawer fixed inset-0 z-[70] md:hidden" onClick={() => setMobileNav(false)}>
             <div className="k846-overlay-backdrop absolute inset-0 bg-ink/70" />
             <div className="k846-overlay-panel absolute left-0 top-0 h-full" onClick={(e) => e.stopPropagation()}>
-              <Sidebar active={page} onNavigate={navigate} user={sidebarUser} onLogin={() => { setMobileNav(false); setLoginMode('admin'); setLoginOpen(true) }} onSignOut={handleSignOut} isAdmin={isAdmin} />
+              <Sidebar active={page} onNavigate={navigate} user={sidebarUser} onLogin={() => { setMobileNav(false); setLoginMode('admin'); setLoginOpen(true) }} onSignOut={handleSignOut} isAdmin={isAdmin} canWarRoom={canUseWarRoom} />
             </div>
           </div>
         )}

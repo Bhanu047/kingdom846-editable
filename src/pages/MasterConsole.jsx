@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext'
 import { Panel, SectionTitle, Pill } from '../components/ui'
 import Icon from '../components/Icon'
 import { apiJson, apiFetch } from '../lib/api'
+import { avatarFor } from '../lib/avatars'
 import BackupPanel from '../components/BackupPanel'
 import ArenaResetPanel from '../components/ArenaResetPanel'
 import EventRepeatPanel from '../components/EventRepeatPanel'
@@ -160,23 +161,18 @@ export default function MasterConsole() {
 
       {/* Leader management */}
       <Panel className="p-5">
-        <SectionTitle eyebrow="Leaders" title="Alliance Leader Logins" icon="users" />
+        <SectionTitle eyebrow="Leaders" title="Leader & War Room Logins" icon="users" />
         <div className="space-y-2">
           {leaders.map((l) => (
             <div key={l.id} className="stagger-in lift flex items-center gap-3 rounded-lg border border-gold/15 bg-white/5 px-3 py-2.5">
               <img
-                src={l.role === 'admin' ? './assets/avatars/spartan.webp' : ({
-                  'ryo': './assets/avatars/ryo-lord.webp',
-                  'kzk': './assets/avatars/kzk-lord.webp',
-                  'sas': './assets/avatars/sas-lord.webp',
-                  'ice': './assets/avatars/ice-lord.webp',
-                }[l.alliance_slug] || './assets/avatars/queen.webp')}
+                src={avatarFor(l)}
                 alt={l.display_name}
                 className="grid h-9 w-9 flex-shrink-0 place-items-center rounded-md object-cover ring-1 ring-gold/30"
               />
               <div className="min-w-0 flex-1">
                 <div className="truncate font-semibold text-parchment">{l.display_name} <span className="text-parchment/40">· {l.username}</span></div>
-                <div className="text-[11px] text-parchment/40">{l.alliance_tag} {l.alliance_slug?.toUpperCase()}</div>
+                <div className="text-[11px] text-parchment/40">{l.role === 'warroom' ? 'War Room crew' : `${l.alliance_tag || ''} ${l.alliance_slug?.toUpperCase() || ''}`.trim()}</div>
               </div>
               <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${l.must_change_password ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' : 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/25'}`}>
                 {l.must_change_password ? 'Must Set Password' : 'Password Set'}

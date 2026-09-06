@@ -47,6 +47,10 @@ export function AuthProvider({ children }) {
       try { msg = (await res.json()).error || msg } catch {}
       throw new Error(msg)
     }
+    // The server lowercases the username it stores; carry that into the session
+    // so the screen does not keep naming an account that no longer exists.
+    const stored = String(username || '').trim().toLowerCase()
+    setUser((prev) => (prev && stored ? { ...prev, username: stored } : prev))
     return res.json()
   }, [])
 
@@ -86,10 +90,40 @@ export function AuthProvider({ children }) {
     return res.json()
   }, [])
 
+  // The shared War Room rally groups. They are one document on the server
+  // rather than a copy per device, so a march time Shoni fixes is the one
+  // Panini reads. `version` is what the save carries back: the server refuses a
+  // save built on groups someone else has since replaced, and the room asks
+  // what to do about it.
+  const getWarRoom = useCallback(async () => apiJson('/api/war-room/roster'), [])
+  const saveWarRoom = useCallback(async (groups, version) => {
+    const res = await apiFetch('/api/war-room/roster', {
+      method: 'PUT',
+      body: JSON.stringify({ groups, version }),
+    })
+    if (res.status === 409) {
+      const remote = await res.json().catch(() => ({}))
+      const err = new Error(remote.error || 'Someone else saved the roster while you were editing.')
+      err.conflict = remote
+      throw err
+    }
+    if (!res.ok) {
+      let msg = `Request failed (${res.status})`
+      try { msg = (await res.json()).error || msg } catch {}
+      throw new Error(msg)
+    }
+    return res.json()
+  }, [])
+
   const isAdmin = user?.role === 'admin'
+  // Sparta, the war-room accounts, and Shoni, who ran the room alone before it
+  // was shared. Kept identical to the server's own rule.
+  const canUseWarRoom = Boolean(
+    user && (isAdmin || user.role === 'warroom' || user.username?.toLowerCase() === 'shoni'),
+  )
 
   return (
-    <AuthContext.Provider value={{ user, loading, signIn, signOut, isAdmin, changeOwnCredentials, setFirstPassword, listLeaders, resetLeader, getMyRoster, uploadRoster, getRoster }}>
+    <AuthContext.Provider value={{ user, loading, signIn, signOut, isAdmin, canUseWarRoom, changeOwnCredentials, setFirstPassword, listLeaders, resetLeader, getMyRoster, uploadRoster, getRoster, getWarRoom, saveWarRoom }}>
       {children}
     </AuthContext.Provider>
   )

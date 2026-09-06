@@ -3292,13 +3292,21 @@ html.k846-js-nav .app-tab .app-tab-mark { display: none; }
    as a bug rather than a flare. */
 .k846-crest-ring {
   position: absolute;
-  width: 300px; height: 300px;
-  margin: -150px 0 0 -150px;
+  /* Sized against the SCREEN, not a fixed 300px.
+     At 300px it scales to 450px on its way out, and a phone is 390px wide -- so
+     on every mobile arrival this opened past both edges of the display as a
+     hard pale arc across the hall, which reads as something broken rather than
+     as a ring leaving the crest. Measured at 390px: 450px wide, spanning -30 to
+     420. Desktop is untouched, where min() still resolves to the 300px it was. */
+  --ring-size: min(300px, 46vw);
+  width: var(--ring-size); height: var(--ring-size);
+  margin: calc(var(--ring-size) / -2) 0 0 calc(var(--ring-size) / -2);
   border-radius: 50%;
   /* Two pixels and a wash inside it, not a hairline: this opens over the
      brightest part of the hall, and a 1px rim at half opacity disappeared
-     into the chandelier entirely. */
-  border: 2px solid rgba(255, 240, 200, .9);
+     into the chandelier entirely. Pulled back from .9 -- at near-white it was
+     the brightest thing on the screen and read as a scratch on the glass. */
+  border: 2px solid rgba(255, 234, 178, .6);
   background: radial-gradient(circle closest-side,
     rgba(255, 226, 158, .1) 0%, rgba(255, 200, 110, .05) 55%, transparent 78%);
   box-shadow: 0 0 40px rgba(232, 199, 102, .5), inset 0 0 40px rgba(232, 199, 102, .25);

@@ -114,7 +114,7 @@ export default function BirthdayPanel() {
             value={name}
             onChange={(e) => setName(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') add() }}
-            placeholder="Player name"
+            aria-label="Player name" placeholder="Player name"
             aria-label="Player name"
             maxLength={60}
             className="min-w-[9rem] flex-1 rounded-md border border-gold/20 bg-ink/60 px-2 py-1.5 text-sm text-parchment outline-none focus:border-gold/60"

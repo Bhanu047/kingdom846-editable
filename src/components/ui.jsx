@@ -44,7 +44,7 @@ export function PlayerNameField({ value, onChange }) {
         maxLength={24}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        placeholder="Not set — stays anonymous"
+        aria-label="Your name" placeholder="Not set — stays anonymous"
         className="w-full rounded-xl border border-gold/15 bg-ink/70 px-3 py-2.5 text-sm font-semibold text-parchment outline-none focus:border-gold/45"
       />
       <span className="mt-1 block text-[10px] leading-relaxed text-parchment/35">Shown in your result and the downloaded report — handy when several players share reports. Leave blank to stay anonymous.</span>

@@ -240,7 +240,7 @@ export default function ChatAssistant() {
               value={input}
               onChange={e => setInput(e.target.value)}
               onKeyDown={handleKey}
-              placeholder="Ask the Advisor..."
+              aria-label="Ask the Advisor" placeholder="Ask the Advisor..."
               className="flex-1 bg-transparent text-sm text-parchment placeholder-parchment/30 outline-none"
               disabled={loading}
             />

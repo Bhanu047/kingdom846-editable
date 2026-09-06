@@ -94,7 +94,7 @@ export default function Login({ onClose, onSuccess, mode = 'leader' }) {
                 autoFocus
                 data-testid="input-new-password"
                 className="mt-1 w-full rounded-lg border border-gold/20 bg-ink/60 px-3 py-2 text-sm text-parchment outline-none focus:border-gold/60 focus:ring-1 focus:ring-gold/40"
-                placeholder="Min 6 characters"
+                aria-label="New password" placeholder="Min 6 characters"
               />
             </div>
             <div>
@@ -105,7 +105,7 @@ export default function Login({ onClose, onSuccess, mode = 'leader' }) {
                 onChange={(e) => setConfirmPw(e.target.value)}
                 data-testid="input-confirm-password"
                 className="mt-1 w-full rounded-lg border border-gold/20 bg-ink/60 px-3 py-2 text-sm text-parchment outline-none focus:border-gold/60 focus:ring-1 focus:ring-gold/40"
-                placeholder="Re-enter password"
+                aria-label="Confirm new password" placeholder="Re-enter password"
               />
             </div>
             {error && <div className="rounded-md bg-crimson/15 px-3 py-2 text-xs text-crimson-200">{error}</div>}
@@ -150,7 +150,7 @@ export default function Login({ onClose, onSuccess, mode = 'leader' }) {
               autoFocus
               data-testid="input-username"
               className="mt-1 w-full rounded-lg border border-gold/20 bg-ink/60 px-3 py-2 text-sm text-parchment outline-none focus:border-gold/60 focus:ring-1 focus:ring-gold/40"
-              placeholder={isAdmin ? 'Sparta username' : 'Leader username'}
+              aria-label="Username" placeholder={isAdmin ? 'Sparta username' : 'Leader username'}
             />
           </div>
           <div>
@@ -161,7 +161,7 @@ export default function Login({ onClose, onSuccess, mode = 'leader' }) {
               onChange={(e) => setPassword(e.target.value)}
               data-testid="input-password"
               className="mt-1 w-full rounded-lg border border-gold/20 bg-ink/60 px-3 py-2 text-sm text-parchment outline-none focus:border-gold/60 focus:ring-1 focus:ring-gold/40"
-              placeholder="••••••••"
+              aria-label="Password" placeholder="••••••••"
             />
           </div>
           {error && <div className="rounded-md bg-crimson/15 px-3 py-2 text-xs text-crimson-200">{error}</div>}

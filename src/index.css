@@ -2408,15 +2408,17 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
  * needs it. That is not a trade worth making for a text field.
  */
 @media (pointer: coarse) {
-  /* Specific enough to beat the styled controls' own sizes: select.royal-select
-     sets 0.875rem, and a bare element selector loses to it. */
+  /* !important, and not for tidiness.
+     The first version of this listed element selectors plus the two styled
+     classes I knew about, and it missed every control carrying a Tailwind text
+     size -- a class selector beats a bare element one. Audited afterwards: the
+     Bear, Mystic, Formation and PvP dropdowns were all still 12-14px, so the
+     zoom-and-pan this rule exists to stop was alive in the whole Battle Lab.
+     There is no size on a touch control worth re-opening that bug for. */
   input:not([type="checkbox"]):not([type="radio"]),
   select,
-  textarea,
-  select.royal-select,
-  input.royal-input,
-  textarea.royal-input {
-    font-size: 16px;
+  textarea {
+    font-size: 16px !important;
   }
 }
 

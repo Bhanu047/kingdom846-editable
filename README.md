@@ -49,8 +49,10 @@ node server/index.cjs  # serves API on :5000; serve dist/ as static
 | `GET  /api/content` | Site content stored in DB. |
 | `GET/POST /api/applications` | Apply for Chief Minister / Noble Advisor. |
 | `GET  /api/king-status` / `PUT` | King & leading alliance (editable by Sparta). |
-| `GET  /api/admin/leaders` | List 4 leaders (admin only). |
-| `PATCH /api/admin/leaders/:id/credentials` | Reset a leader's password (admin only). |
+| `GET  /api/admin/leaders` | List the 4 leaders and the war room accounts (admin only). |
+| `PATCH /api/admin/leaders/:id/credentials` | Reset a leader's or war room account's password (admin only). |
+| `GET  /api/war-room/roster` | The shared War Room roster (war room crew only). |
+| `PUT  /api/war-room/roster` | Save it for the whole crew; a stale `version` is refused with 409. |
 | `POST /api/ai/chat` | Ask the Royal Advisor (public, read-only). |
 | `POST /api/ai/admin` | Ask the Royal Advisor with actions unlocked (admin only). |
 
@@ -122,6 +124,13 @@ in-app credential management (see below).
 | [KzK] leader | leader | Leader login + roster upload |
 | [SAS] leader | leader | Leader login + roster upload |
 | [ICE] leader | leader | Leader login + roster upload |
+| Panini | warroom | Login + War Room only |
+| Anonymous | warroom | Login + War Room only |
+
+Panini and Anonymous are seeded with a temporary password and are asked to set
+their own on first login. They sign in through the ordinary **Login** button,
+not Royal Access, and the War Room is the only thing their accounts open — no
+roster upload, no event schedule, no admin screens.
 
 ### How to change your admin (Sparta) username & password
 
@@ -145,6 +154,22 @@ the server (delete `data.db` first if you want the new seed to re-apply).
 
 **Or — in code:** edit the `SEED` array in `server/index.cjs` (each leader has
 `role: 'leader'` and an `allianceSlug`), then restart (delete `data.db` to re-seed).
+
+### The War Room is shared
+
+Sparta, Shoni, Panini and Anonymous all open the **same** roster. It is stored
+once on the server (`war_room_state`), not per device: a march time saved by any
+of them is what the next one to look sees, within a few seconds — the room polls
+while it is open.
+
+Editing at the same time is handled rather than ignored. Each save carries the
+version it was built on; if somebody else saved first, the save is refused and
+the room shows whose roster is now current, with the choice to load theirs or
+keep and overwrite with yours. Nothing is silently replaced.
+
+To add somebody to the crew, give their account `role: 'warroom'` in the `SEED`
+array (or change an existing account's role); Sparta resets their password from
+the Master Console like any leader's.
 
 ---
 

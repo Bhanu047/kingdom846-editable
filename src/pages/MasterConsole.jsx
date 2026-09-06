@@ -160,7 +160,7 @@ export default function MasterConsole() {
 
       {/* Leader management */}
       <Panel className="p-5">
-        <SectionTitle eyebrow="Leaders" title="Alliance Leader Logins" icon="users" />
+        <SectionTitle eyebrow="Leaders" title="Leader & War Room Logins" icon="users" />
         <div className="space-y-2">
           {leaders.map((l) => (
             <div key={l.id} className="stagger-in lift flex items-center gap-3 rounded-lg border border-gold/15 bg-white/5 px-3 py-2.5">
@@ -176,7 +176,7 @@ export default function MasterConsole() {
               />
               <div className="min-w-0 flex-1">
                 <div className="truncate font-semibold text-parchment">{l.display_name} <span className="text-parchment/40">· {l.username}</span></div>
-                <div className="text-[11px] text-parchment/40">{l.alliance_tag} {l.alliance_slug?.toUpperCase()}</div>
+                <div className="text-[11px] text-parchment/40">{l.role === 'warroom' ? 'War Room crew' : `${l.alliance_tag || ''} ${l.alliance_slug?.toUpperCase() || ''}`.trim()}</div>
               </div>
               <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${l.must_change_password ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30' : 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/25'}`}>
                 {l.must_change_password ? 'Must Set Password' : 'Password Set'}

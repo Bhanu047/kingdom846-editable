@@ -16,8 +16,11 @@ function getLeaderAvatar(user) {
   return map[slug] || './assets/avatars/queen.webp'
 }
 
-export default function Sidebar({ active, onNavigate, onLogin, onSignOut, user, isAdmin }) {
-  const isShoni = user?.role === 'leader' && user?.username === 'shoni'
+export default function Sidebar({ active, onNavigate, onLogin, onSignOut, user, isAdmin, canWarRoom }) {
+  // Who sees the War Room link. The room itself and the server both decide this
+  // the same way; the prop carries that one answer here rather than a third
+  // copy of the rule.
+  const showWarRoom = canWarRoom ?? (user?.role === 'admin' || user?.username?.toLowerCase() === 'shoni')
 
   function openBattleLab() {
     try {
@@ -113,11 +116,23 @@ export default function Sidebar({ active, onNavigate, onLogin, onSignOut, user, 
             <button onClick={() => onNavigate('leader-portal')} className={`nav-item w-full text-left ${active === 'leader-portal' ? 'active nav-glow' : ''}`}>
               <Icon name="clock" size={17} /><span>Event Schedule</span>
             </button>
-            {isShoni && (
+            {showWarRoom && (
               <button onClick={() => onNavigate('war-room')} className={`nav-item w-full text-left ${active === 'war-room' ? 'active nav-glow' : ''}`}>
                 <Icon name="swords" size={17} /><span>War Room</span>
               </button>
             )}
+          </>
+        )}
+
+        {/* The war-room accounts have exactly one room to go to, so it is their
+            whole section rather than an extra line under someone else's. */}
+        {user?.role === 'warroom' && showWarRoom && (
+          <>
+            <div className="gold-divider my-3" />
+            <div className="eyebrow px-3 pb-2">War Room</div>
+            <button onClick={() => onNavigate('war-room')} className={`nav-item w-full text-left ${active === 'war-room' ? 'active nav-glow' : ''}`}>
+              <Icon name="swords" size={17} /><span>War Room</span>
+            </button>
           </>
         )}
       </nav>
@@ -133,7 +148,7 @@ export default function Sidebar({ active, onNavigate, onLogin, onSignOut, user, 
             />
             <div className="min-w-0 flex-1 leading-tight">
               <div className="truncate text-sm font-semibold text-parchment">{user.name}</div>
-              <div className="text-[10px] uppercase tracking-wider text-gold/70">{user.role === 'admin' ? 'Sovereign Admin' : 'Alliance Leader'}</div>
+              <div className="text-[10px] uppercase tracking-wider text-gold/70">{user.role === 'admin' ? 'Sovereign Admin' : user.role === 'warroom' ? 'War Room Crew' : 'Alliance Leader'}</div>
             </div>
             <button onClick={onSignOut} title="Sign out" className="text-parchment/50 hover:text-parchment"><Icon name="logout" size={16} /></button>
           </div>

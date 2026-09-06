@@ -73,7 +73,7 @@ export default function Settings() {
               <div className="flex-1">
                 <div className="font-display text-lg font-bold text-parchment">{user.display_name || user.username}</div>
                 <div className="text-xs text-parchment/50">
-                  {user.role === 'admin' ? 'Sovereign Admin' : 'Alliance Leader'}
+                  {user.role === 'admin' ? 'Sovereign Admin' : user.role === 'warroom' ? 'War Room Crew' : 'Alliance Leader'}
                   {user.alliance_tag && ` · ${user.alliance_tag}`}
                 </div>
               </div>

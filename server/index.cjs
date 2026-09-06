@@ -140,6 +140,22 @@ db.exec(`
     ('kzk', 'KamikazeKarnival', 'Lovely Khaos', 'English', 'Chaos with purpose'),
     ('sas', 'SaintsAndSinners', 'Lady Charlotte', 'English', 'Saints by day, sinners by night'),
     ('ice', 'IceHunters', 'Dunngeon', 'English', 'Cold steel, colder hearts');
+  -- The War Room roster, held once for everybody who can open the room.
+  -- It used to live in localStorage, which meant Shoni's roster existed only on
+  -- Shoni's phone: nobody else could see a march time she had just fixed, and a
+  -- cleared browser took the whole rally plan with it. One row, one shared
+  -- document, so a change one caller saves is the change the next caller reads.
+  --
+  -- The version counts saves. A save carrying a stale version is refused rather
+  -- than applied, so two people editing at once cannot silently overwrite each
+  -- other -- the second one is told, and chooses.
+  CREATE TABLE IF NOT EXISTS war_room_state (
+    id INTEGER PRIMARY KEY CHECK (id = 1),
+    data TEXT NOT NULL,
+    version INTEGER NOT NULL DEFAULT 0,
+    updated_at TEXT DEFAULT (datetime('now')),
+    updated_by TEXT
+  );
   CREATE TABLE IF NOT EXISTS kingshot_sync (
     id TEXT PRIMARY KEY,
     type TEXT NOT NULL,
@@ -378,12 +394,19 @@ const SEED = [
   { username: 'lovelykhaos', password: 'LovelyKzK_846!', role: 'leader', display_name: 'Lovely Khaos', alliance_tag: '[KzK]', alliance: 'kzk' },
   { username: 'ladycharlotte', password: 'CharlotteSas_846!', role: 'leader', display_name: 'Lady Charlotte', alliance_tag: '[SAS]', alliance: 'sas' },
   { username: 'dunngeon', password: 'DunngeonIce_846!', role: 'leader', display_name: 'Dunngeon', alliance_tag: '[ICE]', alliance: 'ice' },
+  // War Room crew. They are not alliance leaders -- they run rallies with Shoni
+  // and Sparta, and nothing else -- so they carry their own role rather than
+  // 'leader', which would hand them a leader's roster and event schedule too.
+  // Both sign in through the ordinary Login button and must replace the
+  // temporary password below on their first visit.
+  { username: 'panini', password: 'PaniniWar_846!', role: 'warroom', display_name: 'Panini', alliance_tag: '[RYO]', alliance: 'ryo', must_change_password: 1 },
+  { username: 'anonymous', password: 'AnonWar_846!', role: 'warroom', display_name: 'Anonymous', alliance_tag: '[RYO]', alliance: 'ryo', must_change_password: 1 },
 ]
 const exists = db.prepare('SELECT id, display_name FROM users WHERE username = ?')
-const ins = db.prepare('INSERT INTO users (username, password_hash, role, alliance_slug, display_name, alliance_tag) VALUES (?,?,?,?,?,?)')
+const ins = db.prepare('INSERT INTO users (username, password_hash, role, alliance_slug, display_name, alliance_tag, must_change_password) VALUES (?,?,?,?,?,?,?)')
 for (const u of SEED) {
   const row = exists.get(u.username)
-  if (!row) ins.run(u.username, hash(u.password), u.role, u.alliance, u.display_name, u.alliance_tag)
+  if (!row) ins.run(u.username, hash(u.password), u.role, u.alliance, u.display_name, u.alliance_tag, u.must_change_password ? 1 : 0)
   else if (!row.display_name) db.prepare('UPDATE users SET display_name=?, alliance_tag=? WHERE id=?').run(u.display_name, u.alliance_tag, row.id)
 }
 
@@ -402,6 +425,15 @@ function auth(req, res, next) {
 }
 const adminOnly = (req, res, next) => req.user.role === 'admin' ? next() : res.status(403).json({ error: 'Admin only' })
 const leadershipOnly = (req, res, next) => (req.user.role === 'admin' || req.user.role === 'leader') ? next() : res.status(403).json({ error: 'Leadership only' })
+
+// Who may open the War Room: Sparta, the war-room accounts, and Shoni, who is a
+// leader by role and was the room's only occupant before it was shared. Named
+// here once so the room's door and its data are guarded by the same rule.
+const WAR_ROOM_LEADERS = new Set(['shoni'])
+const canUseWarRoom = (user) => !!user && (
+  user.role === 'admin' || user.role === 'warroom' || WAR_ROOM_LEADERS.has(String(user.username || '').toLowerCase())
+)
+const warRoomOnly = (req, res, next) => canUseWarRoom(req.user) ? next() : res.status(403).json({ error: 'War Room access only' })
 
 // --- Rate limiting (in-memory, per-IP) ---
 const loginAttempts = new Map()
@@ -663,7 +695,9 @@ app.post('/api/login', (req, res) => {
     } catch (e) { console.error('[auth] password rehash failed', e.message) }
   }
   if (mode === 'admin' && user.role !== 'admin') return res.status(403).json({ error: 'This login is for the Sparta master account only.' })
-  if (mode === 'leader' && user.role !== 'leader') return res.status(403).json({ error: 'Leader login only. Sparta uses Royal Access.' })
+  // The war-room accounts come through the same door as the leaders; only the
+  // Royal Access door stays admin-only.
+  if (mode === 'leader' && user.role !== 'leader' && user.role !== 'warroom') return res.status(403).json({ error: 'Leader login only. Sparta uses Royal Access.' })
   clearRateLimit(ip)
   logEvent(req, 'action', 'login', { detail: user.role, userId: user.id })
   res.json({ token: makeToken(user.id), user: { id: user.id, username: user.username, role: user.role, alliance_slug: user.alliance_slug, display_name: user.display_name, alliance_tag: user.alliance_tag, must_change_password: !!user.must_change_password } })
@@ -1443,13 +1477,15 @@ app.get('/api/admin/backups/:name', auth, adminOnly, (req, res) => {
 // reading a const early is a load-time error that takes the whole server down.
 module.exports = { ...(module.exports || {}), runBackup, backupTick, listBackups, verifyBackup, pruneBackups, BACKUP_DIR }
 
+// The war-room accounts are listed here too: they are Sparta's to reset when
+// one of them forgets a password, and there is no other screen that could.
 app.get('/api/admin/leaders', auth, adminOnly, (_req, res) => {
-  res.json(db.prepare("SELECT id, username, display_name, alliance_tag, alliance_slug, role, must_change_password FROM users WHERE role='leader' ORDER BY alliance_slug").all())
+  res.json(db.prepare("SELECT id, username, display_name, alliance_tag, alliance_slug, role, must_change_password FROM users WHERE role IN ('leader','warroom') ORDER BY role, alliance_slug").all())
 })
 
 app.patch('/api/admin/leaders/:id/credentials', auth, adminOnly, (req, res) => {
   const id = Number(req.params.id)
-  const leader = db.prepare("SELECT * FROM users WHERE id=? AND role='leader'").get(id)
+  const leader = db.prepare("SELECT * FROM users WHERE id=? AND role IN ('leader','warroom')").get(id)
   if (!leader) return res.status(404).json({ error: 'Leader not found' })
   const username = String(req.body.username || '').trim().toLowerCase()
   const new_password = String(req.body.new_password || '').trim()
@@ -2561,6 +2597,69 @@ app.post('/api/leader/roster', auth, leaderOnly, (req, res) => {
   })
   tx(clean)
   res.json({ ok: true, count: clean.length })
+})
+
+// --- War Room: one roster, shared by everyone who can open the room ---
+//
+// The room's whole point is that the callers agree on the same march times. A
+// per-device roster could not do that: Shoni fixed a time, Panini's screen
+// still showed the old one, and the rally went out unsynced. Reads are open to
+// the whole crew, writes come back to the same row, and the version below is
+// how a caller finds out someone else got there first.
+
+const WAR_ROOM_MAX = 200
+
+/** Only the fields the room actually renders survive a save. */
+function cleanWhales(raw) {
+  const list = Array.isArray(raw) ? raw.slice(0, WAR_ROOM_MAX) : []
+  return list.map((w, i) => ({
+    id: String(w && w.id != null ? w.id : `w${i}`).slice(0, 64),
+    name: String((w && w.name) || '').trim().slice(0, 64) || 'Unnamed',
+    march: String((w && w.march) || '0:00').trim().slice(0, 12),
+    status: String((w && w.status) || 'Undeployed').trim().slice(0, 48),
+  }))
+}
+
+const readWarRoom = () => {
+  const row = db.prepare('SELECT data, version, updated_at, updated_by FROM war_room_state WHERE id = 1').get()
+  let whales = []
+  if (row) { try { whales = cleanWhales(JSON.parse(row.data)) } catch { whales = [] } }
+  return {
+    whales,
+    version: row ? row.version : 0,
+    updated_at: row ? row.updated_at : null,
+    updated_by: row ? row.updated_by : null,
+  }
+}
+
+app.get('/api/war-room/roster', auth, warRoomOnly, (_req, res) => res.json(readWarRoom()))
+
+app.put('/api/war-room/roster', auth, warRoomOnly, (req, res) => {
+  const whales = cleanWhales(req.body && req.body.whales)
+  const claimed = req.body && req.body.version
+  const by = req.user.display_name || req.user.username
+  // The save and the version check are one unit: two callers pressing Save in
+  // the same second must not both read version 4 and both write version 5.
+  const commit = db.transaction(() => {
+    const current = db.prepare('SELECT version FROM war_room_state WHERE id = 1').get()
+    const version = current ? current.version : 0
+    // A save that names no version is a deliberate overwrite -- the caller has
+    // already been shown the other roster and chose theirs.
+    if (claimed != null && Number(claimed) !== version) return null
+    const next = version + 1
+    db.prepare(`INSERT INTO war_room_state (id, data, version, updated_at, updated_by) VALUES (1,?,?,datetime('now'),?)
+      ON CONFLICT(id) DO UPDATE SET data=excluded.data, version=excluded.version, updated_at=excluded.updated_at, updated_by=excluded.updated_by`)
+      .run(JSON.stringify(whales), next, by)
+    return next
+  })
+  const saved = commit()
+  if (saved === null) {
+    // Stale: hand back what is actually stored so the room can show it rather
+    // than leaving the caller guessing what they would have destroyed.
+    return res.status(409).json({ error: 'Someone else saved the roster while you were editing.', ...readWarRoom() })
+  }
+  logEvent(req, 'action', 'war-room-save', { detail: String(whales.length), userId: req.user.id })
+  res.json(readWarRoom())
 })
 
 // Public roster (all alliances) — feeds Rankings / Hall of Legends

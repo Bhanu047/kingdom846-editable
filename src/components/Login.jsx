@@ -138,7 +138,7 @@ export default function Login({ onClose, onSuccess, mode = 'leader' }) {
         <p className="mt-1 text-xs text-parchment/50">
           {isAdmin
             ? 'Sparta master account — full control of the realm.'
-            : 'Alliance leader portal — manage your roster and requests.'}
+            : 'Alliance leaders and the war room crew — rosters, schedules and the command table.'}
         </p>
 
         <form onSubmit={submit} className="mt-5 space-y-3">
@@ -173,7 +173,7 @@ export default function Login({ onClose, onSuccess, mode = 'leader' }) {
         <div className="mt-4 rounded-md border border-gold/20 bg-gold/5 px-3 py-2 text-[11px] text-gold/80">
           {isAdmin
             ? 'For the Sparta master account only. Leaders must use the top-right Login button.'
-            : 'For alliance leaders only. Sparta uses the Royal Access button.'}
+            : 'For alliance leaders and war room accounts. Sparta uses the Royal Access button.'}
         </div>
       </div>
     </div>

@@ -2599,7 +2599,7 @@ app.post('/api/leader/roster', auth, leaderOnly, (req, res) => {
   res.json({ ok: true, count: clean.length })
 })
 
-// --- War Room: one roster, shared by everyone who can open the room ---
+// --- War Room: one set of rally groups, shared by everyone who can open the room ---
 //
 // The room's whole point is that the callers agree on the same march times. A
 // per-device roster could not do that: Shoni fixed a time, Panini's screen
@@ -2607,11 +2607,12 @@ app.post('/api/leader/roster', auth, leaderOnly, (req, res) => {
 // the whole crew, writes come back to the same row, and the version below is
 // how a caller finds out someone else got there first.
 
-const WAR_ROOM_MAX = 200
+const WAR_ROOM_MAX_WHALES = 200
+const WAR_ROOM_MAX_GROUPS = 12
 
 /** Only the fields the room actually renders survive a save. */
 function cleanWhales(raw) {
-  const list = Array.isArray(raw) ? raw.slice(0, WAR_ROOM_MAX) : []
+  const list = Array.isArray(raw) ? raw.slice(0, WAR_ROOM_MAX_WHALES) : []
   return list.map((w, i) => ({
     id: String(w && w.id != null ? w.id : `w${i}`).slice(0, 64),
     name: String((w && w.name) || '').trim().slice(0, 64) || 'Unnamed',
@@ -2620,12 +2621,30 @@ function cleanWhales(raw) {
   }))
 }
 
+/**
+ * A castle fight is not one roster -- there is the main rally and the counter --
+ * so the shared document is the groups, each with its own whales. A bare array
+ * is read as the single roster this held before groups existed.
+ */
+function cleanGroups(raw) {
+  // Whales carry a march time and no whale list of their own.
+  if (Array.isArray(raw) && raw.length && raw.every((w) => w && !Array.isArray(w.whales) && w.march !== undefined)) {
+    return [{ id: 'main', name: 'Main rally', whales: cleanWhales(raw) }]
+  }
+  const list = Array.isArray(raw) ? raw.slice(0, WAR_ROOM_MAX_GROUPS) : []
+  return list.map((g, i) => ({
+    id: String(g && g.id != null ? g.id : `g${i}`).slice(0, 64),
+    name: String((g && g.name) || '').trim().slice(0, 48) || 'Untitled',
+    whales: cleanWhales(g && g.whales),
+  }))
+}
+
 const readWarRoom = () => {
   const row = db.prepare('SELECT data, version, updated_at, updated_by FROM war_room_state WHERE id = 1').get()
-  let whales = []
-  if (row) { try { whales = cleanWhales(JSON.parse(row.data)) } catch { whales = [] } }
+  let groups = []
+  if (row) { try { groups = cleanGroups(JSON.parse(row.data)) } catch { groups = [] } }
   return {
-    whales,
+    groups,
     version: row ? row.version : 0,
     updated_at: row ? row.updated_at : null,
     updated_by: row ? row.updated_by : null,
@@ -2635,7 +2654,7 @@ const readWarRoom = () => {
 app.get('/api/war-room/roster', auth, warRoomOnly, (_req, res) => res.json(readWarRoom()))
 
 app.put('/api/war-room/roster', auth, warRoomOnly, (req, res) => {
-  const whales = cleanWhales(req.body && req.body.whales)
+  const groups = cleanGroups(req.body && req.body.groups)
   const claimed = req.body && req.body.version
   const by = req.user.display_name || req.user.username
   // The save and the version check are one unit: two callers pressing Save in
@@ -2649,7 +2668,7 @@ app.put('/api/war-room/roster', auth, warRoomOnly, (req, res) => {
     const next = version + 1
     db.prepare(`INSERT INTO war_room_state (id, data, version, updated_at, updated_by) VALUES (1,?,?,datetime('now'),?)
       ON CONFLICT(id) DO UPDATE SET data=excluded.data, version=excluded.version, updated_at=excluded.updated_at, updated_by=excluded.updated_by`)
-      .run(JSON.stringify(whales), next, by)
+      .run(JSON.stringify(groups), next, by)
     return next
   })
   const saved = commit()
@@ -2658,7 +2677,7 @@ app.put('/api/war-room/roster', auth, warRoomOnly, (req, res) => {
     // than leaving the caller guessing what they would have destroyed.
     return res.status(409).json({ error: 'Someone else saved the roster while you were editing.', ...readWarRoom() })
   }
-  logEvent(req, 'action', 'war-room-save', { detail: String(whales.length), userId: req.user.id })
+  logEvent(req, 'action', 'war-room-save', { detail: String(groups.reduce((n, g) => n + g.whales.length, 0)), userId: req.user.id })
   res.json(readWarRoom())
 })
 

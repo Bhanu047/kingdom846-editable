@@ -90,15 +90,16 @@ export function AuthProvider({ children }) {
     return res.json()
   }, [])
 
-  // The shared War Room roster. It is one document on the server rather than a
-  // copy per device, so a march time Shoni fixes is the one Panini reads.
-  // `version` is what the save carries back: the server refuses a save built on
-  // a roster someone else has since replaced, and the room asks what to do.
+  // The shared War Room rally groups. They are one document on the server
+  // rather than a copy per device, so a march time Shoni fixes is the one
+  // Panini reads. `version` is what the save carries back: the server refuses a
+  // save built on groups someone else has since replaced, and the room asks
+  // what to do about it.
   const getWarRoom = useCallback(async () => apiJson('/api/war-room/roster'), [])
-  const saveWarRoom = useCallback(async (whales, version) => {
+  const saveWarRoom = useCallback(async (groups, version) => {
     const res = await apiFetch('/api/war-room/roster', {
       method: 'PUT',
-      body: JSON.stringify({ whales, version }),
+      body: JSON.stringify({ groups, version }),
     })
     if (res.status === 409) {
       const remote = await res.json().catch(() => ({}))

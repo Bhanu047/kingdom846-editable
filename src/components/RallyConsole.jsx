@@ -125,11 +125,11 @@ export default function RallyConsole({ sequence, startAt, onAbort, onComplete })
 
   // The one big numeral. Seconds while a call is close enough to act on,
   // M:SS once it is far enough away that counting seconds is noise.
-  let readout, readoutClass = 'text-[24vw] sm:text-[8rem]'
+  let readout, readoutClass = 'text-[20vw] sm:text-[8rem]'
   if (phase === 'ARMING') readout = String(Math.max(1, Math.ceil(-now)))
   else if (phase === 'CLEAR') readout = clock(impactIn)
-  else if (phase === 'LAUNCH') { readout = 'GO'; readoutClass = 'text-[19vw] sm:text-[6.5rem]' }
-  else if (t > 60) { readout = clock(t); readoutClass = 'text-[16vw] sm:text-[5.5rem]' }
+  else if (phase === 'LAUNCH') { readout = 'GO'; readoutClass = 'text-[17vw] sm:text-[6.5rem]' }
+  else if (t > 60) { readout = clock(t); readoutClass = 'text-[14vw] sm:text-[5.5rem]' }
   else readout = String(Math.ceil(t))
 
   // Drawn only once a call is inside the window -- a ring sitting full through
@@ -167,17 +167,17 @@ export default function RallyConsole({ sequence, startAt, onAbort, onComplete })
           is the whole operation on one line -- spent time behind the head,
           a notch for every call, so the shape of what is left is visible
           without reading the queue below. */}
-      <div className="wr-console k-plate px-4 pb-3 pt-4" data-phase={phase}>
+      <div className="wr-console k-plate px-4 pb-3 pt-3" data-phase={phase}>
         <div className="flex items-end justify-between">
           <div>
             <div className="font-mono text-[9px] font-bold uppercase tracking-[.2em] text-parchment/45">All marches land in</div>
-            <div className="mt-0.5 font-mono text-3xl font-bold tabular-nums" style={{ color: 'var(--wr)' }}>{clock(impactIn)}</div>
+            <div className="mt-0.5 font-mono text-2xl font-bold tabular-nums sm:text-3xl" style={{ color: 'var(--wr)' }}>{clock(impactIn)}</div>
           </div>
           <div className="text-right font-mono text-[10px] uppercase tracking-[.14em] text-parchment/40">
             {sequence.filter((w) => w.offset - now <= 0).length}<span className="text-parchment/25"> / {sequence.length}</span> called
           </div>
         </div>
-        <div className="wr-rail mt-3">
+        <div className="wr-rail mt-2.5">
           <div className="wr-rail-track" />
           <div className="wr-rail-fill" style={{ width: `${progress}%` }} />
           {sequence.map((w) => (
@@ -192,13 +192,38 @@ export default function RallyConsole({ sequence, startAt, onAbort, onComplete })
         </div>
       </div>
 
-      {/* THE APPROACH. The marches themselves, closing on one target. The
-          console above says who and when; this says where everything is. */}
-      <RallyApproach sequence={sequence} now={now} impactAt={impactAt} phase={phase} />
-
+      {/* FIRING ORDER. The queue sits here, directly under the clock, because
+          it is the thing the caller reads between calls: who is next, who is
+          after that, and how long each has. It used to be last, below a map
+          the height of the screen, so reaching it meant scrolling mid-rally --
+          exactly when a phone is hardest to operate. */}
+      <div className="wr-console k-plate p-4" data-phase={phase}>
+        <div className="eyebrow mb-3">Firing Order</div>
+        <div className="space-y-2">
+          {sequence.map((w, i) => {
+            const callIn = w.offset - now
+            const state = callIn <= 0 ? 'done' : i === nextIndex ? 'active' : 'pending'
+            return (
+              <div key={w.id} data-state={state} className="wr-row royal-plaque flex items-center gap-3">
+                <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full border border-gold/25 font-mono text-[10px] font-bold text-gold/70">
+                  {state === 'done' ? '✓' : i + 1}
+                </span>
+                <span className="flex-1 truncate font-semibold text-parchment">{w.name}</span>
+                <span className="font-mono text-[10px] tabular-nums text-parchment/35">march {w.march}</span>
+                <span
+                  className="w-16 text-right font-mono text-xs font-bold tabular-nums"
+                  style={{ color: state === 'active' ? 'var(--wr)' : undefined }}
+                >
+                  {callIn <= 0 ? 'CALLED' : `T-${clock(callIn)}`}
+                </span>
+              </div>
+            )
+          })}
+        </div>
+      </div>
       {/* THE CALL. One name, one number, one state -- identifiable by colour
           before a single word is read. */}
-      <div ref={callPanel} className="wr-console k-plate relative overflow-hidden py-9 text-center" data-phase={phase}>
+      <div ref={callPanel} className="wr-console k-plate relative overflow-hidden py-6 text-center sm:py-9" data-phase={phase}>
         <div className="wr-radar" />
         <div className="wr-rings" />
         <div className="wr-scan" />
@@ -246,9 +271,11 @@ export default function RallyConsole({ sequence, startAt, onAbort, onComplete })
               caller draw breath instead of being surprised twice a minute.
               Guarded on `next`: once everything is called findIndex returns
               -1, and -1 + 1 wraps to sequence[0], which re-advertised the
-              FIRST whale at T-0:00 under "Sequence Complete". */}
+              FIRST whale at T-0:00 under "Sequence Complete". On a phone it
+              is hidden: the full queue is six inches higher up the screen,
+              and this panel has to fit above the fold. */}
           {next && sequence[nextIndex + 1] && (
-            <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-gold/15 bg-ink/60 px-3 py-1.5">
+            <div className="mt-4 hidden items-center gap-2 rounded-full border border-gold/15 bg-ink/60 px-3 py-1.5 sm:inline-flex">
               <Icon name="chevron" size={12} className="text-gold/50" />
               <span className="font-mono text-[10px] uppercase tracking-[.14em] text-parchment/45">Then</span>
               <span className="text-xs font-semibold text-parchment/80">{sequence[nextIndex + 1].name}</span>
@@ -260,32 +287,10 @@ export default function RallyConsole({ sequence, startAt, onAbort, onComplete })
         </div>
       </div>
 
-      {/* FIRING ORDER. The queue, with the active row lit in the state colour
-          so the eye can drop straight to it. */}
-      <div className="wr-console k-plate p-4" data-phase={phase}>
-        <div className="eyebrow mb-3">Firing Order</div>
-        <div className="space-y-2">
-          {sequence.map((w, i) => {
-            const callIn = w.offset - now
-            const state = callIn <= 0 ? 'done' : i === nextIndex ? 'active' : 'pending'
-            return (
-              <div key={w.id} data-state={state} className="wr-row royal-plaque flex items-center gap-3">
-                <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full border border-gold/25 font-mono text-[10px] font-bold text-gold/70">
-                  {state === 'done' ? '✓' : i + 1}
-                </span>
-                <span className="flex-1 truncate font-semibold text-parchment">{w.name}</span>
-                <span className="font-mono text-[10px] tabular-nums text-parchment/35">march {w.march}</span>
-                <span
-                  className="w-16 text-right font-mono text-xs font-bold tabular-nums"
-                  style={{ color: state === 'active' ? 'var(--wr)' : undefined }}
-                >
-                  {callIn <= 0 ? 'CALLED' : `T-${clock(callIn)}`}
-                </span>
-              </div>
-            )
-          })}
-        </div>
-      </div>
+      {/* THE APPROACH. The marches themselves, closing on one target. It is
+          last deliberately: everything above is what the call needs, and this
+          is what the room watches once the names are away. */}
+      <RallyApproach sequence={sequence} now={now} impactAt={impactAt} phase={phase} />
     </div>
   )
 }

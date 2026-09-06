@@ -2306,7 +2306,9 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
 }
 
 /* Row states in the firing order. */
-.wr-row { transition: background 260ms ease, border-color 260ms ease, opacity 260ms ease }
+/* Tighter than a stock plaque. The queue sits above the call panel now, so
+   every row it saves is a row of the big readout that stays on screen. */
+.wr-row { padding: .55rem .75rem; transition: background 260ms ease, border-color 260ms ease, opacity 260ms ease }
 .wr-row[data-state="active"] {
   border-color: var(--wr) !important;
   background: color-mix(in srgb, var(--wr) 10%, transparent);

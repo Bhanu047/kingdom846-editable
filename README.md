@@ -127,10 +127,14 @@ in-app credential management (see below).
 | Panini | warroom | Login + War Room only |
 | Anonymous | warroom | Login + War Room only |
 
-Panini and Anonymous are seeded with a temporary password and are asked to set
-their own on first login. They sign in through the ordinary **Login** button,
-not Royal Access, and the War Room is the only thing their accounts open — no
-roster upload, no event schedule, no admin screens.
+Panini and Anonymous both sit under **[RYO]**, are seeded with a temporary
+password and are asked to set their own on first login — and can change it again
+whenever they like from Settings. They sign in through the ordinary **Login**
+button, not Royal Access, and the War Room is the only thing their accounts open
+— no roster upload, no event schedule, no admin screens. Each has their own
+portrait (`public/assets/avatars/panini.webp`, `anonymous.webp`), resolved by
+`src/lib/avatars.js`, which is the single place that decides which portrait an
+account gets.
 
 ### How to change your admin (Sparta) username & password
 
@@ -145,12 +149,17 @@ the server (delete `data.db` first if you want the new seed to re-apply).
 
 ### How to add / change alliance leader logins
 
-**In the app (Sparta resets them — leaders cannot change their own):**
+**Anyone can change their own login:** sign in, open **Settings** → "Your
+Login", enter your current password and a new username, a new password, or
+both. This is the same for Sparta, the alliance leaders and the war room crew —
+setting a password on first login is not a one-time chance any more.
+
+**If somebody forgets theirs, Sparta resets it:**
 1. Log in as Sparta via **Royal Access**.
-2. Open **Master Console** → "Alliance Leaders" list.
-3. Click **Reset** next to a leader → set a new username + password → Save.
-   (If a leader forgets their password, Sparta resets it here and gives the
-   leader the new credentials.)
+2. Open **Master Console** → "Leader & War Room Logins".
+3. Click **Reset** next to the account → set a new username + password → Save,
+   and hand them the new credentials. They are asked to set their own the next
+   time they sign in.
 
 **Or — in code:** edit the `SEED` array in `server/index.cjs` (each leader has
 `role: 'leader'` and an `allianceSlug`), then restart (delete `data.db` to re-seed).

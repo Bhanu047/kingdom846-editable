@@ -1,20 +1,7 @@
 import { Fragment } from 'react'
 import Icon from './Icon'
 import { nav } from '../data/kingdom'
-
-// Map leader to their alliance-themed avatar
-function getLeaderAvatar(user) {
-  if (!user) return './assets/avatars/king.webp'
-  if (user.role === 'admin') return './assets/avatars/spartan.webp'
-  const slug = user.alliance_slug || ''
-  const map = {
-    'ryo': './assets/avatars/ryo-lord.webp',
-    'kzk': './assets/avatars/kzk-lord.webp',
-    'sas': './assets/avatars/sas-lord.webp',
-    'ice': './assets/avatars/ice-lord.webp',
-  }
-  return map[slug] || './assets/avatars/queen.webp'
-}
+import { avatarFor } from '../lib/avatars'
 
 export default function Sidebar({ active, onNavigate, onLogin, onSignOut, user, isAdmin, canWarRoom }) {
   // Who sees the War Room link. The room itself and the server both decide this
@@ -142,7 +129,7 @@ export default function Sidebar({ active, onNavigate, onLogin, onSignOut, user, 
         {user ? (
           <div className="flex items-center gap-3 rounded-lg border border-gold/10 bg-white/5 p-2">
             <img
-              src={getLeaderAvatar(user)}
+              src={avatarFor(user)}
               alt={user.name}
               className="grid h-9 w-9 place-items-center rounded-full object-cover ring-2 ring-gold/50 shadow-lg"
             />

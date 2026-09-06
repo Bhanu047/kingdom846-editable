@@ -337,7 +337,7 @@ function Shell() {
     return <ErrorBoundary key={page}><Suspense fallback={<PageSkeleton />}>{lazyEl}</Suspense></ErrorBoundary>
   }
 
-  const sidebarUser = user ? { name: user.display_name || user.username, username: user.username, role: user.role, alliance_slug: user.alliance_slug } : null
+  const sidebarUser = user ? { name: user.display_name || user.username, username: user.username, display_name: user.display_name, role: user.role, alliance_slug: user.alliance_slug } : null
   const handleSignOut = () => { signOut(); navigate('dashboard') }
 
   return (

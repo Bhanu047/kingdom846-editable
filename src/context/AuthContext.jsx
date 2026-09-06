@@ -47,6 +47,10 @@ export function AuthProvider({ children }) {
       try { msg = (await res.json()).error || msg } catch {}
       throw new Error(msg)
     }
+    // The server lowercases the username it stores; carry that into the session
+    // so the screen does not keep naming an account that no longer exists.
+    const stored = String(username || '').trim().toLowerCase()
+    setUser((prev) => (prev && stored ? { ...prev, username: stored } : prev))
     return res.json()
   }, [])
 

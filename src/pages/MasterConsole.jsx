@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext'
 import { Panel, SectionTitle, Pill } from '../components/ui'
 import Icon from '../components/Icon'
 import { apiJson, apiFetch } from '../lib/api'
+import { avatarFor } from '../lib/avatars'
 import BackupPanel from '../components/BackupPanel'
 import ArenaResetPanel from '../components/ArenaResetPanel'
 import EventRepeatPanel from '../components/EventRepeatPanel'
@@ -165,12 +166,7 @@ export default function MasterConsole() {
           {leaders.map((l) => (
             <div key={l.id} className="stagger-in lift flex items-center gap-3 rounded-lg border border-gold/15 bg-white/5 px-3 py-2.5">
               <img
-                src={l.role === 'admin' ? './assets/avatars/spartan.webp' : ({
-                  'ryo': './assets/avatars/ryo-lord.webp',
-                  'kzk': './assets/avatars/kzk-lord.webp',
-                  'sas': './assets/avatars/sas-lord.webp',
-                  'ice': './assets/avatars/ice-lord.webp',
-                }[l.alliance_slug] || './assets/avatars/queen.webp')}
+                src={avatarFor(l)}
                 alt={l.display_name}
                 className="grid h-9 w-9 flex-shrink-0 place-items-center rounded-md object-cover ring-1 ring-gold/30"
               />

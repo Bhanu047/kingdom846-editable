@@ -1035,11 +1035,18 @@ input:focus, textarea:focus, select:focus {
   text-shadow: 0 0 8px rgba(212,175,55,.25);
 }
 .royal-count-label {
+  /* 0.5rem is 8px, and on a phone those D / H / M / S letters under the
+     countdown were the smallest text on the site by some way. Nudged to 10px
+     on touch screens only, where the reading distance is longer and the
+     pixels are being asked to do more. Desktop keeps the finer setting. */
   font-size: 0.5rem;
   color: rgba(212,175,55,.35);
   text-transform: uppercase;
   letter-spacing: 0.15em;
   font-weight: 600;
+}
+@media (pointer: coarse) {
+  .royal-count-label { font-size: 0.625rem }
 }
 
 /* Royal select — styled dropdowns */
@@ -2452,6 +2459,35 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
 .tap-target {
   margin: -0.75rem;
   padding: 0.75rem;
+}
+
+/* The crown button is fixed to the bottom-right, and the credits line is the
+   last thing in the page -- so on a phone the crown came to rest on top of the
+   "Privacy" link. The tap still reached the link, but a control sitting on a
+   link looks like a mistake. The line clears the button now. */
+@media (pointer: coarse) {
+  .footer-credits { padding-right: 4.25rem; flex-wrap: wrap }
+}
+
+/* A thumb is about 44px across and several controls here are 16 to 20px tall.
+   These grow the HIT AREA and nothing else -- an invisible pseudo-element
+   centred on the control, so the layout, the spacing and the look are all
+   exactly as they were. Only on touch pointers: a mouse does not need it.
+
+   .tap-y grows height alone, for controls that sit shoulder to shoulder --
+   the footer's "Discord ◆ Privacy" would otherwise have overlapping targets
+   and the wrong link would win in the middle. */
+@media (pointer: coarse) {
+  .tap-y, .tap-xy { position: relative }
+  .tap-y::after, .tap-xy::after {
+    content: "";
+    position: absolute;
+    left: 50%; top: 50%;
+    translate: -50% -50%;
+    height: max(100%, 44px);
+  }
+  .tap-y::after  { width: 100% }
+  .tap-xy::after { width: max(100%, 44px) }
 }
 
 /* The chat button and its panel are `position: fixed`, so `viewport-fit=cover`

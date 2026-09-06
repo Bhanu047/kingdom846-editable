@@ -224,7 +224,7 @@ export default function Dashboard({ onNavigate }) {
 
       {/* Kingdom Performance — verified Atlas + Optimizer summary; full detail in About Kingdom */}
       <Panel glow className="glass-panel">
-        <RoyalSectionHeader icon="trophy" eyebrow="Records" title="Kingdom Performance" action={<button onClick={() => onNavigate('about')} className="text-xs text-gold hover:underline">View About →</button>} />
+        <RoyalSectionHeader icon="trophy" eyebrow="Records" title="Kingdom Performance" action={<button onClick={() => onNavigate('about')} className="tap-y text-xs text-gold hover:underline">View About →</button>} />
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <KvKStat onClick={about} label="S-Tier Atlas" value={tracker846.atlas.score.toFixed(2)} sub={`Rank #${tracker846.atlas.rank}`} icon="landmark" />
           <KvKStat onClick={about} label="KvK Rating" value={tracker846.kvk.rating.toFixed(3)} sub={`Global Rank #${tracker846.kvk.rank}`} icon="trophy" />
@@ -237,7 +237,7 @@ export default function Dashboard({ onNavigate }) {
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Alliance Ranking — 4 clickable banners */}
         <Panel className="lift-glow lg:col-span-2">
-          <RoyalSectionHeader icon="shield" eyebrow="The Council" title="Alliance Ranking" action={<button onClick={() => onNavigate('alliances')} className="text-xs text-gold hover:underline">All →</button>} />
+          <RoyalSectionHeader icon="shield" eyebrow="The Council" title="Alliance Ranking" action={<button onClick={() => onNavigate('alliances')} className="tap-y text-xs text-gold hover:underline">All →</button>} />
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             {top4.map((a) => (
               <button key={a.slug} onClick={() => onNavigate('alliances')} className="lift group relative overflow-hidden rounded-lg border border-gold/20">
@@ -345,7 +345,7 @@ export default function Dashboard({ onNavigate }) {
       {/* News + Guides */}
       <div className="grid gap-6 lg:grid-cols-3">
         <Panel className="lg:col-span-1">
-          <SectionTitle eyebrow="Realm" title="Kingdom News" action={<button onClick={() => onNavigate('news')} className="text-xs text-gold hover:underline">All →</button>} />
+          <SectionTitle eyebrow="Realm" title="Kingdom News" action={<button onClick={() => onNavigate('news')} className="tap-y text-xs text-gold hover:underline">All →</button>} />
           <div className="space-y-3">
             {displayNews.slice(0, 4).map((n) => (
               <button key={n.id} onClick={() => onNavigate('news')} className="block w-full text-left">
@@ -360,7 +360,7 @@ export default function Dashboard({ onNavigate }) {
         </Panel>
 
         <Panel className="lg:col-span-2">
-          <SectionTitle eyebrow="Strategy" title="Guides & Playbooks" action={<button onClick={() => onNavigate('guides')} className="text-xs text-gold hover:underline">All →</button>} />
+          <SectionTitle eyebrow="Strategy" title="Guides & Playbooks" action={<button onClick={() => onNavigate('guides')} className="tap-y text-xs text-gold hover:underline">All →</button>} />
           <div className="grid gap-4 md:grid-cols-3">
             {displayGuides.slice(0, 3).map((g) => (
               <button key={g.id} onClick={() => onNavigate('guides')} className="panel overflow-hidden text-left transition hover:panel-glow flex flex-col">

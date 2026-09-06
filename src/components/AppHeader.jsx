@@ -81,7 +81,7 @@ export default function AppHeader({
       {isAdmin && page !== 'console' && <button onClick={() => onNavigate('console')} className="hidden shrink-0 items-center gap-1.5 rounded-lg border border-gold/30 bg-gold/10 px-3 py-1.5 text-xs font-semibold text-gold sm:flex" data-testid="button-master-console"><Icon name="crown" size={13} /> Master</button>}
       <button onClick={onOpenSearch} aria-label="Search the realm" className={appMode
         ? 'tap-target shrink-0 text-gold/70 hover:text-gold-bright'
-        : 'flex shrink-0 items-center gap-2 rounded-lg border border-gold/20 bg-ink/60 px-2.5 py-1.5 text-xs text-parchment/50 hover:text-parchment sm:px-3'}>
+        : 'tap-xy flex shrink-0 items-center gap-2 rounded-lg border border-gold/20 bg-ink/60 px-2.5 py-1.5 text-xs text-parchment/50 hover:text-parchment sm:px-3'}>
         <Icon name="search" size={appMode ? 19 : 14} />{!appMode && <span className="hidden sm:inline">Search the realm…</span>}
       </button>
       {user ? (

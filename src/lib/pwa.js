@@ -40,6 +40,26 @@ function setWaiting(registration) {
 
 export function getWaitingRegistration() { return waitingRegistration }
 
+/* "Not now" has to mean not now, not never.
+ *
+ * Dismissing the update banner only cleared the component's own state, and the
+ * build check refuses to run again while a waiting update is already recorded
+ * -- so one tap on "not now" hid the only route to the new version for the rest
+ * of the visit, on an app that is served shell-first and therefore cannot get
+ * there on its own. Reported by someone who tapped it by accident and then
+ * could not find their way back to the update.
+ *
+ * So dismissing clears the record and holds the check off for a few minutes.
+ * The next time the app is brought to the foreground after that, it notices the
+ * new build again and offers it again.
+ */
+const DISMISS_QUIET = 5 * 60 * 1000
+
+export function dismissUpdate() {
+  setWaiting(null)
+  lastBuildCheck = Date.now() - BUILD_CHECK_INTERVAL + DISMISS_QUIET
+}
+
 export function onUpdateReady(fn) {
   updateListeners.add(fn)
   return () => updateListeners.delete(fn)

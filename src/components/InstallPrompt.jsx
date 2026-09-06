@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import Icon from './Icon'
-import { getInstallPrompt, onInstallPromptChange, promptInstall, isStandalone, isIOS, getWaitingRegistration, onUpdateReady, applyUpdate } from '../lib/pwa'
+import { getInstallPrompt, onInstallPromptChange, promptInstall, isStandalone, isIOS, getWaitingRegistration, onUpdateReady, applyUpdate, dismissUpdate } from '../lib/pwa'
 import { trackAction } from '../lib/analytics'
 
 const DISMISS_KEY = 'k846-install-dismissed-v1'
@@ -78,7 +78,9 @@ export default function InstallPrompt() {
         icon="sparkles"
         title="A new version is ready"
         body="Reload to get the latest kingdom data, guides and fixes."
-        onDismiss={() => setUpdateReg(null)}
+        // Not never: dismissUpdate lets the check offer it again in a few
+        // minutes, so a mis-tap cannot strand anyone on the old build.
+        onDismiss={() => { dismissUpdate(); setUpdateReg(null) }}
         action={
           <button onClick={() => applyUpdate(updateReg)} className="btn-primary !py-1.5 !text-xs">
             Reload now

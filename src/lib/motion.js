@@ -153,6 +153,7 @@ export function installStagger(opts = {}) {
         delay: stagger(step),
         ease: motion.spring.element(),
       })
+      guaranteeVisible(children)
     } catch (err) {
       // A reveal that throws must never leave the page invisible.
       console.error('[motion] stagger failed, showing content', err)
@@ -321,6 +322,40 @@ export const motion = {
  * encodes several hard-won fixes and is not what needed changing. Only the
  * movement itself is different.
  */
+/* The guarantee, for anything a tween hides before it shows it.
+ *
+ * Every entrance in this file starts its subject at opacity 0 and animates up.
+ * That is fine while the animation runs. It is not fine when the main thread
+ * is busy -- a phone loading a route, decoding hero art and running three
+ * observers -- because the tween is created, the start state is applied, and
+ * then no frame runs for a second or more. What is on screen in that second is
+ * content at opacity 0, and there is nothing in a tween that ever checks.
+ *
+ * Reported twice from the same phone, both times as things that were simply
+ * not there: a transparent View Alliances button, and the Kingdom Performance
+ * panel as an empty gold box. Both were mid-animation, which is no comfort to
+ * somebody looking at them.
+ *
+ * So every hide-then-show carries a deadline. Past it, anything still
+ * transparent is simply shown. The number is well past the natural end of the
+ * animations here -- a spring plus the longest stagger -- so a healthy
+ * entrance never meets it, and a starved one stops being invisible.
+ */
+const VISIBLE_BY_MS = 1100
+
+function guaranteeVisible(els, after = VISIBLE_BY_MS) {
+  const list = [...els].filter(Boolean)
+  if (!list.length) return
+  setTimeout(() => {
+    for (const el of list) {
+      if (!el.isConnected) continue
+      if (+getComputedStyle(el).opacity >= 0.99) continue
+      el.style.opacity = '1'
+      el.style.transform = 'none'
+    }
+  }, after)
+}
+
 export function revealElement(el) {
   if (!el || prefersReducedMotion()) return
   try {
@@ -338,6 +373,10 @@ export function revealElement(el) {
         ease: motion.spring.element(),
       })
     }
+    // The panel and everything it holds. An empty bordered box is the exact
+    // shape this failure takes, because the panel's own tween finishes and its
+    // children's does not.
+    guaranteeVisible([el, ...kids])
   } catch (err) {
     // Never leave a section stranded at opacity 0 because a tween threw.
     console.error('[motion] reveal failed, showing content', err)

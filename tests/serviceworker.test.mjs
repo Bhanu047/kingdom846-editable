@@ -100,7 +100,7 @@ test('the shell the app opens from is precached at install', async () => {
 test('the cache version was bumped with the rule change', () => {
   // sw.js says so in its own header: stale entries under an old policy are how
   // a fix fails to reach the phones that need it.
-  assert.equal(loadWorker({ fetchImpl: async () => freshShell }).api.CACHE_VERSION, 'v5')
+  assert.equal(loadWorker({ fetchImpl: async () => freshShell }).api.CACHE_VERSION, 'v7')
 })
 
 test('the fonts do not hold up the first paint', () => {
@@ -183,21 +183,37 @@ test('a fresh shell brings its build in with it', async () => {
     <script type="module" crossorigin src="./assets/index-Ce8CVWka.js"></script>
     <link rel="stylesheet" href="./assets/index-3BqRtSbR.css">
   </head><body></body></html>`
-  const { api, added } = loadWorker({ fetchImpl: async () => ({ ok: true }) })
+  const { api, stores } = loadWorker({ fetchImpl: async () => ({ ok: true }) })
   await api.primeBuild({ text: async () => html })
   // Relative in the built HTML, absolute in the cache: the paths the browser
-  // will actually ask for.
-  assert.deepEqual(added.sort(), ['/assets/index-3BqRtSbR.css', '/assets/index-Ce8CVWka.js'])
+  // will actually ask for. Checked against what is IN the cache rather than
+  // against cache.add(), because priming now fetches first and stores only what
+  // came back with the right content type -- see "HTML is never the answer".
+  const cached = [...(stores.get('k846-assets-v7') || new Map()).keys()].sort()
+  assert.deepEqual(cached, ['/assets/index-3BqRtSbR.css', '/assets/index-Ce8CVWka.js'])
+})
+
+test('priming refuses a build file that comes back as a page', async () => {
+  // What a stale phone meets the morning after a deploy: the file it is asking
+  // for is gone, and an SPA server answers with index.html. Storing that under
+  // a .js name is what put "Something went wrong" on the screen, so it is not
+  // stored, and the cache is left empty rather than poisoned.
+  const html = '<script src="./assets/index-gone.js"></script>'
+  const page = { ok: true, headers: { get: () => 'text/html; charset=utf-8' } }
+  const { api, stores } = loadWorker({ fetchImpl: async () => page })
+  await api.primeBuild({ text: async () => html })
+  const cached = [...(stores.get('k846-assets-v7') || new Map()).keys()]
+  assert.deepEqual(cached, [], 'a page of HTML was filed under a .js name')
 })
 
 test('priming asks for nothing that is already local', async () => {
   const html = '<script src="./assets/index-abc.js"></script>'
-  const { api, added, stores } = loadWorker({ fetchImpl: async () => ({ ok: true }) })
+  let fetches = 0
+  const { api, stores } = loadWorker({ fetchImpl: async () => { fetches++; return { ok: true } } })
   await api.primeBuild({ text: async () => html })
-  assert.deepEqual(added, ['/assets/index-abc.js'], 'first visit fetches it')
-  added.length = 0
+  assert.equal(fetches, 1, 'first visit fetches it')
   await api.primeBuild({ text: async () => html })
-  assert.deepEqual(added, [], 'the second finds it cached')
+  assert.equal(fetches, 1, 'the second finds it cached')
   assert.ok(stores.size)
 })
 

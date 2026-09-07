@@ -13,7 +13,7 @@
  * Bump CACHE_VERSION on any change to this file's caching rules; the activate
  * handler deletes every cache that doesn't match, so old entries never linger.
  */
-const CACHE_VERSION = 'v6'
+const CACHE_VERSION = 'v7'
 const SHELL_CACHE = `k846-shell-${CACHE_VERSION}`
 const ASSET_CACHE = `k846-assets-${CACHE_VERSION}`
 const FONT_CACHE = `k846-fonts-${CACHE_VERSION}`
@@ -94,10 +94,43 @@ self.addEventListener('message', (event) => {
   }
 })
 
+/* HTML is never the answer to a request for code.
+ *
+ * The server used to answer a missing build file with index.html and a 200,
+ * and this worker believed it: `response.ok` was true, so a page of HTML was
+ * stored under a .js name and served from cache from then on. The browser
+ * cannot execute HTML as a module, so the page failed to load its own code and
+ * showed the error card -- and the poisoned entry meant a reload was the only
+ * way out. The server now sends a real 404; this is the second lock, because a
+ * worker outlives the deploy that installed it and has to survive meeting an
+ * older server.
+ */
+function isCodeRequest(request) {
+  // A Request during a fetch, a plain URL string while priming.
+  const href = typeof request === 'string' ? request : (request && request.url)
+  // A relative path needs some base to resolve against; which origin it is does
+  // not matter here, only the extension does.
+  const base = (self.location && self.location.origin) || 'https://kingdom846.com'
+  try { return /\.(?:js|mjs|css)$/i.test(new URL(href, base).pathname) } catch { return false }
+}
+function mismatched(request, response) {
+  if (!isCodeRequest(request) || !response) return false
+  const type = (response.headers && response.headers.get && response.headers.get('content-type')) || ''
+  return /html/i.test(type)
+}
+
 async function networkFirst(request, cacheName, fallbackUrl) {
   const cache = await caches.open(cacheName)
   try {
     const response = await fetch(request)
+    // A wrong-typed answer is a miss, not a response: never stored, never
+    // handed to the page. The cached copy of the file it is really asking for
+    // is a better answer, and failing outright is better than either.
+    if (mismatched(request, response)) {
+      const cached = await cache.match(request)
+      if (cached) return cached
+      return new Response('', { status: 404, statusText: 'Stale build asset' })
+    }
     if (response && response.ok) cache.put(request, response.clone())
     return response
   } catch (err) {
@@ -171,7 +204,13 @@ async function primeBuild(response) {
   const cache = await caches.open(ASSET_CACHE)
   await Promise.all([...urls].map(async (url) => {
     if (await cache.match(url)) return
-    await cache.add(url).catch(() => {})
+    // cache.add() would store whatever comes back; fetch first so the same
+    // type check applies here as everywhere else.
+    try {
+      const res = await fetch(url)
+      if (!res || !res.ok || mismatched(url, res)) return
+      await cache.put(url, res)
+    } catch {}
   }))
 }
 
@@ -189,6 +228,7 @@ async function staleWhileRevalidate(request, cacheName) {
   if (stored && !cached) await cache.delete(request).catch(() => {})
   const network = fetch(request)
     .then((response) => {
+      if (mismatched(request, response)) return null
       // Opaque cross-origin responses report status 0; they are still worth
       // keeping for fonts, which is the only cross-origin case we cache.
       if (response && (response.ok || response.type === 'opaque')) cache.put(request, response.clone())

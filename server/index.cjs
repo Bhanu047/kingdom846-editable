@@ -3304,8 +3304,26 @@ function webpNegotiation(root) {
         if (filePath.endsWith('.webmanifest')) res.setHeader('Content-Type', 'application/manifest+json')
       }
     }))
-    // SPA fallback: any non-API GET returns index.html
-    app.get(/^\/(?!api).*/, (_req, res) => {
+    /* A file that is not there is a 404, not the homepage.
+     *
+     * Every deploy renames the hashed build files, and a phone holding the
+     * previous shell in its service worker asks for the ones it remembers. This
+     * fallback answered those requests with index.html and a 200 -- so the
+     * browser was handed 21 kB of HTML where it expected JavaScript, the
+     * worker filed that HTML away under a .js name as a perfectly good
+     * response, and the page died with "Something went wrong" until it was
+     * reloaded. Reported from a phone the morning after a deploy.
+     *
+     * Anything that names a file -- an extension in the last segment -- gets an
+     * honest 404. Routes have no extension, so the SPA fallback is untouched.
+     */
+    const LOOKS_LIKE_A_FILE = /\.[a-z0-9]{2,8}$/i
+    app.get(/^\/(?!api).*/, (req, res) => {
+      const last = req.path.split('/').pop() || ''
+      if (req.path.startsWith('/assets/') || LOOKS_LIKE_A_FILE.test(last)) {
+        res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate')
+        return res.status(404).type('text/plain').send('Not found')
+      }
       res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate')
       res.sendFile(path.join(distPublic, 'index.html'))
     })

@@ -192,7 +192,7 @@ export default function Dashboard({ onNavigate }) {
                 raises them out of their own line, so a CSS entrance on the
                 paragraph would only fade in over the top of it. */}
             <p className="hero-motto mt-1.5 font-display text-sm tracking-[0.15em] text-gold md:text-base text-glow">One Crown. Four Alliances. Endless Glory.</p>
-            <div className="mt-5 flex flex-wrap justify-center gap-2 hero-rise" style={{ '--d': '.88s' }}>
+            <div className="mt-5 flex flex-wrap justify-center gap-2 hero-rise" style={{ '--d': '.35s' }}>
               <button onClick={() => onNavigate('alliances')} className="btn-primary btn-royal sparkle-btn"><Icon name="shield" size={14} /> View Alliances</button>
               <button onClick={() => onNavigate('about')} className="btn-secondary gold-border-hover"><Icon name="castle" size={14} /> Kingdom</button>
             </div>

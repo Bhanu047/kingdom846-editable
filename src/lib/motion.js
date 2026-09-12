@@ -153,6 +153,7 @@ export function installStagger(opts = {}) {
         delay: stagger(step),
         ease: motion.spring.element(),
       })
+      guaranteeVisible(children)
     } catch (err) {
       // A reveal that throws must never leave the page invisible.
       console.error('[motion] stagger failed, showing content', err)
@@ -190,7 +191,23 @@ export function installStagger(opts = {}) {
    * whole point of the effect -- and the sweep re-arms only while something
    * somewhere is still waiting, so an idle page does no work.
    */
-  const WATCHDOG_MS = 900
+  /* 900ms was a rescue timer being used as a schedule.
+   *
+   * Measured on a throttled phone, tapping straight through the entrance: the
+   * hero's gold button sat at opacity 0 from the moment the dashboard mounted
+   * until 900ms later, when this fired. The observer never called back for it
+   * at all -- the group mounted already on screen, which is the one case where
+   * a scroll reveal has nothing to reveal on. So a primary control looked
+   * disabled for a second on every cold open, and looked broken to the person
+   * waiting for it. Reported as "it's transparent, I refreshed and it's gold".
+   *
+   * Two changes, and the first is the real one: a group that is ALREADY on
+   * screen when it is scanned cascades immediately rather than waiting for a
+   * callback that is not coming. The timer goes back to being what its comment
+   * says it is -- the net under the cases nobody predicted -- and a quarter of
+   * a second is long enough to catch them without being visible.
+   */
+  const WATCHDOG_MS = 250
   let sweepTimer = 0
 
   const onScreen = (el) => {
@@ -225,10 +242,17 @@ export function installStagger(opts = {}) {
       if (el.parentElement) groups.add(el.parentElement)
     }
     for (const g of groups) {
-      if (!played.has(g)) { io.observe(g); continue }
-      // Already played: anything here that has never been revealed arrived
-      // after the cascade, and no observer will ever call back for it.
-      reveal(kidsOf(g).filter((c) => !revealed.has(c)))
+      if (played.has(g)) {
+        // Already played: anything here that has never been revealed arrived
+        // after the cascade, and no observer will ever call back for it.
+        reveal(kidsOf(g).filter((c) => !revealed.has(c)))
+        continue
+      }
+      // On screen the moment it is scanned -- a page's own first paint, or a
+      // route that mounts under the reader. There is no scroll coming to
+      // reveal it on, so it cascades now.
+      if (onScreen(g)) { run(g); continue }
+      io.observe(g)
     }
     armSweep()
   }
@@ -298,6 +322,40 @@ export const motion = {
  * encodes several hard-won fixes and is not what needed changing. Only the
  * movement itself is different.
  */
+/* The guarantee, for anything a tween hides before it shows it.
+ *
+ * Every entrance in this file starts its subject at opacity 0 and animates up.
+ * That is fine while the animation runs. It is not fine when the main thread
+ * is busy -- a phone loading a route, decoding hero art and running three
+ * observers -- because the tween is created, the start state is applied, and
+ * then no frame runs for a second or more. What is on screen in that second is
+ * content at opacity 0, and there is nothing in a tween that ever checks.
+ *
+ * Reported twice from the same phone, both times as things that were simply
+ * not there: a transparent View Alliances button, and the Kingdom Performance
+ * panel as an empty gold box. Both were mid-animation, which is no comfort to
+ * somebody looking at them.
+ *
+ * So every hide-then-show carries a deadline. Past it, anything still
+ * transparent is simply shown. The number is well past the natural end of the
+ * animations here -- a spring plus the longest stagger -- so a healthy
+ * entrance never meets it, and a starved one stops being invisible.
+ */
+const VISIBLE_BY_MS = 1100
+
+function guaranteeVisible(els, after = VISIBLE_BY_MS) {
+  const list = [...els].filter(Boolean)
+  if (!list.length) return
+  setTimeout(() => {
+    for (const el of list) {
+      if (!el.isConnected) continue
+      if (+getComputedStyle(el).opacity >= 0.99) continue
+      el.style.opacity = '1'
+      el.style.transform = 'none'
+    }
+  }, after)
+}
+
 export function revealElement(el) {
   if (!el || prefersReducedMotion()) return
   try {
@@ -315,6 +373,10 @@ export function revealElement(el) {
         ease: motion.spring.element(),
       })
     }
+    // The panel and everything it holds. An empty bordered box is the exact
+    // shape this failure takes, because the panel's own tween finishes and its
+    // children's does not.
+    guaranteeVisible([el, ...kids])
   } catch (err) {
     // Never leave a section stranded at opacity 0 because a tween threw.
     console.error('[motion] reveal failed, showing content', err)

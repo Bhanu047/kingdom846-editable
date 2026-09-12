@@ -2608,7 +2608,23 @@ input:focus-visible, select:focus-visible, textarea:focus-visible {
 
 /* letter-spacing is set !important on .eyebrow, and !important beats an
    animation -- so this resolves out of blur instead of opening its tracking. */
-.hero-rise { animation: hero-rise-in .6s cubic-bezier(.22,.61,.36,1) var(--d, 0s) both }
+/* Held until the door opens.
+ *
+ * Everything else in this hero waits for `k846:entered` -- the wordmark, the
+ * crest, the motto all go through whenEntered(), because the app mounts behind
+ * the welcome screen and an entrance played to a closed door is an entrance
+ * nobody sees. These two did not, so they started their clock on mount and
+ * finished whenever they finished. Tap through the welcome quickly, or open it
+ * on a phone where the dashboard mounts late, and what lands in front of you is
+ * the FIRST 880ms of the button row's animation -- which is `opacity: 0`. The
+ * report was a screenshot of a transparent View Alliances button, gold again
+ * after a refresh, and a refresh is just a faster mount.
+ *
+ * Gated the safe way round: with no class the animation simply does not apply,
+ * so the content is visible. It can never be the reason something is invisible,
+ * which is the whole family of bug this belongs to.
+ */
+html.k846-entered .hero-rise { animation: hero-rise-in .6s cubic-bezier(.22,.61,.36,1) var(--d, 0s) both }
 @keyframes hero-rise-in {
   from { opacity: 0; transform: translateY(12px) }
   to   { opacity: 1; transform: none }

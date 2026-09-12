@@ -141,6 +141,20 @@ export default function SplashScreen({ onEnter }) {
 
   return (
     <section className={`royal-welcome-shell ${opening ? 'is-opening' : ''}`}>
+      {/* The floor under the door.
+       *
+       * The shell is sized in dvh so the entrance is centred in what you can
+       * actually see. On iOS that number is the viewport MINUS the toolbars,
+       * while a fixed element with viewport-fit=cover is laid out against the
+       * full screen -- so the shell can end above the bottom of the display and
+       * what shows in the strip below it is the app, mid-load, behind a door
+       * that is supposed to be closed. Reported as a welcome screen filling
+       * half the phone.
+       *
+       * This is the same black, anchored top and bottom with no height of its
+       * own to fall short by. Whatever the units resolve to, the strip is the
+       * entrance's own letterbox rather than a seam. */}
+      <div className="royal-welcome-floor" aria-hidden="true" />
       <iframe
         title="Kingdom 846 Royal Welcome"
         src="/royal-welcome-2/index.html"
@@ -158,6 +172,7 @@ export default function SplashScreen({ onEnter }) {
         .royal-welcome-shell{position:fixed;inset:0;height:100vh;height:100dvh;
           z-index:9999;overflow:hidden;background:#060810;
           touch-action:none;overscroll-behavior:none}
+        .royal-welcome-floor{position:fixed;inset:0;background:#060810;z-index:-1}
         .royal-welcome-frame{position:absolute;inset:0;width:100%;height:100%;border:0;display:block;background:#060810;opacity:0}
         .royal-welcome-frame.is-ready{opacity:1}
         .royal-welcome-shell.is-opening{pointer-events:none}

@@ -2,8 +2,10 @@ import { useEffect, useRef } from 'react'
 import Icon from './Icon'
 import { revealArt } from '../lib/motion'
 
-export function Panel({ children, className = '', glow }) {
-  return <div className={`panel p-5 ${glow ? 'panel-glow gold-corners' : ''} ${className}`}>{children}</div>
+export function Panel({ children, className = '', glow, style }) {
+  // `style` passes through so a caller can drive the card's own entrance --
+  // without it an inline style was silently dropped and the fade never ran.
+  return <div className={`panel p-5 ${glow ? 'panel-glow gold-corners' : ''} ${className}`} style={style}>{children}</div>
 }
 
 export function SectionTitle({ eyebrow, title, action }) {

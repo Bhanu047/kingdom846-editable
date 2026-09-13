@@ -121,6 +121,24 @@ import path from 'node:path'
 const require_ = createRequire(import.meta.url)
 const advisor = require_('../server/ai/record.cjs')
 
+test('the atlas block still carries everything the charts read', () => {
+  // Twice now an edit to one field in this block has taken a neighbouring one
+  // with it -- a slice that removed the simulator also removed the radar, and
+  // the page rendered an error boundary where the analytics should be. The
+  // build passed and so did every other test: nothing but loading the page
+  // caught it. These are the fields AtlasAnalytics dereferences directly, so
+  // losing one fails here instead.
+  for (const key of ['score', 'rank', 'percentile', 'tier', 'tierThreshold', 'lastMove', 'breakdown', 'radar', 'curve', 'experiencePenalty']) {
+    assert.ok(key === 'tier' ? tracker846.tier : atlas[key] !== undefined, `atlas.${key} is missing — the charts read it`)
+  }
+  assert.equal(atlas.radar.length, 6, 'the radar draws six axes')
+  for (const axis of atlas.radar) {
+    assert.equal(typeof axis.label, 'string')
+    assert.ok(axis.value >= 0 && axis.value <= 100, `${axis.label} is outside 0-100`)
+  }
+  assert.equal(atlas.breakdown.length, 5)
+})
+
 test('the advisor states the same record the kingdom does', () => {
   assert.equal(advisor.record.wars, kvk.total)
   assert.equal(advisor.record.dominations, kvk.dominations)

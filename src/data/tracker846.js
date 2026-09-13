@@ -6,8 +6,7 @@
 // - Kingshot Atlas: https://ks-atlas.com/kingdom/846
 //   Atlas block — read 2026-09-13 through a browser that runs the page's
 //   JavaScript, which a plain fetch cannot do: the score and rank, the
-//   decomposition, the radar, the per-KvK curve behind its history charts, and
-//   its simulator's projection for the next KvK.
+//   decomposition, the radar, and the per-KvK curve behind its history charts.
 //
 // The KvK runs are the only record typed out here. Everything countable --
 // totals, records, win rates, streaks, and the four outcome kinds -- is counted
@@ -142,24 +141,6 @@ export const tracker846 = {
     // Read off the charts on the same day as the score; see `curve` above for
     // what is exact in it and what is a reading.
     curve: curve.map((point) => ({ ...point })),
-    // Atlas's own projection for the next KvK, from its Score Simulator with
-    // the default outcome selected: both phases won, which it calls a
-    // domination. Only that scenario is published as figures. The others move
-    // with inputs we do not have, so nothing else is stored and nothing is
-    // extrapolated from this one.
-    simulator: {
-      nextKvk: 19,
-      outcome: 'Domination — prep and battle both won',
-      projected: 73.61,
-      delta: 3.57,
-      deltaPct: 5.1,
-      parts: [
-        { label: 'Base Win Rate', pts: 3.37 },
-        { label: 'Streak Impact', pts: 0.15 },
-        { label: 'Experience', pts: 0.00 },
-        { label: 'Form Bonus', pts: 0.04 },
-      ],
-    },
     radar: [
       { label: 'Win Rate',   value: 83 },
       { label: 'Domination', value: 75 },

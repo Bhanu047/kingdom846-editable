@@ -1,8 +1,8 @@
-import { useId, useState } from 'react'
+import { useEffect, useId, useState } from 'react'
 import { Panel, SectionTitle, Pill } from './ui'
 import Icon from './Icon'
 import { tracker846 } from '../data/tracker846'
-import { smoothPath, useInView } from '../lib/chartAnim'
+import { smoothPath, useCountUp, useInView, useReveal } from '../lib/chartAnim'
 
 // The Atlas profile, rebuilt on our own page.
 //
@@ -43,6 +43,71 @@ const BLUE = '#7f9ed6'
    -------------------------------------------------------------------------- */
 const PLOT = { W: 520, H: 200, L: 40, R: 16, T: 18, B: 30 }
 
+/* The entrance, in one place.
+ *
+ * Every chart plays the same shape: the line draws, its points arrive along it,
+ * the fill comes up underneath. Timings live here so the four cards stay in
+ * step, and so a card in the right-hand column can be held back a moment -- a
+ * whole grid firing at once reads as a page glitch rather than an entrance.
+ *
+ * `calm` is the reduced-motion path, and it is a real reveal, not a skipped
+ * one: the chart fades up over 300ms already drawn, with no drawing, no travel
+ * and no counting. The observer still decides WHEN, so it happens as the card
+ * arrives rather than silently at mount.
+ */
+const DRAW_MS = 1100
+const DOT_STAGGER_MS = 40
+const CALM_FADE_MS = 300
+const ROW_STAGGER_MS = 120
+
+function useEntrance(delayMs = 0) {
+  const [ref, seen, calm] = useInView()
+  const [on, setOn] = useState(false)
+  useEffect(() => {
+    if (!seen) return undefined
+    if (!delayMs) { setOn(true); return undefined }
+    const id = setTimeout(() => setOn(true), delayMs)
+    return () => clearTimeout(id)
+  }, [seen, delayMs])
+
+  // What a caller needs to describe any one piece of the sequence.
+  return {
+    ref,
+    on,
+    calm,
+    // The card itself fades either way; under calm it is the whole entrance.
+    cardStyle: { opacity: on ? 1 : 0, transition: `opacity ${calm ? CALM_FADE_MS : 500}ms ease` },
+    // A line: drawn on for everyone else, already whole under calm.
+    drawStyle: (delay = 0) => (calm
+      ? { strokeDasharray: 'none' }
+      : {
+        strokeDasharray: 1,
+        strokeDashoffset: on ? 0 : 1,
+        transition: `stroke-dashoffset ${DRAW_MS}ms cubic-bezier(.16,1,.3,1) ${delay}ms`,
+      }),
+    // A point on that line, popping in after the line reaches it.
+    dotStyle: (i, cx, cy, delay = DRAW_MS * 0.55) => (calm
+      ? { opacity: on ? 1 : 0, transition: `opacity ${CALM_FADE_MS}ms ease` }
+      : {
+        transformOrigin: `${cx}px ${cy}px`,
+        transform: on ? 'scale(1)' : 'scale(0)',
+        transition: `transform 260ms cubic-bezier(.34,1.56,.64,1) ${delay + i * DOT_STAGGER_MS}ms`,
+      }),
+    // Anything that simply arrives: a fill, a label, a legend.
+    fadeStyle: (delay = 0) => ({
+      opacity: on ? 1 : 0,
+      transition: `opacity ${calm ? CALM_FADE_MS : 450}ms ease ${calm ? 0 : delay}ms`,
+    }),
+  }
+}
+
+// A headline figure that counts up when its card arrives -- and simply reads
+// its value under reduced motion, where useCountUp returns the target outright.
+function useFigure(value, on, duration = 900) {
+  return useCountUp(on ? value : 0, duration)
+}
+
+
 function useKvkPoints(count) {
   const [active, setActive] = useState(null)
   const { W, L, R } = PLOT
@@ -65,9 +130,19 @@ function KvkHover({ count, onActive }) {
 }
 
 function KvkTooltip({ label, value, left, top }) {
+  // Mounted only while a point is active, so `useReveal` gives it a frame at
+  // the start state and the fade-and-rise actually plays instead of the box
+  // snapping into place.
+  const shown = useReveal()
   return (
-    <div className="pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-[140%] whitespace-nowrap rounded-md border border-gold/25 bg-[#0b1222]/95 px-2 py-1 text-[10px] shadow-lg"
-      style={{ left, top }}>
+    <div className="pointer-events-none absolute z-10 -translate-x-1/2 whitespace-nowrap rounded-md border border-gold/25 bg-[#0b1222]/95 px-2 py-1 text-[10px] shadow-lg"
+      style={{
+        left,
+        top,
+        opacity: shown ? 1 : 0,
+        transform: `translate(-50%, ${shown ? '-140%' : 'calc(-140% + 4px)'})`,
+        transition: 'opacity 120ms ease, transform 120ms cubic-bezier(.2,.8,.3,1)',
+      }}>
       <span className="text-parchment/50">KvK {label}</span>
       <span className="ml-1.5 font-mono font-bold text-gold-bright">{value}</span>
     </div>
@@ -97,9 +172,9 @@ function KvkAxis({ series, x }) {
 /* ---------------------------------------------------------------- history --
    Atlas score across the campaign, as the profile plots it.
    ------------------------------------------------------------------------ */
-function ScoreHistory() {
-  const [ref, reveal] = useInView()
+function ScoreHistory({ delay = 0 }) {
   const gid = useId()
+  const ent = useEntrance(delay)
   const { atlas } = tracker846
   const series = atlas.curve
   const move = atlas.lastMove
@@ -110,16 +185,18 @@ function ScoreHistory() {
   const y = (v) => H - B - (v / 100) * (H - T - B)
   const line = smoothPath(series.map((p, i) => ({ x: x(i), y: y(p.score) })))
   const hot = active == null ? null : series[active]
+  const shownMove = useFigure(move.score, ent.on)
+  const shownScore = useFigure(atlas.score, ent.on)
 
   return (
-    <Panel>
+    <Panel style={ent.cardStyle}>
       <SectionTitle eyebrow="Trajectory" title="Atlas Score History" />
       <div className="mt-1 flex items-baseline gap-2">
-        <span className="font-display text-xl font-bold" style={{ color: GOLD }}>▲{move.score.toFixed(2)}</span>
+        <span className="font-display text-xl font-bold tabular-nums" style={{ color: GOLD }}>▲{shownMove.toFixed(2)}</span>
         <span className="text-[11px] text-parchment/50">KvK {move.fromKvk} → {move.toKvk}</span>
-        <span className="ml-auto font-mono text-lg font-black text-gold-bright">{atlas.score.toFixed(2)}</span>
+        <span className="ml-auto font-mono text-lg font-black tabular-nums text-gold-bright">{shownScore.toFixed(2)}</span>
       </div>
-      <div ref={ref} className="relative mt-2">
+      <div ref={ent.ref} className="relative mt-2">
         <svg viewBox={`0 0 ${W} ${H}`} className="w-full">
           <defs>
             <linearGradient id={`${gid}-f`} x1="0" y1="0" x2="0" y2="1">
@@ -128,17 +205,15 @@ function ScoreHistory() {
             </linearGradient>
           </defs>
           {ticks.map((t) => <line key={t} x1={L} x2={W - R} y1={y(t)} y2={y(t)} stroke="rgba(226,199,125,.10)" />)}
+          {/* Fill last: it belongs under a line that already exists. */}
           <path d={`${line} L${x(series.length - 1)},${H - B} L${x(0)},${H - B} Z`}
-            fill={`url(#${gid}-f)`} style={{ opacity: reveal ? 1 : 0, transition: 'opacity .7s ease .3s' }} />
-          <path d={line} pathLength="1" strokeDasharray="1" strokeDashoffset={reveal ? 0 : 1}
-            fill="none" stroke={GOLD} strokeWidth="2.6"
-            style={{ transition: 'stroke-dashoffset 1.1s cubic-bezier(.16,1,.3,1)' }} />
-          <g style={{ opacity: reveal ? 1 : 0, transition: 'opacity .4s ease 1s' }}>
-            {series.map((p, i) => (
-              <circle key={p.kvk} cx={x(i)} cy={y(p.score)} r={active === i ? 4.2 : 2.4}
-                fill="#FFF6DA" stroke={GOLD} strokeWidth={active === i ? 1.6 : 0} />
-            ))}
-          </g>
+            fill={`url(#${gid}-f)`} style={ent.fadeStyle(DRAW_MS * 0.8)} />
+          <path d={line} pathLength="1" fill="none" stroke={GOLD} strokeWidth="2.6" style={ent.drawStyle()} />
+          {series.map((p, i) => (
+            <circle key={p.kvk} cx={x(i)} cy={y(p.score)} r={active === i ? 4.2 : 2.4}
+              fill="#FFF6DA" stroke={GOLD} strokeWidth={active === i ? 1.6 : 0}
+              style={{ ...ent.dotStyle(i, x(i), y(p.score)), transitionProperty: 'transform, r, stroke-width', transitionDuration: '260ms, 140ms, 140ms' }} />
+          ))}
         </svg>
         {ticks.map((t) => (
           <div key={t} className="pointer-events-none absolute -translate-y-1/2 font-mono text-[9px] text-parchment/35"
@@ -157,9 +232,9 @@ function ScoreHistory() {
   )
 }
 
-function RankHistory() {
-  const [ref, reveal] = useInView()
+function RankHistory({ delay = 0 }) {
   const gid = useId()
+  const ent = useEntrance(delay)
   const { atlas, tier } = tracker846
   const series = atlas.curve
   const move = atlas.lastMove
@@ -177,16 +252,18 @@ function RankHistory() {
   const y = (rank) => T + ((rank - 1) / (FLOOR - 1)) * (H - T - B)
   const line = smoothPath(series.map((p, i) => ({ x: x(i), y: y(p.rank) })))
   const hot = active == null ? null : series[active]
+  const shownRanks = useFigure(move.ranks, ent.on)
+  const shownRank = useFigure(atlas.rank, ent.on)
 
   return (
-    <Panel>
+    <Panel style={ent.cardStyle}>
       <SectionTitle eyebrow="Standing" title="Kingdom Ranking History" />
       <div className="mt-1 flex items-baseline gap-2">
-        <span className="font-display text-xl font-bold" style={{ color: BLUE }}>▲{move.ranks} ranks</span>
+        <span className="font-display text-xl font-bold tabular-nums" style={{ color: BLUE }}>▲{Math.round(shownRanks)} ranks</span>
         <span className="text-[11px] text-parchment/50">KvK {move.fromKvk} → {move.toKvk}</span>
-        <span className="ml-auto font-mono text-lg font-black text-gold-bright">#{atlas.rank}</span>
+        <span className="ml-auto font-mono text-lg font-black tabular-nums text-gold-bright">#{Math.round(shownRank)}</span>
       </div>
-      <div ref={ref} className="relative mt-2">
+      <div ref={ent.ref} className="relative mt-2">
         <svg viewBox={`0 0 ${W} ${H}`} className="w-full">
           <defs>
             <linearGradient id={`${gid}-r`} x1="0" y1="0" x2="1" y2="0">
@@ -195,15 +272,12 @@ function RankHistory() {
             </linearGradient>
           </defs>
           {ticks.map((t) => <line key={t} x1={L} x2={W - R} y1={y(t)} y2={y(t)} stroke="rgba(127,158,214,.12)" />)}
-          <path d={line} pathLength="1" strokeDasharray="1" strokeDashoffset={reveal ? 0 : 1}
-            fill="none" stroke={`url(#${gid}-r)`} strokeWidth="2.6"
-            style={{ transition: 'stroke-dashoffset 1.1s cubic-bezier(.16,1,.3,1)' }} />
-          <g style={{ opacity: reveal ? 1 : 0, transition: 'opacity .4s ease 1s' }}>
-            {series.map((p, i) => (
-              <circle key={p.kvk} cx={x(i)} cy={y(p.rank)} r={active === i ? 4.2 : 2.4}
-                fill="#FFF6DA" stroke={BLUE} strokeWidth={active === i ? 1.6 : 0} />
-            ))}
-          </g>
+          <path d={line} pathLength="1" fill="none" stroke={`url(#${gid}-r)`} strokeWidth="2.6" style={ent.drawStyle()} />
+          {series.map((p, i) => (
+            <circle key={p.kvk} cx={x(i)} cy={y(p.rank)} r={active === i ? 4.2 : 2.4}
+              fill="#FFF6DA" stroke={BLUE} strokeWidth={active === i ? 1.6 : 0}
+              style={{ ...ent.dotStyle(i, x(i), y(p.rank)), transitionProperty: 'transform, r, stroke-width', transitionDuration: '260ms, 140ms, 140ms' }} />
+          ))}
         </svg>
         {ticks.map((t) => (
           <div key={t} className="pointer-events-none absolute -translate-y-1/2 font-mono text-[9px] text-parchment/35"
@@ -239,9 +313,9 @@ function RankHistory() {
    holds them against the rates recomputed from the twelve runs -- so these are
    read from the source AND checked against our record, not one or the other.
    ------------------------------------------------------------------------ */
-function PerformanceTrend() {
-  const [ref, reveal] = useInView()
+function PerformanceTrend({ delay = 0 }) {
   const gid = useId()
+  const ent = useEntrance(delay)
   const series = tracker846.atlas.curve
   const { active, setActive, x } = useKvkPoints(series.length)
 
@@ -262,23 +336,25 @@ function PerformanceTrend() {
   const vpct = (v) => `${(v / H) * 100}%`
   const k = tracker846.kvk
   const hot = active == null ? null : series[active]
+  const shownPrep = useFigure(last.prepWinRate, ent.on)
+  const shownBattle = useFigure(last.battleWinRate, ent.on)
 
   return (
-    <Panel className="flex flex-col">
+    <Panel className="flex flex-col" style={ent.cardStyle}>
       <SectionTitle eyebrow="Consistency" title="Performance Trend" />
       <div className="mt-1 flex flex-wrap items-baseline gap-3 text-[11px]">
         {/* The key shows each line's own dash pattern rather than a dot, so the
             legend tells them apart the same way the plot does. */}
         <span className="inline-flex items-center gap-1.5" style={{ color: BLUE }}>
           <svg width="18" height="3" aria-hidden="true"><line x1="0" y1="1.5" x2="18" y2="1.5" stroke={BLUE} strokeWidth="3" strokeDasharray="5 3.5" /></svg>
-          Prep WR {last.prepWinRate.toFixed(1)}%
+          Prep WR <span className="tabular-nums">{shownPrep.toFixed(1)}%</span>
         </span>
         <span className="inline-flex items-center gap-1.5" style={{ color: GOLD }}>
           <svg width="18" height="3" aria-hidden="true"><line x1="0" y1="1.5" x2="18" y2="1.5" stroke={GOLD} strokeWidth="3" /></svg>
-          Battle WR {last.battleWinRate.toFixed(1)}%
+          Battle WR <span className="tabular-nums">{shownBattle.toFixed(1)}%</span>
         </span>
       </div>
-      <div ref={ref} className="relative mt-2 min-h-[160px] flex-1">
+      <div ref={ent.ref} className="relative mt-2 min-h-[160px] flex-1">
         <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className="h-full w-full">
           <defs>
             <linearGradient id={`${gid}-pf`} x1="0" y1="0" x2="0" y2="1">
@@ -301,10 +377,10 @@ function PerformanceTrend() {
                 and a drawn line are the same gesture. */}
             <clipPath id={`${gid}-wipe`}>
               <rect x={L - 4} y="0" width={W - L - R + 8} height={H}
-                style={{
+                style={ent.calm ? { transform: 'scaleX(1)' } : {
                   transformOrigin: `${L - 4}px 0px`,
-                  transform: reveal ? 'scaleX(1)' : 'scaleX(0)',
-                  transition: 'transform 1.2s cubic-bezier(.16,1,.3,1)',
+                  transform: ent.on ? 'scaleX(1)' : 'scaleX(0)',
+                  transition: `transform ${DRAW_MS}ms cubic-bezier(.16,1,.3,1) 150ms`,
                 }} />
             </clipPath>
           </defs>
@@ -314,7 +390,7 @@ function PerformanceTrend() {
           {series.map((p, i) => (
             <line key={p.kvk} x1={x(i)} x2={x(i)} y1={T} y2={H - B} stroke="rgba(226,199,125,.05)" vectorEffect="non-scaling-stroke" />
           ))}
-          <g style={{ opacity: reveal ? 1 : 0, transition: 'opacity .7s ease .4s' }}>
+          <g style={ent.fadeStyle(DRAW_MS * 0.9)}>
             <path d={area('prepWinRate')} fill={`url(#${gid}-pf)`} />
             <path d={area('battleWinRate')} fill={`url(#${gid}-bf)`} />
           </g>
@@ -326,24 +402,30 @@ function PerformanceTrend() {
             <path d={path('prepWinRate')} fill="none" stroke={BLUE} strokeWidth="2.6"
               strokeDasharray="8 4" strokeLinecap="butt" vectorEffect="non-scaling-stroke" />
           </g>
-          <path d={path('battleWinRate')} pathLength="1" strokeDasharray="1" strokeDashoffset={reveal ? 0 : 1}
-            fill="none" stroke={GOLD} strokeWidth="2.6" vectorEffect="non-scaling-stroke"
-            style={{ transition: 'stroke-dashoffset 1.2s cubic-bezier(.16,1,.3,1) .16s' }} />
+          <path d={path('battleWinRate')} pathLength="1" fill="none" stroke={GOLD} strokeWidth="2.6"
+            vectorEffect="non-scaling-stroke" style={ent.drawStyle()} />
         </svg>
         {/* Point markers are HTML: under preserveAspectRatio="none" an SVG
             circle would be squashed into an ellipse by the stretch. */}
         {series.map((p, i) => (
-          <div key={p.kvk} className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 rounded-full"
+          <div key={p.kvk} className="pointer-events-none absolute rounded-full"
             style={{
               left: pct(x(i)), top: vpct(y(p.battleWinRate)),
               height: active === i ? 9 : 5, width: active === i ? 9 : 5,
               background: active === i ? '#FFF6DA' : GOLD,
-              opacity: reveal ? 1 : 0, transition: 'opacity .4s ease 1.1s, height .12s, width .12s',
+              // -50%/-50% is folded into the transform so the pop-in scales
+              // about the point itself rather than its top-left corner.
+              ...(ent.calm
+                ? { transform: 'translate(-50%, -50%)', opacity: ent.on ? 1 : 0, transition: `opacity ${CALM_FADE_MS}ms ease` }
+                : {
+                  transform: `translate(-50%, -50%) scale(${ent.on ? 1 : 0})`,
+                  transition: `transform 260ms cubic-bezier(.34,1.56,.64,1) ${DRAW_MS * 0.55 + i * DOT_STAGGER_MS}ms, height .12s, width .12s`,
+                }),
             }} />
         ))}
         <div className="pointer-events-none absolute h-[9px] w-[9px] -translate-x-1/2 -translate-y-1/2 rounded-full border-2"
           style={{ left: pct(x(series.length - 1)), top: vpct(y(last.prepWinRate)), borderColor: BLUE, background: '#0b1222',
-            opacity: reveal ? 1 : 0, transition: 'opacity .4s ease 1.1s' }} />
+            ...ent.fadeStyle(DRAW_MS) }} />
         {ticks.map((t) => (
           <div key={t} className="pointer-events-none absolute -translate-y-1/2 font-mono text-[9px] text-parchment/35"
             style={{ right: `${((W - L + 6) / W) * 100}%`, top: vpct(y(t)) }}>{t}%</div>
@@ -378,8 +460,8 @@ function PerformanceTrend() {
 // list below it read as the same thing.
 const SEG_COLORS = { base: '#E0B23B', dominv: '#5D90E8', form: '#5BC98C', streaks: '#C77FD8', history: '#D76158' }
 
-function ScoreBreakdown() {
-  const [ref, reveal] = useInView()
+function ScoreBreakdown({ delay = 0 }) {
+  const ent = useEntrance(delay)
   const { breakdown, score, experiencePenalty } = tracker846.atlas
   const total = breakdown.reduce((s, b) => s + b.pts, 0)
   // The components are re-read less often than the score is. When they are
@@ -389,7 +471,7 @@ function ScoreBreakdown() {
   const stale = Math.abs(total - score) > 0.05
 
   return (
-    <Panel>
+    <Panel style={ent.cardStyle}>
       <SectionTitle eyebrow="Score Components" title="Atlas Score Breakdown"
         action={<Pill tone="gold">{tracker846.tier}</Pill>} />
       <div className="mt-3 flex items-baseline gap-2">
@@ -400,10 +482,10 @@ function ScoreBreakdown() {
             : 'breakdown is approximate'}
         </span>
       </div>
-      <div ref={ref} className="k-track mt-3 flex h-5 overflow-hidden rounded-full border border-gold/15">
+      <div ref={ent.ref} className="k-track mt-3 flex h-5 overflow-hidden rounded-full border border-gold/15">
         {breakdown.map((b, i) => (
           <div key={b.key} className="k-seg" title={`${b.label} ${b.pts}`}
-            style={{ width: reveal ? `${(b.pts / total) * 100}%` : '0%', '--c': SEG_COLORS[b.key], transitionDelay: `${i * 90}ms` }} />
+            style={{ width: ent.on ? `${(b.pts / total) * 100}%` : '0%', '--c': SEG_COLORS[b.key], transitionDelay: `${i * 90}ms` }} />
         ))}
       </div>
       <div className="mt-3 space-y-1.5">
@@ -432,8 +514,8 @@ function ScoreBreakdown() {
    Six axes. Labels sit outside the grid by opting out of the clamp -- the
    same trap that printed the PvP radar's labels on top of its own polygon.
    ------------------------------------------------------------------------ */
-function PerformanceRadar() {
-  const [ref, reveal] = useInView()
+function PerformanceRadar({ delay = 0 }) {
+  const ent = useEntrance(delay)
   const gid = useId()
   const axes = tracker846.atlas.radar
   const CX = 170, CY = 152, R = 96
@@ -446,9 +528,9 @@ function PerformanceRadar() {
   const rings = [25, 50, 75, 100]
 
   return (
-    <Panel>
+    <Panel style={ent.cardStyle}>
       <SectionTitle eyebrow="Profile" title="Performance Radar" />
-      <div ref={ref} className="relative mt-2">
+      <div ref={ent.ref} className="relative mt-2">
         <svg viewBox="0 0 340 300" className="w-full" role="img"
           aria-label={`Performance radar. ${axes.map((a) => `${a.label}: ${a.value}%`).join(', ')}.`}>
           <defs>
@@ -466,8 +548,11 @@ function PerformanceRadar() {
             return <line key={i} x1={CX} y1={CY} x2={ex} y2={ey} stroke="rgba(226,199,125,.10)" />
           })}
           <polygon points={poly} fill={`url(#${gid}-f)`} stroke={GOLD} strokeWidth="2.2"
-            style={{ transformOrigin: `${CX}px ${CY}px`, transform: reveal ? 'scale(1)' : 'scale(.05)', opacity: reveal ? 1 : 0, transition: 'transform .9s cubic-bezier(.34,1.4,.6,1), opacity .5s ease' }} />
-          <g style={{ opacity: reveal ? 1 : 0, transition: 'opacity .4s ease .8s' }}>
+            style={ent.calm
+              ? { opacity: ent.on ? 1 : 0, transition: `opacity ${CALM_FADE_MS}ms ease` }
+              : { transformOrigin: `${CX}px ${CY}px`, transform: ent.on ? 'scale(1)' : 'scale(.05)', opacity: ent.on ? 1 : 0, transition: 'transform .9s cubic-bezier(.34,1.4,.6,1), opacity .5s ease' }} />
+          {/* The axis figures land after the shape does, not with it. */}
+          <g style={ent.fadeStyle(800)}>
             {axes.map((a, i) => {
               const [px, py] = pt(i, a.value)
               return <circle key={a.label} cx={px} cy={py} r="3" fill="#F6E2A4" stroke="#0b1222" strokeWidth="1.4" />
@@ -493,116 +578,21 @@ function PerformanceRadar() {
 }
 
 
-/* -------------------------------------------------------------- simulator --
-   Atlas's projection for the next KvK. Its simulator lets you pick an outcome;
-   only the default one -- both phases won -- is published as figures, so that
-   is the only one shown. The others are not extrapolated from it, because the
-   components below do not move linearly and a wrong projection on a kingdom's
-   own page is worse than an absent one.
-   ------------------------------------------------------------------------ */
-function ScoreSimulator() {
-  const [ref, reveal] = useInView()
-  const { atlas } = tracker846
-  const sim = atlas.simulator
-  const top = Math.max(...sim.parts.map((p) => p.pts))
-
-  return (
-    <Panel>
-      <SectionTitle eyebrow={`If KvK ${sim.nextKvk} is won`} title="Atlas Score Simulator"
-        action={<Pill tone="gold">+{sim.deltaPct.toFixed(1)}%</Pill>} />
-      <div className="mt-3 flex items-center gap-3">
-        <div>
-          <div className="font-mono text-2xl font-black text-parchment/70">{atlas.score.toFixed(2)}</div>
-          <div className="text-[9px] uppercase tracking-wider text-parchment/40">Now</div>
-        </div>
-        <Icon name="arrow" size={18} className="text-gold/60" />
-        <div>
-          <div className="gilt-text font-mono text-3xl font-black">{sim.projected.toFixed(2)}</div>
-          <div className="text-[9px] uppercase tracking-wider text-parchment/45">Projected · ▲{sim.delta.toFixed(2)}</div>
-        </div>
-      </div>
-      <div className="mt-1 text-[11px] text-parchment/50">{sim.outcome}</div>
-      <div ref={ref} className="mt-3 space-y-2">
-        {sim.parts.map((part, i) => (
-          <div key={part.label} className="grid grid-cols-[104px_1fr_46px] items-center gap-2">
-            <div className="text-[10px] uppercase tracking-wider text-parchment/45">{part.label}</div>
-            <div className="k-track h-1.5 overflow-hidden rounded-full bg-white/[.06]">
-              <div className="h-full rounded-full"
-                style={{
-                  width: reveal ? `${top ? (part.pts / top) * 100 : 0}%` : '0%',
-                  background: part.pts ? GOLD : 'rgba(226,199,125,.25)',
-                  transition: `width .8s cubic-bezier(.16,1,.3,1) ${i * 90}ms`,
-                }} />
-            </div>
-            <div className="text-right font-mono text-[11px] text-gold-bright">+{part.pts.toFixed(2)}</div>
-          </div>
-        ))}
-      </div>
-      <p className="mt-3 text-[10px] leading-relaxed text-parchment/40">
-        Atlas&apos;s own projection for a domination in KvK {sim.nextKvk}. Other outcomes are not shown because the
-        profile does not publish their figures.
-      </p>
-    </Panel>
-  )
-}
-
-/* ------------------------------------------------------------------ tier --
-   Where the kingdom sits against the tier it holds.
-   ------------------------------------------------------------------------ */
-function PathToTier() {
-  const [ref, reveal] = useInView()
-  const { atlas, tier } = tracker846
-  const held = atlas.score >= atlas.tierThreshold
-  // The bar runs from the threshold to 100 rather than 0 to 100: the whole
-  // question this panel answers is how much room there is above the line, and
-  // two thirds of a 0-100 bar is territory the kingdom left behind long ago.
-  const pos = Math.min(100, ((atlas.score - atlas.tierThreshold) / (100 - atlas.tierThreshold)) * 100)
-
-  return (
-    <Panel>
-      <SectionTitle eyebrow="Standing" title="Path to Next Tier"
-        action={<Pill tone="gold">{tier}</Pill>} />
-      <div className="mt-3 flex items-baseline gap-2">
-        <span className="gilt-text font-mono text-3xl font-black">{atlas.score.toFixed(2)}</span>
-        <span className="text-[11px] text-parchment/50">holds at {atlas.tierThreshold}+</span>
-      </div>
-      <div ref={ref} className="k-track mt-3 h-2.5 overflow-hidden rounded-full border border-gold/15 bg-white/[.05]">
-        <div className="h-full rounded-full"
-          style={{
-            width: reveal ? `${pos}%` : '0%',
-            backgroundImage: `linear-gradient(90deg, ${BLUE}, ${GOLD})`,
-            transition: 'width 1s cubic-bezier(.16,1,.3,1) .2s',
-          }} />
-      </div>
-      <div className="mt-1 flex justify-between font-mono text-[9px] text-parchment/30">
-        <span>{atlas.tierThreshold}</span><span>100</span>
-      </div>
-      <p className="mt-3 text-[11px] leading-relaxed text-parchment/65">
-        {held
-          ? `Already ${tier}. There is no tier above it — ${(atlas.score - atlas.tierThreshold).toFixed(2)} points of room over the line, and holding it is the whole job.`
-          : `${(atlas.tierThreshold - atlas.score).toFixed(2)} points below the ${tier} line.`}
-      </p>
-    </Panel>
-  )
-}
-
 /* -------------------------------------------------------------------------- */
 export default function AtlasAnalytics() {
   return (
     <div className="space-y-6">
+      {/* The second card in each row follows the first. A grid that fires all
+          at once reads as the page glitching rather than as an entrance. */}
       <div className="grid gap-6 lg:grid-cols-2">
         <ScoreHistory />
-        <RankHistory />
+        <RankHistory delay={ROW_STAGGER_MS} />
       </div>
       <div className="grid gap-6 lg:grid-cols-2">
         <PerformanceTrend />
-        <PerformanceRadar />
+        <PerformanceRadar delay={ROW_STAGGER_MS} />
       </div>
       <ScoreBreakdown />
-      <div className="grid gap-6 lg:grid-cols-2">
-        <ScoreSimulator />
-        <PathToTier />
-      </div>
     </div>
   )
 }

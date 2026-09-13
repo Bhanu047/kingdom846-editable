@@ -99,31 +99,26 @@ export const tracker846 = {
     // The one step of the score/rank curve the profile publishes as a figure.
     // The rest is drawn but not given numerically, so we plot this and say so
     // rather than inventing the curve.
-    lastMove: { fromKvk: 16, toKvk: 17, score: 5.47, ranks: 33 },
-    // The decomposition and the radar were read a KvK earlier than the score
-    // above and have not been re-read since. They sum to 66.37, which is the
-    // score as it stood on that date -- NOT the 70.04 beside them. Dated
-    // separately, and the panel that draws them says which date it is showing,
-    // so the bar cannot pass itself off as a breakdown of today's score.
-    componentsVerified: '2026-08-23',
-    // Atlas labels its own decomposition approximate; these five sum to 66.37
-    // against the 66.38 published that day, which is the rounding that label
-    // refers to.
+    lastMove: { fromKvk: 17, toKvk: 18, score: 3.66, ranks: 10 },
+    // Read the same day as the score, from the profile's Analytics tab.
+    componentsVerified: '2026-09-13',
+    // Atlas labels its own decomposition approximate; these five sum to 70.01
+    // against a published 70.04, which is the rounding that label refers to.
     breakdown: [
-      { key: 'base',    label: 'Base Score', note: 'win rates', pts: 47.93 },
-      { key: 'dominv',  label: 'Dom / Inv',  note: 'impact',    pts: 4.55 },
-      { key: 'form',    label: 'Form',       note: 'last 5',    pts: 6.61 },
-      { key: 'streaks', label: 'Streaks',    note: 'bonus',     pts: 3.61 },
-      { key: 'history', label: 'History',    note: 'bonus',     pts: 3.67 },
+      { key: 'base',    label: 'Base Score', note: 'win rates', pts: 49.00 },
+      { key: 'dominv',  label: 'Dom / Inv',  note: 'impact',    pts: 4.90 },
+      { key: 'form',    label: 'Form',       note: 'last 5',    pts: 7.11 },
+      { key: 'streaks', label: 'Streaks',    note: 'bonus',     pts: 5.00 },
+      { key: 'history', label: 'History',    note: 'bonus',     pts: 4.00 },
     ],
     experiencePenalty: false,
     radar: [
-      { label: 'Win Rate',   value: 82 },
-      { label: 'Domination', value: 73 },
+      { label: 'Win Rate',   value: 83 },
+      { label: 'Domination', value: 75 },
       { label: 'Form',       value: 83 },
       { label: 'Streaks',    value: 100 },
       { label: 'Experience', value: 100 },
-      { label: 'Resilience', value: 91 },
+      { label: 'Resilience', value: 92 },
     ],
   },
   kvk: {
@@ -145,6 +140,7 @@ export const tracker846 = {
     history: runs.map((run) => ({ ...run })),
   },
   transfers: [
+    { transfer: 8, date: 'Sep 2026', group: 4, status: 'Ordinary' },
     { transfer: 7, date: 'Jul 2026', group: 3, status: 'Leading' },
     { transfer: 6, date: 'Jun 2026', group: 4, status: 'Ordinary' },
     { transfer: 5, date: 'Apr 2026', group: 4, status: 'Ordinary' },

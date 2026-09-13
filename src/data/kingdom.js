@@ -41,15 +41,15 @@ export const kingdom = {
   level: 100,
   // Public tracker data (real). Everything the Atlas snapshot already carries
   // is read from it; a second hand-typed copy is just a second thing to forget.
-  // The mystic figures have no entry in tracker846.js, so they stay written
-  // out here and stay a manual refresh.
+  // The mystic figures have no entry in tracker846.js, so they stay written out
+  // here -- read off the Atlas header on 2026-09-13 with the rest.
   tier: tracker846.tier,
   atlasScore: tracker846.atlas.score,
   atlasRank: tracker846.atlas.rank,
   atlasPercentile: `Top ${(100 - tracker846.atlas.percentile).toFixed(1)}%`,
-  mysticScore: 186025,
-  mysticRank: 259,
-  mysticPercentile: 'Top 11.1%',
+  mysticScore: 198614,
+  mysticRank: 250,
+  mysticPercentile: 'Top 10.3%',
   transferStatus: tracker846.transfers[0]?.status ?? 'Ordinary',
   // KvK performance overview -- read off the tracker snapshot, not typed again.
   // This block held its own copy of every figure and all of them had fallen a
@@ -475,16 +475,22 @@ export const kvkStats = {
   currentRank: tracker846.kvk.rank
 }
 
-// Transfer events. The settled ones come from the tracker snapshot; only the
-// next window is written out here, because it has not happened yet.
+// Transfer events, from the tracker snapshot.
 //
-// Its status used to be the fixed string 'Upcoming', which stopped being true
-// the morning the window opened and stayed untrue after it shut. It is read off
-// the window now, so the row announces itself correctly on all three days of
-// its life: before, during, and after.
-const nextTransfer = { transfer: 8, opens: '2026-09-13', closes: '2026-09-19', group: 4 }
+// The window for the current one is the only thing added here. Atlas records a
+// transfer's GROUP and its status ('Leading', 'Ordinary'); it does not say
+// whether the doors are open right now, and that was written out as the fixed
+// string 'Upcoming' -- which stopped being true the morning the window opened
+// and stayed untrue after it shut. The dates drive it now, so the row reads
+// correctly on all three days of its life: before, during, and after.
+//
+// The transfer itself is no longer written out twice. It was listed here by
+// hand while it was still in the future, and the snapshot has since recorded
+// it -- which would have shown transfer 8 on the page twice, once as a guess
+// and once as a fact.
+const currentWindow = { transfer: 8, opens: '2026-09-13', closes: '2026-09-19' }
 
-function transferWindowStatus({ opens, closes }) {
+function windowState({ opens, closes }) {
   const now = Date.now()
   if (now < new Date(opens + 'T00:00:00').getTime()) return 'Upcoming'
   if (now <= new Date(closes + 'T23:59:59').getTime()) return 'Open now'
@@ -493,24 +499,18 @@ function transferWindowStatus({ opens, closes }) {
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 
-function transferWindowLabel({ opens, closes }) {
+function windowLabel({ opens, closes }) {
   const [, om, od] = opens.split('-').map(Number)
   const [y, cm, cd] = closes.split('-').map(Number)
-  const from = `${MONTHS[om - 1]} ${od}`
   const to = om === cm ? `${cd}` : `${MONTHS[cm - 1]} ${cd}`
-  return `${from}\u2013${to}, ${y}`
+  return `${MONTHS[om - 1]} ${od}\u2013${to}, ${y}`
 }
 
-export const transfers = [
-  {
-    transfer: nextTransfer.transfer,
-    date: transferWindowLabel(nextTransfer),
-    group: nextTransfer.group,
-    status: transferWindowStatus(nextTransfer),
-    upcoming: transferWindowStatus(nextTransfer) !== 'Closed',
-  },
-  ...tracker846.transfers.map((t) => ({ ...t })),
-]
+export const transfers = tracker846.transfers.map((t) => {
+  if (t.transfer !== currentWindow.transfer) return { ...t }
+  const state = windowState(currentWindow)
+  return { ...t, date: windowLabel(currentWindow), window: state, upcoming: state !== 'Closed' }
+})
 
 export const reputation = {
   overall: 5.0,

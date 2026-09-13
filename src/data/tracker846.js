@@ -4,10 +4,10 @@
 // - Kingshot Optimizer: https://kingshotoptimizer.com/kvk-rankings/kingdom/846
 //   KvK block — read 2026-09-13, after KvK 18.
 // - Kingshot Atlas: https://ks-atlas.com/kingdom/846
-//   Atlas score, rank and percentile — read 2026-09-13 through a browser that
-//   runs the page's JavaScript. The score decomposition and radar were not
-//   re-read and are still the 2026-08-23 figures, dated separately as
-//   `atlas.componentsVerified`.
+//   Atlas block — read 2026-09-13 through a browser that runs the page's
+//   JavaScript, which a plain fetch cannot do: the score and rank, the
+//   decomposition, the radar, the per-KvK curve behind its history charts, and
+//   its simulator's projection for the next KvK.
 //
 // The KvK runs are the only record typed out here. Everything countable --
 // totals, records, win rates, streaks, and the four outcome kinds -- is counted
@@ -123,9 +123,9 @@ export const tracker846 = {
     // than, which is what the site states in prose.
     percentile: 99,
     tierThreshold: 57,
-    // The one step of the score/rank curve the profile publishes as a figure.
-    // The rest is drawn but not given numerically, so we plot this and say so
-    // rather than inventing the curve.
+    // The move the profile calls out above its history charts. The rest of the
+    // curve is in `curve` below, so this is a label rather than the only thing
+    // known -- and the test file holds it against the two points it spans.
     lastMove: { fromKvk: 17, toKvk: 18, score: 3.66, ranks: 10 },
     // Read the same day as the score, from the profile's Analytics tab.
     componentsVerified: '2026-09-13',

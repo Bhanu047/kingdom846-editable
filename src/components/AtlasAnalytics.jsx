@@ -175,6 +175,7 @@ function RankHistory() {
    ------------------------------------------------------------------------ */
 function PerformanceTrend() {
   const [ref, reveal] = useInView()
+  const gid = useId()
   const runs = runsOldestFirst()
   const pts = useMemo(() => {
     let p = 0, b = 0
@@ -205,8 +206,16 @@ function PerformanceTrend() {
     <Panel className="flex flex-col">
       <SectionTitle eyebrow="Consistency" title="Performance Trend" />
       <div className="mt-1 flex flex-wrap items-baseline gap-3 text-[11px]">
-        <span style={{ color: BLUE }}>● Prep {Math.round(last.prep)}%</span>
-        <span style={{ color: GOLD }}>● Battle {Math.round(last.battle)}%</span>
+        {/* The key shows each line's own dash pattern rather than a dot, so the
+            legend tells them apart the same way the plot does. */}
+        <span className="inline-flex items-center gap-1.5" style={{ color: BLUE }}>
+          <svg width="18" height="3" aria-hidden="true"><line x1="0" y1="1.5" x2="18" y2="1.5" stroke={BLUE} strokeWidth="3" strokeDasharray="5 3.5" /></svg>
+          Prep {Math.round(last.prep)}%
+        </span>
+        <span className="inline-flex items-center gap-1.5" style={{ color: GOLD }}>
+          <svg width="18" height="3" aria-hidden="true"><line x1="0" y1="1.5" x2="18" y2="1.5" stroke={GOLD} strokeWidth="3" /></svg>
+          Battle {Math.round(last.battle)}%
+        </span>
       </div>
       <div ref={ref} className="relative mt-2 min-h-[160px] flex-1">
         <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className="h-full w-full">
@@ -216,11 +225,34 @@ function PerformanceTrend() {
           {pts.map((p, i) => (
             <line key={p.kvk} x1={x(i)} x2={x(i)} y1={T} y2={H - B} stroke="rgba(226,199,125,.05)" vectorEffect="non-scaling-stroke" />
           ))}
+          {/* Prep is dashed and battle is solid, as Atlas draws them, so the two
+              are still separable in greyscale, in a screenshot, or to a reader
+              who cannot tell the blue from the gold.
+
+              That costs prep its draw-in: the animation everything else here
+              uses IS a dash -- pathLength="1" with a single dash retreating to
+              offset 0 -- and a path cannot carry that and a visible dash
+              pattern at once. So prep is wiped in behind a clip rect instead.
+              The curve only ever moves left to right, so a left-to-right wipe
+              and a drawn line are the same gesture. */}
+          <defs>
+            <clipPath id={`${gid}-wipe`}>
+              <rect x={L - 4} y="0" width={W - L - R + 8} height={H}
+                style={{
+                  transformOrigin: `${L - 4}px 0px`,
+                  transform: reveal ? 'scaleX(1)' : 'scaleX(0)',
+                  transition: 'transform 1.2s cubic-bezier(.16,1,.3,1)',
+                }} />
+            </clipPath>
+          </defs>
           {/* non-scaling-stroke keeps these 2.6px however far the box stretches;
-              without it a tall card would fatten the lines. */}
-          <path d={path('prep')} pathLength="1" strokeDasharray="1" strokeDashoffset={reveal ? 0 : 1}
-            fill="none" stroke={BLUE} strokeWidth="2.6" vectorEffect="non-scaling-stroke"
-            style={{ transition: 'stroke-dashoffset 1.2s cubic-bezier(.16,1,.3,1)' }} />
+              without it a tall card would fatten the lines. It also holds the
+              dash pattern square, which a stretched viewBox would otherwise
+              smear into uneven ticks. */}
+          <g clipPath={`url(#${gid}-wipe)`}>
+            <path d={path('prep')} fill="none" stroke={BLUE} strokeWidth="2.6"
+              strokeDasharray="7 5" strokeLinecap="butt" vectorEffect="non-scaling-stroke" />
+          </g>
           <path d={path('battle')} pathLength="1" strokeDasharray="1" strokeDashoffset={reveal ? 0 : 1}
             fill="none" stroke={GOLD} strokeWidth="2.6" vectorEffect="non-scaling-stroke"
             style={{ transition: 'stroke-dashoffset 1.2s cubic-bezier(.16,1,.3,1) .16s' }} />

@@ -15,21 +15,6 @@ import { tracker846 } from './tracker846'
 // to be wrong instead of one.
 const sharePct = (n) => Math.round((n / tracker846.kvk.total) * 100)
 
-// The CURRENT streak in a phase, counted off the history rather than stored.
-// A stored streak is correct on the day it is written and wrong after the next
-// KvK; `best` is a record and stays in the snapshot.
-function currentStreak(phase) {
-  const runs = tracker846.kvk.history
-  const outcome = runs[0]?.[phase]
-  if (!outcome) return '\u2014'
-  let n = 0
-  for (const run of runs) {
-    if (run[phase] !== outcome) break
-    n += 1
-  }
-  return `${n}${outcome}`
-}
-
 export const kingdom = {
   id: 846,
   name: 'Kingdom 846',
@@ -81,14 +66,14 @@ export const kingdom = {
     prepPhase: {
       wins: tracker846.kvk.prep.wins,
       losses: tracker846.kvk.prep.losses,
-      streak: currentStreak('prep'),
+      streak: tracker846.kvk.prep.streak,
       winRate: `${tracker846.kvk.prep.winRate}%`,
       best: tracker846.kvk.prep.best,
     },
     battlePhase: {
       wins: tracker846.kvk.battle.wins,
       losses: tracker846.kvk.battle.losses,
-      streak: currentStreak('battle'),
+      streak: tracker846.kvk.battle.streak,
       winRate: `${tracker846.kvk.battle.winRate}%`,
       best: tracker846.kvk.battle.best,
     },
@@ -104,7 +89,8 @@ export const kingdom = {
   // The tracker figures below ARE snapshots -- they come from ks-atlas and
   // kingshotoptimizer, which have no public API. This records when they were
   // last checked so the page can say so rather than implying they are live.
-  trackerVerified: '2026-08-23',
+  trackerVerified: tracker846.kvk.verified,
+  atlasVerified: tracker846.atlas.verified,
   kvkRating: tracker846.kvk.rating,
   kvkCurrentRank: tracker846.kvk.rank,
   source: 'https://ks-atlas.com/kingdom/846',
@@ -257,7 +243,25 @@ export const players = [
 //
 // Running totals are interpolated from tracker846.js rather than typed into the
 // prose, so a recap cannot outlive the record it cites.
-export const news = [
+const chronicle = [
+  {
+    id: 'masters-7-8',
+    title: '7th & 8th Masters unlock September 14',
+    category: 'FEATURE',
+    date: 'Sep 13, 2026',
+    excerpt: 'Two more Master slots open tomorrow, eight weeks after the 5th and 6th.',
+    body: 'The kingdom\'s 7th and 8th Masters unlock on September 14, 2026, following the 5th and 6th on July 20. Two more slots to fill means two more formations worth planning before the next KvK cycle.',
+    source: kingdom.timelineSource
+  },
+  {
+    id: 'kvk18-recap',
+    title: `KvK ${tracker846.kvk.latest.kvk} swept against ${tracker846.kvk.latest.opponent}`,
+    category: 'KVK',
+    date: 'Sep 12, 2026',
+    excerpt: `Prep and battle both won. ${tracker846.kvk.prep.record} in prep, ${tracker846.kvk.battle.record} in battle, and the rating climbs to ${tracker846.kvk.rating.toFixed(3)} at global rank #${tracker846.kvk.rank}.`,
+    body: `KvK ${tracker846.kvk.latest.kvk} (September 12, 2026) matched Kingdom 846 against ${tracker846.kvk.latest.opponent}, ranked #${tracker846.kvk.latest.opponentRank} globally, at match quality ${tracker846.kvk.latest.quality}. Both phases were won, and the preparation streak reaches ${tracker846.kvk.prep.streak}.\n\nAcross ${tracker846.kvk.total} KvKs that makes ${tracker846.kvk.prep.record} in preparation and ${tracker846.kvk.battle.record} in battle, with ${tracker846.kvk.dominations} dominations — a ${tracker846.kvk.dominationRate}% domination rate. The rating stands at ${tracker846.kvk.rating.toFixed(3)} for global rank #${tracker846.kvk.rank}.`,
+    source: kingdom.kvkSource
+  },
   {
     id: 'flamedragon',
     title: 'First Flamedragon Tyrant Competition opens',
@@ -287,11 +291,11 @@ export const news = [
   },
   {
     id: 'kvk17-recap',
-    title: `KvK ${tracker846.kvk.latest.kvk} taken in both phases against ${tracker846.kvk.latest.opponent}`,
+    title: 'KvK 17 taken in both phases against K795',
     category: 'KVK',
     date: 'Aug 15, 2026',
-    excerpt: `Prep and battle both won against ${tracker846.kvk.latest.opponent} (global #${tracker846.kvk.latest.opponentRank}). The kingdom now holds ${tracker846.kvk.prep.record} in prep and ${tracker846.kvk.battle.record} in battle.`,
-    body: `KvK ${tracker846.kvk.latest.kvk} (August 15, 2026) matched Kingdom 846 against ${tracker846.kvk.latest.opponent}, ranked #${tracker846.kvk.latest.opponentRank} globally, at match quality ${tracker846.kvk.latest.quality}. Both phases were won.\n\nAcross ${tracker846.kvk.total} KvKs the kingdom stands at ${tracker846.kvk.prep.record} in preparation and ${tracker846.kvk.battle.record} in battle, with ${tracker846.kvk.dominations} dominations — a ${tracker846.kvk.dominationRate}% domination rate — for a rating of ${tracker846.kvk.rating.toFixed(3)} and global rank #${tracker846.kvk.rank}.`,
+    excerpt: 'Prep and battle both won, at match quality 4.36 — the start of the run the kingdom is still on.',
+    body: 'KvK 17 (August 15, 2026) matched Kingdom 846 against K795 at match quality 4.36. Both phases were won.\n\nIt opened the run the kingdom is still on: no phase lost in either KvK since.',
     source: kingdom.kvkSource
   },
   {
@@ -308,11 +312,16 @@ export const news = [
     title: 'KvK 16 split against K623 — prep won, battle lost',
     category: 'KVK',
     date: 'Jul 18, 2026',
-    excerpt: 'The toughest matchup in the kingdom\'s history by match quality. The preparation phase was won; the battle phase was not.',
-    body: 'KvK 16 (July 18, 2026) put Kingdom 846 against K623, ranked #11 globally, at match quality 5.93 — the hardest draw the kingdom has had. Preparation was won and the battle phase was lost.\n\nIt remains the only loss in the current run: every KvK since has been taken in both phases.',
+    excerpt: `The toughest matchup in the kingdom's history by match quality (${tracker846.kvk.toughest.quality}). The preparation phase was won; the battle phase was not.`,
+    body: `KvK 16 (July 18, 2026) put Kingdom 846 against ${tracker846.kvk.toughest.opponent}, ranked #${tracker846.kvk.toughest.opponentRank} globally, at match quality ${tracker846.kvk.toughest.quality} — the hardest draw in the kingdom's history. Preparation was won and the battle phase was lost.\n\nIt is the last phase the kingdom has dropped: every KvK since has been taken in both.`,
     source: kingdom.kvkSource
   }
 ]
+
+// Newest first, sorted rather than arranged by hand. The page renders the array
+// in order, and the last edit left a September recap sitting below an August
+// one because the new entry went in where the old one had been.
+export const news = [...chronicle].sort((a, b) => Date.parse(b.date) - Date.parse(a.date))
 
 // Generic strategy library (real Kingshot concepts) with real guide content.
 export const guides = [
@@ -429,7 +438,8 @@ export const timeline = [
   { name: '5th & 6th Masters Unlocked', date: '2026-07-20', category: 'Feature', status: 'past' },
   { name: 'Generation 6 Heroes (Triton, Sophia, Yang)', date: '2026-08-17', category: 'Heroes', status: 'past' },
   { name: 'Generation 6 Pets (Regal White Lion, Ironclad War Elephant)', date: '2026-08-17', category: 'Pets', status: 'past' },
-  { name: 'First Flamedragon Tyrant Competition', date: '2026-08-30', category: 'PvP', status: 'upcoming', art: './assets/art-fire-tyrant.webp', featured: true },
+  { name: 'First Flamedragon Tyrant Competition', date: '2026-08-30', category: 'PvP', status: 'past', art: './assets/art-fire-tyrant.webp' },
+  { name: '7th & 8th Masters Unlocked', date: '2026-09-14', category: 'Feature', status: 'upcoming', featured: true },
   { name: 'Generation 7 Heroes (Wee & Woo, Ava, Charles)', date: '2026-11-09', category: 'Heroes', status: 'future' },
   { name: 'Generation 7 Pets (Ironclad War Bear)', date: '2026-11-09', category: 'Pets', status: 'future' },
   { name: 'Advanced Truegold Research', date: '2026-12-21', category: 'Truegold', status: 'future' },
@@ -457,7 +467,7 @@ export const kvkStats = {
   reversals: tracker846.kvk.reversals,
   prepRecord: tracker846.kvk.prep.record,
   prepWinRate: tracker846.kvk.prep.winRate,
-  prepStreak: currentStreak('prep'),
+  prepStreak: tracker846.kvk.prep.streak,
   battleRecord: tracker846.kvk.battle.record,
   battleWinRate: tracker846.kvk.battle.winRate,
   battleBestStreak: tracker846.kvk.battle.best,
@@ -472,7 +482,7 @@ export const kvkStats = {
 // the morning the window opened and stayed untrue after it shut. It is read off
 // the window now, so the row announces itself correctly on all three days of
 // its life: before, during, and after.
-const nextTransfer = { transfer: 8, opens: '2026-09-13', closes: '2026-09-19', group: '—' }
+const nextTransfer = { transfer: 8, opens: '2026-09-13', closes: '2026-09-19', group: 4 }
 
 function transferWindowStatus({ opens, closes }) {
   const now = Date.now()

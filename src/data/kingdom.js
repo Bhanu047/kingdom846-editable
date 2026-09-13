@@ -10,6 +10,26 @@
 
 import { tracker846 } from './tracker846'
 
+// Share of all KvKs run, as a whole percentage -- the outcome tiles used to
+// carry both the count and a percentage typed beside it, which is two chances
+// to be wrong instead of one.
+const sharePct = (n) => Math.round((n / tracker846.kvk.total) * 100)
+
+// The CURRENT streak in a phase, counted off the history rather than stored.
+// A stored streak is correct on the day it is written and wrong after the next
+// KvK; `best` is a record and stays in the snapshot.
+function currentStreak(phase) {
+  const runs = tracker846.kvk.history
+  const outcome = runs[0]?.[phase]
+  if (!outcome) return '\u2014'
+  let n = 0
+  for (const run of runs) {
+    if (run[phase] !== outcome) break
+    n += 1
+  }
+  return `${n}${outcome}`
+}
+
 export const kingdom = {
   id: 846,
   name: 'Kingdom 846',
@@ -34,26 +54,44 @@ export const kingdom = {
   leadingAlliance: '[RYO] Spiders',
   totalPower: '111,597,006,633',
   level: 100,
-  // Public tracker data (real)
-  tier: 'S-Tier',
-  atlasScore: 60.91,
-  atlasRank: 66,
-  atlasPercentile: 'Top 3.3%',
+  // Public tracker data (real). Everything the Atlas snapshot already carries
+  // is read from it; a second hand-typed copy is just a second thing to forget.
+  // The mystic figures have no entry in tracker846.js, so they stay written
+  // out here and stay a manual refresh.
+  tier: tracker846.tier,
+  atlasScore: tracker846.atlas.score,
+  atlasRank: tracker846.atlas.rank,
+  atlasPercentile: `Top ${(100 - tracker846.atlas.percentile).toFixed(1)}%`,
   mysticScore: 186025,
   mysticRank: 259,
   mysticPercentile: 'Top 11.1%',
-  transferStatus: 'Leading',
-  // KvK performance overview
+  transferStatus: tracker846.transfers[0]?.status ?? 'Ordinary',
+  // KvK performance overview -- read off the tracker snapshot, not typed again.
+  // This block held its own copy of every figure and all of them had fallen a
+  // KvK behind: 10 KvKs against 11, 7 dominations against 8, an 8-2 record
+  // against 9-2. Derived, it cannot disagree with the page beside it.
   kvkOverview: {
-    totalKvks: 10,
+    totalKvks: tracker846.kvk.total,
     outcomes: [
-      { label: 'Dominations', value: 7, pct: 70, icon: 'crown' },
-      { label: 'Comebacks', value: 1, pct: 10, icon: 'refresh' },
-      { label: 'Reversals', value: 1, pct: 10, icon: 'refresh' },
-      { label: 'Invasions', value: 1, pct: 10, icon: 'swords' },
+      { label: 'Dominations', value: tracker846.kvk.dominations, pct: sharePct(tracker846.kvk.dominations), icon: 'crown' },
+      { label: 'Comebacks', value: tracker846.kvk.comebacks, pct: sharePct(tracker846.kvk.comebacks), icon: 'refresh' },
+      { label: 'Reversals', value: tracker846.kvk.reversals, pct: sharePct(tracker846.kvk.reversals), icon: 'refresh' },
+      { label: 'Invasions', value: tracker846.kvk.invasions, pct: sharePct(tracker846.kvk.invasions), icon: 'swords' },
     ],
-    prepPhase: { wins: 8, losses: 2, streak: '4W', winRate: '80%', best: '4W' },
-    battlePhase: { wins: 8, losses: 2, streak: '5W', winRate: '80%', best: '5W' },
+    prepPhase: {
+      wins: tracker846.kvk.prep.wins,
+      losses: tracker846.kvk.prep.losses,
+      streak: currentStreak('prep'),
+      winRate: `${tracker846.kvk.prep.winRate}%`,
+      best: tracker846.kvk.prep.best,
+    },
+    battlePhase: {
+      wins: tracker846.kvk.battle.wins,
+      losses: tracker846.kvk.battle.losses,
+      streak: currentStreak('battle'),
+      winRate: `${tracker846.kvk.battle.winRate}%`,
+      best: tracker846.kvk.battle.best,
+    },
   },
   created: '2025-08-17',
   // Kingdom age is DERIVED, not stored. It was hardcoded at 359 and had drifted
@@ -67,8 +105,8 @@ export const kingdom = {
   // kingshotoptimizer, which have no public API. This records when they were
   // last checked so the page can say so rather than implying they are live.
   trackerVerified: '2026-08-23',
-  kvkRating: 2.564,
-  kvkCurrentRank: 25,
+  kvkRating: tracker846.kvk.rating,
+  kvkCurrentRank: tracker846.kvk.rank,
   source: 'https://ks-atlas.com/kingdom/846',
   timelineSource: 'https://kingshotoptimizer.com/kingdom-timeline/846',
   kvkSource: 'https://kingshotoptimizer.com/kvk-rankings/kingdom/846'
@@ -208,41 +246,52 @@ export const players = [
 
 
 // Kingdom Chronicle — derived from REAL timeline milestones and KvK results.
+//
+// Every headline here was written in the future tense about something that has
+// since happened: the anniversary was "approaching" a month after the kingdom
+// passed it, Generation 6 unlocked "next week" in mid-August, and the newest
+// item on the page was a KvK recap two KvKs old that quoted a record the
+// tracker had already moved past. A chronicle that talks about last month as
+// though it were next week reads as abandoned even when the rest of the site
+// is live.
+//
+// Running totals are interpolated from tracker846.js rather than typed into the
+// prose, so a recap cannot outlive the record it cites.
 export const news = [
   {
-    id: 'anniv-approaching',
-    title: 'Kingdom 846 approaches its First Anniversary',
-    category: 'ANNIVERSARY',
-    date: 'Aug 10, 2026',
-    excerpt: 'Founded August 17, 2025, the kingdom reaches Day 359. Anniversary milestone unlocks August 16, 2026.',
-    body: 'Kingdom 846 was founded on August 17, 2025. The First Anniversary milestone unlocks on August 16, 2026, followed immediately by Generation 6 Heroes and Pets on August 17. Anniversary rewards and a kingdom-wide celebration are expected.',
-    source: kingdom.timelineSource
-  },
-  {
-    id: 'gen6-heroes',
-    title: 'Generation 6 Heroes unlock next week — Triton, Sophia, Yang',
-    category: 'HEROES',
-    date: 'Aug 10, 2026',
-    excerpt: 'A new hero generation becomes available August 17, alongside Generation 6 Pets (Regal White Lion, Ironclad War Elephant).',
-    body: 'Generation 6 Heroes (Triton, Sophia, Yang) unlock on August 17, 2026, alongside Generation 6 Pets (Regal White Lion, Ironclad War Elephant). Commanders should prepare recruitment and bonding resources.',
-    source: kingdom.timelineSource
-  },
-  {
     id: 'flamedragon',
-    title: 'First Flamedragon Tyrant Competition begins August 30',
+    title: 'First Flamedragon Tyrant Competition opens',
     category: 'PVP',
-    date: 'Aug 10, 2026',
-    excerpt: 'A new competitive world-boss event opens. Prepare anti-burn gear and rally compositions.',
-    body: 'The First Flamedragon Tyrant Competition begins August 30, 2026. Rallies should prepare anti-burn loadouts and optimized march compositions for the world-boss damage race.',
+    date: 'Aug 30, 2026',
+    excerpt: 'The kingdom\'s first Flamedragon Tyrant Competition began August 30 — a world-boss damage race.',
+    body: 'The First Flamedragon Tyrant Competition began on August 30, 2026. It is a world-boss damage race: anti-burn loadouts and optimised march compositions decide placement, and rally timing decides the rest.',
     source: kingdom.timelineSource
   },
   {
-    id: 'kvk16-recap',
-    title: 'KvK 16 concludes vs K623 — Prep won, Battle lost',
+    id: 'gen6-live',
+    title: 'Generation 6 Heroes and Pets are live',
+    category: 'HEROES',
+    date: 'Aug 17, 2026',
+    excerpt: 'Triton, Sophia and Yang arrived on August 17, alongside the Regal White Lion and the Ironclad War Elephant.',
+    body: 'Generation 6 Heroes — Triton, Sophia and Yang — unlocked on August 17, 2026, together with Generation 6 Pets (Regal White Lion, Ironclad War Elephant).\n\nRecruitment and bonding resources spend hard on a new generation; commanders who banked through the anniversary window are the ones fielding them first.',
+    source: kingdom.timelineSource
+  },
+  {
+    id: 'first-anniversary',
+    title: 'Kingdom 846 marks its First Anniversary',
+    category: 'ANNIVERSARY',
+    date: 'Aug 17, 2026',
+    excerpt: 'Founded August 17, 2025. The anniversary milestone unlocked August 16, and Generation 6 landed the day after.',
+    body: 'Kingdom 846 was founded on August 17, 2025. The First Anniversary milestone unlocked on August 16, 2026, with Generation 6 Heroes and Pets following on the 17th — the kingdom\'s first birthday and its sixth hero generation inside a single day.',
+    source: kingdom.timelineSource
+  },
+  {
+    id: 'kvk17-recap',
+    title: `KvK ${tracker846.kvk.latest.kvk} taken in both phases against ${tracker846.kvk.latest.opponent}`,
     category: 'KVK',
-    date: 'Jul 18, 2026',
-    excerpt: 'Kingdom 846 faced its toughest opponent (#5 ranked K623, match quality 5.75). Preparation phase won, battle phase lost.',
-    body: 'KvK 16 (July 18, 2026) pitted Kingdom 846 against K623, ranked #5 globally — the toughest matchup in the kingdom\'s history at match quality 5.75. Kingdom 846 won the preparation phase but lost the battle phase. Overall KvK record stands at 8-2 prep and 8-2 battle across 10 KvKs, with a 2.564 rating and global rank #25.',
+    date: 'Aug 15, 2026',
+    excerpt: `Prep and battle both won against ${tracker846.kvk.latest.opponent} (global #${tracker846.kvk.latest.opponentRank}). The kingdom now holds ${tracker846.kvk.prep.record} in prep and ${tracker846.kvk.battle.record} in battle.`,
+    body: `KvK ${tracker846.kvk.latest.kvk} (August 15, 2026) matched Kingdom 846 against ${tracker846.kvk.latest.opponent}, ranked #${tracker846.kvk.latest.opponentRank} globally, at match quality ${tracker846.kvk.latest.quality}. Both phases were won.\n\nAcross ${tracker846.kvk.total} KvKs the kingdom stands at ${tracker846.kvk.prep.record} in preparation and ${tracker846.kvk.battle.record} in battle, with ${tracker846.kvk.dominations} dominations — a ${tracker846.kvk.dominationRate}% domination rate — for a rating of ${tracker846.kvk.rating.toFixed(3)} and global rank #${tracker846.kvk.rank}.`,
     source: kingdom.kvkSource
   },
   {
@@ -253,6 +302,15 @@ export const news = [
     excerpt: 'The kingdom unlocked its fifth and sixth Masters on July 20, 2026.',
     body: 'On July 20, 2026, Kingdom 846 unlocked its fifth and sixth Masters, expanding the available Master roster for combat formations.',
     source: kingdom.timelineSource
+  },
+  {
+    id: 'kvk16-recap',
+    title: 'KvK 16 split against K623 — prep won, battle lost',
+    category: 'KVK',
+    date: 'Jul 18, 2026',
+    excerpt: 'The toughest matchup in the kingdom\'s history by match quality. The preparation phase was won; the battle phase was not.',
+    body: 'KvK 16 (July 18, 2026) put Kingdom 846 against K623, ranked #11 globally, at match quality 5.93 — the hardest draw the kingdom has had. Preparation was won and the battle phase was lost.\n\nIt remains the only loss in the current run: every KvK since has been taken in both phases.',
+    source: kingdom.kvkSource
   }
 ]
 
@@ -380,42 +438,68 @@ export const timeline = [
   { name: 'Truegold 10', date: '2027-06-07', category: 'Truegold', status: 'future' }
 ]
 
-// KvK history — sourced from kingshotoptimizer.com/kvk-rankings/kingdom/846
-export const kvkHistory = [
-  { kvk: 16, date: '2026-07-18', opponent: 'K623', opponentRank: 5, quality: 5.75, prep: 'W', battle: 'L' },
-  { kvk: 15, date: '2026-06-20', opponent: 'K766', opponentRank: 147, quality: 4.35, prep: 'W', battle: 'W' },
-  { kvk: 14, date: '2026-05-23', opponent: 'K610', opponentRank: 1198, quality: 3.48, prep: 'W', battle: 'W' },
-  { kvk: 13, date: '2026-04-25', opponent: 'K832', opponentRank: 670, quality: 3.74, prep: 'W', battle: 'W' },
-  { kvk: 12, date: '2026-03-28', opponent: 'K777', opponentRank: 42, quality: 4.93, prep: 'L', battle: 'L' },
-  { kvk: 11, date: '2026-02-28', opponent: 'K833', opponentRank: 212, quality: 4.19, prep: 'W', battle: 'W' },
-  { kvk: 10, date: '2026-01-31', opponent: 'K815', opponentRank: 1245, quality: 3.45, prep: 'W', battle: 'W' },
-  { kvk: 9, date: '2026-01-03', opponent: 'K791', opponentRank: 276, quality: 4.10, prep: 'L', battle: 'W' },
-  { kvk: 8, date: '2025-12-06', opponent: 'K840', opponentRank: 1216, quality: 3.46, prep: 'W', battle: 'W' },
-  { kvk: 7, date: '2025-11-08', opponent: 'K841', opponentRank: 1083, quality: 3.53, prep: 'W', battle: 'W' }
-]
+// KvK history and totals.
+//
+// These were a second, hand-typed copy of what tracker846.js already holds,
+// and the two had drifted apart on every figure that matters: 10 KvKs here
+// against 11 there, rating 2.564 against 2.873, global rank #25 against #15,
+// and a different opponent rank and match quality on every single run. The
+// pages read the tracker; this copy fed the content API, so the same kingdom
+// could be described two ways depending on which one answered first.
+//
+// Projected from the snapshot now. Update tracker846.js and these follow.
+export const kvkHistory = tracker846.kvk.history.map((run) => ({ ...run }))
 
 export const kvkStats = {
-  total: 10,
-  dominations: 7,
-  comebacks: 1,
-  reversals: 1,
-  prepRecord: '8-2',
-  prepWinRate: 80,
-  prepStreak: '4W',
-  battleRecord: '8-2',
-  battleWinRate: 80,
-  battleBestStreak: '5W',
-  rating: 2.564,
-  currentRank: 25
+  total: tracker846.kvk.total,
+  dominations: tracker846.kvk.dominations,
+  comebacks: tracker846.kvk.comebacks,
+  reversals: tracker846.kvk.reversals,
+  prepRecord: tracker846.kvk.prep.record,
+  prepWinRate: tracker846.kvk.prep.winRate,
+  prepStreak: currentStreak('prep'),
+  battleRecord: tracker846.kvk.battle.record,
+  battleWinRate: tracker846.kvk.battle.winRate,
+  battleBestStreak: tracker846.kvk.battle.best,
+  rating: tracker846.kvk.rating,
+  currentRank: tracker846.kvk.rank
+}
+
+// Transfer events. The settled ones come from the tracker snapshot; only the
+// next window is written out here, because it has not happened yet.
+//
+// Its status used to be the fixed string 'Upcoming', which stopped being true
+// the morning the window opened and stayed untrue after it shut. It is read off
+// the window now, so the row announces itself correctly on all three days of
+// its life: before, during, and after.
+const nextTransfer = { transfer: 8, opens: '2026-09-13', closes: '2026-09-19', group: '—' }
+
+function transferWindowStatus({ opens, closes }) {
+  const now = Date.now()
+  if (now < new Date(opens + 'T00:00:00').getTime()) return 'Upcoming'
+  if (now <= new Date(closes + 'T23:59:59').getTime()) return 'Open now'
+  return 'Closed'
+}
+
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+function transferWindowLabel({ opens, closes }) {
+  const [, om, od] = opens.split('-').map(Number)
+  const [y, cm, cd] = closes.split('-').map(Number)
+  const from = `${MONTHS[om - 1]} ${od}`
+  const to = om === cm ? `${cd}` : `${MONTHS[cm - 1]} ${cd}`
+  return `${from}\u2013${to}, ${y}`
 }
 
 export const transfers = [
-  { transfer: 8, date: 'Sep 13–19, 2026', group: '—', status: 'Upcoming', upcoming: true },
-  { transfer: 7, date: 'Jul 2026', group: 3, status: 'Leading' },
-  { transfer: 6, date: 'Jun 2026', group: 4, status: 'Ordinary' },
-  { transfer: 5, date: 'Apr 2026', group: 4, status: 'Ordinary' },
-  { transfer: 4, date: 'Mar 2026', group: 5, status: 'Ordinary' },
-  { transfer: 3, date: 'Jan 2026', group: 6, status: 'Ordinary' }
+  {
+    transfer: nextTransfer.transfer,
+    date: transferWindowLabel(nextTransfer),
+    group: nextTransfer.group,
+    status: transferWindowStatus(nextTransfer),
+    upcoming: transferWindowStatus(nextTransfer) !== 'Closed',
+  },
+  ...tracker846.transfers.map((t) => ({ ...t })),
 ]
 
 export const reputation = {

@@ -192,8 +192,11 @@ for ch in "WE TAKE WHAT'S OURS":
 
 d.text((TX, 450), "One Crown. Four Alliances. Endless Glory.", font=fnt(SERIF_R, 22), fill=PARCH_DIM + (208,))
 
+# The domain is right-aligned to where the corner ornament begins, not to the
+# frame: aligned to the frame it ran straight into the filigree curl.
 fd = fnt(SERIF_R, 19)
-x = W - 76 - text_width("KINGDOM846.COM", fd, 4.2)
+ORN_GAP = 18
+x = (W - 22 - orn.width) - ORN_GAP - text_width("KINGDOM846.COM", fd, 4.2)
 for ch in "KINGDOM846.COM":
     d.text((x, 548), ch, font=fd, fill=GOLD + (205,))
     x += d.textlength(ch, font=fd) + 4.2

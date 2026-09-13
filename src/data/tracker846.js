@@ -4,9 +4,10 @@
 // - Kingshot Optimizer: https://kingshotoptimizer.com/kvk-rankings/kingdom/846
 //   KvK block — read 2026-09-13, after KvK 18.
 // - Kingshot Atlas: https://ks-atlas.com/kingdom/846
-//   Atlas block — read 2026-08-23. Atlas renders client-side and could not be
-//   read on the 13th, so the score, rank and breakdown are still the August
-//   figures and say so through `atlas.verified`.
+//   Atlas score, rank and percentile — read 2026-09-13 through a browser that
+//   runs the page's JavaScript. The score decomposition and radar were not
+//   re-read and are still the 2026-08-23 figures, dated separately as
+//   `atlas.componentsVerified`.
 //
 // The KvK runs are the only record typed out here. Everything countable --
 // totals, records, win rates, streaks, and the four outcome kinds -- is counted
@@ -85,21 +86,29 @@ const invasions = count((r) => r.prep === 'L' && r.battle === 'L')
 export const tracker846 = {
   tier: 'S-Tier',
   atlas: {
-    // As of atlas.verified below -- the Atlas profile is client-rendered and
-    // was not re-read after KvK 18. Rating and rank in the kvk block ARE
-    // current; these are not, and the two are dated separately for that reason.
-    verified: '2026-08-23',
-    score: 66.38,
-    rank: 33,
-    // "Ranks better than 98% of all kingdoms", per the Atlas profile.
-    percentile: 98,
+    // Score, rank and percentile: read off the live profile on the date below.
+    // Atlas renders client-side, so this needed a browser that runs JavaScript;
+    // plain fetches get the app's boot shell and nothing else.
+    verified: '2026-09-13',
+    score: 70.04,
+    rank: 23,
+    // "Top 1.0%" on the profile -- stored as the percentage it ranks better
+    // than, which is what the site states in prose.
+    percentile: 99,
     tierThreshold: 57,
-    // The only step of the score/rank history the profile actually publishes
-    // as a figure. The rest of the curve is drawn on their page but not given
-    // numerically, so we plot this step and say so rather than inventing it.
+    // The one step of the score/rank curve the profile publishes as a figure.
+    // The rest is drawn but not given numerically, so we plot this and say so
+    // rather than inventing the curve.
     lastMove: { fromKvk: 16, toKvk: 17, score: 5.47, ranks: 33 },
+    // The decomposition and the radar were read a KvK earlier than the score
+    // above and have not been re-read since. They sum to 66.37, which is the
+    // score as it stood on that date -- NOT the 70.04 beside them. Dated
+    // separately, and the panel that draws them says which date it is showing,
+    // so the bar cannot pass itself off as a breakdown of today's score.
+    componentsVerified: '2026-08-23',
     // Atlas labels its own decomposition approximate; these five sum to 66.37
-    // against a published 66.38, which is the rounding that label refers to.
+    // against the 66.38 published that day, which is the rounding that label
+    // refers to.
     breakdown: [
       { key: 'base',    label: 'Base Score', note: 'win rates', pts: 47.93 },
       { key: 'dominv',  label: 'Dom / Inv',  note: 'impact',    pts: 4.55 },

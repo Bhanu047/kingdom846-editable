@@ -317,14 +317,23 @@ function ScoreBreakdown() {
   const [ref, reveal] = useInView()
   const { breakdown, score, experiencePenalty } = tracker846.atlas
   const total = breakdown.reduce((s, b) => s + b.pts, 0)
+  // The components are re-read less often than the score is. When they are
+  // behind it, the bar is a decomposition of the OLDER score, so the panel
+  // shows that older total and its date instead of printing today's score
+  // above five segments that do not add up to it.
+  const stale = Math.abs(total - score) > 0.05
 
   return (
     <Panel>
       <SectionTitle eyebrow="Score Components" title="Atlas Score Breakdown"
         action={<Pill tone="gold">{tracker846.tier}</Pill>} />
       <div className="mt-3 flex items-baseline gap-2">
-        <span className="gilt-text font-mono text-3xl font-black">{score.toFixed(2)}</span>
-        <span className="text-[11px] text-parchment/40">breakdown is approximate</span>
+        <span className="gilt-text font-mono text-3xl font-black">{(stale ? total : score).toFixed(2)}</span>
+        <span className="text-[11px] text-parchment/40">
+          {stale
+            ? `components as of ${tracker846.atlas.componentsVerified} · score now ${score.toFixed(2)}`
+            : 'breakdown is approximate'}
+        </span>
       </div>
       <div ref={ref} className="k-track mt-3 flex h-5 overflow-hidden rounded-full border border-gold/15">
         {breakdown.map((b, i) => (

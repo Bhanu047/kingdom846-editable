@@ -144,7 +144,7 @@ export default function About() {
             <h1 className="gilt-display mt-3 font-decorative text-[26px] font-black leading-tight tracking-[.03em] sm:text-3xl md:text-4xl">KINGDOM 846</h1>
             <p className="mt-1.5 font-display text-[11px] tracking-[.1em] text-gold-bright/85 md:text-xs">“{kingdom.motto}”</p>
             <p className="mx-auto mt-3 max-w-xl text-[13px] leading-relaxed text-parchment/70">
-              An <span className="text-gold-bright">S-Tier</span> realm of four alliances under one crown — disciplined in preparation, coordinated in the rally, kingdom-first in command. Latest chapter: <span className="text-gold-bright">K846 vs K795</span>.
+              An <span className="text-gold-bright">{tracker846.tier}</span> realm of four alliances under one crown — disciplined in preparation, coordinated in the rally, kingdom-first in command. Latest chapter: <span className="text-gold-bright">K846 vs {latestKvk.opponent}</span>.
             </p>
             <div className="mt-4 flex flex-wrap justify-center gap-2">
               <a href="https://ks-atlas.com/kingdom/846" target="_blank" rel="noreferrer" className="btn-secondary btn-sm"><Icon name="arrow" size={13} /> Atlas</a>

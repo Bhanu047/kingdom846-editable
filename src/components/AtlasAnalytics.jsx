@@ -1,4 +1,4 @@
-import { useId, useMemo } from 'react'
+import { useId, useState } from 'react'
 import { Panel, SectionTitle, Pill } from './ui'
 import Icon from './Icon'
 import { tracker846 } from '../data/tracker846'
@@ -26,7 +26,73 @@ import { smoothPath, useInView } from '../lib/chartAnim'
 const GOLD = '#E8C558'
 const BLUE = '#7f9ed6'
 
-const runsOldestFirst = () => [...tracker846.kvk.history].reverse()
+/* ------------------------------------------------------------ kvk charts --
+   The three line charts share an x-axis -- one point per KvK, 7 through 18 --
+   and everything that follows from it: where a point sits, which labels fit,
+   and what the reader gets when they hover or tap one.
+
+   Atlas labels every KvK on its axis. At 520 units wide that is fine, but on a
+   360px phone twelve "#12"s collide into a grey smear, so every other label is
+   dropped below 400px and the last one is always kept -- an axis whose final
+   tick is missing reads as though the chart stops early.
+
+   The hover layer is HTML over the SVG rather than SVG hit areas: it has to
+   work on touch, where there is no hover at all and a tap has to land on
+   something forgiving. Each point gets an equal vertical band of the plot, so
+   the target is the full height of the chart and about 40px wide.
+   -------------------------------------------------------------------------- */
+const PLOT = { W: 520, H: 200, L: 40, R: 16, T: 18, B: 30 }
+
+function useKvkPoints(count) {
+  const [active, setActive] = useState(null)
+  const { W, L, R } = PLOT
+  const x = (i) => L + (i / (count - 1)) * (W - L - R)
+  return { active, setActive, x }
+}
+
+function KvkHover({ count, onActive }) {
+  return (
+    <div className="absolute inset-0 flex" onPointerLeave={() => onActive(null)}>
+      {Array.from({ length: count }, (_, i) => (
+        <button key={i} type="button" tabIndex={-1} aria-hidden="true"
+          className="h-full flex-1 cursor-default bg-transparent"
+          onPointerEnter={() => onActive(i)}
+          onPointerDown={() => onActive(i)}
+          onFocus={() => onActive(i)} />
+      ))}
+    </div>
+  )
+}
+
+function KvkTooltip({ label, value, left, top }) {
+  return (
+    <div className="pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-[140%] whitespace-nowrap rounded-md border border-gold/25 bg-[#0b1222]/95 px-2 py-1 text-[10px] shadow-lg"
+      style={{ left, top }}>
+      <span className="text-parchment/50">KvK {label}</span>
+      <span className="ml-1.5 font-mono font-bold text-gold-bright">{value}</span>
+    </div>
+  )
+}
+
+// The axis sits in its OWN row under the plot, not absolutely positioned
+// inside it. Inside the plot box the bottom y-tick (0%, or #470 on the rank
+// chart) and the first KvK label both land in the same corner, and on a phone
+// -- where the box is shorter but the type is not smaller -- they overlapped.
+// Measured at 360 and 390px: "0" sitting on top of "#7".
+function KvkAxis({ series, x }) {
+  const { W } = PLOT
+  const last = series.length - 1
+  return (
+    <div className="relative mt-1.5 h-3">
+      {series.map((p, i) => (
+        <div key={p.kvk}
+          className={`pointer-events-none absolute -translate-x-1/2 whitespace-nowrap text-[9px] font-semibold text-parchment/40 ${
+            i % 2 === 0 || i === last ? '' : 'hidden min-[400px]:block'}`}
+          style={{ left: `${(x(i) / W) * 100}%` }}>#{p.kvk}</div>
+      ))}
+    </div>
+  )
+}
 
 /* ---------------------------------------------------------------- history --
    Atlas score across the campaign, as the profile plots it.
@@ -37,12 +103,13 @@ function ScoreHistory() {
   const { atlas } = tracker846
   const series = atlas.curve
   const move = atlas.lastMove
+  const { active, setActive, x } = useKvkPoints(series.length)
 
-  const W = 520, H = 200, L = 40, R = 16, T = 18, B = 30
+  const { W, H, L, R, T, B } = PLOT
   const ticks = [0, 25, 50, 75, 100]
-  const x = (i) => L + (i / (series.length - 1)) * (W - L - R)
   const y = (v) => H - B - (v / 100) * (H - T - B)
   const line = smoothPath(series.map((p, i) => ({ x: x(i), y: y(p.score) })))
+  const hot = active == null ? null : series[active]
 
   return (
     <Panel>
@@ -68,20 +135,21 @@ function ScoreHistory() {
             style={{ transition: 'stroke-dashoffset 1.1s cubic-bezier(.16,1,.3,1)' }} />
           <g style={{ opacity: reveal ? 1 : 0, transition: 'opacity .4s ease 1s' }}>
             {series.map((p, i) => (
-              <circle key={p.kvk} cx={x(i)} cy={y(p.score)} r="2.4" fill="#FFF6DA" />
+              <circle key={p.kvk} cx={x(i)} cy={y(p.score)} r={active === i ? 4.2 : 2.4}
+                fill="#FFF6DA" stroke={GOLD} strokeWidth={active === i ? 1.6 : 0} />
             ))}
           </g>
         </svg>
-        {ticks.filter((t) => t % 50 === 0).map((t) => (
+        {ticks.map((t) => (
           <div key={t} className="pointer-events-none absolute -translate-y-1/2 font-mono text-[9px] text-parchment/35"
-            style={{ right: `${(W - L + 6) / W * 100}%`, top: `${y(t) / H * 100}%` }}>{t}</div>
+            style={{ right: `${((W - L + 6) / W) * 100}%`, top: `${(y(t) / H) * 100}%` }}>{t}</div>
         ))}
-        {[0, series.length - 1].map((i, n) => (
-          <div key={series[i].kvk} className="pointer-events-none absolute whitespace-nowrap text-[9px] font-semibold text-parchment/40"
-            style={{ left: n === 0 ? `${x(i) / W * 100}%` : undefined, right: n ? '2%' : undefined, top: `${(H - 12) / H * 100}%` }}>#{series[i].kvk}</div>
-        ))}
+        <KvkHover count={series.length} onActive={setActive} />
+        {hot && <KvkTooltip label={hot.kvk} value={hot.score.toFixed(2)}
+          left={`${(x(active) / W) * 100}%`} top={`${(y(hot.score) / H) * 100}%`} />}
       </div>
-      <p className="mt-2 text-[10px] leading-relaxed text-parchment/40">
+      <KvkAxis series={series} x={x} />
+      <p className="mt-4 text-[10px] leading-relaxed text-parchment/40">
         Read off the Atlas history chart (±0.1). Its last point sits at {series[series.length - 1].score.toFixed(2)};
         the profile recalculates after a KvK settles, and {atlas.score.toFixed(2)} is the standing it shows now.
       </p>
@@ -96,28 +164,23 @@ function RankHistory() {
   const series = atlas.curve
   const move = atlas.lastMove
   const headroom = atlas.score - atlas.tierThreshold
+  const { active, setActive, x } = useKvkPoints(series.length)
 
-  // Rank is a line now, not a ladder. The ladder existed because only two
-  // positions were known and a two-point plot is mostly empty; twelve points
-  // is a trajectory, and it tells the real story -- #458 at KvK 7, down into
-  // the twenties, with the two falls after a lost phase plainly visible.
-  //
-  // #1 sits at the TOP: on a rank axis, better is a smaller number, and a
-  // chart that climbs as the kingdom falls would be read backwards by
-  // everyone. The domain is logarithmic because the same twenty places matter
-  // far more at #20 than at #400, and a linear axis flattens the whole recent
-  // half of the campaign into one band.
-  const worst = Math.max(...series.map((p) => p.rank))
-  const span = Math.log(worst)
-  const W = 520, H = 200, L = 40, R = 16, T = 18, B = 30
-  const x = (i) => L + (i / (series.length - 1)) * (W - L - R)
-  const y = (rank) => T + (Math.log(rank) / span) * (H - T - B)
+  // Atlas's own axis: linear, #1 at the top, running to #470 -- the size of the
+  // ladder rather than the band this kingdom happens to occupy. A log domain
+  // read better in isolation, but this chart is compared against the source
+  // side by side, and a curve whose shape depends on which scale we picked is
+  // the wrong kind of difference to introduce.
+  const { W, H, L, R, T, B } = PLOT
+  const FLOOR = 470
+  const ticks = [1, 118, 236, 353, FLOOR]
+  const y = (rank) => T + ((rank - 1) / (FLOOR - 1)) * (H - T - B)
   const line = smoothPath(series.map((p, i) => ({ x: x(i), y: y(p.rank) })))
-  const guides = [1, 10, 50, 200, worst]
+  const hot = active == null ? null : series[active]
 
   return (
     <Panel>
-      <SectionTitle eyebrow="Standing" title="Kingdom Ranking" />
+      <SectionTitle eyebrow="Standing" title="Kingdom Ranking History" />
       <div className="mt-1 flex items-baseline gap-2">
         <span className="font-display text-xl font-bold" style={{ color: BLUE }}>▲{move.ranks} ranks</span>
         <span className="text-[11px] text-parchment/50">KvK {move.fromKvk} → {move.toKvk}</span>
@@ -131,27 +194,28 @@ function RankHistory() {
               <stop offset="100%" stopColor="#FFF6DA" stopOpacity="1" />
             </linearGradient>
           </defs>
-          {guides.map((g) => <line key={g} x1={L} x2={W - R} y1={y(g)} y2={y(g)} stroke="rgba(127,158,214,.12)" />)}
+          {ticks.map((t) => <line key={t} x1={L} x2={W - R} y1={y(t)} y2={y(t)} stroke="rgba(127,158,214,.12)" />)}
           <path d={line} pathLength="1" strokeDasharray="1" strokeDashoffset={reveal ? 0 : 1}
             fill="none" stroke={`url(#${gid}-r)`} strokeWidth="2.6"
             style={{ transition: 'stroke-dashoffset 1.1s cubic-bezier(.16,1,.3,1)' }} />
           <g style={{ opacity: reveal ? 1 : 0, transition: 'opacity .4s ease 1s' }}>
             {series.map((p, i) => (
-              <circle key={p.kvk} cx={x(i)} cy={y(p.rank)} r="2.4" fill="#FFF6DA" />
+              <circle key={p.kvk} cx={x(i)} cy={y(p.rank)} r={active === i ? 4.2 : 2.4}
+                fill="#FFF6DA" stroke={BLUE} strokeWidth={active === i ? 1.6 : 0} />
             ))}
           </g>
         </svg>
-        {guides.map((g) => (
-          <div key={g} className="pointer-events-none absolute -translate-y-1/2 font-mono text-[9px] text-parchment/35"
-            style={{ right: `${(W - L + 6) / W * 100}%`, top: `${y(g) / H * 100}%` }}>#{g}</div>
+        {ticks.map((t) => (
+          <div key={t} className="pointer-events-none absolute -translate-y-1/2 font-mono text-[9px] text-parchment/35"
+            style={{ right: `${((W - L + 6) / W) * 100}%`, top: `${(y(t) / H) * 100}%` }}>#{t}</div>
         ))}
-        {[0, series.length - 1].map((i, n) => (
-          <div key={series[i].kvk} className="pointer-events-none absolute whitespace-nowrap text-[9px] font-semibold text-parchment/40"
-            style={{ left: n === 0 ? `${x(i) / W * 100}%` : undefined, right: n ? '2%' : undefined, top: `${(H - 12) / H * 100}%` }}>#{series[i].kvk}</div>
-        ))}
+        <KvkHover count={series.length} onActive={setActive} />
+        {hot && <KvkTooltip label={hot.kvk} value={`#${hot.rank}`}
+          left={`${(x(active) / W) * 100}%`} top={`${(y(hot.rank) / H) * 100}%`} />}
       </div>
+      <KvkAxis series={series} x={x} />
 
-      <div className="mt-3 grid grid-cols-2 gap-2">
+      <div className="mt-5 grid grid-cols-2 gap-2">
         <div className="rounded-lg bg-white/5 p-2.5 text-center">
           <div className="font-display text-lg font-bold text-gold-bright">{tier}</div>
           <div className="text-[9px] uppercase tracking-wider text-parchment/45">Tier · {atlas.tierThreshold}+ to hold</div>
@@ -170,21 +234,16 @@ function RankHistory() {
 }
 
 /* ------------------------------------------------------------------ trend --
-   Prep and battle win rate as they actually developed. Every point is computed
-   from the KvK history, so this one is complete.
+   Prep and battle win rate as they developed, from the same curve the other
+   two charts use. The stored rates are the profile's own, and the test file
+   holds them against the rates recomputed from the twelve runs -- so these are
+   read from the source AND checked against our record, not one or the other.
    ------------------------------------------------------------------------ */
 function PerformanceTrend() {
   const [ref, reveal] = useInView()
   const gid = useId()
-  const runs = runsOldestFirst()
-  const pts = useMemo(() => {
-    let p = 0, b = 0
-    return runs.map((k, i) => {
-      if (k.prep === 'W') p += 1
-      if (k.battle === 'W') b += 1
-      return { kvk: k.kvk, prep: (p / (i + 1)) * 100, battle: (b / (i + 1)) * 100 }
-    })
-  }, [])
+  const series = tracker846.atlas.curve
+  const { active, setActive, x } = useKvkPoints(series.length)
 
   // preserveAspectRatio="none" so the plot stretches to whatever height the
   // card ends up with. This card sits in a grid row beside the radar and gets
@@ -193,14 +252,16 @@ function PerformanceTrend() {
   // aspect ratio to protect, and the only things that WOULD distort under a
   // non-uniform scale are the end markers, so those are HTML dots positioned
   // over the SVG rather than circles inside it.
-  const W = 520, H = 200, L = 40, R = 16, T = 16, B = 26
-  const x = (i) => L + (i / (pts.length - 1)) * (W - L - R)
+  const { W, H, L, R, T, B } = PLOT
+  const ticks = [0, 25, 50, 75, 100]
   const y = (v) => H - B - (v / 100) * (H - T - B)
-  const path = (key) => smoothPath(pts.map((p, i) => ({ x: x(i), y: y(p[key]) })))
-  const last = pts[pts.length - 1]
+  const path = (key) => smoothPath(series.map((p, i) => ({ x: x(i), y: y(p[key]) })))
+  const area = (key) => `${path(key)} L${x(series.length - 1)},${H - B} L${x(0)},${H - B} Z`
+  const last = series[series.length - 1]
   const pct = (v) => `${(v / W) * 100}%`
   const vpct = (v) => `${(v / H) * 100}%`
   const k = tracker846.kvk
+  const hot = active == null ? null : series[active]
 
   return (
     <Panel className="flex flex-col">
@@ -210,32 +271,34 @@ function PerformanceTrend() {
             legend tells them apart the same way the plot does. */}
         <span className="inline-flex items-center gap-1.5" style={{ color: BLUE }}>
           <svg width="18" height="3" aria-hidden="true"><line x1="0" y1="1.5" x2="18" y2="1.5" stroke={BLUE} strokeWidth="3" strokeDasharray="5 3.5" /></svg>
-          Prep {Math.round(last.prep)}%
+          Prep WR {last.prepWinRate.toFixed(1)}%
         </span>
         <span className="inline-flex items-center gap-1.5" style={{ color: GOLD }}>
           <svg width="18" height="3" aria-hidden="true"><line x1="0" y1="1.5" x2="18" y2="1.5" stroke={GOLD} strokeWidth="3" /></svg>
-          Battle {Math.round(last.battle)}%
+          Battle WR {last.battleWinRate.toFixed(1)}%
         </span>
       </div>
       <div ref={ref} className="relative mt-2 min-h-[160px] flex-1">
         <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className="h-full w-full">
-          {[0, 25, 50, 75, 100].map((t) => (
-            <line key={t} x1={L} x2={W - R} y1={y(t)} y2={y(t)} stroke="rgba(226,199,125,.10)" vectorEffect="non-scaling-stroke" />
-          ))}
-          {pts.map((p, i) => (
-            <line key={p.kvk} x1={x(i)} x2={x(i)} y1={T} y2={H - B} stroke="rgba(226,199,125,.05)" vectorEffect="non-scaling-stroke" />
-          ))}
-          {/* Prep is dashed and battle is solid, as Atlas draws them, so the two
-              are still separable in greyscale, in a screenshot, or to a reader
-              who cannot tell the blue from the gold.
-
-              That costs prep its draw-in: the animation everything else here
-              uses IS a dash -- pathLength="1" with a single dash retreating to
-              offset 0 -- and a path cannot carry that and a visible dash
-              pattern at once. So prep is wiped in behind a clip rect instead.
-              The curve only ever moves left to right, so a left-to-right wipe
-              and a drawn line are the same gesture. */}
           <defs>
+            <linearGradient id={`${gid}-pf`} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={BLUE} stopOpacity=".20" />
+              <stop offset="100%" stopColor={BLUE} stopOpacity="0" />
+            </linearGradient>
+            <linearGradient id={`${gid}-bf`} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={GOLD} stopOpacity=".22" />
+              <stop offset="100%" stopColor={GOLD} stopOpacity="0" />
+            </linearGradient>
+            {/* Prep is dashed and battle is solid, as Atlas draws them, so the
+                two are still separable in greyscale, in a screenshot, or to a
+                reader who cannot tell the blue from the gold.
+
+                That costs prep its draw-in: the animation everything else here
+                uses IS a dash -- pathLength="1" with a single dash retreating
+                to offset 0 -- and a path cannot carry that and a visible dash
+                pattern at once. So prep is wiped in behind a clip rect instead.
+                The curve only ever moves left to right, so a left-to-right wipe
+                and a drawn line are the same gesture. */}
             <clipPath id={`${gid}-wipe`}>
               <rect x={L - 4} y="0" width={W - L - R + 8} height={H}
                 style={{
@@ -245,32 +308,52 @@ function PerformanceTrend() {
                 }} />
             </clipPath>
           </defs>
+          {ticks.map((t) => (
+            <line key={t} x1={L} x2={W - R} y1={y(t)} y2={y(t)} stroke="rgba(226,199,125,.10)" vectorEffect="non-scaling-stroke" />
+          ))}
+          {series.map((p, i) => (
+            <line key={p.kvk} x1={x(i)} x2={x(i)} y1={T} y2={H - B} stroke="rgba(226,199,125,.05)" vectorEffect="non-scaling-stroke" />
+          ))}
+          <g style={{ opacity: reveal ? 1 : 0, transition: 'opacity .7s ease .4s' }}>
+            <path d={area('prepWinRate')} fill={`url(#${gid}-pf)`} />
+            <path d={area('battleWinRate')} fill={`url(#${gid}-bf)`} />
+          </g>
           {/* non-scaling-stroke keeps these 2.6px however far the box stretches;
               without it a tall card would fatten the lines. It also holds the
               dash pattern square, which a stretched viewBox would otherwise
               smear into uneven ticks. */}
           <g clipPath={`url(#${gid}-wipe)`}>
-            <path d={path('prep')} fill="none" stroke={BLUE} strokeWidth="2.6"
-              strokeDasharray="7 5" strokeLinecap="butt" vectorEffect="non-scaling-stroke" />
+            <path d={path('prepWinRate')} fill="none" stroke={BLUE} strokeWidth="2.6"
+              strokeDasharray="8 4" strokeLinecap="butt" vectorEffect="non-scaling-stroke" />
           </g>
-          <path d={path('battle')} pathLength="1" strokeDasharray="1" strokeDashoffset={reveal ? 0 : 1}
+          <path d={path('battleWinRate')} pathLength="1" strokeDasharray="1" strokeDashoffset={reveal ? 0 : 1}
             fill="none" stroke={GOLD} strokeWidth="2.6" vectorEffect="non-scaling-stroke"
             style={{ transition: 'stroke-dashoffset 1.2s cubic-bezier(.16,1,.3,1) .16s' }} />
         </svg>
-        {[{ v: last.prep, c: BLUE }, { v: last.battle, c: GOLD }].map((m) => (
-          <div key={m.c} className="pointer-events-none absolute h-[9px] w-[9px] -translate-x-1/2 -translate-y-1/2 rounded-full border-2"
-            style={{ left: pct(x(pts.length - 1)), top: vpct(y(m.v)), borderColor: m.c, background: '#0b1222',
-              opacity: reveal ? 1 : 0, transition: 'opacity .4s ease 1.1s' }} />
+        {/* Point markers are HTML: under preserveAspectRatio="none" an SVG
+            circle would be squashed into an ellipse by the stretch. */}
+        {series.map((p, i) => (
+          <div key={p.kvk} className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 rounded-full"
+            style={{
+              left: pct(x(i)), top: vpct(y(p.battleWinRate)),
+              height: active === i ? 9 : 5, width: active === i ? 9 : 5,
+              background: active === i ? '#FFF6DA' : GOLD,
+              opacity: reveal ? 1 : 0, transition: 'opacity .4s ease 1.1s, height .12s, width .12s',
+            }} />
         ))}
-        {[0, 50, 100].map((t) => (
+        <div className="pointer-events-none absolute h-[9px] w-[9px] -translate-x-1/2 -translate-y-1/2 rounded-full border-2"
+          style={{ left: pct(x(series.length - 1)), top: vpct(y(last.prepWinRate)), borderColor: BLUE, background: '#0b1222',
+            opacity: reveal ? 1 : 0, transition: 'opacity .4s ease 1.1s' }} />
+        {ticks.map((t) => (
           <div key={t} className="pointer-events-none absolute -translate-y-1/2 font-mono text-[9px] text-parchment/35"
             style={{ right: `${((W - L + 6) / W) * 100}%`, top: vpct(y(t)) }}>{t}%</div>
         ))}
-        {[0, pts.length - 1].map((i) => (
-          <div key={i} className="pointer-events-none absolute whitespace-nowrap text-[9px] font-semibold text-parchment/40"
-            style={{ left: i === 0 ? pct(x(i)) : undefined, right: i ? '2%' : undefined, bottom: 0 }}>#{pts[i].kvk}</div>
-        ))}
+        <KvkHover count={series.length} onActive={setActive} />
+        {hot && <KvkTooltip label={hot.kvk}
+          value={`prep ${hot.prepWinRate.toFixed(1)}% · battle ${hot.battleWinRate.toFixed(1)}%`}
+          left={pct(x(active))} top={vpct(y(Math.max(hot.prepWinRate, hot.battleWinRate)))} />}
       </div>
+      <KvkAxis series={series} x={x} />
 
       {/* The card is stretched to the radar's height either way, so it may as
           well carry the record the curves are drawn from. */}
@@ -291,10 +374,8 @@ function PerformanceTrend() {
   )
 }
 
-/* -------------------------------------------------------------- breakdown --
-   Where the score comes from. A segmented bar rather than five separate
-   readouts, because the point of a decomposition is the relative size.
-   ------------------------------------------------------------------------ */
+// The five score components, each its own colour so the stacked bar and the
+// list below it read as the same thing.
 const SEG_COLORS = { base: '#E0B23B', dominv: '#5D90E8', form: '#5BC98C', streaks: '#C77FD8', history: '#D76158' }
 
 function ScoreBreakdown() {

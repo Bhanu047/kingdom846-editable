@@ -106,3 +106,62 @@ test('the published last move matches the curve it describes', () => {
   assert.ok(Math.abs((from.rank - to.rank) - atlas.lastMove.ranks) <= 2,
     'the published rank move disagrees with the two points it spans')
 })
+
+/* The advisor's copy of the record.
+ *
+ * server/ai/record.cjs restates the war record for the corpus, because the
+ * production image ships server/ and dist/ only -- src/data/tracker846.js is
+ * not on disk at runtime and is an ES module besides. That duplication is the
+ * exact thing this file exists to catch, so it is checked rather than trusted.
+ */
+import { createRequire } from 'node:module'
+import fs from 'node:fs'
+import path from 'node:path'
+
+const require_ = createRequire(import.meta.url)
+const advisor = require_('../server/ai/record.cjs')
+
+test('the advisor states the same record the kingdom does', () => {
+  assert.equal(advisor.record.wars, kvk.total)
+  assert.equal(advisor.record.dominations, kvk.dominations)
+  assert.equal(advisor.record.comebacks, kvk.comebacks)
+  assert.equal(advisor.record.reversals, kvk.reversals)
+  assert.equal(advisor.record.invasions, kvk.invasions)
+  assert.equal(advisor.record.prepRecord, kvk.prep.record)
+  assert.equal(advisor.record.battleRecord, kvk.battle.record)
+  assert.equal(advisor.record.rating, kvk.rating)
+  assert.equal(advisor.record.ratingRank, kvk.rank)
+  assert.equal(advisor.record.atlasScore, atlas.score)
+  assert.equal(advisor.record.atlasRank, atlas.rank)
+  assert.equal(advisor.record.tier, tracker846.tier)
+})
+
+test('no topic states the war record as prose', () => {
+  const here = path.dirname(new URL(import.meta.url).pathname)
+  const corpus = JSON.parse(fs.readFileSync(path.join(here, '..', 'server', 'ai', 'knowledge.json'), 'utf8'))
+  const stale = []
+  for (const topic of corpus) {
+    if (typeof topic.answer !== 'string') continue
+    // A bare count of wars or dominations is the shape that went stale: it
+    // reads as fact, answers questions, and nothing about it looks old.
+    const m = topic.answer.match(/\b\d+\s+(?:wars|dominations)\b/i)
+    if (m) stale.push(`${topic.id}: "${m[0]}"`)
+  }
+  assert.deepEqual(stale, [], 'these topics hard-code a figure that moves every KvK — use a {{placeholder}}')
+})
+
+test('every placeholder a topic uses is one the advisor can fill', () => {
+  const here = path.dirname(new URL(import.meta.url).pathname)
+  const corpus = JSON.parse(fs.readFileSync(path.join(here, '..', 'server', 'ai', 'knowledge.json'), 'utf8'))
+  const used = new Set()
+  for (const topic of corpus) {
+    for (const m of String(topic.answer || '').matchAll(/\{\{(\w+)\}\}/g)) used.add(m[1])
+  }
+  assert.ok(used.size > 0, 'the placeholders went missing — the figures are hard-coded again')
+  for (const key of used) {
+    assert.ok(advisor.FIELDS.includes(key), `{{${key}}} has no value in record.cjs, so visitors are shown the raw braces`)
+  }
+  // And nothing survives filling.
+  const filled = advisor.fillCorpus(corpus)
+  assert.deepEqual(filled.filter((t) => /\{\{\w+\}\}/.test(t.answer || '')).map((t) => t.id), [])
+})

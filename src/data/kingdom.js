@@ -34,26 +34,44 @@ export const kingdom = {
   leadingAlliance: '[RYO] Spiders',
   totalPower: '111,597,006,633',
   level: 100,
-  // Public tracker data (real)
-  tier: 'S-Tier',
-  atlasScore: 60.91,
-  atlasRank: 66,
-  atlasPercentile: 'Top 3.3%',
+  // Public tracker data (real).
+  //
+  // These were a second, hand-typed copy of the Atlas and Optimizer figures,
+  // and the copy had fallen a full KvK cycle behind the verified snapshot in
+  // tracker846.js: Atlas 60.91 at rank 66 here against 66.38 at rank 33 there,
+  // 7 dominations in 10 KvKs against 8 in 11, a 2.564 rating at global rank 25
+  // against 2.873 at rank 15. That is the exact drift the `stats` export below
+  // was already repaired for, so these read from the snapshot as well now.
+  // tracker846.js is the single place a new KvK result gets typed.
+  tier: tracker846.tier,
+  atlasScore: tracker846.atlas.score,
+  atlasRank: tracker846.atlas.rank,
+  // The Atlas profile publishes this as "ranks better than N% of all
+  // kingdoms"; the page states the complement.
+  atlasPercentile: `Top ${100 - tracker846.atlas.percentile}%`,
+  // Mystic Trial has no entry in the tracker snapshot, so it stays a literal
+  // here, covered by trackerVerified like the rest of the snapshot.
   mysticScore: 186025,
   mysticRank: 259,
   mysticPercentile: 'Top 11.1%',
-  transferStatus: 'Leading',
+  transferStatus: tracker846.transfers[0].status,
   // KvK performance overview
-  kvkOverview: {
-    totalKvks: 10,
-    outcomes: [
-      { label: 'Dominations', value: 7, pct: 70, icon: 'crown' },
-      { label: 'Comebacks', value: 1, pct: 10, icon: 'refresh' },
-      { label: 'Reversals', value: 1, pct: 10, icon: 'refresh' },
-      { label: 'Invasions', value: 1, pct: 10, icon: 'swords' },
-    ],
-    prepPhase: { wins: 8, losses: 2, streak: '4W', winRate: '80%', best: '4W' },
-    battlePhase: { wins: 8, losses: 2, streak: '5W', winRate: '80%', best: '5W' },
+  get kvkOverview() {
+    const k = tracker846.kvk
+    const share = (n) => Math.round((n / k.total) * 100)
+    return {
+      totalKvks: k.total,
+      outcomes: [
+        { label: 'Dominations', value: k.dominations, pct: k.dominationRate, icon: 'crown' },
+        { label: 'Comebacks', value: k.comebacks, pct: share(k.comebacks), icon: 'refresh' },
+        { label: 'Reversals', value: k.reversals, pct: share(k.reversals), icon: 'refresh' },
+        { label: 'Invasions', value: k.invasions, pct: share(k.invasions), icon: 'swords' },
+      ],
+      prepPhase: { wins: k.prep.wins, losses: k.prep.losses, streak: k.prep.streak, winRate: `${k.prep.winRate}%`, best: k.prep.best },
+      // The snapshot records a best run for the battle phase but no current
+      // one; the current run is the best run until a loss ends it.
+      battlePhase: { wins: k.battle.wins, losses: k.battle.losses, streak: k.battle.streak ?? k.battle.best, winRate: `${k.battle.winRate}%`, best: k.battle.best },
+    }
   },
   created: '2025-08-17',
   // Kingdom age is DERIVED, not stored. It was hardcoded at 359 and had drifted
@@ -63,12 +81,14 @@ export const kingdom = {
     const start = Date.parse(this.created + 'T00:00:00Z')
     return Math.max(1, Math.floor((Date.now() - start) / 86400000) + 1)
   },
-  // The tracker figures below ARE snapshots -- they come from ks-atlas and
-  // kingshotoptimizer, which have no public API. This records when they were
-  // last checked so the page can say so rather than implying they are live.
+  // The tracker figures ARE snapshots -- they come from ks-atlas and
+  // kingshotoptimizer, which have no public API, and are typed once into
+  // tracker846.js. This records when that snapshot was last checked, so the
+  // page can say so rather than implying the numbers are live. Move it when
+  // you refresh tracker846.js, not when you touch this file.
   trackerVerified: '2026-08-23',
-  kvkRating: 2.564,
-  kvkCurrentRank: 25,
+  kvkRating: tracker846.kvk.rating,
+  kvkCurrentRank: tracker846.kvk.rank,
   source: 'https://ks-atlas.com/kingdom/846',
   timelineSource: 'https://kingshotoptimizer.com/kingdom-timeline/846',
   kvkSource: 'https://kingshotoptimizer.com/kvk-rankings/kingdom/846'
@@ -369,9 +389,10 @@ export const timeline = [
   { name: '4th Master Unlocked (Cassia)', date: '2026-05-25', category: 'Feature', status: 'past' },
   { name: 'Truegold 8 — Tempered Truegold', date: '2026-06-22', category: 'Truegold', status: 'past' },
   { name: '5th & 6th Masters Unlocked', date: '2026-07-20', category: 'Feature', status: 'past' },
+  { name: 'First Anniversary', date: '2026-08-16', category: 'Anniversary', status: 'past', art: './assets/art-season-opening.webp' },
   { name: 'Generation 6 Heroes (Triton, Sophia, Yang)', date: '2026-08-17', category: 'Heroes', status: 'past' },
   { name: 'Generation 6 Pets (Regal White Lion, Ironclad War Elephant)', date: '2026-08-17', category: 'Pets', status: 'past' },
-  { name: 'First Flamedragon Tyrant Competition', date: '2026-08-30', category: 'PvP', status: 'upcoming', art: './assets/art-fire-tyrant.webp', featured: true },
+  { name: 'First Flamedragon Tyrant Competition', date: '2026-08-30', category: 'PvP', status: 'past', art: './assets/art-fire-tyrant.webp' },
   { name: 'Generation 7 Heroes (Wee & Woo, Ava, Charles)', date: '2026-11-09', category: 'Heroes', status: 'future' },
   { name: 'Generation 7 Pets (Ironclad War Bear)', date: '2026-11-09', category: 'Pets', status: 'future' },
   { name: 'Advanced Truegold Research', date: '2026-12-21', category: 'Truegold', status: 'future' },
@@ -380,50 +401,60 @@ export const timeline = [
   { name: 'Truegold 10', date: '2027-06-07', category: 'Truegold', status: 'future' }
 ]
 
-// KvK history — sourced from kingshotoptimizer.com/kvk-rankings/kingdom/846
-export const kvkHistory = [
-  { kvk: 16, date: '2026-07-18', opponent: 'K623', opponentRank: 5, quality: 5.75, prep: 'W', battle: 'L' },
-  { kvk: 15, date: '2026-06-20', opponent: 'K766', opponentRank: 147, quality: 4.35, prep: 'W', battle: 'W' },
-  { kvk: 14, date: '2026-05-23', opponent: 'K610', opponentRank: 1198, quality: 3.48, prep: 'W', battle: 'W' },
-  { kvk: 13, date: '2026-04-25', opponent: 'K832', opponentRank: 670, quality: 3.74, prep: 'W', battle: 'W' },
-  { kvk: 12, date: '2026-03-28', opponent: 'K777', opponentRank: 42, quality: 4.93, prep: 'L', battle: 'L' },
-  { kvk: 11, date: '2026-02-28', opponent: 'K833', opponentRank: 212, quality: 4.19, prep: 'W', battle: 'W' },
-  { kvk: 10, date: '2026-01-31', opponent: 'K815', opponentRank: 1245, quality: 3.45, prep: 'W', battle: 'W' },
-  { kvk: 9, date: '2026-01-03', opponent: 'K791', opponentRank: 276, quality: 4.10, prep: 'L', battle: 'W' },
-  { kvk: 8, date: '2025-12-06', opponent: 'K840', opponentRank: 1216, quality: 3.46, prep: 'W', battle: 'W' },
-  { kvk: 7, date: '2025-11-08', opponent: 'K841', opponentRank: 1083, quality: 3.53, prep: 'W', battle: 'W' }
-]
+// KvK history — the verified snapshot in tracker846.js, which is where a new
+// KvK result gets typed.
+//
+// This was a second copy of the same table, and the two disagreed twice over:
+// it stopped at KvK 16 while the snapshot already carried KvK 17, and it
+// recorded different figures for matches both of them listed (KvK 16's
+// opponent at rank 5 and quality 5.75 here against rank 11 and quality 5.93
+// there). Copied rather than shared, a table can only drift.
+export const kvkHistory = [...tracker846.kvk.history]
 
 export const kvkStats = {
-  total: 10,
-  dominations: 7,
-  comebacks: 1,
-  reversals: 1,
-  prepRecord: '8-2',
-  prepWinRate: 80,
-  prepStreak: '4W',
-  battleRecord: '8-2',
-  battleWinRate: 80,
-  battleBestStreak: '5W',
-  rating: 2.564,
-  currentRank: 25
+  total: tracker846.kvk.total,
+  dominations: tracker846.kvk.dominations,
+  comebacks: tracker846.kvk.comebacks,
+  reversals: tracker846.kvk.reversals,
+  prepRecord: tracker846.kvk.prep.record,
+  prepWinRate: tracker846.kvk.prep.winRate,
+  prepStreak: tracker846.kvk.prep.streak,
+  battleRecord: tracker846.kvk.battle.record,
+  battleWinRate: tracker846.kvk.battle.winRate,
+  battleBestStreak: tracker846.kvk.battle.best,
+  rating: tracker846.kvk.rating,
+  currentRank: tracker846.kvk.rank,
 }
 
+// Transfer windows.
+//
+// The closed windows are the verified snapshot. #8 is the announced window,
+// which the snapshot cannot carry because it has not happened yet -- and its
+// status was written as a bare 'Upcoming', which is a label with an expiry
+// date on it: correct until the window opens and wrong every day after. The
+// window's own dates decide it now, the same way hasPassed() rather than a
+// frozen `status` string decides whether a timeline milestone is past.
+//
+// `endsAfter` is the first day the window is over -- midnight following its
+// last day -- because hasPassed() turns true at the start of the date it is
+// given, and a window is still open on its closing day.
+const transfer8 = { transfer: 8, date: 'Sep 13–19, 2026', group: '—', opens: '2026-09-13', endsAfter: '2026-09-20' }
+
 export const transfers = [
-  { transfer: 8, date: 'Sep 13–19, 2026', group: '—', status: 'Upcoming', upcoming: true },
-  { transfer: 7, date: 'Jul 2026', group: 3, status: 'Leading' },
-  { transfer: 6, date: 'Jun 2026', group: 4, status: 'Ordinary' },
-  { transfer: 5, date: 'Apr 2026', group: 4, status: 'Ordinary' },
-  { transfer: 4, date: 'Mar 2026', group: 5, status: 'Ordinary' },
-  { transfer: 3, date: 'Jan 2026', group: 6, status: 'Ordinary' }
+  {
+    transfer: transfer8.transfer,
+    date: transfer8.date,
+    group: transfer8.group,
+    status: hasPassed(transfer8.endsAfter) ? 'Closed' : hasPassed(transfer8.opens) ? 'Open' : 'Upcoming',
+    upcoming: !hasPassed(transfer8.endsAfter),
+  },
+  ...tracker846.transfers,
 ]
 
+// Ratings from the verified snapshot; the review texts are only on the
+// Optimizer profile, so they stay written out here.
 export const reputation = {
-  overall: 5.0,
-  reviews: 2,
-  communication: 5.0,
-  compliance: 5.0,
-  sportsmanship: 5.0,
+  ...tracker846.reputation,
   reviewList: [
     { rating: 5.0, time: '4 months ago', text: 'Fun KvK match. Very organized castle battle and easy to get along with.' },
     { rating: 5.0, time: '3 months ago', text: 'The people were nice. It was a fun kvk' }

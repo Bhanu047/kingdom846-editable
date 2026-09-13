@@ -100,7 +100,11 @@ test('the shell the app opens from is precached at install', async () => {
 test('the cache version was bumped with the rule change', () => {
   // sw.js says so in its own header: stale entries under an old policy are how
   // a fix fails to reach the phones that need it.
-  assert.equal(loadWorker({ fetchImpl: async () => freshShell }).api.CACHE_VERSION, 'v5')
+  //
+  // This literal is part of the bump. The update-banner change moved the worker
+  // to v6 and left it reading v5, so the one test guarding the bump has been
+  // failing ever since -- move it in the same commit that moves sw.js.
+  assert.equal(loadWorker({ fetchImpl: async () => freshShell }).api.CACHE_VERSION, 'v6')
 })
 
 test('the fonts do not hold up the first paint', () => {

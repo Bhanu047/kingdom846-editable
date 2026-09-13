@@ -14,17 +14,21 @@
 export const ROUTES = [
   {
     id: 'dashboard', path: '/', index: true, changefreq: 'daily', priority: '1.0',
-    title: "Kingdom 846 — We Take What's Ours",
-    description: 'The official portal of Kingdom 846 in Kingshot — the crown, the four alliances, live events, rankings and guides.',
+    // "Kingdom 846" alone is unwinnable: chapter 846 of the Kingdom manga owns
+    // every form of it. "Kingshot" and "K846" are what separate this from that,
+    // and they are what a player actually types. The trackers that currently
+    // outrank the portal for its own name use both.
+    title: 'Kingdom 846 (K846) — Official Kingshot Kingdom Portal',
+    description: "The official portal for Kingdom 846 (K846) in Kingshot: the crown, the four alliances, bear hunt and KvK schedules, rankings, transfer windows and guides.",
   },
   {
     id: 'about', path: '/about', index: true, changefreq: 'monthly', priority: '0.8',
-    title: 'About Kingdom 846 — Standing, KvK Record & Atlas Profile',
-    description: "Kingdom 846's Atlas standing, KvK win record, match history, transfer windows and kingdom reputation, rebuilt from the public trackers.",
+    title: 'About Kingdom 846 (K846) — Kingshot Atlas Standing & KvK Record',
+    description: "Kingdom 846's Kingshot Atlas standing, KvK win record, full match history, transfer windows and kingdom reputation, rebuilt from the public trackers.",
   },
   {
     id: 'alliances', path: '/alliances', index: true, changefreq: 'weekly', priority: '0.9',
-    title: 'Alliances of Kingdom 846 — Spiders, KamiKaze, Saints & IceHunters',
+    title: 'Kingdom 846 Alliances — Spiders, KamiKaze, Saints & IceHunters | Kingshot',
     description: 'The four alliances of Kingdom 846: leadership, power, bear hunt and rally schedules, and how to join each one.',
   },
   {
@@ -34,8 +38,8 @@ export const ROUTES = [
   },
   {
     id: 'timeline', path: '/timeline', index: true, changefreq: 'daily', priority: '0.8',
-    title: 'Kingdom 846 Timeline — Every Milestone Since Founding',
-    description: 'The full milestone history of Kingdom 846: hero and pet generations, Truegold tiers, Masters, feature unlocks and KvK firsts, with the dates ahead.',
+    title: 'Kingdom 846 (K846) Timeline — Every Kingshot Milestone & Unlock Date',
+    description: 'The full Kingshot milestone history of Kingdom 846 (K846): hero and pet generations, Truegold tiers, Masters, feature unlocks and KvK firsts, with the dates ahead.',
   },
   {
     id: 'news', path: '/news', index: true, changefreq: 'daily', priority: '0.8',

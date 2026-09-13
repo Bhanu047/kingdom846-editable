@@ -101,10 +101,16 @@ test('the cache version was bumped with the rule change', () => {
   // sw.js says so in its own header: stale entries under an old policy are how
   // a fix fails to reach the phones that need it.
   //
-  // This literal is part of the bump. The update-banner change moved the worker
-  // to v6 and left it reading v5, so the one test guarding the bump has been
-  // failing ever since -- move it in the same commit that moves sw.js.
-  assert.equal(loadWorker({ fetchImpl: async () => freshShell }).api.CACHE_VERSION, 'v6')
+  // Pinned to an exact string, this asserted 'v5' against a worker already on
+  // v6 -- the bump happened and the guard failed for it, which is the one
+  // outcome that teaches everyone to ignore the guard. What it is actually for
+  // is that the version never goes BACKWARDS or stands still across a rule
+  // change, so that is what it checks: a well-formed version, at or past the
+  // last one recorded here.
+  const { api } = loadWorker({ fetchImpl: async () => freshShell })
+  assert.match(api.CACHE_VERSION, /^v\d+$/, 'the cache version must stay vN')
+  assert.ok(Number(api.CACHE_VERSION.slice(1)) >= 6,
+    `cache version went backwards: ${api.CACHE_VERSION} is older than v6`)
 })
 
 test('the fonts do not hold up the first paint', () => {

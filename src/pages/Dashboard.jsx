@@ -226,7 +226,7 @@ export default function Dashboard({ onNavigate }) {
       <Panel glow className="glass-panel">
         <RoyalSectionHeader icon="trophy" eyebrow="Records" title="Kingdom Performance" action={<button onClick={() => onNavigate('about')} className="tap-y text-xs text-gold hover:underline">View About →</button>} />
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <KvKStat onClick={about} label="S-Tier Atlas" value={tracker846.atlas.score.toFixed(2)} sub={`Rank #${tracker846.atlas.rank}`} icon="landmark" />
+          <KvKStat onClick={about} label={`${tracker846.tier} Atlas`} value={tracker846.atlas.score.toFixed(2)} sub={`Rank #${tracker846.atlas.rank}`} icon="landmark" />
           <KvKStat onClick={about} label="KvK Rating" value={tracker846.kvk.rating.toFixed(3)} sub={`Global Rank #${tracker846.kvk.rank}`} icon="trophy" />
           <KvKStat onClick={about} label="Total KvKs" value={tracker846.kvk.total} sub={`Prep ${tracker846.kvk.prep.record} · Battle ${tracker846.kvk.battle.record}`} icon="crown" />
           <KvKStat onClick={about} label="Dominations" value={tracker846.kvk.dominations} sub={`${tracker846.kvk.dominationRate}% · Latest vs ${tracker846.kvk.latest.opponent}`} icon="shield" />

@@ -26,7 +26,10 @@ const { detectTool, isAffirmative, isNegative } = require('./tools.cjs')
 const { normalize, tokenize } = require('./tokenize.cjs')
 const { expandPhrases } = require('./synonyms.cjs')
 
-const KNOWLEDGE = require('./knowledge.json')
+const { fillCorpus } = require('./record.cjs')
+// The corpus states the war record in prose, and the record moves every KvK.
+// Topics carry placeholders; the figures are filled in once here, at load.
+const KNOWLEDGE = fillCorpus(require('./knowledge.json'))
 const SMALLTALK = require('./smalltalk.json')
 const JOKES = require('./jokes.json')
 

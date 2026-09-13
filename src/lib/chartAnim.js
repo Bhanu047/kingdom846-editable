@@ -74,30 +74,80 @@ export function smoothPath(pts) {
 //
 // One-shot on purpose. Re-animating every time a chart scrolls past is the
 // thing that makes long pages exhausting.
+/**
+ * Returns [ref, seen, calm].
+ *
+ * `seen` flips once, when the element first reaches the viewport. `calm` says
+ * the visitor has asked for reduced motion, and it is the CALLER's job to
+ * honour it -- by revealing without movement, not by skipping the reveal.
+ *
+ * Reduced motion used to short-circuit this hook: it set `seen` at mount and
+ * never observed anything. That did not remove the motion, because a state
+ * flip one tick after mount still runs every CSS transition keyed off it. All
+ * it did was fire the entrance while the chart was far below the fold, so by
+ * the time the reader scrolled down the animation was long over and the card
+ * sat there looking inert. Reported from a Windows Chrome that reports
+ * reduce -- the charts looked dead on the one machine the preference was set.
+ *
+ * So the observer runs for everyone now, and `calm` picks what happens when it
+ * fires: a plain fade for those who asked for less, the full sequence for
+ * everyone else.
+ */
 export function useInView(options) {
   const [seen, setSeen] = useState(false)
   const ref = useRef(null)
+  const calm = prefersReducedMotion()
 
   useEffect(() => {
     const el = ref.current
     if (!el || seen) return undefined
-    if (typeof IntersectionObserver === 'undefined'
-      || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    // No observer at all (very old browser, or a test environment): show the
+    // finished state rather than leaving the chart hidden forever.
+    if (typeof IntersectionObserver === 'undefined') {
       setSeen(true)
       return undefined
     }
+    let raf = 0
+    const reveal = () => {
+      setSeen(true)
+      io.disconnect()
+      document.removeEventListener('scroll', onScroll, true)
+      if (raf) cancelAnimationFrame(raf)
+    }
+
+    /* The "already scrolled past" case, which the observer cannot report.
+     *
+     * IntersectionObserver only notifies on threshold CROSSINGS. A card that
+     * goes from below the fold to above it -- a restored scroll position, an
+     * anchor jump, a fast fling -- was never intersecting at either end, so no
+     * crossing happens and no callback is delivered. The old guard read the
+     * geometry of a callback that never arrived, so a chart jumped past stayed
+     * at its hidden start state for the rest of the visit. Verified in the
+     * browser: after a jump to the bottom of the page the observers logged no
+     * callbacks at all, and four charts sat invisible.
+     *
+     * A geometry check on scroll covers it. Capture phase, because the page
+     * scrolls an inner container and scroll events do not bubble; passive and
+     * rAF-collapsed, so a fling costs one rect read per frame; and it detaches
+     * itself the moment the card is seen.
+     */
+    const checkPassed = () => {
+      raf = 0
+      const rect = el.getBoundingClientRect()
+      if (rect.bottom <= 0) reveal()
+    }
+    const onScroll = () => {
+      if (!raf) raf = requestAnimationFrame(checkPassed)
+    }
+
     const io = new IntersectionObserver((entries) => {
       for (const e of entries) {
-        // Already scrolled past counts as seen. Without this a chart the reader
-        // JUMPS over -- a restored scroll position, an anchor link, a fast
-        // fling -- never intersects at all, so its entrance never fires and its
-        // line stays at the hidden start state permanently. Caught exactly that
-        // on Atlas Score History: scroll straight to the section below it and
-        // the curve was simply never drawn.
-        const passed = !e.isIntersecting && e.boundingClientRect.bottom <= e.rootBounds?.top
-        if (!e.isIntersecting && !passed) continue
-        setSeen(true)
-        io.disconnect()
+        // The ordinary case: the card has come into view.
+        if (e.isIntersecting) { reveal(); return }
+        // An observer callback that arrives while the card is already above the
+        // viewport still counts -- it happens when the element is observed
+        // after the scroll rather than before.
+        if (e.boundingClientRect.bottom <= (e.rootBounds?.top ?? 0)) { reveal(); return }
       }
     }, {
       // threshold 0, never a fraction: a card taller than the viewport can
@@ -109,8 +159,17 @@ export function useInView(options) {
       ...options,
     })
     io.observe(el)
-    return () => io.disconnect()
+    document.addEventListener('scroll', onScroll, { capture: true, passive: true })
+    // And check once now, for a card mounted below a page that is already
+    // scrolled past it.
+    checkPassed()
+
+    return () => {
+      io.disconnect()
+      document.removeEventListener('scroll', onScroll, true)
+      if (raf) cancelAnimationFrame(raf)
+    }
   }, [seen, options])
 
-  return [ref, seen]
+  return [ref, seen, calm]
 }

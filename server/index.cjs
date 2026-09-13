@@ -3304,10 +3304,28 @@ function webpNegotiation(root) {
         if (filePath.endsWith('.webmanifest')) res.setHeader('Content-Type', 'application/manifest+json')
       }
     }))
-    // SPA fallback: any non-API GET returns index.html
-    app.get(/^\/(?!api).*/, (_req, res) => {
+    // SPA fallback: any non-API GET returns the app shell.
+    //
+    // Prefer the prerendered shell for this route when the build wrote one.
+    // They are byte-identical to index.html apart from the head -- title,
+    // description, canonical, Open Graph, and noindex on the signed-in
+    // screens. A crawler reads those without running any JavaScript; the app
+    // boots from the same document and takes over as usual.
+    //
+    // The route name is matched against the files the build produced rather
+    // than interpolated into a path, so nothing a visitor types can walk out
+    // of dist/.
+    const prerendered = new Set(
+      fs.existsSync(distPublic)
+        ? fs.readdirSync(distPublic).filter((f) => f.endsWith('.html') && f !== 'index.html')
+            .map((f) => f.slice(0, -'.html'.length))
+        : []
+    )
+    app.get(/^\/(?!api).*/, (req, res) => {
       res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate')
-      res.sendFile(path.join(distPublic, 'index.html'))
+      const slug = decodeURIComponent(req.path).replace(/^\/+|\/+$/g, '')
+      const file = prerendered.has(slug) ? `${slug}.html` : 'index.html'
+      res.sendFile(path.join(distPublic, file))
     })
   } else {
     const { createServer: createViteServer } = require('vite')

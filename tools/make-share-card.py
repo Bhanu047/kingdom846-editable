@@ -16,8 +16,8 @@ import random
 
 W, H = 1200, 630
 
-NAVY_HI   = (22, 46, 86)
-NAVY_LO   = (4, 9, 20)
+NAVY_HI   = (12, 26, 50)
+NAVY_LO   = (2, 5, 12)
 GOLD      = (212, 175, 55)
 GOLD_BR   = (232, 199, 102)
 GOLD_DEEP = (156, 122, 36)
@@ -107,22 +107,22 @@ for y in range(H):
 # Pool of warm light for the crest to stand in.
 glow = Image.new("L", (W, H), 0)
 gd = ImageDraw.Draw(glow)
-cx, cy, r = 352, 272, 430
+cx, cy, r = 352, 268, 352
 for i in range(r, 0, -3):
-    gd.ellipse([cx - i, cy - i * 0.94, cx + i, cy + i * 0.94], fill=int(150 * (1 - i / r) ** 1.45))
+    gd.ellipse([cx - i, cy - i * 0.94, cx + i, cy + i * 0.94], fill=int(128 * (1 - i / r) ** 1.75))
 glow = glow.filter(ImageFilter.GaussianBlur(52))
-bg = Image.composite(Image.new("RGB", (W, H), (150, 116, 40)), bg, glow.point(lambda v: int(v * 0.70)))
+bg = Image.composite(Image.new("RGB", (W, H), (150, 116, 40)), bg, glow.point(lambda v: int(v * 0.52)))
 
 # Diagonal sheen, as if light crossed a lacquered surface.
 sheen = Image.new("L", (W, H), 0)
 sd = ImageDraw.Draw(sheen)
-sd.polygon([(-260, H), (330, -120), (600, -120), (10, H)], fill=46)
+sd.polygon([(-260, H), (330, -120), (600, -120), (10, H)], fill=26)
 bg = ImageChops.screen(bg, Image.merge("RGB", (sheen,) * 3).filter(ImageFilter.GaussianBlur(90)))
 
 # Vignette back down to near-black at the corners.
 vig = Image.new("L", (W, H), 0)
-ImageDraw.Draw(vig).ellipse([-W * .14, -H * .32, W * 1.14, H * 1.32], fill=255)
-bg = Image.composite(bg, Image.new("RGB", (W, H), (3, 6, 14)), vig.filter(ImageFilter.GaussianBlur(140)))
+ImageDraw.Draw(vig).ellipse([-W * .06, -H * .20, W * 1.06, H * 1.20], fill=255)
+bg = Image.composite(bg, Image.new("RGB", (W, H), (1, 3, 8)), vig.filter(ImageFilter.GaussianBlur(125)))
 
 # Fine grain -- flat digital gradients are the tell of a cheap card.
 random.seed(846)

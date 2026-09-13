@@ -1354,7 +1354,7 @@
       "fun fact",
       "tell me something"
     ],
-    "answer": "Kingdom 846 Trivia:\n\n- The kingdom number 846 was chosen by Spartan\n- We have fought in 10 wars and won 7 dominations\n- Our diplomatic record is perfect — no broken treaties\n- The crest features a gold moon and three blue stars as one inseparable set\n- Four alliances, one crown — unity is our greatest weapon\n- The website was designed and built entirely by Spartan\n- The Royal Advisor (me) runs on the website's own server\n\nAsk me more about the kingdom!"
+    "answer": "Kingdom 846 Trivia:\n\n- The kingdom number 846 was chosen by Spartan\n- We have fought in {{wars}} wars and won {{dominations}} dominations\n- Our diplomatic record is perfect — no broken treaties\n- The crest features a gold moon and three blue stars as one inseparable set\n- Four alliances, one crown — unity is our greatest weapon\n- The website was designed and built entirely by Spartan\n- The Royal Advisor (me) runs on the website's own server\n\nAsk me more about the kingdom!"
   },
   {
     "id": "weather",
@@ -1880,7 +1880,7 @@
       "previous kvk",
       "battle history"
     ],
-    "answer": "Kingdom 846 War History:\n\n- Fought in 10 wars\n- Won 7 dominations\n- Never broken a treaty\n- Never lost a defensive war\n- Perfect diplomatic record\n\nVisit the Timeline page for detailed war records and kingdom milestones. The About page has the full kingdom history."
+    "answer": "Kingdom 846 War History:\n\n- Fought in {{wars}} wars\n- Won {{dominations}} dominations\n- Never broken a treaty\n- Never lost a defensive war\n- Perfect diplomatic record\n\nVisit the Timeline page for detailed war records and kingdom milestones. The About page has the full kingdom history."
   },
   {
     "id": "point-system",
@@ -2356,7 +2356,7 @@
       "kingdom info",
       "about kingdom"
     ],
-    "answer": "The About Page:\n\n- Kingdom 846 lore and history\n- Full doctrine: One Crown. Four Alliances. Endless Glory.\n- War records: 10 wars, 7 dominations\n- Kingdom motto and philosophy\n- Hero images and royal crest\n- Council of Alliances information\n\nVisit the About page to learn everything about Kingdom 846's history and values."
+    "answer": "The About Page:\n\n- Kingdom 846 lore and history\n- Full doctrine: One Crown. Four Alliances. Endless Glory.\n- War records: {{wars}} wars, {{dominations}} dominations\n- Kingdom motto and philosophy\n- Hero images and royal crest\n- Council of Alliances information\n\nVisit the About page to learn everything about Kingdom 846's history and values."
   },
   {
     "id": "dashboard",
@@ -3563,7 +3563,7 @@
       "kingdom rank",
       "how does our kingdom rank"
     ],
-    "answer": "Kingdom Rankings:\n\n- Kingdoms are ranked by overall power and dominance\n- Affected by KvK performance\n- Higher ranking = better KvK matchmaking\n- Kingdom 846 has a strong ranking with 7 dominations\n- Visit the About page for kingdom achievements\n\nOur strong war record keeps Kingdom 846 highly ranked."
+    "answer": "Kingdom Rankings:\n\n- Kingdoms are ranked by overall power and dominance\n- Affected by KvK performance\n- Higher ranking = better KvK matchmaking\n- Kingdom 846 is {{tier}}, Atlas rank #{{atlasRank}}, with {{dominations}} dominations\n- Visit the About page for kingdom achievements\n\nOur strong war record keeps Kingdom 846 highly ranked."
   },
   {
     "id": "alliance-ranking",

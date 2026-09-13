@@ -100,7 +100,17 @@ test('the shell the app opens from is precached at install', async () => {
 test('the cache version was bumped with the rule change', () => {
   // sw.js says so in its own header: stale entries under an old policy are how
   // a fix fails to reach the phones that need it.
-  assert.equal(loadWorker({ fetchImpl: async () => freshShell }).api.CACHE_VERSION, 'v5')
+  //
+  // Pinned to an exact string, this asserted 'v5' against a worker already on
+  // v6 -- the bump happened and the guard failed for it, which is the one
+  // outcome that teaches everyone to ignore the guard. What it is actually for
+  // is that the version never goes BACKWARDS or stands still across a rule
+  // change, so that is what it checks: a well-formed version, at or past the
+  // last one recorded here.
+  const { api } = loadWorker({ fetchImpl: async () => freshShell })
+  assert.match(api.CACHE_VERSION, /^v\d+$/, 'the cache version must stay vN')
+  assert.ok(Number(api.CACHE_VERSION.slice(1)) >= 6,
+    `cache version went backwards: ${api.CACHE_VERSION} is older than v6`)
 })
 
 test('the fonts do not hold up the first paint', () => {

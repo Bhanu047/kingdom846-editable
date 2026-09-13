@@ -83,6 +83,33 @@ const comebacks = count((r) => r.prep === 'L' && r.battle === 'W')
 const reversals = count((r) => r.prep === 'W' && r.battle === 'L')
 const invasions = count((r) => r.prep === 'L' && r.battle === 'L')
 
+// The profile's own history charts, point by point.
+//
+// Score and rank are read off the plotted points, so they carry about +/-0.1
+// and +/-1 of reading error; the win rates are exact, and they reproduce what
+// the runs above compute to the decimal, which is the check that the rows line
+// up with the right KvKs.
+//
+// The last point disagrees with the header on purpose: the chart plots KvK 18
+// at 71.90 and #14, while the profile's current standing reads 70.04 and #23.
+// Atlas recalculates after a KvK settles and the header is the live figure, so
+// the curve is drawn as the site draws it and "current" is taken from the
+// header -- the same split the real profile shows.
+const curve = [
+  { kvk: 7,  score: 23.20, rank: 458, prepWinRate: 100.0, battleWinRate: 100.0 },
+  { kvk: 8,  score: 32.06, rank: 294, prepWinRate: 100.0, battleWinRate: 100.0 },
+  { kvk: 9,  score: 34.83, rank: 335, prepWinRate: 66.7,  battleWinRate: 100.0 },
+  { kvk: 10, score: 47.84, rank: 117, prepWinRate: 75.0,  battleWinRate: 100.0 },
+  { kvk: 11, score: 58.26, rank: 41,  prepWinRate: 80.0,  battleWinRate: 100.0 },
+  { kvk: 12, score: 46.03, rank: 256, prepWinRate: 66.7,  battleWinRate: 83.3 },
+  { kvk: 13, score: 57.04, rank: 77,  prepWinRate: 71.4,  battleWinRate: 85.7 },
+  { kvk: 14, score: 62.18, rank: 38,  prepWinRate: 75.0,  battleWinRate: 87.5 },
+  { kvk: 15, score: 66.97, rank: 16,  prepWinRate: 77.8,  battleWinRate: 88.9 },
+  { kvk: 16, score: 62.77, rank: 57,  prepWinRate: 80.0,  battleWinRate: 80.0 },
+  { kvk: 17, score: 68.24, rank: 24,  prepWinRate: 81.8,  battleWinRate: 81.8 },
+  { kvk: 18, score: 71.90, rank: 14,  prepWinRate: 83.3,  battleWinRate: 83.3 },
+]
+
 export const tracker846 = {
   tier: 'S-Tier',
   atlas: {
@@ -112,6 +139,27 @@ export const tracker846 = {
       { key: 'history', label: 'History',    note: 'bonus',     pts: 4.00 },
     ],
     experiencePenalty: false,
+    // Read off the charts on the same day as the score; see `curve` above for
+    // what is exact in it and what is a reading.
+    curve: curve.map((point) => ({ ...point })),
+    // Atlas's own projection for the next KvK, from its Score Simulator with
+    // the default outcome selected: both phases won, which it calls a
+    // domination. Only that scenario is published as figures. The others move
+    // with inputs we do not have, so nothing else is stored and nothing is
+    // extrapolated from this one.
+    simulator: {
+      nextKvk: 19,
+      outcome: 'Domination — prep and battle both won',
+      projected: 73.61,
+      delta: 3.57,
+      deltaPct: 5.1,
+      parts: [
+        { label: 'Base Win Rate', pts: 3.37 },
+        { label: 'Streak Impact', pts: 0.15 },
+        { label: 'Experience', pts: 0.00 },
+        { label: 'Form Bonus', pts: 0.04 },
+      ],
+    },
     radar: [
       { label: 'Win Rate',   value: 83 },
       { label: 'Domination', value: 75 },

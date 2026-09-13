@@ -7,19 +7,21 @@ import { smoothPath, useInView } from '../lib/chartAnim'
 // The Atlas profile, rebuilt on our own page.
 //
 // A note on what is and is not drawn here, because it is the whole design
-// constraint. The Atlas profile publishes: the current score and rank, the
-// component breakdown, the six performance metrics, and the size of the last
-// move (KvK 16 -> 17). It draws score and rank curves across KvKs 7-17 but does
-// not publish those per-KvK numbers anywhere we can read.
+// constraint. Everything on this page is either published by Atlas verbatim,
+// read off its own charts, or derived from the KvK history we already hold.
 //
-// So the two history charts plot the step that IS published and mark the rest
-// as unrecorded, rather than drawing a plausible line through invented points.
-// A chart that looks authoritative and is guessed is worse than one with an
-// honest gap in it -- this is a kingdom's public record, and people compare it
-// against the real profile.
+// The score and rank curves used to be RECONSTRUCTED -- modelled from our
+// record with weights solved out of the published breakdown -- because the
+// profile draws those curves without publishing the numbers behind them. They
+// are the real per-KvK figures now, read point by point off the profile's
+// charts, so the model and its calibration rings are gone. What the readings
+// cost in precision is stated where it matters: about +/-0.1 on a score and
+// +/-1 on a rank, against win rates that are exact.
 //
-// Everything else on this page is either published verbatim or derived from
-// the KvK history we already hold, and is exact.
+// The rule that produced the old model still holds for anything we cannot
+// read: a chart that looks authoritative and is guessed is worse than one with
+// an honest gap in it. This is a kingdom's public record, and people compare
+// it against the real profile.
 
 const GOLD = '#E8C558'
 const BLUE = '#7f9ed6'
@@ -27,82 +29,27 @@ const BLUE = '#7f9ed6'
 const runsOldestFirst = () => [...tracker846.kvk.history].reverse()
 
 /* ---------------------------------------------------------------- history --
-   Atlas score across the campaign.
-
-   The profile publishes the current score, the component breakdown and the
-   size of the last move -- not the per-KvK figures behind its own curve. So
-   this line is RECONSTRUCTED: each component is recomputed from the record as
-   it stood after every KvK, using the weights implied by the published
-   breakdown at KvK 17.
-
-   It is not a guess dressed as data. The model is calibrated on the published
-   components, and the two figures we can actually check are drawn on top of it
-   as rings: KvK 17 reconstructs to 66.37 against a published 66.38, and KvK 16
-   to 59.72 against the 60.91 implied by the +5.47 move. Where the ring sits off
-   the line, that is the model's error and you can see it.
+   Atlas score across the campaign, as the profile plots it.
    ------------------------------------------------------------------------ */
-
-// Domination = both phases won. Verified against the tracker: this definition
-// yields exactly the 8 dominations in 11 KvKs the profile reports.
-function recordAfter(rows) {
-  const n = rows.length
-  const pw = rows.filter((r) => r.prep === 'W').length
-  const bw = rows.filter((r) => r.battle === 'W').length
-  const dom = rows.filter((r) => r.prep === 'W' && r.battle === 'W').length
-  const last5 = rows.slice(-5)
-  const form = last5.reduce((a, r) => a + (r.prep === 'W' ? 1 : 0) + (r.battle === 'W' ? 1 : 0), 0) / (last5.length * 2)
-  let streak = 0
-  for (let i = rows.length - 1; i >= 0; i -= 1) {
-    if (rows[i].prep === 'W' && rows[i].battle === 'W') streak += 1
-    else break
-  }
-  return { n, win: (pw + bw) / (2 * n), domRate: dom / n, form, streak }
-}
-
-// Weights solved from the published breakdown at KvK 17.
-const W_BASE = 47.93, W_DOM = 4.55, W_FORM = 6.61, W_STREAK = 3.61, W_HIST = 3.67
-const SCORE_MODEL = (() => {
-  const at17 = recordAfter(runsOldestFirst())
-  return {
-    base: W_BASE / at17.win,
-    dom: W_DOM / at17.domRate,
-    form: W_FORM / at17.form,
-    hist: W_HIST / (at17.n / 12),
-  }
-})()
-
-function reconstructedScore(rows) {
-  const r = recordAfter(rows)
-  return SCORE_MODEL.base * r.win
-    + SCORE_MODEL.dom * r.domRate
-    + SCORE_MODEL.form * r.form
-    + W_STREAK * Math.min(1, r.streak)
-    + SCORE_MODEL.hist * (r.n / 12)
-}
-
 function ScoreHistory() {
   const [ref, reveal] = useInView()
   const gid = useId()
-  const runs = runsOldestFirst()
-  const series = runs.map((k, i) => ({ kvk: k.kvk, value: reconstructedScore(runs.slice(0, i + 1)) }))
   const { atlas } = tracker846
-  const anchors = [
-    { kvk: atlas.lastMove.fromKvk, value: +(atlas.score - atlas.lastMove.score).toFixed(2) },
-    { kvk: atlas.lastMove.toKvk, value: atlas.score },
-  ]
+  const series = atlas.curve
+  const move = atlas.lastMove
 
   const W = 520, H = 200, L = 40, R = 16, T = 18, B = 30
   const ticks = [0, 25, 50, 75, 100]
-  const x = (kvk) => L + (runs.findIndex((r) => r.kvk === kvk) / (runs.length - 1)) * (W - L - R)
+  const x = (i) => L + (i / (series.length - 1)) * (W - L - R)
   const y = (v) => H - B - (v / 100) * (H - T - B)
-  const line = smoothPath(series.map((p) => ({ x: x(p.kvk), y: y(p.value) })))
+  const line = smoothPath(series.map((p, i) => ({ x: x(i), y: y(p.score) })))
 
   return (
     <Panel>
       <SectionTitle eyebrow="Trajectory" title="Atlas Score History" />
       <div className="mt-1 flex items-baseline gap-2">
-        <span className="font-display text-xl font-bold" style={{ color: GOLD }}>▲{atlas.lastMove.score.toFixed(2)}</span>
-        <span className="text-[11px] text-parchment/50">KvK {atlas.lastMove.fromKvk} → {atlas.lastMove.toKvk}</span>
+        <span className="font-display text-xl font-bold" style={{ color: GOLD }}>▲{move.score.toFixed(2)}</span>
+        <span className="text-[11px] text-parchment/50">KvK {move.fromKvk} → {move.toKvk}</span>
         <span className="ml-auto font-mono text-lg font-black text-gold-bright">{atlas.score.toFixed(2)}</span>
       </div>
       <div ref={ref} className="relative mt-2">
@@ -114,18 +61,14 @@ function ScoreHistory() {
             </linearGradient>
           </defs>
           {ticks.map((t) => <line key={t} x1={L} x2={W - R} y1={y(t)} y2={y(t)} stroke="rgba(226,199,125,.10)" />)}
-          <path d={`${line} L${x(runs[runs.length - 1].kvk)},${H - B} L${x(runs[0].kvk)},${H - B} Z`}
+          <path d={`${line} L${x(series.length - 1)},${H - B} L${x(0)},${H - B} Z`}
             fill={`url(#${gid}-f)`} style={{ opacity: reveal ? 1 : 0, transition: 'opacity .7s ease .3s' }} />
           <path d={line} pathLength="1" strokeDasharray="1" strokeDashoffset={reveal ? 0 : 1}
             fill="none" stroke={GOLD} strokeWidth="2.6"
             style={{ transition: 'stroke-dashoffset 1.1s cubic-bezier(.16,1,.3,1)' }} />
-          {/* The two published figures, drawn over the model so any gap shows. */}
           <g style={{ opacity: reveal ? 1 : 0, transition: 'opacity .4s ease 1s' }}>
-            {anchors.map((a) => (
-              <g key={a.kvk}>
-                <circle cx={x(a.kvk)} cy={y(a.value)} r="6" fill="none" stroke="#FFF6DA" strokeWidth="1.8" />
-                <circle cx={x(a.kvk)} cy={y(a.value)} r="2" fill="#FFF6DA" />
-              </g>
+            {series.map((p, i) => (
+              <circle key={p.kvk} cx={x(i)} cy={y(p.score)} r="2.4" fill="#FFF6DA" />
             ))}
           </g>
         </svg>
@@ -133,14 +76,14 @@ function ScoreHistory() {
           <div key={t} className="pointer-events-none absolute -translate-y-1/2 font-mono text-[9px] text-parchment/35"
             style={{ right: `${(W - L + 6) / W * 100}%`, top: `${y(t) / H * 100}%` }}>{t}</div>
         ))}
-        {[runs[0], runs[runs.length - 1]].map((r, i) => (
-          <div key={r.kvk} className="pointer-events-none absolute whitespace-nowrap text-[9px] font-semibold text-parchment/40"
-            style={{ left: i === 0 ? `${x(r.kvk) / W * 100}%` : undefined, right: i ? '2%' : undefined, top: `${(H - 12) / H * 100}%` }}>#{r.kvk}</div>
+        {[0, series.length - 1].map((i, n) => (
+          <div key={series[i].kvk} className="pointer-events-none absolute whitespace-nowrap text-[9px] font-semibold text-parchment/40"
+            style={{ left: n === 0 ? `${x(i) / W * 100}%` : undefined, right: n ? '2%' : undefined, top: `${(H - 12) / H * 100}%` }}>#{series[i].kvk}</div>
         ))}
       </div>
       <p className="mt-2 text-[10px] leading-relaxed text-parchment/40">
-        <span className="text-parchment/70">○</span> marks the two published figures. The line is reconstructed from the
-        record using the weights in the breakdown below — it lands on 66.37 at KvK 17 against a published 66.38.
+        Read off the Atlas history chart (±0.1). Its last point sits at {series[series.length - 1].score.toFixed(2)};
+        the profile recalculates after a KvK settles, and {atlas.score.toFixed(2)} is the standing it shows now.
       </p>
     </Panel>
   )
@@ -148,58 +91,67 @@ function ScoreHistory() {
 
 function RankHistory() {
   const [ref, reveal] = useInView()
+  const gid = useId()
   const { atlas, tier } = tracker846
-  const prev = atlas.rank + atlas.lastMove.ranks
-
-  // Scale to the band the kingdom is actually in, not #1-#470. On the full
-  // ladder #33 and #66 both collapse onto the left edge and a 33-place climb
-  // reads as no movement at all -- which is the opposite of what the card is
-  // for. The domain is the top slice, widened enough to hold both marks.
-  const worst = Math.max(120, Math.ceil((prev * 1.5) / 20) * 20)
-  const posOf = (r) => ((r - 1) / (worst - 1)) * 100
+  const series = atlas.curve
+  const move = atlas.lastMove
   const headroom = atlas.score - atlas.tierThreshold
+
+  // Rank is a line now, not a ladder. The ladder existed because only two
+  // positions were known and a two-point plot is mostly empty; twelve points
+  // is a trajectory, and it tells the real story -- #458 at KvK 7, down into
+  // the twenties, with the two falls after a lost phase plainly visible.
+  //
+  // #1 sits at the TOP: on a rank axis, better is a smaller number, and a
+  // chart that climbs as the kingdom falls would be read backwards by
+  // everyone. The domain is logarithmic because the same twenty places matter
+  // far more at #20 than at #400, and a linear axis flattens the whole recent
+  // half of the campaign into one band.
+  const worst = Math.max(...series.map((p) => p.rank))
+  const span = Math.log(worst)
+  const W = 520, H = 200, L = 40, R = 16, T = 18, B = 30
+  const x = (i) => L + (i / (series.length - 1)) * (W - L - R)
+  const y = (rank) => T + (Math.log(rank) / span) * (H - T - B)
+  const line = smoothPath(series.map((p, i) => ({ x: x(i), y: y(p.rank) })))
+  const guides = [1, 10, 50, 200, worst]
 
   return (
     <Panel>
       <SectionTitle eyebrow="Standing" title="Kingdom Ranking" />
       <div className="mt-1 flex items-baseline gap-2">
-        <span className="font-display text-xl font-bold" style={{ color: BLUE }}>▲{atlas.lastMove.ranks} ranks</span>
-        <span className="text-[11px] text-parchment/50">KvK {atlas.lastMove.fromKvk} → {atlas.lastMove.toKvk}</span>
+        <span className="font-display text-xl font-bold" style={{ color: BLUE }}>▲{move.ranks} ranks</span>
+        <span className="text-[11px] text-parchment/50">KvK {move.fromKvk} → {move.toKvk}</span>
         <span className="ml-auto font-mono text-lg font-black text-gold-bright">#{atlas.rank}</span>
       </div>
-
-      {/* A ladder, not a line chart. Rank depends on every other kingdom in the
-          game, so unlike the score it cannot be reconstructed from our own
-          record -- two positions are genuinely all there is, and a ladder shows
-          a move between two of them better than a mostly-empty plot. */}
-      <div ref={ref} className="relative mt-7 h-12">
-        <div className="absolute inset-x-0 top-1/2 h-[3px] -translate-y-1/2 overflow-hidden rounded-full bg-white/[.06]">
-          <div className="h-full rounded-full"
-            style={{
-              marginLeft: `${posOf(atlas.rank)}%`,
-              width: reveal ? `${posOf(prev) - posOf(atlas.rank)}%` : '0%',
-              backgroundImage: `linear-gradient(90deg, #FFF6DA, ${BLUE})`,
-              transition: 'width .9s cubic-bezier(.16,1,.3,1) .25s',
-            }} />
-        </div>
-        {[
-          { r: atlas.rank, label: 'now', tone: '#FFF6DA', big: true },
-          { r: prev, label: `KvK ${atlas.lastMove.fromKvk}`, tone: 'rgba(127,158,214,.8)' },
-        ].map((m) => (
-          <div key={m.label} className="absolute -translate-x-1/2 whitespace-nowrap text-center"
-            style={{ left: `${posOf(m.r)}%`, top: m.big ? 0 : 2, opacity: reveal ? 1 : 0, transition: 'opacity .5s ease .55s' }}>
-            <div className={`mx-auto rounded-full border-2 ${m.big ? 'h-3.5 w-3.5' : 'h-3 w-3'}`}
-              style={{ borderColor: m.tone, background: '#0b1222' }} />
-            <div className={`font-mono font-bold ${m.big ? 'mt-1.5 text-[15px] text-gold-bright' : 'mt-2 text-[11px] text-parchment/55'}`}>#{m.r}</div>
-            <div className="text-[8px] uppercase tracking-[.14em] text-parchment/35">{m.label}</div>
-          </div>
+      <div ref={ref} className="relative mt-2">
+        <svg viewBox={`0 0 ${W} ${H}`} className="w-full">
+          <defs>
+            <linearGradient id={`${gid}-r`} x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stopColor={BLUE} stopOpacity=".55" />
+              <stop offset="100%" stopColor="#FFF6DA" stopOpacity="1" />
+            </linearGradient>
+          </defs>
+          {guides.map((g) => <line key={g} x1={L} x2={W - R} y1={y(g)} y2={y(g)} stroke="rgba(127,158,214,.12)" />)}
+          <path d={line} pathLength="1" strokeDasharray="1" strokeDashoffset={reveal ? 0 : 1}
+            fill="none" stroke={`url(#${gid}-r)`} strokeWidth="2.6"
+            style={{ transition: 'stroke-dashoffset 1.1s cubic-bezier(.16,1,.3,1)' }} />
+          <g style={{ opacity: reveal ? 1 : 0, transition: 'opacity .4s ease 1s' }}>
+            {series.map((p, i) => (
+              <circle key={p.kvk} cx={x(i)} cy={y(p.rank)} r="2.4" fill="#FFF6DA" />
+            ))}
+          </g>
+        </svg>
+        {guides.map((g) => (
+          <div key={g} className="pointer-events-none absolute -translate-y-1/2 font-mono text-[9px] text-parchment/35"
+            style={{ right: `${(W - L + 6) / W * 100}%`, top: `${y(g) / H * 100}%` }}>#{g}</div>
+        ))}
+        {[0, series.length - 1].map((i, n) => (
+          <div key={series[i].kvk} className="pointer-events-none absolute whitespace-nowrap text-[9px] font-semibold text-parchment/40"
+            style={{ left: n === 0 ? `${x(i) / W * 100}%` : undefined, right: n ? '2%' : undefined, top: `${(H - 12) / H * 100}%` }}>#{series[i].kvk}</div>
         ))}
       </div>
-      <div className="mt-1 flex justify-between font-mono text-[9px] text-parchment/30">
-        <span>#1</span><span>#{worst}+</span>
-      </div>
 
-      <div className="mt-4 grid grid-cols-2 gap-2">
+      <div className="mt-3 grid grid-cols-2 gap-2">
         <div className="rounded-lg bg-white/5 p-2.5 text-center">
           <div className="font-display text-lg font-bold text-gold-bright">{tier}</div>
           <div className="text-[9px] uppercase tracking-wider text-parchment/45">Tier · {atlas.tierThreshold}+ to hold</div>
@@ -427,6 +379,100 @@ function PerformanceRadar() {
   )
 }
 
+
+/* -------------------------------------------------------------- simulator --
+   Atlas's projection for the next KvK. Its simulator lets you pick an outcome;
+   only the default one -- both phases won -- is published as figures, so that
+   is the only one shown. The others are not extrapolated from it, because the
+   components below do not move linearly and a wrong projection on a kingdom's
+   own page is worse than an absent one.
+   ------------------------------------------------------------------------ */
+function ScoreSimulator() {
+  const [ref, reveal] = useInView()
+  const { atlas } = tracker846
+  const sim = atlas.simulator
+  const top = Math.max(...sim.parts.map((p) => p.pts))
+
+  return (
+    <Panel>
+      <SectionTitle eyebrow={`If KvK ${sim.nextKvk} is won`} title="Atlas Score Simulator"
+        action={<Pill tone="gold">+{sim.deltaPct.toFixed(1)}%</Pill>} />
+      <div className="mt-3 flex items-center gap-3">
+        <div>
+          <div className="font-mono text-2xl font-black text-parchment/70">{atlas.score.toFixed(2)}</div>
+          <div className="text-[9px] uppercase tracking-wider text-parchment/40">Now</div>
+        </div>
+        <Icon name="arrow" size={18} className="text-gold/60" />
+        <div>
+          <div className="gilt-text font-mono text-3xl font-black">{sim.projected.toFixed(2)}</div>
+          <div className="text-[9px] uppercase tracking-wider text-parchment/45">Projected · ▲{sim.delta.toFixed(2)}</div>
+        </div>
+      </div>
+      <div className="mt-1 text-[11px] text-parchment/50">{sim.outcome}</div>
+      <div ref={ref} className="mt-3 space-y-2">
+        {sim.parts.map((part, i) => (
+          <div key={part.label} className="grid grid-cols-[104px_1fr_46px] items-center gap-2">
+            <div className="text-[10px] uppercase tracking-wider text-parchment/45">{part.label}</div>
+            <div className="k-track h-1.5 overflow-hidden rounded-full bg-white/[.06]">
+              <div className="h-full rounded-full"
+                style={{
+                  width: reveal ? `${top ? (part.pts / top) * 100 : 0}%` : '0%',
+                  background: part.pts ? GOLD : 'rgba(226,199,125,.25)',
+                  transition: `width .8s cubic-bezier(.16,1,.3,1) ${i * 90}ms`,
+                }} />
+            </div>
+            <div className="text-right font-mono text-[11px] text-gold-bright">+{part.pts.toFixed(2)}</div>
+          </div>
+        ))}
+      </div>
+      <p className="mt-3 text-[10px] leading-relaxed text-parchment/40">
+        Atlas&apos;s own projection for a domination in KvK {sim.nextKvk}. Other outcomes are not shown because the
+        profile does not publish their figures.
+      </p>
+    </Panel>
+  )
+}
+
+/* ------------------------------------------------------------------ tier --
+   Where the kingdom sits against the tier it holds.
+   ------------------------------------------------------------------------ */
+function PathToTier() {
+  const [ref, reveal] = useInView()
+  const { atlas, tier } = tracker846
+  const held = atlas.score >= atlas.tierThreshold
+  // The bar runs from the threshold to 100 rather than 0 to 100: the whole
+  // question this panel answers is how much room there is above the line, and
+  // two thirds of a 0-100 bar is territory the kingdom left behind long ago.
+  const pos = Math.min(100, ((atlas.score - atlas.tierThreshold) / (100 - atlas.tierThreshold)) * 100)
+
+  return (
+    <Panel>
+      <SectionTitle eyebrow="Standing" title="Path to Next Tier"
+        action={<Pill tone="gold">{tier}</Pill>} />
+      <div className="mt-3 flex items-baseline gap-2">
+        <span className="gilt-text font-mono text-3xl font-black">{atlas.score.toFixed(2)}</span>
+        <span className="text-[11px] text-parchment/50">holds at {atlas.tierThreshold}+</span>
+      </div>
+      <div ref={ref} className="k-track mt-3 h-2.5 overflow-hidden rounded-full border border-gold/15 bg-white/[.05]">
+        <div className="h-full rounded-full"
+          style={{
+            width: reveal ? `${pos}%` : '0%',
+            backgroundImage: `linear-gradient(90deg, ${BLUE}, ${GOLD})`,
+            transition: 'width 1s cubic-bezier(.16,1,.3,1) .2s',
+          }} />
+      </div>
+      <div className="mt-1 flex justify-between font-mono text-[9px] text-parchment/30">
+        <span>{atlas.tierThreshold}</span><span>100</span>
+      </div>
+      <p className="mt-3 text-[11px] leading-relaxed text-parchment/65">
+        {held
+          ? `Already ${tier}. There is no tier above it — ${(atlas.score - atlas.tierThreshold).toFixed(2)} points of room over the line, and holding it is the whole job.`
+          : `${(atlas.tierThreshold - atlas.score).toFixed(2)} points below the ${tier} line.`}
+      </p>
+    </Panel>
+  )
+}
+
 /* -------------------------------------------------------------------------- */
 export default function AtlasAnalytics() {
   return (
@@ -440,6 +486,10 @@ export default function AtlasAnalytics() {
         <PerformanceRadar />
       </div>
       <ScoreBreakdown />
+      <div className="grid gap-6 lg:grid-cols-2">
+        <ScoreSimulator />
+        <PathToTier />
+      </div>
     </div>
   )
 }

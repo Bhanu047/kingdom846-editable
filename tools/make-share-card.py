@@ -198,7 +198,7 @@ fd = fnt(SERIF_R, 19)
 ORN_GAP = 18
 x = (W - 22 - orn.width) - ORN_GAP - text_width("KINGDOM846.COM", fd, 4.2)
 for ch in "KINGDOM846.COM":
-    d.text((x, 548), ch, font=fd, fill=GOLD + (205,))
+    d.text((x, 522), ch, font=fd, fill=GOLD + (205,))
     x += d.textlength(ch, font=fd) + 4.2
 
 card.convert("RGB").save("public/assets/kingdom846-share.jpg", "JPEG",

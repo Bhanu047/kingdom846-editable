@@ -32,10 +32,14 @@ export const kingdom = {
   //
   // The crown changes hands every 14 days, so this WILL go stale again. Refresh
   // it whenever you touch this file; it is a safety net, not a source of truth.
-  king: 'Lovelykhaos',
-  kingTitle: 'Queen',
-  kingTag: '[KzK] KamikazeKarnival',
-  kingAllianceSlug: 'kzk',
+  //
+  // Read off the live portal on 2026-09-13, where the crown had already moved
+  // on from Queen Lovelykhaos of KzK: the Sep 12 rotation took it to RYO. The
+  // next one is Sep 26, which is when these four lines start lying again.
+  king: 'Nomnomnom',
+  kingTitle: 'High King',
+  kingTag: '[RYO] Spiders',
+  kingAllianceSlug: 'ryo',
   leadingAlliance: '[RYO] Spiders',
   totalPower: '111,597,006,633',
   level: 100,

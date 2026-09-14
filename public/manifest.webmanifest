@@ -3,7 +3,7 @@
   "short_name": "Kingdom 846",
   "description": "The official portal of Kingdom 846 — alliances, events, guides, rankings, and kingdom management.",
   "id": "/",
-  "start_url": "/#/dashboard",
+  "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
@@ -18,9 +18,9 @@
     { "src": "/app-icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ],
   "shortcuts": [
-    { "name": "Events", "short_name": "Events", "url": "/#/events", "icons": [{ "src": "/app-icons/icon-192.png", "sizes": "192x192" }] },
-    { "name": "Rankings", "short_name": "Rankings", "url": "/#/rankings", "icons": [{ "src": "/app-icons/icon-192.png", "sizes": "192x192" }] },
-    { "name": "Battle Lab", "short_name": "Battle Lab", "url": "/#/battle-lab", "icons": [{ "src": "/app-icons/icon-192.png", "sizes": "192x192" }] },
-    { "name": "Guides", "short_name": "Guides", "url": "/#/guides", "icons": [{ "src": "/app-icons/icon-192.png", "sizes": "192x192" }] }
+    { "name": "Events", "short_name": "Events", "url": "/events", "icons": [{ "src": "/app-icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Rankings", "short_name": "Rankings", "url": "/rankings", "icons": [{ "src": "/app-icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Battle Lab", "short_name": "Battle Lab", "url": "/battle-lab", "icons": [{ "src": "/app-icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Guides", "short_name": "Guides", "url": "/guides", "icons": [{ "src": "/app-icons/icon-192.png", "sizes": "192x192" }] }
   ]
 }

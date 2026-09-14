@@ -8,21 +8,30 @@
        this page, which hosts it, did not. -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="theme-color" content="#06152b" />
-  <meta name="description" content="The official portal of Kingdom 846 — alliances, events, guides, rankings, and kingdom management. We don't wait for glory. We take it." />
-  <title>Kingdom 846 — We Take What's Ours</title>
+  <meta name="description" content="The official portal for Kingdom 846 (K846) in Kingshot: the crown, the four alliances, bear hunt and KvK schedules, rankings, transfer windows and guides." />
+  <title>Kingdom 846 (K846) — Official Kingshot Kingdom Portal</title>
+  <!-- One canonical URL. The portal is hash-routed, so every #/route a
+       visitor lands on is this same document to a crawler; saying so
+       stops any of them being treated as a duplicate. -->
+  <link rel="canonical" href="https://kingdom846.com/" />
   <meta property="og:type" content="website" />
   <meta property="og:title" content="Kingdom 846 — We Take What's Ours" />
   <meta property="og:description" content="The official portal of Kingdom 846 — alliances, events, guides, rankings, and kingdom management." />
   <meta property="og:url" content="https://kingdom846.com/" />
-  <meta property="og:image" content="https://kingdom846.com/assets/kingdom846-social-preview.jpg" />
+  <!-- The share card is the kingdom's own crest on a navy field, built to
+       the 1.91:1 ratio the platforms crop to, so nothing is cut off. JPEG
+       rather than WebP on purpose: WebP previews are unreliable on LinkedIn
+       and some chat clients. Absolute URL on purpose too -- scrapers do not
+       resolve a relative one. Regenerate with tools/make-share-card.py. -->
+  <meta property="og:image" content="https://kingdom846.com/assets/kingdom846-share.jpg" />
   <meta property="og:image:width" content="1200" />
-  <meta property="og:image:height" content="627" />
-  <meta property="og:image:alt" content="Kingdom846 live community platform architecture and verified adoption metrics" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="The Kingdom 846 crest — gold lions and a crowned blue shield — beside the words Kingdom 846, We Take What's Ours" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="Kingdom 846 — We Take What's Ours" />
   <meta name="twitter:description" content="The official portal of Kingdom 846 — alliances, events, guides, rankings, and kingdom management." />
-  <meta name="twitter:image" content="https://kingdom846.com/assets/kingdom846-social-preview.jpg" />
-  <meta name="twitter:image:alt" content="Kingdom846 live community platform architecture and verified adoption metrics" />
+  <meta name="twitter:image" content="https://kingdom846.com/assets/kingdom846-share.jpg" />
+  <meta name="twitter:image:alt" content="The Kingdom 846 crest — gold lions and a crowned blue shield — beside the words Kingdom 846, We Take What's Ours" />
   <!-- Critical paint. Without this the document is unstyled until the JS bundle
        injects the CSS, and an unstyled document paints WHITE. Every hard
        navigation into the site flashed white before the realm appeared -- most

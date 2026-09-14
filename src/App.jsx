@@ -28,6 +28,7 @@ import { installNetworkWatch, probe } from './lib/network'
 import { SiteDataProvider, useSiteData } from './context/SiteDataContext'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import { nav, timeline, guides, news } from './data/kingdom'
+import { routeById, SITE_ORIGIN } from './data/routes'
 
 
 const Dashboard = lazy(() => import('./pages/Dashboard'))
@@ -75,12 +76,35 @@ function PageStage({ page, children }) {
   )
 }
 
-function getPageFromHash() {
-  const hash = window.location.hash.replace(/^#\/?/, '')
-  return hash || 'dashboard'
+/**
+ * Routing is by path, not by fragment.
+ *
+ * It used to be `#/alliances`. A crawler discards everything from the "#"
+ * onward, so every screen in the portal was the same single URL to a search
+ * engine and only the front door could ever be indexed. Paths give each screen
+ * a URL of its own; the server already falls back to index.html for any
+ * non-API GET, and the service worker already answers every navigation from
+ * the cached shell, so nothing else had to move.
+ *
+ * Links shared before the change still arrive as `#/alliances`. Those are read
+ * here and rewritten to the path form once, on mount, rather than broken.
+ */
+function pathFor(page) { return page === 'dashboard' ? '/' : '/' + page }
+
+function legacyHashPage() {
+  return window.location.hash.replace(/^#\/?/, '').trim()
 }
 
-function navigateTo(page) { window.location.hash = '/' + page }
+function getPageFromLocation() {
+  const fromHash = legacyHashPage()
+  if (fromHash) return fromHash
+  const path = decodeURIComponent(window.location.pathname).replace(/^\/+|\/+$/g, '')
+  return path || 'dashboard'
+}
+
+function navigateTo(page) {
+  window.history.pushState({ k846Page: page }, '', pathFor(page))
+}
 
 // Every hash the switch below handles. Kept next to it so adding a route and
 // forgetting this list shows up as a phantom 404 in analytics, not silence.
@@ -139,7 +163,7 @@ function Shell() {
   // behind. lib/appMode.js still keeps the <html> attribute in step for CSS.
   const [appMode] = useState(isAppMode)
   const [showSplash, setShowSplash] = useState(true)
-  const [page, setPage] = useState(getPageFromHash)
+  const [page, setPage] = useState(getPageFromLocation)
   const [loginOpen, setLoginOpen] = useState(false)
   const [loginMode, setLoginMode] = useState('leader')
   const [mobileNav, setMobileNav] = useState(false)
@@ -153,9 +177,18 @@ function Shell() {
   const { reload: reloadSiteData } = useSiteData()
 
   useEffect(() => {
-    const onHashChange = () => setPage(getPageFromHash())
-    window.addEventListener('hashchange', onHashChange)
-    return () => window.removeEventListener('hashchange', onHashChange)
+    // A shared `#/alliances` link lands on "/" with the screen in the fragment.
+    // Rewrite it to the real path so the address bar, a re-share and the
+    // canonical tag all agree, without adding a history entry to go back to.
+    const legacy = legacyHashPage()
+    if (legacy) window.history.replaceState({ k846Page: legacy }, '', pathFor(legacy))
+
+    // popstate now fires for overlays too -- useBackToClose pushes an entry to
+    // catch the back button. Those entries do not change the URL, so this
+    // resolves to the page already showing and the setState is a no-op.
+    const onPop = () => setPage(getPageFromLocation())
+    window.addEventListener('popstate', onPop)
+    return () => window.removeEventListener('popstate', onPop)
   }, [])
 
   useEffect(() => {
@@ -235,6 +268,33 @@ function Shell() {
   // dead link from Discord looks like a normal visit. Record it instead.
   useEffect(() => {
     if (page && !KNOWN_PAGES.has(page)) trackAction('notfound', page)
+  }, [page])
+
+  // Title, description and canonical follow the route. A single-page app keeps
+  // the document it booted with, so without this every screen shared the front
+  // door's title -- in a search result, in a bookmark, and in the tab strip.
+  useEffect(() => {
+    const r = routeById(page)
+    if (!r) return
+    document.title = r.title
+    if (r.description) {
+      let m = document.querySelector('meta[name="description"]')
+      if (!m) { m = document.createElement('meta'); m.setAttribute('name', 'description'); document.head.appendChild(m) }
+      m.setAttribute('content', r.description)
+    }
+    let link = document.querySelector('link[rel="canonical"]')
+    if (!link) { link = document.createElement('link'); link.setAttribute('rel', 'canonical'); document.head.appendChild(link) }
+    link.setAttribute('href', SITE_ORIGIN + r.path)
+
+    // Keep crawlers out of the signed-in surfaces even when they are reached
+    // by a client-side navigation rather than a fresh request.
+    let robots = document.querySelector('meta[name="robots"]')
+    if (r.index === false) {
+      if (!robots) { robots = document.createElement('meta'); robots.setAttribute('name', 'robots'); document.head.appendChild(robots) }
+      robots.setAttribute('content', 'noindex, nofollow')
+    } else if (robots) {
+      robots.remove()
+    }
   }, [page])
 
   const navigate = (p) => {
@@ -405,7 +465,7 @@ function Shell() {
               <div className="flex flex-col items-center gap-2 text-center">
                 <div className="flex items-center gap-3"><span className="text-gold-bright float-anim"><Icon name="crown" size={20} /></span><span className="font-serif text-lg tracking-wider gradient-gold font-bold">Kingdom 846</span><span className="text-gold-bright float-anim" style={{ animationDelay: '2s' }}><Icon name="crown" size={20} /></span></div>
                 <p className="text-[12px] text-gold/50 italic font-serif">Where legends are forged in fire and crowned in gold</p>
-                <div className="footer-credits mt-2 flex items-center gap-2 text-[11px] text-parchment/50"><span>Crafted by</span><span className="text-gold/70 font-semibold">Spartan</span><span className="text-gold/30">◆</span><span>Forged for the realm</span><span className="text-gold/30">◆</span><a href="https://discord.gg/rcxJCh97A" target="_blank" rel="noreferrer" className="tap-y text-gold/60 hover:text-gold-bright transition">Discord</a><span className="text-gold/30">◆</span><a href="#/privacy" className="tap-y text-gold/60 hover:text-gold-bright transition">Privacy</a></div>
+                <div className="footer-credits mt-2 flex items-center gap-2 text-[11px] text-parchment/50"><span>Crafted by</span><span className="text-gold/70 font-semibold">Spartan</span><span className="text-gold/30">◆</span><span>Forged for the realm</span><span className="text-gold/30">◆</span><a href="https://discord.gg/rcxJCh97A" target="_blank" rel="noreferrer" className="tap-y text-gold/60 hover:text-gold-bright transition">Discord</a><span className="text-gold/30">◆</span><a href="/privacy" onClick={(e) => { e.preventDefault(); navigate('privacy') }} className="tap-y text-gold/60 hover:text-gold-bright transition">Privacy</a></div>
               </div>
             </footer>
             </div>

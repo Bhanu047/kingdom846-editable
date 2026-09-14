@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "node server/index.cjs",
-    "build": "vite build",
+    "build": "vite build && node tools/prerender.mjs",
     "start": "node server/index.cjs",
     "preview": "vite preview",
     "test": "node --test --test-force-exit tests/*.test.mjs",

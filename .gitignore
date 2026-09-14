@@ -20,3 +20,7 @@ backups/
 *.pem
 *.p12
 *.pfx
+
+# Rendered video. Regenerate with tools/make-intro-video.py; the frames and
+# the mp4 are build output, not source.
+dist-video/

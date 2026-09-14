@@ -1,17 +1,27 @@
 /**
- * Record a guided tour of the portal as video.
+ * Record a guided tour of the portal as one continuous video.
  *
- * Drives a real browser through every public screen, scrolling each one at a
- * readable pace, and records the whole thing. The point is that this is the
- * actual site -- not a mockup, not a generated impression of one. No video
- * model can show a real interface; a browser can.
+ * The site is filmed rather than described: no video model can render a real
+ * interface, so a browser drives the real one.
  *
- * Needs the built site served locally:
- *   npm run build
- *   NODE_ENV=production PORT=5099 SESSION_SECRET=x DB_PATH=/tmp/t.db node server/index.cjs
+ * Two things about this site shape the script.
+ *
+ * The front door is an iframe -- /royal-welcome-2/ -- and its ENTER THE REALM
+ * button only becomes clickable after roughly half a minute of animation. It
+ * is also letter-spaced, so its textContent reads "E N T E R  T H E  R E A L M"
+ * and no ordinary text selector matches it; whitespace is stripped before
+ * comparing.
+ *
+ * And the entrance is paid for once per session, so the tour runs in a single
+ * context and moves between screens the way the app does -- pushState plus a
+ * popstate event, which is exactly what its own router listens for. Nine
+ * separate page loads would mean nine trips through the front door.
+ *
+ * Writes dist-video/tour/tour.webm and segments.json, which records where each
+ * screen begins so the cut does not have to guess.
+ *
+ *   npm run build && node server/index.cjs   (production, on TOUR_BASE)
  *   node tools/record-tour.mjs
- *
- * Output: dist-video/tour/*.webm  (convert and stitch with make-promo.sh)
  */
 import { chromium } from 'playwright-core'
 import fs from 'node:fs'
@@ -20,17 +30,16 @@ const BASE = process.env.TOUR_BASE || 'http://127.0.0.1:5099'
 const OUT = 'dist-video/tour'
 const W = 1920, H = 1080
 
-// Each stop: path, how long to dwell, and how far to scroll (0 = stay put).
 const STOPS = [
-  { path: '/',           dwell: 5200, scroll: 0.70, label: 'Home — crown, status, rankings' },
-  { path: '/about',      dwell: 5200, scroll: 0.75, label: 'About — Atlas standing & KvK record' },
-  { path: '/alliances',  dwell: 4600, scroll: 0.65, label: 'Alliances' },
-  { path: '/events',     dwell: 4400, scroll: 0.60, label: 'Events & countdowns' },
-  { path: '/timeline',   dwell: 4400, scroll: 0.65, label: 'Kingdom timeline' },
-  { path: '/rankings',   dwell: 3800, scroll: 0.55, label: 'Rankings' },
-  { path: '/guides',     dwell: 3800, scroll: 0.55, label: 'Guides' },
-  { path: '/battle-lab', dwell: 4200, scroll: 0.50, label: 'Battle Lab' },
-  { path: '/transfer',   dwell: 3600, scroll: 0.50, label: 'Transfer' },
+  { path: '/',           hold: 4200, scroll: 0.55 },
+  { path: '/about',      hold: 4600, scroll: 0.70 },
+  { path: '/alliances',  hold: 4200, scroll: 0.60 },
+  { path: '/events',     hold: 4200, scroll: 0.55 },
+  { path: '/timeline',   hold: 4200, scroll: 0.60 },
+  { path: '/rankings',   hold: 3800, scroll: 0.50 },
+  { path: '/guides',     hold: 3800, scroll: 0.50 },
+  { path: '/battle-lab', hold: 4200, scroll: 0.45 },
+  { path: '/transfer',   hold: 3800, scroll: 0.45 },
 ]
 
 fs.rmSync(OUT, { recursive: true, force: true })
@@ -40,56 +49,78 @@ const browser = await chromium.launch({
   executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome',
   args: ['--no-sandbox', '--disable-gpu', '--force-device-scale-factor=1'],
 })
+const ctx = await browser.newContext({
+  viewport: { width: W, height: H },
+  recordVideo: { dir: OUT, size: { width: W, height: H } },
+})
+const page = await ctx.newPage()
+const t0 = Date.now()
+const at = () => (Date.now() - t0) / 1000
 
-for (const stop of STOPS) {
-  const ctx = await browser.newContext({
-    viewport: { width: W, height: H },
-    recordVideo: { dir: OUT, size: { width: W, height: H } },
-    reducedMotion: 'no-preference',
-  })
-  const page = await ctx.newPage()
-  await page.goto(BASE + stop.path, { waitUntil: 'networkidle' }).catch(() => {})
+// domcontentloaded, not networkidle: the portal polls, so the network never
+// goes idle and the wait simply burns its timeout.
+await page.goto(BASE + '/', { waitUntil: 'domcontentloaded' })
 
-  // The splash screen holds the first paint for about 1.3s; let it finish and
-  // let the entrance animations settle before anything is recorded as "the
-  // page".
-  await page.waitForTimeout(2600)
+// --- through the front door ------------------------------------------------
+const welcome = async () => page.frames().find((f) => /royal-welcome/.test(f.url()))
+const clickIn = async (frame, pattern) => frame.evaluate((p) => {
+  const rx = new RegExp(p, 'i')
+  const norm = (s) => (s || '').replace(/\s+/g, '').toLowerCase()
+  const el = [...document.querySelectorAll('button,a')].find((e) => rx.test(norm(e.textContent)) && e.offsetParent)
+  if (!el) return null
+  el.click()
+  return el.textContent.replace(/\s+/g, ' ').trim()
+}, pattern).catch(() => null)
 
-  // Dismiss anything sitting over the top -- install prompt, birthday toast --
-  // so the tour shows the screen rather than a dialog.
-  await page.keyboard.press('Escape').catch(() => {})
-  await page.waitForTimeout(300)
-
-  if (stop.scroll > 0) {
-    // Smooth, linear scroll of whichever element actually scrolls. The app
-    // scrolls an inner container, not the window, so find the tallest
-    // overflowing element rather than assuming.
-    await page.evaluate(async (frac) => {
-      const scroller = [...document.querySelectorAll('*')]
-        .filter((el) => {
-          const s = getComputedStyle(el)
-          return /auto|scroll/.test(s.overflowY) && el.scrollHeight > el.clientHeight + 80
-        })
-        .sort((a, b) => (b.scrollHeight - b.clientHeight) - (a.scrollHeight - a.clientHeight))[0]
-        || document.scrollingElement
-      const max = scroller.scrollHeight - scroller.clientHeight
-      const target = max * frac
-      const steps = 90
-      for (let i = 1; i <= steps; i++) {
-        scroller.scrollTop = target * (i / steps)
-        await new Promise((r) => requestAnimationFrame(r))
-      }
-    }, stop.scroll)
+let fr = null
+for (let i = 0; i < 40 && !fr; i++) { fr = await welcome(); if (!fr) await page.waitForTimeout(250) }
+if (fr) {
+  for (let i = 0; i < 20; i++) { if (await clickIn(fr, 'skipintro')) break; await page.waitForTimeout(400) }
+  for (let i = 0; i < 90; i++) {
+    if (await clickIn(fr, 'enter.*realm')) { console.log(`entered at ${at().toFixed(1)}s`); break }
+    await page.waitForTimeout(500)
   }
+  for (let i = 0; i < 30 && await welcome(); i++) await page.waitForTimeout(300)
+}
+await page.waitForTimeout(2500)   // let the portal's entrance animations settle
 
-  await page.waitForTimeout(stop.dwell)
-  const video = page.video()
-  await ctx.close()                       // flushes the file
-  const src = await video.path()
-  const name = (stop.path === '/' ? 'home' : stop.path.replace(/\//g, '')) + '.webm'
-  fs.renameSync(src, `${OUT}/${name}`)
-  console.log(`${name.padEnd(16)} ${stop.label}`)
+// --- the tour --------------------------------------------------------------
+const segments = []
+for (const stop of STOPS) {
+  // The app's router listens for popstate, so this is its own navigation path
+  // rather than a reload -- which would send us back through the front door.
+  await page.evaluate((p) => {
+    history.pushState({}, '', p)
+    window.dispatchEvent(new PopStateEvent('popstate'))
+  }, stop.path)
+  await page.waitForTimeout(1600)          // route swap + entrance animation
+
+  const start = at()
+  await page.evaluate(async (frac) => {
+    const scroller = [...document.querySelectorAll('*')]
+      .filter((el) => {
+        const s = getComputedStyle(el)
+        return /auto|scroll/.test(s.overflowY) && el.scrollHeight > el.clientHeight + 80
+      })
+      .sort((a, b) => (b.scrollHeight - b.clientHeight) - (a.scrollHeight - a.clientHeight))[0]
+      || document.scrollingElement
+    scroller.scrollTop = 0
+    const target = (scroller.scrollHeight - scroller.clientHeight) * frac
+    for (let i = 1; i <= 100; i++) {
+      scroller.scrollTop = target * (i / 100)
+      await new Promise((r) => requestAnimationFrame(r))
+    }
+  }, stop.scroll)
+  await page.waitForTimeout(stop.hold)
+
+  const name = stop.path === '/' ? 'home' : stop.path.replace(/\//g, '')
+  segments.push({ name, start: +start.toFixed(2), end: +at().toFixed(2) })
+  console.log(`  ${name.padEnd(12)} ${start.toFixed(1)}s -> ${at().toFixed(1)}s`)
 }
 
+const video = page.video()
+await ctx.close()
+fs.renameSync(await video.path(), `${OUT}/tour.webm`)
+fs.writeFileSync(`${OUT}/segments.json`, JSON.stringify(segments, null, 2))
 await browser.close()
-console.log('\nrecorded', STOPS.length, 'screens into', OUT)
+console.log(`\n${OUT}/tour.webm  (${segments.length} screens, ${at().toFixed(0)}s)`)

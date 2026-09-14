@@ -31,15 +31,15 @@ const OUT = 'dist-video/tour'
 const W = 1920, H = 1080
 
 const STOPS = [
-  { path: '/',           hold: 4200, scroll: 0.55 },
-  { path: '/about',      hold: 4600, scroll: 0.70 },
-  { path: '/alliances',  hold: 4200, scroll: 0.60 },
-  { path: '/events',     hold: 4200, scroll: 0.55 },
-  { path: '/timeline',   hold: 4200, scroll: 0.60 },
-  { path: '/rankings',   hold: 3800, scroll: 0.50 },
-  { path: '/guides',     hold: 3800, scroll: 0.50 },
-  { path: '/battle-lab', hold: 4200, scroll: 0.45 },
-  { path: '/transfer',   hold: 3800, scroll: 0.45 },
+  { path: '/',           hold: 10080, scroll: 0.55 },
+  { path: '/about',      hold: 11040, scroll: 0.70 },
+  { path: '/alliances',  hold: 10080, scroll: 0.60 },
+  { path: '/events',     hold: 10080, scroll: 0.55 },
+  { path: '/timeline',   hold: 10080, scroll: 0.60 },
+  { path: '/rankings',   hold: 9120, scroll: 0.50 },
+  { path: '/guides',     hold: 9120, scroll: 0.50 },
+  { path: '/battle-lab', hold: 10080, scroll: 0.45 },
+  { path: '/transfer',   hold: 9120, scroll: 0.45 },
 ]
 
 fs.rmSync(OUT, { recursive: true, force: true })

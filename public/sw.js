@@ -13,7 +13,15 @@
  * Bump CACHE_VERSION on any change to this file's caching rules; the activate
  * handler deletes every cache that doesn't match, so old entries never linger.
  */
-const CACHE_VERSION = 'v6'
+// v7: the Mystic Trial board. The shell caches the page and hands back the
+// cached copy first, so a deploy lands one open later -- correct on the server,
+// previous build on the phone, and a refresh does not help because a refresh is
+// still served from this cache. Bumping the version is what breaks that: the
+// bytes of this file change, so the browser sees a new worker and the update
+// prompt actually has an event to fire on, and activate then deletes every
+// cache not in KEEP -- including the stale shell -- so the next navigation has
+// nothing to serve but the network.
+const CACHE_VERSION = 'v7'
 const SHELL_CACHE = `k846-shell-${CACHE_VERSION}`
 const ASSET_CACHE = `k846-assets-${CACHE_VERSION}`
 const FONT_CACHE = `k846-fonts-${CACHE_VERSION}`

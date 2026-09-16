@@ -226,12 +226,37 @@ export const AVATAR_OPTIONS = [
   'king', 'queen', 'warrior', 'knight', 'mage', 'shieldmaiden', 'sorceress', 'archer', 'berserker', 'spartan'
 ]
 
+// Mystic Trial — top 15 by total stages cleared, read off the in-game board.
+//
+// These are real governors, not the five invented names that stood here before
+// (SpartanWarrior, DragonSlayer, IronFist and the rest were placeholders, and a
+// Hall of Legends full of people who do not exist is worse than an empty one).
+//
+// On the alliance column: the in-game board carries tags from outside 846's four
+// alliances -- THB, CWW, WEB, CGF, ATA -- because the Trial board is not scoped
+// to one kingdom's alliance list. They are filed the way the kingdom asked:
+// SAS to SAS, ICE to ICE, KzK to KzK, everyone else to RYO. The tag shown is
+// therefore the 846 alliance they are filed under, not the tag they wear in the
+// game.
+//
+// `stages` is the board's own Total Stages figure. An uploaded roster has no
+// such number, so the board falls back to showing position when it is absent.
 export const players = [
-  { rank: 1, name: 'SpartanWarrior', tag: '[RYO]', slug: 'ryo', alliance: 'Spiders', avatar: 'spartan' },
-  { rank: 2, name: 'DragonSlayer', tag: '[KzK]', slug: 'kzk', alliance: 'KamikazeKarnival', avatar: 'berserker' },
-  { rank: 3, name: 'IronFist', tag: '[SAS]', slug: 'sas', alliance: 'SaintsAndSinners', avatar: 'warrior' },
-  { rank: 4, name: 'FrostBite', tag: '[ICE]', slug: 'ice', alliance: 'IceHunters', avatar: 'knight' },
-  { rank: 5, name: 'ShadowBlade', tag: '[RYO]', slug: 'ryo', alliance: 'Spiders', avatar: 'archer' },
+  { rank: 1,  name: 'ɯɯ27',           stages: 3278, tag: '[RYO]', slug: 'ryo', alliance: 'Spiders',           avatar: 'king' },
+  { rank: 2,  name: 'Cozy',           stages: 3264, tag: '[ICE]', slug: 'ice', alliance: 'IceHunters',        avatar: 'sorceress' },
+  { rank: 3,  name: 'Corgi ツ',        stages: 3234, tag: '[RYO]', slug: 'ryo', alliance: 'Spiders',           avatar: 'mage' },
+  { rank: 4,  name: 'NomNomNom',      stages: 3173, tag: '[RYO]', slug: 'ryo', alliance: 'Spiders',           avatar: 'archer' },
+  { rank: 5,  name: 'LittleMithril',  stages: 3024, tag: '[KzK]', slug: 'kzk', alliance: 'KamikazeKarnival',  avatar: 'berserker' },
+  { rank: 6,  name: 'Peanuts',        stages: 3005, tag: '[SAS]', slug: 'sas', alliance: 'SaintsAndSinners',  avatar: 'knight' },
+  { rank: 7,  name: 'TegarXRhukus',   stages: 2889, tag: '[KzK]', slug: 'kzk', alliance: 'KamikazeKarnival',  avatar: 'warrior' },
+  { rank: 8,  name: 'Goaty',          stages: 2864, tag: '[ICE]', slug: 'ice', alliance: 'IceHunters',        avatar: 'shieldmaiden' },
+  { rank: 9,  name: 'Spartan',        stages: 2838, tag: '[RYO]', slug: 'ryo', alliance: 'Spiders',           avatar: 'spartan' },
+  { rank: 10, name: 'Armageddon',     stages: 2831, tag: '[SAS]', slug: 'sas', alliance: 'SaintsAndSinners',  avatar: 'anonymous' },
+  { rank: 11, name: 'Toad You So',    stages: 2760, tag: '[SAS]', slug: 'sas', alliance: 'SaintsAndSinners',  avatar: 'panini' },
+  { rank: 12, name: 'Frog',           stages: 2738, tag: '[KzK]', slug: 'kzk', alliance: 'KamikazeKarnival',  avatar: 'mage' },
+  { rank: 13, name: 'Chom ツ',         stages: 2729, tag: '[RYO]', slug: 'ryo', alliance: 'Spiders',           avatar: 'queen' },
+  { rank: 14, name: 'MemoryFull',     stages: 2701, tag: '[SAS]', slug: 'sas', alliance: 'SaintsAndSinners',  avatar: 'sorceress' },
+  { rank: 15, name: 'MightyJayChub',  stages: 2690, tag: '[RYO]', slug: 'ryo', alliance: 'Spiders',           avatar: 'archer' },
 ]
 
 

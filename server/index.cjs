@@ -383,23 +383,26 @@ if (!cols.some((c) => c.name === 'must_change_password')) {
 // One time only. The marker lives inside the blob rather than in a table of its
 // own, so this leaves no schema behind and cannot re-run and stamp on whatever
 // the editor is used for next.
+//
+// Names and order only. The stage counts are not published -- see the strip
+// below, which also clears them from any database this already seeded.
 const RANKINGS_SEED = 'mystic-trial-2026-09-16'
 const MYSTIC_TRIAL_TOP15 = [
-  { rank: 1,  name: 'MM27',          stages: 3278, tag: '[RYO]', slug: 'ryo', alliance: 'Spiders',          avatar: 'king' },
-  { rank: 2,  name: 'Cozy',          stages: 3264, tag: '[ICE]', slug: 'ice', alliance: 'IceHunters',       avatar: 'sorceress' },
-  { rank: 3,  name: 'Corgi \u30c4',     stages: 3234, tag: '[RYO]', slug: 'ryo', alliance: 'Spiders',          avatar: 'mage' },
-  { rank: 4,  name: 'NomNomNom',     stages: 3173, tag: '[RYO]', slug: 'ryo', alliance: 'Spiders',          avatar: 'archer' },
-  { rank: 5,  name: 'LittleMithril', stages: 3024, tag: '[KzK]', slug: 'kzk', alliance: 'KamikazeKarnival', avatar: 'berserker' },
-  { rank: 6,  name: 'Peanuts',       stages: 3005, tag: '[SAS]', slug: 'sas', alliance: 'SaintsAndSinners', avatar: 'knight' },
-  { rank: 7,  name: 'TegarXRhukus',  stages: 2889, tag: '[KzK]', slug: 'kzk', alliance: 'KamikazeKarnival', avatar: 'warrior' },
-  { rank: 8,  name: 'Goaty',         stages: 2864, tag: '[ICE]', slug: 'ice', alliance: 'IceHunters',       avatar: 'shieldmaiden' },
-  { rank: 9,  name: 'Spartan',       stages: 2838, tag: '[RYO]', slug: 'ryo', alliance: 'Spiders',          avatar: 'spartan' },
-  { rank: 10, name: 'Armageddon',    stages: 2831, tag: '[SAS]', slug: 'sas', alliance: 'SaintsAndSinners', avatar: 'anonymous' },
-  { rank: 11, name: 'Toad You So',   stages: 2760, tag: '[SAS]', slug: 'sas', alliance: 'SaintsAndSinners', avatar: 'panini' },
-  { rank: 12, name: 'Frog',          stages: 2738, tag: '[KzK]', slug: 'kzk', alliance: 'KamikazeKarnival', avatar: 'mage' },
-  { rank: 13, name: 'Chom \u30c4',      stages: 2729, tag: '[RYO]', slug: 'ryo', alliance: 'Spiders',          avatar: 'queen' },
-  { rank: 14, name: 'MemoryFull',    stages: 2701, tag: '[SAS]', slug: 'sas', alliance: 'SaintsAndSinners', avatar: 'sorceress' },
-  { rank: 15, name: 'MightyJayChub', stages: 2690, tag: '[RYO]', slug: 'ryo', alliance: 'Spiders',          avatar: 'archer' },
+  { rank: 1,  name: 'MM27', tag: '[RYO]', slug: 'ryo', alliance: 'Spiders',          avatar: 'king' },
+  { rank: 2,  name: 'Cozy', tag: '[ICE]', slug: 'ice', alliance: 'IceHunters',       avatar: 'sorceress' },
+  { rank: 3,  name: 'Corgi \u30c4', tag: '[RYO]', slug: 'ryo', alliance: 'Spiders',          avatar: 'mage' },
+  { rank: 4,  name: 'NomNomNom', tag: '[RYO]', slug: 'ryo', alliance: 'Spiders',          avatar: 'archer' },
+  { rank: 5,  name: 'LittleMithril', tag: '[KzK]', slug: 'kzk', alliance: 'KamikazeKarnival', avatar: 'berserker' },
+  { rank: 6,  name: 'Peanuts', tag: '[SAS]', slug: 'sas', alliance: 'SaintsAndSinners', avatar: 'knight' },
+  { rank: 7,  name: 'TegarXRhukus', tag: '[KzK]', slug: 'kzk', alliance: 'KamikazeKarnival', avatar: 'warrior' },
+  { rank: 8,  name: 'Goaty', tag: '[ICE]', slug: 'ice', alliance: 'IceHunters',       avatar: 'shieldmaiden' },
+  { rank: 9,  name: 'Spartan', tag: '[RYO]', slug: 'ryo', alliance: 'Spiders',          avatar: 'spartan' },
+  { rank: 10, name: 'Armageddon', tag: '[SAS]', slug: 'sas', alliance: 'SaintsAndSinners', avatar: 'anonymous' },
+  { rank: 11, name: 'Toad You So', tag: '[SAS]', slug: 'sas', alliance: 'SaintsAndSinners', avatar: 'panini' },
+  { rank: 12, name: 'Frog', tag: '[KzK]', slug: 'kzk', alliance: 'KamikazeKarnival', avatar: 'mage' },
+  { rank: 13, name: 'Chom \u30c4', tag: '[RYO]', slug: 'ryo', alliance: 'Spiders',          avatar: 'queen' },
+  { rank: 14, name: 'MemoryFull', tag: '[SAS]', slug: 'sas', alliance: 'SaintsAndSinners', avatar: 'sorceress' },
+  { rank: 15, name: 'MightyJayChub', tag: '[RYO]', slug: 'ryo', alliance: 'Spiders',          avatar: 'archer' },
 ]
 try {
   const scRow = db.prepare('SELECT data FROM site_content WHERE id = ?').get('current')
@@ -417,6 +420,38 @@ try {
   // A malformed blob is not worth refusing to boot over; the board falls back
   // to the file, which carries the same fifteen.
   console.warn('[migrate] rankings seed skipped:', err.message)
+}
+
+// Migrate: take the Mystic Trial stage counts back out of the stored content.
+//
+// An earlier seed wrote them in, and they went out over /api/content -- which is
+// a public GET with no auth on it. Dropping the column from the board would have
+// hidden them on the page and left them sitting in the JSON for anyone who asked
+// the endpoint directly, which is not the same thing as not publishing a score.
+// The order is public; what each governor actually cleared is not.
+//
+// Deliberately a strip rather than another reseed: it removes one key and leaves
+// the list alone, so an admin who has edited the rankings since keeps their edit.
+const STAGES_STRIPPED = 'trial-stages-stripped-2026-09-16'
+try {
+  const scRow2 = db.prepare('SELECT data FROM site_content WHERE id = ?').get('current')
+  if (scRow2) {
+    const blob2 = JSON.parse(scRow2.data)
+    if (blob2 && blob2.__stagesStripped !== STAGES_STRIPPED) {
+      let removed = 0
+      if (Array.isArray(blob2.players)) {
+        for (const pl of blob2.players) {
+          if (pl && Object.prototype.hasOwnProperty.call(pl, 'stages')) { delete pl.stages; removed++ }
+        }
+      }
+      blob2.__stagesStripped = STAGES_STRIPPED
+      db.prepare("UPDATE site_content SET data = ?, updated_at = datetime('now') WHERE id = ?")
+        .run(JSON.stringify(blob2), 'current')
+      if (removed) console.log(`[migrate] rankings: stage counts removed from ${removed} stored rows`)
+    }
+  }
+} catch (err) {
+  console.warn('[migrate] stage strip skipped:', err.message)
 }
 
 // Migrate: add preferred_date + preferred_slot to transfers (30-min appointment booking)

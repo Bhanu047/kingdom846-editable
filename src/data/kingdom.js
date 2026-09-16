@@ -226,7 +226,7 @@ export const AVATAR_OPTIONS = [
   'king', 'queen', 'warrior', 'knight', 'mage', 'shieldmaiden', 'sorceress', 'archer', 'berserker', 'spartan'
 ]
 
-// Mystic Trial — top 15 by total stages cleared, read off the in-game board.
+// Mystic Trial — the top 15, read off the in-game board.
 //
 // These are real governors, not the five invented names that stood here before
 // (SpartanWarrior, DragonSlayer, IronFist and the rest were placeholders, and a
@@ -239,24 +239,25 @@ export const AVATAR_OPTIONS = [
 // therefore the 846 alliance they are filed under, not the tag they wear in the
 // game.
 //
-// `stages` is the board's own Total Stages figure. An uploaded roster has no
-// such number, so the board falls back to showing position when it is absent.
+// Deliberately no stage counts. The order is published, the scores are not --
+// and this list is served to anyone over /api/content, so a number kept here
+// would be public whether or not the page draws it.
 export const players = [
-  { rank: 1,  name: 'MM27',           stages: 3278, tag: '[RYO]', slug: 'ryo', alliance: 'Spiders',           avatar: 'king' },
-  { rank: 2,  name: 'Cozy',           stages: 3264, tag: '[ICE]', slug: 'ice', alliance: 'IceHunters',        avatar: 'sorceress' },
-  { rank: 3,  name: 'Corgi ツ',        stages: 3234, tag: '[RYO]', slug: 'ryo', alliance: 'Spiders',           avatar: 'mage' },
-  { rank: 4,  name: 'NomNomNom',      stages: 3173, tag: '[RYO]', slug: 'ryo', alliance: 'Spiders',           avatar: 'archer' },
-  { rank: 5,  name: 'LittleMithril',  stages: 3024, tag: '[KzK]', slug: 'kzk', alliance: 'KamikazeKarnival',  avatar: 'berserker' },
-  { rank: 6,  name: 'Peanuts',        stages: 3005, tag: '[SAS]', slug: 'sas', alliance: 'SaintsAndSinners',  avatar: 'knight' },
-  { rank: 7,  name: 'TegarXRhukus',   stages: 2889, tag: '[KzK]', slug: 'kzk', alliance: 'KamikazeKarnival',  avatar: 'warrior' },
-  { rank: 8,  name: 'Goaty',          stages: 2864, tag: '[ICE]', slug: 'ice', alliance: 'IceHunters',        avatar: 'shieldmaiden' },
-  { rank: 9,  name: 'Spartan',        stages: 2838, tag: '[RYO]', slug: 'ryo', alliance: 'Spiders',           avatar: 'spartan' },
-  { rank: 10, name: 'Armageddon',     stages: 2831, tag: '[SAS]', slug: 'sas', alliance: 'SaintsAndSinners',  avatar: 'anonymous' },
-  { rank: 11, name: 'Toad You So',    stages: 2760, tag: '[SAS]', slug: 'sas', alliance: 'SaintsAndSinners',  avatar: 'panini' },
-  { rank: 12, name: 'Frog',           stages: 2738, tag: '[KzK]', slug: 'kzk', alliance: 'KamikazeKarnival',  avatar: 'mage' },
-  { rank: 13, name: 'Chom ツ',         stages: 2729, tag: '[RYO]', slug: 'ryo', alliance: 'Spiders',           avatar: 'queen' },
-  { rank: 14, name: 'MemoryFull',     stages: 2701, tag: '[SAS]', slug: 'sas', alliance: 'SaintsAndSinners',  avatar: 'sorceress' },
-  { rank: 15, name: 'MightyJayChub',  stages: 2690, tag: '[RYO]', slug: 'ryo', alliance: 'Spiders',           avatar: 'archer' },
+  { rank: 1,  name: 'MM27', tag: '[RYO]', slug: 'ryo', alliance: 'Spiders',           avatar: 'king' },
+  { rank: 2,  name: 'Cozy', tag: '[ICE]', slug: 'ice', alliance: 'IceHunters',        avatar: 'sorceress' },
+  { rank: 3,  name: 'Corgi ツ', tag: '[RYO]', slug: 'ryo', alliance: 'Spiders',           avatar: 'mage' },
+  { rank: 4,  name: 'NomNomNom', tag: '[RYO]', slug: 'ryo', alliance: 'Spiders',           avatar: 'archer' },
+  { rank: 5,  name: 'LittleMithril', tag: '[KzK]', slug: 'kzk', alliance: 'KamikazeKarnival',  avatar: 'berserker' },
+  { rank: 6,  name: 'Peanuts', tag: '[SAS]', slug: 'sas', alliance: 'SaintsAndSinners',  avatar: 'knight' },
+  { rank: 7,  name: 'TegarXRhukus', tag: '[KzK]', slug: 'kzk', alliance: 'KamikazeKarnival',  avatar: 'warrior' },
+  { rank: 8,  name: 'Goaty', tag: '[ICE]', slug: 'ice', alliance: 'IceHunters',        avatar: 'shieldmaiden' },
+  { rank: 9,  name: 'Spartan', tag: '[RYO]', slug: 'ryo', alliance: 'Spiders',           avatar: 'spartan' },
+  { rank: 10, name: 'Armageddon', tag: '[SAS]', slug: 'sas', alliance: 'SaintsAndSinners',  avatar: 'anonymous' },
+  { rank: 11, name: 'Toad You So', tag: '[SAS]', slug: 'sas', alliance: 'SaintsAndSinners',  avatar: 'panini' },
+  { rank: 12, name: 'Frog', tag: '[KzK]', slug: 'kzk', alliance: 'KamikazeKarnival',  avatar: 'mage' },
+  { rank: 13, name: 'Chom ツ', tag: '[RYO]', slug: 'ryo', alliance: 'Spiders',           avatar: 'queen' },
+  { rank: 14, name: 'MemoryFull', tag: '[SAS]', slug: 'sas', alliance: 'SaintsAndSinners',  avatar: 'sorceress' },
+  { rank: 15, name: 'MightyJayChub', tag: '[RYO]', slug: 'ryo', alliance: 'Spiders',           avatar: 'archer' },
 ]
 
 

@@ -242,7 +242,7 @@ export const AVATAR_OPTIONS = [
 // `stages` is the board's own Total Stages figure. An uploaded roster has no
 // such number, so the board falls back to showing position when it is absent.
 export const players = [
-  { rank: 1,  name: 'ɯɯ27',           stages: 3278, tag: '[RYO]', slug: 'ryo', alliance: 'Spiders',           avatar: 'king' },
+  { rank: 1,  name: 'MM27',           stages: 3278, tag: '[RYO]', slug: 'ryo', alliance: 'Spiders',           avatar: 'king' },
   { rank: 2,  name: 'Cozy',           stages: 3264, tag: '[ICE]', slug: 'ice', alliance: 'IceHunters',        avatar: 'sorceress' },
   { rank: 3,  name: 'Corgi ツ',        stages: 3234, tag: '[RYO]', slug: 'ryo', alliance: 'Spiders',           avatar: 'mage' },
   { rank: 4,  name: 'NomNomNom',      stages: 3173, tag: '[RYO]', slug: 'ryo', alliance: 'Spiders',           avatar: 'archer' },

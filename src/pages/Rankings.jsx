@@ -13,6 +13,13 @@ const PODIUM = {
   3: { grad: 'from-amber-700/25 via-amber-800/10 to-transparent', ring: 'ring-amber-600/50', badge: 'bg-gradient-to-b from-amber-400 to-amber-800 text-ink', crown: false, label: 'text-amber-300' },
 }
 
+// Order is published; the score behind it is not. The board ranks on Mystic
+// Trial stages, but the stage counts themselves are the kingdom's own business
+// and are deliberately absent -- not hidden in the markup, absent, because
+// /api/content is a public GET and anything carried there is readable whether
+// or not a column renders it. If a stage count ever needs to show, it has to be
+// put back in the data first, and that is the decision to think twice about.
+//
 // One row, used by both boards below. They are the same shape -- rank, face,
 // tag, name, alliance, and one number on the right -- and the only thing that
 // differs is whether that number is a stage count or a position.
@@ -27,7 +34,7 @@ function BoardRow({ p }) {
         <div className={`rank-badge badge-shine relative grid h-10 w-10 flex-shrink-0 place-items-center rounded-lg font-display text-base font-bold ${isTop3 ? s.badge : 'border border-gold/30 bg-ink/70 text-parchment/80'}`}>{isTop3 && s.crown && <Icon name="crown" size={12} className="absolute -top-2 left-1/2 -translate-x-1/2 text-gold" />}{p.rank}</div>
         <div className="flex-shrink-0"><img src={`./assets/avatars/${p.avatar || 'warrior'}.webp`} alt={p.name} className="h-10 w-10 rounded-lg object-cover ring-1 ring-gold/30" loading="lazy" /></div>
         <div className="min-w-0 flex-1"><div className={`truncate font-display text-base font-bold ${isTop3 ? s.label : 'text-parchment'}`}><span className="text-gold/80">{p.tag}</span>{p.name}</div><div className="truncate text-[11px] text-parchment/50">{p.alliance}</div></div>
-        <div className={`flex-shrink-0 text-right ${isTop3 ? s.label : 'text-parchment/40'}`}><div className="text-[10px] uppercase tracking-wider">{p.stages == null ? 'Position' : 'Total Stages'}</div><div className="font-display text-sm font-bold tabular-nums">{p.stages == null ? `#${p.rank}` : p.stages.toLocaleString()}</div></div>
+        <div className={`flex-shrink-0 text-right ${isTop3 ? s.label : 'text-parchment/40'}`}><div className="text-[10px] uppercase tracking-wider">Position</div><div className="font-display text-sm font-bold tabular-nums">#{p.rank}</div></div>
       </div>
     </div>
   )
@@ -75,7 +82,7 @@ export default function Rankings() {
       <PageHeader
         eyebrow="Hall of Legends"
         title="Commander Rankings"
-        subtitle="Mystic Trial — total stages cleared. The kingdom's elite."
+        subtitle="Mystic Trial — the kingdom's top fifteen."
         art="./assets/hero-rankings.webp"
         alt="Commander Rankings"
       />
@@ -95,7 +102,7 @@ export default function Rankings() {
           <div className="mb-3 flex items-baseline justify-between gap-3">
             <div>
               <div className="text-[10px] uppercase tracking-[0.18em] text-gold/70">Alliance Rosters</div>
-              <p className="mt-0.5 text-xs text-parchment/45">Uploaded by alliance leaders — membership and position, not Trial stages.</p>
+              <p className="mt-0.5 text-xs text-parchment/45">Uploaded by alliance leaders — membership and position.</p>
             </div>
             <span className="flex-shrink-0 rounded-md border border-emerald-500/20 bg-emerald-500/5 px-2 py-1 text-[10px] text-emerald-300">Live</span>
           </div>

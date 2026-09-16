@@ -48,7 +48,7 @@ export default function Rankings() {
       <PageHeader
         eyebrow="Hall of Legends"
         title="Commander Rankings"
-        subtitle="Position and name — the kingdom's elite."
+        subtitle="Mystic Trial — total stages cleared. The kingdom's elite."
         art="./assets/hero-rankings.webp"
         alt="Commander Rankings"
       />
@@ -70,7 +70,7 @@ export default function Rankings() {
                     <div className={`rank-badge badge-shine relative grid h-10 w-10 flex-shrink-0 place-items-center rounded-lg font-display text-base font-bold ${isTop3 ? s.badge : 'border border-gold/30 bg-ink/70 text-parchment/80'}`}>{isTop3 && s.crown && <Icon name="crown" size={12} className="absolute -top-2 left-1/2 -translate-x-1/2 text-gold" />}{p.rank}</div>
                     <div className="flex-shrink-0"><img src={`./assets/avatars/${p.avatar || 'warrior'}.webp`} alt={p.name} className="h-10 w-10 rounded-lg object-cover ring-1 ring-gold/30" loading="lazy" /></div>
                     <div className="min-w-0 flex-1"><div className={`truncate font-display text-base font-bold ${isTop3 ? s.label : 'text-parchment'}`}><span className="text-gold/80">{p.tag}</span>{p.name}</div><div className="truncate text-[11px] text-parchment/50">{p.alliance}</div></div>
-                    <div className={`hidden flex-shrink-0 text-right sm:block ${isTop3 ? s.label : 'text-parchment/40'}`}><div className="text-[10px] uppercase tracking-wider">Position</div><div className="font-display text-sm font-bold">#{p.rank}</div></div>
+                    <div className={`flex-shrink-0 text-right ${isTop3 ? s.label : 'text-parchment/40'}`}><div className="text-[10px] uppercase tracking-wider">{p.stages == null ? 'Position' : 'Total Stages'}</div><div className="font-display text-sm font-bold tabular-nums">{p.stages == null ? `#${p.rank}` : p.stages.toLocaleString()}</div></div>
                   </div>
                 </div>
               )

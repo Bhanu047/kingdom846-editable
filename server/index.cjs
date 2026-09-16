@@ -371,6 +371,54 @@ if (!cols.some((c) => c.name === 'must_change_password')) {
   db.prepare("UPDATE users SET must_change_password = 1 WHERE role = 'leader'").run()
 }
 
+// Migrate: the Mystic Trial top 15 into the stored content.
+//
+// The Rankings board reads /api/content, which is whatever an admin last saved
+// through the editor -- src/data/kingdom.js is only the fallback used when that
+// row is empty. So the Trial ranking could be updated in the file, shipped, and
+// deployed three times over without one character of it reaching the page,
+// because the stored copy won every load. It is the stored copy that has to
+// change, and an admin session is the only other way to change it.
+//
+// One time only. The marker lives inside the blob rather than in a table of its
+// own, so this leaves no schema behind and cannot re-run and stamp on whatever
+// the editor is used for next.
+const RANKINGS_SEED = 'mystic-trial-2026-09-16'
+const MYSTIC_TRIAL_TOP15 = [
+  { rank: 1,  name: 'MM27',          stages: 3278, tag: '[RYO]', slug: 'ryo', alliance: 'Spiders',          avatar: 'king' },
+  { rank: 2,  name: 'Cozy',          stages: 3264, tag: '[ICE]', slug: 'ice', alliance: 'IceHunters',       avatar: 'sorceress' },
+  { rank: 3,  name: 'Corgi \u30c4',     stages: 3234, tag: '[RYO]', slug: 'ryo', alliance: 'Spiders',          avatar: 'mage' },
+  { rank: 4,  name: 'NomNomNom',     stages: 3173, tag: '[RYO]', slug: 'ryo', alliance: 'Spiders',          avatar: 'archer' },
+  { rank: 5,  name: 'LittleMithril', stages: 3024, tag: '[KzK]', slug: 'kzk', alliance: 'KamikazeKarnival', avatar: 'berserker' },
+  { rank: 6,  name: 'Peanuts',       stages: 3005, tag: '[SAS]', slug: 'sas', alliance: 'SaintsAndSinners', avatar: 'knight' },
+  { rank: 7,  name: 'TegarXRhukus',  stages: 2889, tag: '[KzK]', slug: 'kzk', alliance: 'KamikazeKarnival', avatar: 'warrior' },
+  { rank: 8,  name: 'Goaty',         stages: 2864, tag: '[ICE]', slug: 'ice', alliance: 'IceHunters',       avatar: 'shieldmaiden' },
+  { rank: 9,  name: 'Spartan',       stages: 2838, tag: '[RYO]', slug: 'ryo', alliance: 'Spiders',          avatar: 'spartan' },
+  { rank: 10, name: 'Armageddon',    stages: 2831, tag: '[SAS]', slug: 'sas', alliance: 'SaintsAndSinners', avatar: 'anonymous' },
+  { rank: 11, name: 'Toad You So',   stages: 2760, tag: '[SAS]', slug: 'sas', alliance: 'SaintsAndSinners', avatar: 'panini' },
+  { rank: 12, name: 'Frog',          stages: 2738, tag: '[KzK]', slug: 'kzk', alliance: 'KamikazeKarnival', avatar: 'mage' },
+  { rank: 13, name: 'Chom \u30c4',      stages: 2729, tag: '[RYO]', slug: 'ryo', alliance: 'Spiders',          avatar: 'queen' },
+  { rank: 14, name: 'MemoryFull',    stages: 2701, tag: '[SAS]', slug: 'sas', alliance: 'SaintsAndSinners', avatar: 'sorceress' },
+  { rank: 15, name: 'MightyJayChub', stages: 2690, tag: '[RYO]', slug: 'ryo', alliance: 'Spiders',          avatar: 'archer' },
+]
+try {
+  const scRow = db.prepare('SELECT data FROM site_content WHERE id = ?').get('current')
+  if (scRow) {
+    const blob = JSON.parse(scRow.data)
+    if (blob && blob.__rankingsSeed !== RANKINGS_SEED) {
+      blob.players = MYSTIC_TRIAL_TOP15
+      blob.__rankingsSeed = RANKINGS_SEED
+      db.prepare("UPDATE site_content SET data = ?, updated_at = datetime('now') WHERE id = ?")
+        .run(JSON.stringify(blob), 'current')
+      console.log('[migrate] rankings: stored players replaced with the Mystic Trial top 15')
+    }
+  }
+} catch (err) {
+  // A malformed blob is not worth refusing to boot over; the board falls back
+  // to the file, which carries the same fifteen.
+  console.warn('[migrate] rankings seed skipped:', err.message)
+}
+
 // Migrate: add preferred_date + preferred_slot to transfers (30-min appointment booking)
 const tcols = db.prepare("PRAGMA table_info(transfers)").all()
 if (!tcols.some((c) => c.name === 'preferred_date')) db.exec('ALTER TABLE transfers ADD COLUMN preferred_date TEXT')

@@ -4,13 +4,12 @@
 // comments: [DOC] published mechanics guides, corroborated twice over.
 // [IMPL] a community implementation's reading of the game. [OPEN] unresolved.
 //
-// This file deliberately contains NO per-troop-type base stats. The previous
-// engine had a T10_BASE table (attack 472/1416/1888, hp 1416/472/354,
-// lethality and defense a flat 10 for all three) that every result depended
-// on; those numbers were constructed rather than measured — attack ran exactly
-// 1x/3x/4x and hp exactly 4x/(4/3)x/1x — and nothing in the real formula
-// corresponds to them. Troop types are differentiated only by the counter
-// triangle and their abilities, below.
+// Per-troop-type base power IS modelled here, and the numbers are measured
+// rather than constructed. An earlier engine carried a T10_BASE table (attack
+// 472/1416/1888, hp 1416/472/354) whose ratios were suspiciously round, and it
+// was removed for that reason. TROOP_OFFENCE/TROOP_DEFENCE below replace it
+// with values fitted to 24 controlled battles measured off the reference
+// simulator -- see research/frakinator-parity.md and research/frakinator-parity.json.
 
 export const TROOP_TYPES = ['infantry', 'cavalry', 'archers']
 
@@ -26,7 +25,11 @@ export const TROOP_LABELS = {
 // fitted so the optimizer would stop returning 0% Cavalry — that contradicted
 // the documented figure and made the one checkable real outcome worse. The
 // real reason Cavalry was vanishing is AMBUSH_SHARE below.
-export const COUNTER_BONUS = 1.10
+// [MEASURED 2026-09-23] 1.115 against the reference, fitted jointly with the
+// base powers below. The three duels infantry>cavalry>archery>infantry each
+// carry it once, so their product (1.425) is the cube of the bonus; 1.10 would
+// need a product of 1.331 and misses the measured duels by ~2,000 troops.
+export const COUNTER_BONUS = 1.115
 
 // The counter triangle IS the troops' named abilities -- there is no separate
 // defensive term, and we used to apply one. [DOC]
@@ -53,12 +56,24 @@ export const COUNTER_BONUS = 1.10
 // flat 20% of every volley is the expected value of that roll -- the "fast mode"
 // read that battle simulators offer alongside a Monte Carlo one. Both are
 // supported here: `rollAbilities` switches between them.
-export const AMBUSH_SHARE = 0.20
+// [MEASURED 2026-09-23] 0.2115 against the reference: 100k cavalry facing
+// 50k infantry + 50k archery kills 17,373 archers through the wall, which is
+// only reachable with a bypass share of this size.
+export const AMBUSH_SHARE = 0.2115
 
 // ---------------------------------------------------------------------------
-// CONSTANTS FREEZE. Two fitted constants live below -- STAT_PAIR_WEIGHT and
-// FRONT_ROW_SPILL. No more get fitted to the current data set, and these two do
-// not move again without materially more evidence.
+// CONSTANTS FREEZE -- LIFTED 2026-09-23 FOR THESE TWO, AND SAYING SO PLAINLY IS
+// BETTER THAN PRETENDING OTHERWISE. The freeze existed because STAT_PAIR_WEIGHT
+// and FRONT_ROW_SPILL were FITTED to sixteen noisy battles, and fitting two free
+// parameters to noise is not evidence. Both have since been MEASURED directly
+// against the reference simulator, which resolves the same fight without noise:
+// spill is 0 (nothing reaches a shielded back row, checked on eleven battles to
+// the troop) and the pair weight is 1.0 (attack, lethality and defense buy
+// identical outcomes to within 0.2%). A measurement replacing a fit is exactly
+// the "materially more evidence" the freeze asked for. The reasoning that
+// produced the old values is kept below, unedited, so the change is auditable.
+//
+// (Historic note, still true of the data it describes:)
 //
 // The reason is measured, not cautionary. Two REPLICATED fights now exist --
 // the same beast, same stats, same split, fought twice -- and they landed 43.7
@@ -168,7 +183,14 @@ export const AMBUSH_SHARE = 0.20
 // The flatness is real and is reported to the user rather than hidden: at 0.20,
 // 28 of 1326 splits score within one point of the winner, spanning 48-58 /
 // 14-24 / 22-34 (research/spill-flat.mjs). That band is what the UI shows.
-export const FRONT_ROW_SPILL = 0.20
+//
+// [MEASURED 2026-09-23 — NOW ZERO, AND NO LONGER FITTED] The reference
+// simulator lets NOTHING past the front row. Eleven measured battles where the
+// winner held a back row returned it at full strength to the troop: 50,000 of
+// 50,000 cavalry behind infantry, 50,000 of 50,000 archery behind infantry.
+// The only damage that ever reaches a back row is Cavalry's Ambusher above.
+// A fitted 0.20 cannot survive a direct measurement of the thing it estimates.
+export const FRONT_ROW_SPILL = 0
 
 // How the Attack/Defense pair is weighted against the Lethality/Health pair.
 //
@@ -203,12 +225,45 @@ export const FRONT_ROW_SPILL = 0.20
 // counter: this contradicts a guide's prose, and the guide's prose is not
 // evidence. Ten battles are. Expect it to move as more rooms arrive -- Crystal
 // Cave contributes only two of the ten.
-export const STAT_PAIR_WEIGHT = 1.09
+//
+// [MEASURED 2026-09-23 — NOW 1.0] The reference weights the two pairs equally,
+// and the measurement is direct rather than fitted: +100% Attack and +100%
+// Lethality on the same army leave 62,859 and 62,830 survivors out of 100,000,
+// and +100% Defense on the defender leaves 62,981. Three ways of spending the
+// same percentage, one answer inside 0.2%. An exponent split would separate
+// them by thousands of troops.
+export const STAT_PAIR_WEIGHT = 1.0
 
 // [DOC] Archers "Volley": 10% chance to fire twice, so the expected multiplier
 // is 0.9 x 1 + 0.1 x 2. Same per-round trigger as Ambusher above.
-export const ARCHER_VOLLEY_MULTIPLIER = 1.10
+// [MEASURED 2026-09-23] 1.111 against the reference, i.e. the documented 10%
+// chance to within the fit's resolution.
+export const ARCHER_VOLLEY_MULTIPLIER = 1.111
 export const ARCHER_VOLLEY_CHANCE = 0.10
+
+// Per-troop-type base power, relative to Infantry = 1.
+//
+// TROOP_OFFENCE is the troop's own base attack x lethality, TROOP_DEFENCE its
+// base defense x health. They enter the damage equation exactly like the
+// player's percentage bonuses do -- the percentages scale the base, they do not
+// replace it -- so a Cavalry troop hits ~3.2x as hard as an Infantry one and
+// dies ~3.3x as easily.
+//
+// [MEASURED 2026-09-23] Fitted jointly with COUNTER_BONUS, AMBUSH_SHARE and
+// ARCHER_VOLLEY_MULTIPLIER to 24 controlled battles run against the reference
+// simulator over its own websocket: single-type duels at equal and unequal
+// counts (which pin the products offence x defence), and mixed armies where a
+// back row is shielded (which separate offence from defence). Residual RMS is
+// 0.3% of army size, and six held-out battles with per-type stat spreads
+// predicted blind came in within 2.2%.
+//
+// Why these are not the old T10_BASE table: that table made all three types
+// EQUALLY powerful (attack 1/3/4 against hp 4/1.33/1 -- the products all equal),
+// which predicts every duel as mutual annihilation. The measured duels are not
+// even: infantry beats cavalry with 26.8% left, archery beats infantry with
+// 32.4% left.
+export const TROOP_OFFENCE = { infantry: 1, cavalry: 3.209, archers: 4.432 }
+export const TROOP_DEFENCE = { infantry: 1, cavalry: 0.2989, archers: 0.2237 }
 
 // Troop tier. [DOC] A full T11 army carries "roughly 15 to 20 percent more
 // stats than T10 across the board"; 1.175 is the midpoint. Expressed relative
@@ -327,12 +382,13 @@ export function counters(attackerType, defenderType) {
 }
 
 /**
- * [IMPL] The damage equation:
+ * [MEASURED] The damage equation, as the reference simulator resolves it:
  *
  *   kills = sqrt(attackerCount)
+ *         x BaseOffence(attackerType) / BaseDefence(defenderType)
  *         x (100 + Attack%)(100 + Lethality%)      <- the ATTACKER's
  *         / ((100 + Defense%)(100 + Health%))      <- the DEFENDER's
- *         x SkillMod x CounterBonus x SpecialMultiplier / DefenseBonus
+ *         x SkillMod x CounterBonus x SpecialMultiplier
  *
  * Two properties of this shape matter more than any coefficient in it:
  *
@@ -359,8 +415,10 @@ export function killsDealt({ attackerCount, attackerStats, defenderStats, attack
   const w = STAT_PAIR_WEIGHT
   const offence = Math.pow((100 + num(attackerStats?.attack)) / 100, w)
     * Math.pow((100 + num(attackerStats?.lethality)) / 100, 2 - w) * attackerTier * attackerTier
+    * (TROOP_OFFENCE[attackerType] || 1)
   const defence = Math.pow((100 + num(defenderStats?.defense)) / 100, w)
     * Math.pow((100 + num(defenderStats?.health)) / 100, 2 - w) * defenderTier * defenderTier
+    * (TROOP_DEFENCE[defenderType] || 1)
   if (defence <= 0) return 0
 
   const special = specialMultiplier == null

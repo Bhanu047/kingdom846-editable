@@ -3303,6 +3303,10 @@ html.k846-js-nav .app-tab .app-tab-mark { display: none; }
    The hero wordmark solved this the same way, and index.css has carried the
    warning since the welcome screen hit it. */
 .k846-bloom-title { perspective: 900px; }
+/* Each word holds its letters on one line, and passes the perspective on: it
+   only reaches an element's direct children, and the letters are now a level
+   further down. */
+.k846-word { display: inline-block; white-space: nowrap; perspective: 900px; }
 /* A title that is not gilt keeps its own colour: the split needs the geometry
    and nothing else from .k846-char below. */
 .k846-char-plain {

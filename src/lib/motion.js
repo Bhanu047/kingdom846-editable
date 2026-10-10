@@ -693,7 +693,11 @@ export function bloomHeading(root) {
 
     try {
       el.classList.add('k846-bloom-title')
-      split = animeText.splitText(el, { chars: { class: gilt ? 'k846-char' : 'k846-char-plain' }, words: false })
+      /* Letters are grouped by word. Split into bare letters, a narrow screen
+         could break the line inside a word -- "Upcomin / g Events" -- and leave
+         a capital stranded on a line of its own. */
+      split = animeText.splitText(el, { chars: { class: gilt ? 'k846-char' : 'k846-char-plain' }, words: { class: 'k846-word' } })
+      const done = split
       animate(split.chars, {
         opacity: { from: 0, to: 1 },
         scale: { from: 0.62, to: 1 },
@@ -701,6 +705,16 @@ export function bloomHeading(root) {
         rotateX: { from: -58, to: 0 },
         delay: stagger(26, { from: 'center' }),
         ease: motion.spring.accent(),
+        /* Once landed, the title goes back to being plain text. Left split, it
+           was dozens of separately painted letters for the life of the page,
+           and some phone browsers drew a stray copy of the first one beside
+           the title. */
+        onComplete: () => {
+          if (split !== done) return
+          try { done.revert() } catch {}
+          el.classList.remove('k846-bloom-title')
+          split = null
+        },
       })
     } catch (err) {
       console.error('[motion] title bloom failed, showing it', err)

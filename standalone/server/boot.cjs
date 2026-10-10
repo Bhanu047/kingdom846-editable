@@ -1,4 +1,4 @@
-// Select durable PostgreSQL only after Neon DATABASE_URL is configured.
-// Until then, retain the existing SQLite test instance without touching 846.
+// Explicit startup flag permits both direct test runs and the hosted boot entrypoint.
+process.env.K791_BOOT='1'
 if(process.env.DATABASE_URL){require('./postgres.cjs')}
 else{require('./index.cjs')}

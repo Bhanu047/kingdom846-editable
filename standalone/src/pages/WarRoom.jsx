@@ -3,7 +3,7 @@ import { Plus, Trash2, Check, X, Play, Eye, Save } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 import RallyConsole from '../components/RallyConsole'
 import RallyApproach, { useApproachPreview } from '../components/RallyApproach'
-import { ALLIANCES } from '../components/brand'
+import { ALLIANCES, allianceFor } from '../components/brand'
 import { parseMarchTime, normalizeMarchTime } from '../lib/marchTime'
 
 const STORAGE_KEY = 'k791-no-legacy-import-v1'   // legacy: one bare array of whales
@@ -25,8 +25,9 @@ function newId() { return `${Date.now()}-${Math.random().toString(36).slice(2, 7
 // typed, so tidy on the way in as well as on the way out.
 const tidyWhales = (list) => (Array.isArray(list) ? list : []).map((w) => ({
   id: w?.id || newId(),
-  name: w?.name || 'Unnamed',
-  march: normalizeMarchTime(w?.march),
+  name: typeof w?.name === 'string' ? w.name : '',
+  march: String(w?.march ?? '').trim() ? normalizeMarchTime(w.march) : '',
+  alliance: typeof w?.alliance === 'string' ? w.alliance : '',
   status: w?.status || 'Undeployed',
 }))
 const tidyGroups = (gs) => (Array.isArray(gs) ? gs : []).map((g) => ({
@@ -80,6 +81,7 @@ export default function WarRoom({ onDock }) {
   const [incoming, setIncoming] = useState(null)
   const [cacheOffer, setCacheOffer] = useState(null)
   const startRef = useRef(0)
+  const focusRef = useRef(null)
   const dirtyRef = useRef(false)
   const versionRef = useRef(null)
   useEffect(() => { dirtyRef.current = dirty }, [dirty])
@@ -175,7 +177,7 @@ export default function WarRoom({ onDock }) {
     return () => { alive = false; clearInterval(id); document.removeEventListener('visibilitychange', onVisible) }
   }, [canUseWarRoom, getWarRoom, applyRemote])
 
-  const sequence = useMemo(() => { const chosen = whales.filter(w => selected[w.id]).map(w => ({...w, marchSec: parseMarchTime(w.march)})); if (!chosen.length) return []; const longest = Math.max(...chosen.map(w => w.marchSec)); return chosen.map(w => ({...w, offset: Math.max(0, longest-w.marchSec)})).sort((a,b)=>a.offset-b.offset||a.name.localeCompare(b.name)) }, [whales,selected])
+  const sequence = useMemo(() => { const chosen = whales.filter(w => selected[w.id]).map(w => ({...w, name: w.name.trim() || 'Unnamed', march: w.march || '0:00', marchSec: parseMarchTime(w.march)})); if (!chosen.length) return []; const longest = Math.max(...chosen.map(w => w.marchSec)); return chosen.map(w => ({...w, offset: Math.max(0, longest-w.marchSec)})).sort((a,b)=>a.offset-b.offset||a.name.localeCompare(b.name)) }, [whales,selected])
 
   // Every march lands together, so impact is the longest one -- the same
   // number the console lands on, computed here for the preview.
@@ -187,12 +189,18 @@ export default function WarRoom({ onDock }) {
   // the offsets, checked rather than trusted.
   const [preview, playPreview] = useApproachPreview(impactAt)
   useEffect(() => { onDock?.(!running); return () => onDock?.(false) }, [running, onDock])
+  // A new row opens empty with the cursor already in its name box.
+  useEffect(() => {
+    if (!focusRef.current) return
+    const el = document.querySelector(`[data-wid="${focusRef.current}"]`)
+    if (el) { el.focus(); el.scrollIntoView({ block: 'center', behavior: 'smooth' }); focusRef.current = null }
+  })
   if (!canUseWarRoom) return <div className="card card-pad"><h1 className="card-title">Private War Room</h1><p className="card-sub">Reserved for authorised Kingdom 791 commanders.</p></div>
-  function addWhale(){setWhales(p=>[...p,{id:newId(),name:'New commander',march:'0:30',status:'Undeployed'}]);touched()}
+  function addWhale(){const id=newId();setWhales(p=>[...p,{id,name:'',march:'',status:'Undeployed',alliance:''}]);focusRef.current=id;touched()}
   function updateWhale(id,field,value){setWhales(p=>p.map(w=>w.id===id?{...w,[field]:value}:w));touched()}
   // Only writes when the tidied form actually differs, so tabbing through a
   // roster does not mark it unsaved for no reason.
-  function normalizeMarch(id,value){const tidy=normalizeMarchTime(value);if(tidy!==value)updateWhale(id,'march',tidy)}
+  function normalizeMarch(id,value){if(!String(value).trim())return;const tidy=normalizeMarchTime(value);if(tidy!==value)updateWhale(id,'march',tidy)}
   function removeWhale(id){setWhales(p=>p.filter(w=>w.id!==id));setSelected(p=>{const n={...p};delete n[id];return n});touched()}
   function addGroup(){const g={id:newId(),name:'New group',whales:[]};setGroups(p=>[...p,g]);setActiveId(g.id);touched()}
   function renameGroup(v){setGroups(p=>p.map(g=>g.id===activeId?{...g,name:v}:g));touched()}
@@ -263,7 +271,7 @@ export default function WarRoom({ onDock }) {
         {sequence.map((w, i) => (
           <li key={w.id}>
             <span className="n">{i + 1}</span>
-            <div style={{ minWidth: 0 }}><b>{w.name}</b><small>March {w.march}</small></div>
+            <div style={{ minWidth: 0 }}><b>{w.name}</b><small>March {w.march || '0:00'}{allianceFor(w.alliance) ? ` · [${allianceFor(w.alliance).tag}]` : ''}</small></div>
             <em>{w.offset ? `+${formatClock(w.offset)}` : 'First'}</em>
           </li>
         ))}
@@ -333,7 +341,7 @@ export default function WarRoom({ onDock }) {
             <button onClick={addWhale} className="btn btn-gold"><Plus size={16} />Add</button>
           </div>
           {whales.length > 0 && <div className="rhead" aria-hidden="true">
-            <span style={{ textAlign: 'center' }}>Arm</span><span>Commander</span><span style={{ textAlign: 'center' }}>March</span><span>Garrison</span><span />
+            <span style={{ textAlign: 'center' }}>Arm</span><span>Commander</span><span>Alliance</span><span style={{ textAlign: 'center' }}>March</span><span>Garrison</span><span />
           </div>}
           <div className="rlist">
             {whales.map((w, i) => <div key={w.id} className={'rrow' + (selected[w.id] ? ' sel' : '')}>
@@ -342,8 +350,9 @@ export default function WarRoom({ onDock }) {
                 <span className="box"><Check size={15} strokeWidth={3} /></span>
                 <em>{i + 1}</em>
               </label>
-              <input value={w.name} onChange={(e) => updateWhale(w.id, 'name', e.target.value)} className="input c-name" aria-label={`Name, row ${i + 1}`} maxLength={64} />
-              <input value={w.march} onChange={(e) => updateWhale(w.id, 'march', e.target.value)} onBlur={(e) => normalizeMarch(w.id, e.target.value)} aria-label={`March time for ${w.name}`} inputMode="numeric" className="input c-time" maxLength={16} />
+              <input value={w.name} data-wid={w.id} onChange={(e) => updateWhale(w.id, 'name', e.target.value)} className="input c-name" aria-label={`Commander name, row ${i + 1}`} placeholder="Commander name" maxLength={64} />
+              <input value={w.march} onChange={(e) => updateWhale(w.id, 'march', e.target.value)} onBlur={(e) => normalizeMarch(w.id, e.target.value)} aria-label={`March time for ${w.name || 'row ' + (i + 1)}`} placeholder="M:SS" inputMode="numeric" className="input c-time" maxLength={16} />
+              <AllySelect value={w.alliance} onChange={(v) => updateWhale(w.id, 'alliance', v)} label={`Alliance for ${w.name || 'row ' + (i + 1)}`} />
               <div className="stat-wrap" data-tone={STATUS_TONE[w.status] || 'muted'}>
                 <select value={w.status} onChange={(e) => updateWhale(w.id, 'status', e.target.value)} className="input" aria-label={`Garrison for ${w.name}`}>{STATUS_OPTIONS.map((o) => <option key={o} value={o}>{o}</option>)}</select>
               </div>
@@ -392,4 +401,18 @@ export default function WarRoom({ onDock }) {
 function formatClock(sec) {
   const n = Math.max(0, Math.round(sec || 0))
   return `${Math.floor(n / 60)}:${String(n % 60).padStart(2, '0')}`
+}
+
+function AllySelect({ value, onChange, label }) {
+  const a = allianceFor(value)
+  const custom = value && !a
+  return (
+    <div className={'ally-wrap' + (a ? ' tone-' + a.tone : '')} style={a ? { '--em': `url(${a.emblem})` } : undefined}>
+      <select className="input" value={a ? a.label : value || ''} onChange={(e) => onChange(e.target.value)} aria-label={label}>
+        <option value="">No alliance</option>
+        {ALLIANCES.map((x) => <option key={x.tag} value={x.label}>{x.label}</option>)}
+        {custom && <option value={value}>{value}</option>}
+      </select>
+    </div>
+  )
 }

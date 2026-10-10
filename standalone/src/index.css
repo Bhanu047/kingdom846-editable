@@ -362,7 +362,7 @@ select.input option { background: #150e0c; color: var(--text); }
 .rrow {
   display: grid; gap: 8px; align-items: center;
   grid-template-columns: 44px 92px minmax(0, 1fr) 40px;
-  grid-template-areas: 'chk name name del' 'chk time stat stat';
+  grid-template-areas: 'chk name name del' 'chk time ally ally' 'chk stat stat stat';
   padding: 8px 8px 8px 4px; border-radius: 14px;
   background: rgba(255, 226, 210, .022); border: 1px solid var(--line);
   transition: border-color .18s, background .18s, box-shadow .18s;
@@ -391,8 +391,8 @@ select.input option { background: #150e0c; color: var(--text); }
 .del { width: 40px; height: 40px; border-radius: 11px; display: grid; place-items: center; border: 1px solid transparent; background: none; color: var(--text-3); transition: all .15s; }
 .del:hover { color: #f2a6a8; background: rgba(236, 90, 95, .1); border-color: rgba(236, 90, 95, .3); }
 @media (min-width: 900px) {
-  .rhead { display: grid; grid-template-columns: 56px minmax(0, 1fr) 104px 236px 40px; gap: 10px; padding: 0 8px 8px 4px; font: 600 10.5px/1 var(--ui); letter-spacing: .16em; text-transform: uppercase; color: var(--text-3); }
-  .rrow { grid-template-columns: 56px minmax(0, 1fr) 104px 236px 40px; grid-template-areas: 'chk name time stat del'; gap: 10px; padding: 6px 8px 6px 4px; }
+  .rhead { display: grid; grid-template-columns: 56px minmax(0, 1fr) 222px 88px 204px 40px; gap: 10px; padding: 0 8px 8px 4px; font: 600 10.5px/1 var(--ui); letter-spacing: .16em; text-transform: uppercase; color: var(--text-3); }
+  .rrow { grid-template-columns: 56px minmax(0, 1fr) 222px 88px 204px 40px; grid-template-areas: 'chk name ally time stat del'; gap: 10px; padding: 6px 8px 6px 4px; }
   .chk { flex-direction: row; gap: 8px; }
 }
 .empty { display: grid; justify-items: center; gap: 12px; text-align: center; padding: 34px 16px; border-radius: 14px; border: 1px dashed var(--line-2); background: radial-gradient(ellipse at 50% 0%, rgba(236, 104, 48, .08), transparent 70%); }
@@ -535,3 +535,11 @@ html, body { overflow-x: clip; }
 .aother:hover, .aother.on { color: var(--gold-hi); }
 .apick-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; padding-top: 12px; border-top: 1px solid var(--line); }
 .apick-foot .hint { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Per-commander alliance: the emblem sits inside the select. */
+.ally-wrap { position: relative; grid-area: ally; min-width: 0; }
+.ally-wrap .input { font-size: 13.5px; }
+.ally-wrap.tone-nwo .input, .ally-wrap.tone-dxp .input, .ally-wrap.tone-fme .input { padding-left: 40px; border-color: var(--tone-line); color: var(--tone-tag); font-weight: 600; }
+.ally-wrap::before { content: ''; position: absolute; left: 8px; top: 50%; width: 24px; height: 24px; margin-top: -12px; border-radius: 50%; background: var(--em) center / cover no-repeat; pointer-events: none; z-index: 1; display: none; box-shadow: 0 0 0 1px rgba(0, 0, 0, .6); }
+.ally-wrap[style]::before { display: block; }
+.rrow .input::placeholder { color: #6e5a50; font-weight: 400; }

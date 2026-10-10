@@ -92,3 +92,15 @@ test('password policy: members need 9+ characters; short passwords are rejected'
  assert.equal(nine.status,200)
  assert.equal((await login('jakey','Nine_ch_9')).status,200)
 })
+
+test('roster keeps each commander\'s alliance and allows a blank new row',async()=>{
+ const admin=(await login('spartan',ADMIN_PASSWORD)).cookie
+ const cur=await req('/api/war-room/roster',{cookie:admin})
+ const groups=[{id:'g1',name:'Main rally',whales:[{id:'w1',name:'IronFang',march:'1:12',status:'Castle Garrison',alliance:'[NwO] NewWorldOrder'},{id:'w2',name:'',march:'',status:'Undeployed',alliance:''}]}]
+ const put=await req('/api/war-room/roster',{cookie:admin,method:'PUT',body:{groups,version:cur.data.version}})
+ assert.equal(put.status,200)
+ const back=(await req('/api/war-room/roster',{cookie:admin})).data.groups[0].whales
+ assert.equal(back[0].alliance,'[NwO] NewWorldOrder')
+ assert.equal(back[1].name,'')
+ assert.equal(back[1].march,'')
+})

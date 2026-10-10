@@ -7,7 +7,29 @@ const names=['Poofy','Charles','Jakey','Polar','Erika'];const validPw=p=>typeof 
 function digest(p,s){return crypto.scryptSync(p,s,64).toString('hex')}function setPassword(username,p){const salt=crypto.randomBytes(24).toString('hex');db.prepare('UPDATE users SET salt=?, hash=? WHERE username=?').run(salt,digest(p,salt),username)}
 const insert=db.prepare('INSERT OR IGNORE INTO users(username,display_name,role,alliance,salt,hash) VALUES(?,?,?,?,?,?)');
 for(const name of names){const p=crypto.randomBytes(32).toString('hex'),salt=crypto.randomBytes(24).toString('hex');insert.run(name.toLowerCase(),name,'member','',salt,digest(p,salt))}
-if(!db.prepare("SELECT 1 FROM users WHERE username='spartan'").get()){const pw=process.env.ADMIN_PASSWORD;if(!validPw(pw)||pw==='CHANGE_THIS_TO_A_LONG_RANDOM_PASSWORD')throw Error('ADMIN_PASSWORD (12+ chars) required for initial owner creation');const salt=crypto.randomBytes(24).toString('hex');insert.run('spartan','Spartan','admin','',salt,digest(pw,salt))}
+// ADMIN_PASSWORD is a bootstrap/reset secret. Only apply it when it changes,
+// so normal in-app password changes persist across process restarts.
+db.exec("CREATE TABLE IF NOT EXISTS app_settings (name TEXT PRIMARY KEY, value TEXT NOT NULL)");
+const bootPassword=process.env.ADMIN_PASSWORD;
+const adminExists=db.prepare("SELECT 1 FROM users WHERE username='spartan'").get();
+if(!adminExists && (!validPw(bootPassword)||bootPassword==='CHANGE_THIS_TO_A_LONG_RANDOM_PASSWORD')) throw Error('ADMIN_PASSWORD (12+ chars) required for initial owner creation');
+if(!adminExists){
+ const salt=crypto.randomBytes(24).toString('hex');
+ insert.run('spartan','Spartan','admin','',salt,digest(bootPassword,salt));
+}
+if(validPw(bootPassword)){
+ const fingerprint=crypto.createHash('sha256').update(bootPassword).digest('hex');
+ const prior=db.prepare("SELECT value FROM app_settings WHERE name='admin_bootstrap_fingerprint'").get();
+ if(!prior){
+   // Fresh DB: the initial password was already installed above. An existing DB
+   // upgraded from earlier code is also reset to the currently configured secret.
+   if(adminExists) setPassword('spartan',bootPassword);
+ } else if(prior.value!==fingerprint){
+   setPassword('spartan',bootPassword);
+   db.prepare("DELETE FROM sessions WHERE username='spartan'").run();
+ }
+ db.prepare("INSERT INTO app_settings(name,value) VALUES('admin_bootstrap_fingerprint',?) ON CONFLICT(name) DO UPDATE SET value=excluded.value").run(fingerprint);
+}
 const secure=process.env.NODE_ENV==='production',cookieName='k791_session';
 function cookies(req){const c={};for(const seg of (req.headers.cookie||'').split(';')){const n=seg.indexOf('=');if(n>0)c[seg.slice(0,n).trim()]=seg.slice(n+1).trim()}return c}
 function auth(req,res,next){const token=cookies(req)[cookieName];if(!token)return res.status(401).json({error:'Please log in'});const hash=crypto.createHash('sha256').update(token).digest('hex');const session=db.prepare('SELECT username FROM sessions WHERE token_hash=? AND expires>?').get(hash,Date.now());if(!session)return res.status(401).json({error:'Session expired'});const user=db.prepare('SELECT username,display_name,role,alliance FROM users WHERE username=?').get(session.username);if(!user)return res.status(401).json({error:'Account not found'});req.user=user;req.sessionHash=hash;next()}

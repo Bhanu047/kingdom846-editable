@@ -34,3 +34,9 @@ The standalone version has no signup route: exactly six provisioned accounts (fi
 ## Verify before deployment
 
 From `standalone/`, run `npm install && npm run build && npm test`. The integration suite starts the application on a temporary port and writes to a throwaway database. A passing test run is required before any user credentials are distributed or the service is deployed. Do not mark deployment as successful until a fresh Render persistent database survives a restart and the five member accounts can log in independently.
+
+## Permanent free PostgreSQL database
+
+**Prepared, not connected yet.** Create or connect a Neon Free Postgres project, then set the `DATABASE_URL` secret in this Kingdom 791 Render service. Do not set it in Kingdom 846. The app automatically switches to a separate PostgreSQL backend when that variable is available. The database schema and six initial accounts are provisioned once on startup. The login and session tables, alliance names and rally rosters then persist across free Render sleep, restarts and redeployments. Without `DATABASE_URL`, the standalone app still uses disposable SQLite, so do NOT treat its data as persistent.
+
+Use the pooled Neon connection URL including `sslmode=require`. Keep it secret: never put `DATABASE_URL` or passwords in source code, commits, README examples, messages or screenshots. Do not enable paid Neon/Render services. Test the account logins and roster after a restart before client handoff.

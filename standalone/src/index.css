@@ -3511,3 +3511,50 @@ body {background:#081326 !important;background-image:radial-gradient(ellipse at 
 .wr-login{background:linear-gradient(145deg,#0a1931ee,#06101eee);border:1px solid #d4af3755;box-shadow:0 25px 80px #0009}
 .wr-input{width:100%;background:#0b1c32;border:1px solid #c8ae6d66;border-radius:10px;padding:12px;color:#f3e8cc}
 .wr-input:focus{outline:2px solid #d4af37}.wr-link{color:#f2d88c;text-decoration:underline;text-underline-offset:3px}
+
+/* Kingdom 791 — Royal War Command identity */
+.k791-entry{min-height:100svh;position:relative;isolation:isolate;overflow:hidden;display:flex;flex-direction:column;color:#fff1d2;background:#09080e;font-family:Georgia,'Times New Roman',serif}
+.k791-entry:before{content:'';position:absolute;inset:0;z-index:-3;background:radial-gradient(ellipse 60% 38% at 50% 40%,rgba(150,59,31,.40),transparent 80%),linear-gradient(115deg,#100b11 2%,#272024 36%,#4d2922 72%,#0b0c16);pointer-events:none}
+.k791-entry:after{content:'';position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg,rgba(6,5,10,.7),transparent 27%,transparent 73%,rgba(6,5,10,.7)),linear-gradient(0deg,#07070b 1%,transparent 29%,transparent 77%,rgba(5,4,9,.55));pointer-events:none}
+.k791-entry-scenery{position:absolute;inset:0;z-index:-2;opacity:.9;background:radial-gradient(circle at 78% 25%,#d98b52 0%,rgba(181,83,51,.2) 13%,transparent 28%),linear-gradient(170deg,transparent 28%,rgba(14,14,24,.85) 78%)}
+.k791-entry-scenery:before{content:'';position:absolute;bottom:16%;right:9%;height:58%;width:35%;background:linear-gradient(130deg,transparent 20%,#15131b 20% 26%,transparent 26%),linear-gradient(0deg,#14131b 7%,transparent 7%),repeating-linear-gradient(90deg,#0d101a 0px,#28303b 17px,#11131e 34px);clip-path:polygon(4% 100%,4% 37%,11% 37%,11% 20%,20% 20%,20% 30%,30% 30%,30% 12%,38% 12%,38% 3%,47% 12%,47% 33%,56% 33%,56% 17%,64% 17%,64% 26%,79% 26%,79% 5%,84% 0,90% 5%,90% 39%,97% 39%,97% 100%);filter:drop-shadow(0 0 18px #dd6e35);opacity:.85}
+.k791-entry-scenery:after{content:'';position:absolute;bottom:-12%;left:-13%;width:60%;height:80%;background:linear-gradient(35deg,#090a0e 25%,#27242c 55%,#100e17 76%);clip-path:polygon(0 100%,0 32%,15% 32%,15% 13%,26% 13%,26% 35%,35% 35%,35% 23%,45% 23%,45% 43%,54% 43%,54% 19%,63% 19%,63% 50%,73% 50%,73% 100%);opacity:.8}
+.k791-entry-topline{width:min(1440px,100%);margin:auto auto 0;padding:24px 35px;display:flex;justify-content:space-between;gap:10px;font-family:Georgia,serif;font-size:11px;letter-spacing:.25em;color:#dec393;text-shadow:0 2px 8px black}
+.k791-live-dot{color:#d5a065}
+.k791-entry-center{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:12px 20px 48px;text-align:center}
+.k791-crest-halo{width:175px;height:186px;position:relative;display:grid;place-items:center;margin-bottom:-13px;filter:drop-shadow(0 12px 30px rgba(0,0,0,.9))}
+.k791-crest-halo:before{content:'';position:absolute;width:160px;height:160px;border-radius:50%;background:radial-gradient(circle,rgba(231,144,57,.25),transparent 70%)}
+.k791-crest-halo img{height:100%;width:100%;object-fit:contain;position:relative}
+.k791-heading{z-index:1;text-shadow:0 4px 15px #000}
+.k791-kicker{font-size:11px;letter-spacing:.46em;color:#edd1a0;margin-bottom:5px}
+.k791-heading h1{margin:0;font:700 clamp(42px,7.5vw,93px)/1.1 Georgia,'Times New Roman',serif;letter-spacing:.09em;color:#e5b96c;text-shadow:0 2px 0 #5c2c12,0 7px 0 rgba(0,0,0,.55),0 12px 40px black}
+.k791-heading h1 em{font-style:normal;color:#fff0a8}
+.k791-war-title{display:flex;align-items:center;justify-content:center;gap:17px;margin-top:1px;color:#f9e8cd;letter-spacing:.5em;font-size:clamp(20px,3vw,31px)}
+.k791-war-title span{height:1px;width:55px;background:linear-gradient(90deg,transparent,#c58042)}
+.k791-war-title span:last-child{transform:rotate(180deg)}
+.k791-heading p{font-size:10px;letter-spacing:.28em;color:#d5b58c;margin:11px 0 20px}
+.k791-heading p b{color:#f5ad53;margin:0 7px}
+.k791-login-panel{width:min(450px,100%);padding:22px 32px 14px;text-align:left;position:relative;background:linear-gradient(160deg,rgba(25,20,22,.97),rgba(7,8,12,.96));border:1px solid #94602f;box-shadow:0 0 0 2px rgba(0,0,0,.85),0 0 0 3px #53341d,0 24px 100px rgba(0,0,0,.8),inset 0 0 45px rgba(86,41,24,.13)}
+.k791-login-panel:before,.k791-login-panel:after{content:'◆';position:absolute;top:-12px;color:#f3c46a;font-size:20px;text-shadow:0 2px 10px #000}
+.k791-login-panel:before{left:-8px}.k791-login-panel:after{right:-8px}
+.k791-panel-heading{display:flex;justify-content:center;align-items:center;gap:12px;text-align:left;border-bottom:1px solid rgba(228,167,77,.23);padding-bottom:14px;margin-bottom:14px}
+.k791-panel-heading>span{font-size:30px;color:#f2bd5b}
+.k791-panel-heading strong{display:block;letter-spacing:.15em;color:#f1ce8f;font-size:15px}
+.k791-panel-heading small{color:#928477;letter-spacing:.08em;font-size:11px}
+.k791-login-panel form{display:flex;flex-direction:column;gap:7px}
+.k791-login-panel label{font:600 10px/1.7 Arial,sans-serif;letter-spacing:.17em;color:#c5aa8b}
+.k791-login-panel input{width:100%;height:46px;background:rgba(3,4,8,.9);border:1px solid #5c4837;border-radius:2px;color:#fff4dc;padding:0 13px;margin-bottom:6px;font:14px Arial,sans-serif;outline:none}
+.k791-login-panel input:focus{border-color:#ffcb70;box-shadow:0 0 0 2px rgba(244,181,75,.15)}
+.k791-login-panel button{background:linear-gradient(#b72e22,#670b0b);color:#fff0d4;min-height:48px;border:1px solid #efab61;box-shadow:inset 0 0 0 2px #57130e,0 6px 17px rgba(105,20,12,.45);font:700 13px Georgia,serif;letter-spacing:.13em;cursor:pointer;margin:7px 0 8px;transition:filter .2s,transform .2s}
+.k791-login-panel button:hover{filter:brightness(1.25);transform:translateY(-1px)}
+.k791-panel-footer{text-align:center;color:#827164;letter-spacing:.13em;font-size:9px;border-top:1px solid rgba(232,172,79,.16);padding:12px 0 0}
+.k791-panel-footer span{color:#cc9a58;margin:0 4px}
+.k791-error{color:#ffb9a6;font:12px Arial,sans-serif;text-align:center;margin:0}
+.k791-entry-bottom{width:100%;display:flex;justify-content:center;gap:min(8vw,80px);border-top:1px solid rgba(224,155,70,.3);background:rgba(2,3,7,.8);padding:16px 20px}
+.k791-entry-bottom div{display:flex;align-items:center;gap:10px;color:#d6bd94;font:9px/1.6 Georgia,serif;letter-spacing:.12em}
+.k791-entry-bottom strong{font-size:27px;color:#dda94f}
+.wr-header{background:linear-gradient(90deg,#0c0b12,#2b151a,#0c0b12)!important;border-bottom:1px solid #875827!important;box-shadow:0 12px 34px rgba(0,0,0,.4)}
+.wr-shell{background:radial-gradient(ellipse at 50% -10%,rgba(114,43,34,.22),transparent 48%),#0b0c14;min-height:100vh}
+.wr-logo{width:52px!important;height:60px!important;object-fit:contain}
+@media(max-width:600px){.k791-entry-topline{padding:16px;font-size:8px;letter-spacing:.12em}.k791-entry-center{padding:0 17px 28px}.k791-crest-halo{width:130px;height:138px}.k791-heading h1{letter-spacing:.025em}.k791-login-panel{padding:20px}.k791-entry-bottom{gap:14px;padding:12px 7px}.k791-entry-bottom div{font-size:7px;gap:5px}.k791-entry-bottom strong{font-size:19px}.k791-war-title{letter-spacing:.27em}.k791-war-title span{width:25px}}
+@media(prefers-reduced-motion:reduce){.k791-login-panel button{transition:none}}

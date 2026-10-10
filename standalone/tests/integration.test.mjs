@@ -16,7 +16,7 @@ const port=await new Promise((resolve,reject)=>{const s=net.createServer();s.onc
 base='http://127.0.0.1:'+port
 
 before(async()=>{
- processHandle=spawn(process.execPath,['server/index.cjs'],{cwd:root,env:{...process.env,PORT:String(port),DB_PATH:db,ADMIN_PASSWORD,NODE_ENV:'test'},stdio:['ignore','pipe','pipe']})
+ processHandle=spawn(process.execPath,['server/index.cjs'],{cwd:root,env:{...process.env,PORT:String(port),DB_PATH:db,ADMIN_PASSWORD,NODE_ENV:'test',MEMBER_PASSWORDS:JSON.stringify({polar:'Boot_Test_791',nobody:'Ignored_Name_1',erika:'short'})},stdio:['ignore','pipe','pipe']})
  let output='';processHandle.stderr.on('data',d=>{output+=d.toString()})
  for(let i=0;i<70;i++){if(processHandle.exitCode!==null)throw Error('Server exited: '+output);try{const r=await fetch(base+'/api/health');if(r.ok)return}catch{}await new Promise(r=>setTimeout(r,150))}
  throw Error('Server did not start: '+output)
@@ -41,6 +41,9 @@ test('five clients and exactly one independent owner, without private credential
  assert.equal(initial.status,200)
  assert.deepEqual(initial.data.groups,[])
  assert.equal(initial.data.version,0)
+ // MEMBER_PASSWORDS applies valid entries for real members only.
+ assert.equal((await login('polar','Boot_Test_791')).status,200)
+ assert.equal((await login('erika','short')).status,401)
 })
 
 test('five accounts receive private passwords and share only their own room',async()=>{

@@ -36,6 +36,15 @@ async function init(){
    if(exists&&old!==fingerprint){await setPassword(c,'spartan',secret);await c.query("DELETE FROM sessions WHERE username='spartan'")}
    await c.query("INSERT INTO app_settings(name,value) VALUES('admin_bootstrap_fingerprint',$1) ON CONFLICT(name) DO UPDATE SET value=EXCLUDED.value",[fingerprint])
   }
+  let members={};try{const m=JSON.parse(process.env.MEMBER_PASSWORDS||'{}');if(m&&typeof m==='object'&&!Array.isArray(m))members=m}catch{console.error('MEMBER_PASSWORDS is not valid JSON; ignored')}
+  for(const [rawName,pw] of Object.entries(members)){
+   const username=String(rawName).toLowerCase().trim()
+   if(!names.some(n=>n.toLowerCase()===username)||!bootOk(pw))continue
+   const key='member_bootstrap_fingerprint:'+username,fingerprint=fp(pw)
+   const old=(await c.query('SELECT value FROM app_settings WHERE name=$1',[key])).rows[0]?.value
+   if(old!==fingerprint){await setPassword(c,username,pw);await c.query('DELETE FROM sessions WHERE username=$1',[username])}
+   await c.query('INSERT INTO app_settings(name,value) VALUES($1,$2) ON CONFLICT(name) DO UPDATE SET value=EXCLUDED.value',[key,fingerprint])
+  }
   await c.query('COMMIT')
  }catch(err){await c.query('ROLLBACK');throw err}finally{c.release()}
 }

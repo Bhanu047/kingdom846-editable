@@ -30,6 +30,19 @@ if(validPw(bootPassword)){
  }
  db.prepare("INSERT INTO app_settings(name,value) VALUES('admin_bootstrap_fingerprint',?) ON CONFLICT(name) DO UPDATE SET value=excluded.value").run(fingerprint);
 }
+// MEMBER_PASSWORDS (optional, JSON {"poofy":"...",...}) sets member passwords
+// from a server-side secret. Like ADMIN_PASSWORD it is applied on a fresh
+// database and whenever the configured value changes, so in-app changes made
+// afterwards are kept for as long as the database survives.
+function memberBootPasswords(){try{const m=JSON.parse(process.env.MEMBER_PASSWORDS||'{}');return m&&typeof m==='object'&&!Array.isArray(m)?m:{}}catch{console.error('MEMBER_PASSWORDS is not valid JSON; ignored');return {}}}
+for(const [rawName,pw] of Object.entries(memberBootPasswords())){
+ const username=String(rawName).toLowerCase().trim();
+ if(!names.some(n=>n.toLowerCase()===username)||!validPw(pw))continue;
+ const key='member_bootstrap_fingerprint:'+username,fingerprint=crypto.createHash('sha256').update(pw).digest('hex');
+ const prior=db.prepare('SELECT value FROM app_settings WHERE name=?').get(key);
+ if(prior?.value!==fingerprint){setPassword(username,pw);db.prepare('DELETE FROM sessions WHERE username=?').run(username)}
+ db.prepare('INSERT INTO app_settings(name,value) VALUES(?,?) ON CONFLICT(name) DO UPDATE SET value=excluded.value').run(key,fingerprint);
+}
 const secure=process.env.NODE_ENV==='production',cookieName='k791_session';
 function cookies(req){const c={};for(const seg of (req.headers.cookie||'').split(';')){const n=seg.indexOf('=');if(n>0)c[seg.slice(0,n).trim()]=seg.slice(n+1).trim()}return c}
 function auth(req,res,next){const token=cookies(req)[cookieName];if(!token)return res.status(401).json({error:'Please log in'});const hash=crypto.createHash('sha256').update(token).digest('hex');const session=db.prepare('SELECT username FROM sessions WHERE token_hash=? AND expires>?').get(hash,Date.now());if(!session)return res.status(401).json({error:'Session expired'});const user=db.prepare('SELECT username,display_name,role,alliance FROM users WHERE username=?').get(session.username);if(!user)return res.status(401).json({error:'Account not found'});req.user=user;req.sessionHash=hash;next()}

@@ -187,3 +187,68 @@ test('the room is closed to everyone else', async () => {
   // And to anyone with no token at all.
   assert.equal((await fetch(`${BASE}/api/war-room/roster`)).status, 401)
 })
+
+/* March times belong to the whale, not to the group it is in. Before the shared
+ * list, the same whale in the main rally and the counter carried two march
+ * times, and fixing one left the other wrong. */
+const writeDoc = async (token, groups, catalog, version) => {
+  const res = await fetch(`${BASE}/api/war-room/roster`, {
+    method: 'PUT', headers: authed(token), body: JSON.stringify({ groups, catalog, version }),
+  })
+  return { status: res.status, body: await res.json() }
+}
+const marchesOf = (state) => state.groups.map((g) => g.whales.map((w) => `${w.name}@${w.march}`))
+
+test('a whale picked in two groups shares one march time', async () => {
+  const shoni = await tokenFor('shoni', PW.shoni)
+  const bubbles = await tokenFor('bubbles', PW.bubbles)
+  const groups = [
+    { id: 'main', name: 'Main rally', whales: [{ id: 'm1', whaleId: 'bru', status: 'RYO' }] },
+    { id: 'counter', name: 'Counter', whales: [{ id: 'c1', whaleId: 'bru', status: 'Castle Garrison' }] },
+  ]
+  const first = await writeDoc(shoni, groups, [{ id: 'bru', name: 'Bru', march: '1:12' }], (await read(shoni)).version)
+  assert.equal(first.status, 200)
+  assert.deepEqual(marchesOf(first.body), [['Bru@1:12'], ['Bru@1:12']])
+
+  // Fixed once, by anyone in the room, right in every group.
+  const fixed = await writeDoc(bubbles, groups, [{ id: 'bru', name: 'Bru', march: '0:58' }], first.body.version)
+  assert.equal(fixed.status, 200)
+  assert.deepEqual(marchesOf(await read(shoni)), [['Bru@0:58'], ['Bru@0:58']])
+  // Where each one is deployed is still the group's own business.
+  assert.deepEqual((await read(shoni)).groups.map((g) => g.whales[0].status), ['RYO', 'Castle Garrison'])
+})
+
+test('a pet march lasts two hours and then goes back by itself', async () => {
+  const shiba = await tokenFor('shiba', PW.shiba)
+  const groups = [{ id: 'main', name: 'Main rally', whales: [{ id: 'm1', whaleId: 'kaz', status: 'ICE' }] }]
+  const base = (await read(shiba)).version
+
+  const running = await writeDoc(shiba, groups, [{ id: 'kaz', name: 'Kaz', march: '1:00', petMarch: '0:40', petUntil: Date.now() + 2 * 3600e3 }], base)
+  assert.equal(running.status, 200)
+  assert.deepEqual(marchesOf(running.body), [['Kaz@0:40']])
+  assert.equal(running.body.catalog[0].march, '1:00', 'the base time is kept while the pet runs')
+
+  const over = await writeDoc(shiba, groups, [{ id: 'kaz', name: 'Kaz', march: '1:00', petMarch: '0:40', petUntil: Date.now() - 1000 }], running.body.version)
+  assert.deepEqual(marchesOf(over.body), [['Kaz@1:00']])
+  assert.equal(over.body.catalog[0].petUntil, undefined)
+
+  // Nothing pets a march for ten hours.
+  const silly = await writeDoc(shiba, groups, [{ id: 'kaz', name: 'Kaz', march: '1:00', petMarch: '0:10', petUntil: Date.now() + 10 * 3600e3 }], over.body.version)
+  assert.deepEqual(marchesOf(silly.body), [['Kaz@1:00']])
+})
+
+test('a screen still on the older page saves into the shared list by name', async () => {
+  const sparta = await tokenFor('sparta', PW.sparta, 'admin')
+  const start = await read(sparta)
+  const known = start.catalog.find((w) => w.name === 'Kaz')
+  assert.ok(known, 'Kaz is on the list from the test before')
+
+  // The old page sends groups whose whales carry a name and a march, no list.
+  const saved = await write(sparta, oneGroup([{ id: 'x', name: 'kaz', march: '0:50', status: 'ICE' }, { id: 'y', name: 'Newcomer', march: '0:33', status: 'RYO' }]), start.version)
+  assert.equal(saved.status, 200)
+  const kaz = saved.body.catalog.filter((w) => w.name.toLowerCase() === 'kaz')
+  assert.equal(kaz.length, 1, 'matched by name, not duplicated')
+  assert.equal(kaz[0].march, '0:50')
+  assert.ok(saved.body.catalog.some((w) => w.name === 'Newcomer' && w.march === '0:33'))
+  assert.deepEqual(marchesOf(saved.body), [['Kaz@0:50', 'Newcomer@0:33']])
+})

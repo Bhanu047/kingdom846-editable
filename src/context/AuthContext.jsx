@@ -96,10 +96,10 @@ export function AuthProvider({ children }) {
   // save built on groups someone else has since replaced, and the room asks
   // what to do about it.
   const getWarRoom = useCallback(async () => apiJson('/api/war-room/roster'), [])
-  const saveWarRoom = useCallback(async (groups, version) => {
+  const saveWarRoom = useCallback(async (groups, version, catalog) => {
     const res = await apiFetch('/api/war-room/roster', {
       method: 'PUT',
-      body: JSON.stringify({ groups, version }),
+      body: JSON.stringify({ groups, catalog, version }),
     })
     if (res.status === 409) {
       const remote = await res.json().catch(() => ({}))

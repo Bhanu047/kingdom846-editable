@@ -192,15 +192,15 @@ function Account({ user, refresh, logout }) {
           <AlliancePicker idPrefix="me" value={user.alliance} busy={busy} onSave={(v) => run(() => post('/api/me/alliance', { alliance: v }), 'Alliance saved.')} />
         </section>
         <section className="card card-pad">
-          <div className="card-head"><div><p className="kicker">Security</p><h2 className="card-title">Change password</h2><p className="card-sub">At least 12 characters.</p></div></div>
+          <div className="card-head"><div><p className="kicker">Security</p><h2 className="card-title">Change password</h2><p className="card-sub">At least 9 characters.</p></div></div>
           <form style={{ display: 'grid', gap: 14 }} onSubmit={(e) => {
             e.preventDefault()
             if (nw !== conf) { setMsg({ ok: false, text: 'The new passwords do not match.' }); return }
             run(async () => { await post('/api/me/password', { currentPassword: cur, newPassword: nw }); setCur(''); setNw(''); setConf('') }, 'Password updated.')
           }}>
             <div className="field"><label className="label" htmlFor="pw-cur">Current password</label><PasswordInput id="pw-cur" autoComplete="current-password" value={cur} onChange={(e) => setCur(e.target.value)} /></div>
-            <div className="field"><label className="label" htmlFor="pw-new">New password</label><PasswordInput id="pw-new" autoComplete="new-password" minLength={12} value={nw} onChange={(e) => setNw(e.target.value)} /></div>
-            <div className="field"><label className="label" htmlFor="pw-conf">Confirm new password</label><PasswordInput id="pw-conf" autoComplete="new-password" minLength={12} value={conf} onChange={(e) => setConf(e.target.value)} /></div>
+            <div className="field"><label className="label" htmlFor="pw-new">New password</label><PasswordInput id="pw-new" autoComplete="new-password" minLength={9} value={nw} onChange={(e) => setNw(e.target.value)} /></div>
+            <div className="field"><label className="label" htmlFor="pw-conf">Confirm new password</label><PasswordInput id="pw-conf" autoComplete="new-password" minLength={9} value={conf} onChange={(e) => setConf(e.target.value)} /></div>
             <button className="btn btn-gold" disabled={busy}><KeyRound size={16} />Update password</button>
           </form>
         </section>
@@ -251,8 +251,8 @@ function MemberCard({ u, onDone }) {
           <form className="field" onSubmit={(e) => { e.preventDefault(); run(async () => { await post('/api/admin/reset-password', { username: u.username, password: pw }); setPw('') }, 'New password set. Their sessions were signed out.') }}>
             <label className="label" htmlFor={'pw-' + u.username}>Set new password</label>
             <div className="inline">
-              <PasswordInput id={'pw-' + u.username} autoComplete="new-password" minLength={12} value={pw} onChange={(e) => setPw(e.target.value)} placeholder="12+ characters" />
-              <button className="btn btn-gold" disabled={busy || pw.length < 12}>Set</button>
+              <PasswordInput id={'pw-' + u.username} autoComplete="new-password" minLength={9} value={pw} onChange={(e) => setPw(e.target.value)} placeholder="9+ characters" />
+              <button className="btn btn-gold" disabled={busy || pw.length < 9}>Set</button>
             </div>
           </form>
         )}

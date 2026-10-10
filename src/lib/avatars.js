@@ -14,6 +14,7 @@ const BY_USERNAME = {
   panini: `${AVATARS}/panini.webp`,
   anonymous: `${AVATARS}/anonymous.webp`,
   abstraction: `${AVATARS}/abstraction.webp`,
+  shiba: `${AVATARS}/shiba.webp`,
 }
 
 const BY_ALLIANCE = {

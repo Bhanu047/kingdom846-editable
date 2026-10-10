@@ -221,58 +221,72 @@ export default function WarRoom() {
 
   const mine = (lastSave.by || '').toLowerCase() === String(user?.display_name || user?.username || '').toLowerCase()
 
-  return <div className="space-y-5">
-    {/* The hero is the room's front door, not part of the operation. Once a
-        rally is live it is 290px of scenery above the only three things that
-        matter, so it stands down for the duration. */}
-    {!running&&<Panel glow className="gold-corners overflow-hidden p-0">
-      <div className="relative min-h-[132px] overflow-hidden md:min-h-[250px]">
-        <img src="/art/war-scene.webp" alt="Kingdom 791 royal war command room" className="absolute inset-0 h-full w-full object-cover drift-slow" />
-        <div className="absolute inset-0 bg-gradient-to-r from-ink via-ink/85 to-ink/35" />
-        <div className="absolute inset-0" style={{background:'radial-gradient(circle at 72% 35%, rgba(212,175,55,.18), transparent 36%)'}} />
-        <div className="relative z-10 flex min-h-[132px] max-w-3xl flex-col justify-center p-5 md:min-h-[250px] md:p-8">
-          <RoyalSectionHeader icon="swords" eyebrow="KINGDOM 791 • SHARED COMMAND" title="War Room"/>
-          <p className="mt-3 hidden max-w-2xl text-sm leading-relaxed text-parchment/70 md:block">Coordinate synchronized whale rallies from the royal command table. One set of rally groups is shared by the whole command crew — save a march time and every other war room screen picks it up.</p>
-          <div className="mt-4 hidden flex-wrap gap-2 md:flex"><Pill tone="gold">Royal Command</Pill><Pill tone="red">Castle Operations</Pill><Pill tone={link === 'live' ? 'green' : 'muted'}>{link === 'live' ? 'Shared · Live' : link === 'offline' ? 'Offline · Local Copy' : 'Connecting…'}</Pill></div>
+  const linkText = link === 'live' ? 'Live' : link === 'offline' ? 'Offline' : 'Connecting'
+  const selCount = sequence.length
+  return <div className="kw">
+    {!running&&<section className="kw-hero">
+      <img src="/art/war-scene.webp" alt="" className="kw-hero-img"/>
+      <div className="kw-hero-shade"/>
+      <div className="kw-hero-body">
+        <div>
+          <p className="k-kicker">Shared Command</p>
+          <h1>Rally Command</h1>
+          <p className="kw-hero-sub">One roster for the whole crew. Save a march time and every screen updates.</p>
+        </div>
+        <div className="kw-stats">
+          <div><b>{countWhales(groups)}</b><span>Whales</span></div>
+          <div><b>{groups.length}</b><span>Groups</span></div>
+          <div><b>{selCount}</b><span>Selected</span></div>
+          <div className={'kw-link kw-link-'+link}><b><i/>{linkText}</b><span>{dirty?'Unsaved changes':mine?'Saved by you':lastSave.by?'By '+lastSave.by:'Not saved yet'}{lastSave.at&&!dirty?' · '+whenText(lastSave.at):''}</span></div>
         </div>
       </div>
-    </Panel>}
+    </section>}
 
-    {/* Who last changed the plan, which is the first thing a caller asks. */}
-    {!running&&<Panel className="flex flex-wrap items-center justify-between gap-3 !py-3">
-      <div className="text-xs text-parchment/50">
-        Shared with the war room · last saved by <span className="text-gold">{mine ? 'you' : (lastSave.by || '—')}</span>
-        {lastSave.at && <span className="text-parchment/35"> · {whenText(lastSave.at)}</span>}
-      </div>
-      <div className="text-xs text-parchment/40">{dirty ? 'Unsaved changes on this device' : link === 'offline' ? 'Reconnecting…' : link === 'live' ? 'In sync with the room' : 'Loading…'}</div>
-    </Panel>}
+    {!running&&incoming&&<div className="kw-alert">
+      <p>{(incoming.updated_by || 'Someone')} saved newer rally groups{whenText(incoming.updated_at) ? ` ${whenText(incoming.updated_at)}` : ''}. Loading them replaces what you typed here.</p>
+      <div><button className="kw-btn" onClick={() => applyRemote(incoming)}>Load theirs</button><button className="kw-btn kw-danger" onClick={() => saveRoster(groups, true)} disabled={saving}>Keep mine</button></div>
+    </div>}
+    {!running&&cacheOffer&&!incoming&&<div className="kw-alert">
+      <p>The room is empty, but this device still holds {countWhales(cacheOffer)} whale{countWhales(cacheOffer) === 1 ? '' : 's'} from before.</p>
+      <div><button className="kw-btn" onClick={() => saveRoster(cacheOffer, true)} disabled={saving}>Publish to the room</button><button className="kw-btn" onClick={() => setCacheOffer(null)}>Dismiss</button></div>
+    </div>}
 
-    {!running&&incoming&&<Panel className="border-amber-400/40 !py-3">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="text-xs text-amber-200">
-          {(incoming.updated_by || 'Someone')} saved newer rally groups{whenText(incoming.updated_at) ? ` ${whenText(incoming.updated_at)}` : ''}. Loading them replaces what you have typed here.
+    {!running?<div className="kw-grid">
+      <aside className="kw-launch">
+        <div className="kw-card kw-launch-card">
+          <p className="k-kicker">Launch</p>
+          <h2>Synced Rally</h2>
+          <p className="kw-muted">{selCount?`${selCount} whale${selCount===1?'':'s'} armed. Calls are staggered so every march lands together.`:'Tick whales in the roster to arm a rally.'}</p>
+          <button onClick={startRally} disabled={!selCount} className="kw-go">Start Synced Rally{selCount?` (${selCount})`:''}</button>
+          {selCount>0&&<button onClick={playPreview} className="kw-btn kw-wide">Preview the approach</button>}
         </div>
-        <div className="flex gap-2">
-          <button onClick={() => applyRemote(incoming)} className="rounded-lg border border-gold/30 px-3 py-1.5 text-xs font-semibold text-gold hover:bg-gold/10">Load theirs</button>
-          <button onClick={() => saveRoster(groups, true)} disabled={saving} className="rounded-lg border border-rose-400/30 px-3 py-1.5 text-xs font-semibold text-rose-200 hover:bg-rose-500/10 disabled:opacity-40">Keep mine &amp; overwrite</button>
-        </div>
-      </div>
-    </Panel>}
+        {selCount>0&&<div className="kw-card"><p className="k-kicker">Call Order</p>
+          <ol className="kw-order">{sequence.map((w,i)=><li key={w.id}><span className="kw-n">{i+1}</span><div><b>{w.name}</b><small>March {w.march}</small></div><em>+{w.offset}s</em></li>)}</ol>
+        </div>}
+      </aside>
 
-    {!running&&cacheOffer&&!incoming&&<Panel className="!py-3">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="text-xs text-parchment/60">The room is empty, but this device still holds {countWhales(cacheOffer)} whale{countWhales(cacheOffer) === 1 ? '' : 's'} from before the roster was shared.</div>
-        <div className="flex gap-2">
-          <button onClick={() => saveRoster(cacheOffer, true)} disabled={saving} className="rounded-lg border border-gold/30 px-3 py-1.5 text-xs font-semibold text-gold hover:bg-gold/10 disabled:opacity-40">Publish to the room</button>
-          <button onClick={() => setCacheOffer(null)} className="rounded-lg border border-gold/15 px-3 py-1.5 text-xs text-parchment/50 hover:bg-white/5">Dismiss</button>
+      <section className="kw-main">
+        <div className="kw-card">
+          <div className="kw-head"><div><p className="k-kicker">Rally Groups</p><h2>Groups</h2></div>{groups.length>1&&<button onClick={removeGroup} className="kw-btn kw-danger">Delete group</button>}</div>
+          <div className="kw-tabs">{groups.map(g=><button key={g.id} onClick={()=>setActiveId(g.id)} className={g.id===activeId?'on':''}>{g.name||'Untitled'}<small>{g.whales.length}</small></button>)}<button onClick={addGroup} className="kw-add">+ New group</button></div>
+          <input value={active?.name||''} onChange={e=>renameGroup(e.target.value)} aria-label="Group name" className="kw-input" placeholder="Group name"/>
         </div>
-      </div>
-    </Panel>}
 
-    {!running?<><Panel><div className="flex items-center justify-between gap-3 mb-3"><div className="eyebrow">Rally Groups</div>{groups.length>1&&<button onClick={removeGroup} className="rounded-md border border-rose-500/25 px-2 py-1 text-[10px] font-semibold text-rose-300 hover:bg-rose-500/10">Delete group</button>}</div><div className="flex flex-wrap gap-2">{groups.map(g=><button key={g.id} onClick={()=>setActiveId(g.id)} className={`rounded-lg border px-3 py-2 text-xs font-semibold transition ${g.id===activeId?'border-gold/70 bg-gold/15 text-gold-bright':'border-gold/20 text-parchment/60 hover:bg-white/5'}`}>{g.name||'Untitled'}</button>)}<button onClick={addGroup} className="rounded-lg border border-gold/20 px-3 py-2 text-xs text-parchment/50 hover:bg-white/5">+ New group</button></div><input value={active?.name||''} onChange={e=>renameGroup(e.target.value)} aria-label="Group name" className="mt-3 w-full rounded-md border border-gold/20 bg-ink/60 px-2 py-1.5 text-sm text-parchment outline-none focus:border-gold/60"/></Panel>
-    {sequence.length>0&&<Panel><div className="flex items-center justify-between gap-3 mb-3"><div className="eyebrow">Synchronized Call Order</div><button onClick={playPreview} className="rounded-lg border border-gold/30 px-3 py-1.5 font-mono text-[10px] font-bold uppercase tracking-[.14em] text-gold transition hover:bg-gold/10">Preview the approach</button></div><div className="space-y-2">{sequence.map((w,i)=><div key={w.id} className="stagger-in royal-plaque flex items-center gap-3"><span className="grid h-8 w-8 place-items-center rounded-full border border-gold/30 text-xs font-bold text-gold">{i+1}</span><span className="flex-1 font-semibold text-parchment">{w.name}</span><span className="font-mono text-xs text-parchment/50">march {w.march}</span><span className="font-mono text-xs text-gold">call +{w.offset}s</span></div>)}</div></Panel>}<button onClick={startRally} disabled={!sequence.length} className="btn-primary w-full !py-4 !text-base disabled:opacity-30">Start Synced Rally {sequence.length?`(${sequence.length})`:''}</button>
-    <Panel><div className="flex items-center justify-between gap-3 mb-4"><div><div className="eyebrow">Whale Roster</div><div className="text-xs text-parchment/40 mt-1">March time format: M:SS</div></div><button onClick={addWhale} className="btn-primary !py-1.5 !text-xs">+ Add Whale</button></div><div className="space-y-2">{whales.map(w=><div key={w.id} className="stagger-in royal-plaque flex flex-wrap items-center gap-2"><input type="checkbox" checked={!!selected[w.id]} onChange={()=>setSelected(s=>({...s,[w.id]:!s[w.id]}))} className="h-4 w-4 accent-[#D4AF37]"/><input value={w.name} onChange={e=>updateWhale(w.id,'name',e.target.value)} className="min-w-32 flex-1 rounded-md border border-gold/20 bg-ink/60 px-2 py-1.5 text-sm text-parchment outline-none focus:border-gold/60"/><input value={w.march} onChange={e=>updateWhale(w.id,'march',e.target.value)} onBlur={e=>normalizeMarch(w.id,e.target.value)} aria-label="March time" className="w-20 rounded-md border border-gold/20 bg-ink/60 px-2 py-1.5 text-sm font-mono text-parchment outline-none focus:border-gold/60"/><select value={w.status} onChange={e=>updateWhale(w.id,'status',e.target.value)} className="royal-select">{STATUS_OPTIONS.map(s=><option key={s} value={s}>{s}</option>)}</select><Pill tone={STATUS_TONE[w.status]||'muted'}>{w.status}</Pill><button onClick={()=>removeWhale(w.id)} className="rounded-md border border-rose-500/25 px-2 py-1 text-xs text-rose-300 hover:bg-rose-500/10">Delete</button></div>)}{!whales.length&&<div className="py-8 text-center text-sm text-parchment/40">{link==='loading'?'Loading the shared roster…':'No whales saved yet.'}</div>}</div>{error&&<div className="mt-3 rounded-md bg-crimson/15 px-3 py-2 text-xs text-crimson-200">{error}</div>}<div className="mt-4 flex items-center justify-between gap-3 border-t border-gold/10 pt-4"><span className="text-xs text-parchment/45">{saved?'Saved — the whole room can see it.':`${sequence.length} selected for rally`}</span><button onClick={()=>saveRoster()} disabled={saving} className="rounded-lg border border-gold/30 px-3 py-1.5 text-xs font-semibold text-gold hover:bg-gold/10 disabled:opacity-40">{saving?'Saving…':'Save Roster'}</button></div></Panel>
-    {sequence.length>0&&<RallyApproach sequence={sequence} now={preview ?? 0} impactAt={impactAt} phase="HOLD" />}
-    </>:<RallyConsole sequence={sequence} startAt={startRef.current} onAbort={stopRally} onComplete={stopRally}/>}
+        <div className="kw-card">
+          <div className="kw-head"><div><p className="k-kicker">Whale Roster</p><h2>{active?.name||'Roster'}</h2><p className="kw-muted">March time format M:SS</p></div><button onClick={addWhale} className="kw-btn kw-gold">+ Add whale</button></div>
+          <div className="kw-rows">{whales.map((w,i)=><div key={w.id} className={'kw-row'+(selected[w.id]?' sel':'')}>
+            <label className="kw-check"><input type="checkbox" checked={!!selected[w.id]} onChange={()=>setSelected(s=>({...s,[w.id]:!s[w.id]}))} aria-label={'Select '+w.name}/><span>{i+1}</span></label>
+            <input value={w.name} onChange={e=>updateWhale(w.id,'name',e.target.value)} className="kw-input kw-name" aria-label="Whale name"/>
+            <input value={w.march} onChange={e=>updateWhale(w.id,'march',e.target.value)} onBlur={e=>normalizeMarch(w.id,e.target.value)} aria-label="March time" inputMode="numeric" className="kw-input kw-time"/>
+            <select value={w.status} onChange={e=>updateWhale(w.id,'status',e.target.value)} className="kw-input kw-status" aria-label="Status">{STATUS_OPTIONS.map(o=><option key={o} value={o}>{o}</option>)}</select>
+            <button onClick={()=>removeWhale(w.id)} className="kw-x" aria-label={'Delete '+w.name}>&times;</button>
+          </div>)}
+          {!whales.length&&<div className="kw-empty"><img src="/art/lion-crest.webp" alt=""/><p>{link==='loading'?'Loading the shared roster…':'No whales yet. Add your first whale to start planning.'}</p></div>}</div>
+          {error&&<div className="k-err">{error}</div>}
+          <div className="kw-foot"><span>{saved?'Saved. The whole room can see it.':`${selCount} selected for rally`}</span><button onClick={()=>saveRoster()} disabled={saving} className="kw-btn kw-gold">{saving?'Saving…':'Save roster'}</button></div>
+        </div>
+      </section>
+      {sequence.length>0&&<div className="kw-approach"><RallyApproach sequence={sequence} now={preview ?? 0} impactAt={impactAt} phase="HOLD" /></div>}
+    </div>:<RallyConsole sequence={sequence} startAt={startRef.current} onAbort={stopRally} onComplete={stopRally}/>}
   </div>
 }

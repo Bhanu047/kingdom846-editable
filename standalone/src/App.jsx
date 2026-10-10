@@ -130,30 +130,34 @@ function AlliancePicker({ value, onSave, busy, idPrefix }) {
   const changed = next !== (value || '')
   return (
     <div className="apick">
-      <div className="acards" role="radiogroup" aria-label="Alliance">
-        {ALLIANCES.map((a) => (
-          <button type="button" role="radio" aria-checked={pick === a.label} key={a.tag}
-            className={'acard tone-' + a.tone + (pick === a.label ? ' on' : '')} style={{ '--banner': `url(${a.banner})` }} onClick={() => setPick(a.label)}>
-            <img src={a.emblem} alt="" />
-            <div style={{ minWidth: 0 }}><b>[{a.tag}]</b><span>{a.name}</span></div>
-            <i className="tick"><Check size={14} strokeWidth={3} /></i>
-          </button>
-        ))}
-        <button type="button" role="radio" aria-checked={pick === 'other'} className={'acard plain' + (pick === 'other' ? ' on' : '')} onClick={() => setPick('other')}>
-          <i className="ph"><PenLine size={18} /></i>
-          <div style={{ minWidth: 0 }}><b>Other</b><span>Type a different alliance</span></div>
-          <i className="tick"><Check size={14} strokeWidth={3} /></i>
-        </button>
+      <div className="atiles" role="radiogroup" aria-label="Alliance">
+        {ALLIANCES.map((a) => {
+          const on = pick === a.label
+          return (
+            <button type="button" role="radio" aria-checked={on} key={a.tag} aria-label={a.label}
+              className={'atile tone-' + a.tone + (on ? ' on' : '')} onClick={() => setPick(a.label)}>
+              <img src={a.emblem} alt="" />
+              <span className="atile-plate"><b>[{a.tag}]</b><span>{a.name.split(/(?<=[a-z])(?=[A-Z])/).map((part, i) => <span key={i}>{i > 0 && <wbr />}{part}</span>)}</span></span>
+              <i className="atile-check" aria-hidden="true"><Check size={13} strokeWidth={3.2} /></i>
+            </button>
+          )
+        })}
       </div>
+      <button type="button" className={'aother' + (pick === 'other' ? ' on' : '')} aria-pressed={pick === 'other'} onClick={() => setPick(pick === 'other' ? '' : 'other')}>
+        <PenLine size={15} />{pick === 'other' ? 'Using a different alliance label' : 'Use a different alliance label'}
+      </button>
       {pick === 'other' && (
         <div className="field">
           <label className="label" htmlFor={idPrefix + '-other'}>Alliance label</label>
-          <input id={idPrefix + '-other'} className="input" maxLength={60} value={other} onChange={(e) => setOther(e.target.value)} placeholder="e.g. [TAG] AllianceName" />
+          <input id={idPrefix + '-other'} className="input" maxLength={60} value={other} onChange={(e) => setOther(e.target.value)} placeholder="e.g. [TAG] AllianceName" autoFocus />
         </div>
       )}
-      <div className="inline">
-        {value ? <button type="button" className="btn btn-ghost btn-sm" style={{ flex: 'none' }} disabled={busy} onClick={() => onSave('')}>Clear</button> : <span />}
-        <button type="button" className="btn btn-gold" style={{ flex: 'none' }} disabled={busy || !changed || (pick === 'other' && !other.trim())} onClick={() => onSave(next)}>Save alliance</button>
+      <div className="apick-foot">
+        <span className="hint">{changed ? (next ? 'Selected: ' + next : 'Alliance will be cleared') : value ? 'Current: ' + value : 'No alliance set'}</span>
+        <div style={{ display: 'flex', gap: 8 }}>
+          {value && <button type="button" className="btn btn-ghost btn-sm" disabled={busy} onClick={() => onSave('')}>Clear</button>}
+          <button type="button" className="btn btn-gold" disabled={busy || !changed || (pick === 'other' && !other.trim())} onClick={() => onSave(next)}>Save alliance</button>
+        </div>
       </div>
     </div>
   )

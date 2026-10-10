@@ -10,5 +10,7 @@ export const PW = {
   panini: 'test-panini-pw',
   anonymous: 'test-anonymous-pw',
   abstraction: 'test-abstraction-pw',
+  shiba: 'test-shiba-pw',
+  bubbles: 'test-bubbles-pw',
 }
 for (const [user, pw] of Object.entries(PW)) process.env[`SEED_PASSWORD_${user.toUpperCase()}`] = pw

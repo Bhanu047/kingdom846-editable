@@ -113,7 +113,7 @@ fixed by their account, never by the request.
 
 ### The War Room is shared
 
-Sparta, Shoni, Panini, Anonymous and Abstraction all open the **same** roster. It is stored
+Sparta, Shoni, Panini, Anonymous, Abstraction, Shiba and Bubbles all open the **same** roster. It is stored
 once on the server (`war_room_state`), not per device: a march time saved by any
 of them is what the next one to look sees, within a few seconds — the room polls
 while it is open.

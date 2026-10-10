@@ -490,6 +490,8 @@ const SEED = [
   { username: 'panini', role: 'warroom', display_name: 'Panini', alliance_tag: '[RYO]', alliance: 'ryo' },
   { username: 'anonymous', role: 'warroom', display_name: 'Anonymous', alliance_tag: '[RYO]', alliance: 'ryo' },
   { username: 'abstraction', role: 'warroom', display_name: 'Abstraction', alliance_tag: '[RYO]', alliance: 'ryo' },
+  { username: 'shiba', role: 'warroom', display_name: 'Shiba', alliance_tag: '[ICE]', alliance: 'ice' },
+  { username: 'bubbles', role: 'warroom', display_name: 'Bubbles', alliance_tag: '[RYO]', alliance: 'ryo' },
 ]
 const seedPassword = (username) => {
   const fromEnv = process.env[`SEED_PASSWORD_${username.toUpperCase()}`]

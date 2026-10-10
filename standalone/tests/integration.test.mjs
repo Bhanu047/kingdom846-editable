@@ -78,3 +78,14 @@ test('five accounts receive private passwords and share only their own room',asy
  assert.ok(fs.existsSync(db))
  assert.equal(path.basename(db),'separate-791.db')
 })
+
+test('password policy: members need 12+ characters; short passwords are rejected',async()=>{
+ const admin=(await login('spartan',ADMIN_PASSWORD)).cookie
+ const short=await req('/api/admin/reset-password',{cookie:admin,method:'POST',body:{username:'jakey',password:'short11chars'.slice(0,11)}})
+ assert.equal(short.status,400)
+ const ok=await req('/api/admin/reset-password',{cookie:admin,method:'POST',body:{username:'jakey',password:'Jakey_Long_Pass_12!'}})
+ assert.equal(ok.status,200)
+ const sess=(await login('jakey','Jakey_Long_Pass_12!')).cookie
+ const weak=await req('/api/me/password',{cookie:sess,method:'POST',body:{currentPassword:'Jakey_Long_Pass_12!',newPassword:'elevenchars'}})
+ assert.equal(weak.status,400)
+})

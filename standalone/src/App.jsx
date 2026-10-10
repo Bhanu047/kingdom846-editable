@@ -1,38 +1,130 @@
-import {useEffect,useState} from 'react';import {AuthProvider,useAuth} from './context/AuthContext';import WarRoom from './pages/WarRoom';
-const names=['Poofy','Charles','Jakey','Polar','Erika'];
-const Avatar=({name,className=''})=><span aria-label={name} title={name} className={'k791-member-avatar '+className}>{String(name||'?').slice(0,1).toUpperCase()}</span>;
-function Screen(){const {user,ready,refresh,login,logout}=useAuth();const [username,setUsername]=useState(''),[password,setPassword]=useState(''),[error,setError]=useState(''),[tab,setTab]=useState('warroom');useEffect(()=>{refresh()},[refresh]);
-if(!ready)return <div className="min-h-screen grid place-items-center text-gold">Connecting to Kingdom 791…</div>;
-if(!user)return <div className="k791-war-entry">
-  <div className="k791-war-fog" aria-hidden="true"/>
-  <header className="k791-war-topbar"><span className="k791-brandseal">♛ <b>791</b></span><div className="k791-top-right"><span className="k791-lock-dot"/> PRIVATE WAR ROOM</div></header>
-  <main className="k791-war-content">
-    <div className="k791-war-brand">
-      <div className="k791-brand-kicker"><span/> KINGDOM COMMAND <span/></div>
-      <div className="k791-war-medallion" aria-hidden="true"><span className="k791-crown">♛</span><span>791</span></div>
-      <h1>KINGDOM <em>791</em></h1>
-      <div className="k791-war-subheading">WAR ROOM</div>
-      <p>The command center for coordinated rallies.</p>
-    </div>
-    <section className="k791-war-login" aria-label="Member login">
-      <div className="k791-war-loginhead"><div className="k791-war-login-icon">⚔</div><div><h2>ENTER THE WAR ROOM</h2><p>Private access for authorized commanders</p></div></div>
-      <form onSubmit={async e=>{e.preventDefault();setError('');try{await login(username,password)}catch(err){setError(err.message)}}}>
-        <label htmlFor="k791-user">USERNAME</label>
-        <input id="k791-user" autoComplete="username" autoCapitalize="none" autoCorrect="off" spellCheck={false} placeholder="Your assigned username" value={username} onChange={e=>setUsername(e.target.value)} required/>
-        <label htmlFor="k791-pass">PASSWORD</label>
-        <input id="k791-pass" type="password" autoComplete="current-password" placeholder="Your private password" value={password} onChange={e=>setPassword(e.target.value)} required/>
-        {error&&<div role="alert" className="k791-login-error">{error}</div>}
-        <button type="submit">⚔ &nbsp; ENTER WAR ROOM <span>→</span></button>
-      </form>
-      <div className="k791-war-bottomline"><span className="k791-lock-dot"/> SECURE PRIVATE ACCESS <span className="k791-war-label">KINGDOM 791</span></div>
-    </section>
+import {useEffect,useState} from 'react'
+import {AuthProvider,useAuth} from './context/AuthContext'
+import WarRoom from './pages/WarRoom'
+
+export const ALLIANCES=[
+ {tag:'NwO',name:'NewWorldOrder',label:'[NwO] NewWorldOrder',img:'/art/alliance-nwo.webp',tone:'nwo',colors:'Gold & Green'},
+ {tag:'DXP',name:'TheBadBatch',label:'[DXP] TheBadBatch',img:'/art/alliance-dxp.webp',tone:'dxp',colors:'Purple & White Wolf'},
+ {tag:'FME',name:'IXXI',label:'[FME] IXXI',img:'/art/alliance-fme.webp',tone:'fme',colors:'Crimson & White'},
+]
+const MEMBERS=['Spartan','Poofy','Charles','Jakey','Polar','Erika']
+const allianceFor=(text)=>ALLIANCES.find(a=>a.label===text||String(text||'').toUpperCase().includes('['+a.tag+']'))
+
+function Portrait({name,size=40,ring}){
+ const key=String(name||'').toLowerCase()
+ const known=MEMBERS.map(m=>m.toLowerCase()).includes(key)
+ return <img className={'k-portrait '+(ring?'k-ring':'')} style={{width:size,height:size}} src={known?`/art/portrait-${key}.webp`:'/art/lion-crest.webp'} alt={name+' portrait'} loading="lazy"/>
+}
+function Crest({size=44,className=''}){return <img className={'k-crest '+className} style={{width:size,height:size}} src="/art/lion-crest.webp" alt="Kingdom 791 lion crest"/>}
+function AllianceTag({value}){
+ const a=allianceFor(value)
+ if(!value)return <span className="k-tag k-tag-none">No alliance</span>
+ return <span className={'k-tag '+(a?'k-tag-'+a.tone:'')}>{a?.label||value}</span>
+}
+function AllianceCards(){
+ return <div className="k-alliances">{ALLIANCES.map(a=><figure key={a.tag} className={'k-acard k-acard-'+a.tone}><img src={a.img} alt={a.label+' emblem'} loading="lazy"/><figcaption><b>[{a.tag}]</b><span>{a.name}</span></figcaption></figure>)}</div>
+}
+function AlliancePicker({value,onSave,busy}){
+ const [text,setText]=useState(value||'')
+ useEffect(()=>setText(value||''),[value])
+ return <div className="k-picker">
+  <div className="k-chips">{ALLIANCES.map(a=><button type="button" key={a.tag} className={'k-chip k-chip-'+a.tone+(text===a.label?' on':'')} onClick={()=>setText(a.label)}><img src={a.img} alt=""/>{a.label}</button>)}</div>
+  <div className="k-row"><input className="wr-input" maxLength={60} value={text} onChange={e=>setText(e.target.value)} placeholder="Or type another alliance label"/><button className="btn-primary" disabled={busy} onClick={()=>onSave(text)}>Save</button></div>
+ </div>
+}
+async function post(path,body){
+ const r=await fetch(path,{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})
+ let d={};try{d=await r.json()}catch{}
+ if(!r.ok)throw new Error(d.error||'Unable to save')
+ return d
+}
+
+function Login(){
+ const {login}=useAuth()
+ const [u,setU]=useState(''),[p,setP]=useState(''),[err,setErr]=useState(''),[busy,setBusy]=useState(false)
+ return <div className="k-login">
+  <div className="k-login-bg" aria-hidden="true"/>
+  <main className="k-login-main">
+   <section className="k-hero">
+    <Crest size={150} className="k-hero-crest"/>
+    <p className="k-kicker">PRIVATE COMMAND</p>
+    <h1>KINGDOM <em>791</em></h1>
+    <p className="k-sub">WAR ROOM</p>
+    <p className="k-lede">Plan together. Arrive together.</p>
+   </section>
+   <section className="k-card" aria-label="Member login">
+    <h2>Enter the War Room</h2>
+    <form onSubmit={async e=>{e.preventDefault();setErr('');setBusy(true);try{await login(u,p)}catch(x){setErr(x.message)}finally{setBusy(false)}}}>
+     <label htmlFor="k-user">Username</label>
+     <input id="k-user" className="wr-input" autoComplete="username" autoCapitalize="none" autoCorrect="off" spellCheck={false} value={u} onChange={e=>setU(e.target.value)} required/>
+     <label htmlFor="k-pass">Password</label>
+     <input id="k-pass" className="wr-input" type="password" autoComplete="current-password" value={p} onChange={e=>setP(e.target.value)} required/>
+     {err&&<div role="alert" className="k-err">{err}</div>}
+     <button className="btn-primary k-enter" disabled={busy}>{busy?'Opening gates…':'Enter War Room'}</button>
+    </form>
+   </section>
+   <AllianceCards/>
   </main>
-  <footer className="k791-war-footer"><span>791  /  WAR ROOM</span><span>PLAN TOGETHER. ARRIVE TOGETHER.</span></footer>
-</div>;
-return <div className="wr-shell"><header className="wr-header sticky top-0 z-30"><div className="mx-auto max-w-7xl px-4 py-3 flex flex-wrap gap-3 items-center"><span className="k791-header-medallion" aria-hidden="true">791</span><div className="min-w-0 flex-1"><div className="eyebrow">KINGDOM 791 · WAR ROOM</div><div className="font-display text-xl text-gold-bright">Rally Command</div></div><div className="flex gap-2 items-center flex-wrap"><button onClick={()=>setTab('warroom')} className={'rounded-lg border px-3 py-2 text-sm '+(tab==='warroom'?'bg-gold/15 border-gold/60':'border-gold/15')}>War Room</button>{user.role==='admin'&&<button onClick={()=>setTab('manage')} className={'rounded-lg border px-3 py-2 text-sm '+(tab==='manage'?'bg-gold/15 border-gold/60':'border-gold/15')}>Manage Members</button>}<Avatar name={user.display_name} className="h-9 w-9"/><span className="text-sm text-parchment/60 px-2">{user.display_name}</span><button onClick={()=>setTab("profile")} className={"rounded-lg border px-3 py-2 text-sm "+(tab==="profile"?"bg-gold/15 border-gold/60":"border-gold/15")}>My Account</button><button onClick={logout} className="rounded-lg border border-gold/20 px-3 py-2 text-sm">Exit</button></div></div></header><main className="mx-auto max-w-7xl px-3 sm:px-5 py-6">{tab==='manage'&&user.role==='admin'?<Admin/>:tab==='profile'?<Profile user={user} refresh={refresh}/>:<><div className="mb-5 flex flex-wrap gap-3 items-center"><div className="eyebrow">Authorized commanders</div><div className="flex gap-2 flex-wrap">{['Spartan',...names].map(n=><div key={n} className="flex items-center gap-1.5 rounded-full border border-gold/20 bg-ink-2/70 p-1 pr-2"><Avatar name={n} className="h-8 w-8"/><span className="text-xs text-parchment/70">{n}</span></div>)}</div></div><WarRoom/></>}</main></div>}
-function Profile({user,refresh}){const [alliance,setAlliance]=useState(user.alliance||''),[currentPassword,setCurrentPassword]=useState(''),[newPassword,setNewPassword]=useState(''),[msg,setMsg]=useState('');async function save(path,body){setMsg('');const r=await fetch(path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const d=await r.json();if(!r.ok){setMsg(d.error||'Unable to update');return}setMsg('Saved successfully');refresh();setCurrentPassword('');setNewPassword('')}return <div className="max-w-xl mx-auto space-y-5"><div className="panel p-6 text-center"><Avatar name={user.display_name} className="h-28 w-28 mx-auto text-4xl"/><div className="eyebrow mt-3">KINGDOM 791</div><h2 className="font-display text-2xl text-gold">{user.display_name}</h2><p className="text-parchment/60 text-sm">@{user.username} • {user.role==='admin'?'Owner':'War Room Member'}</p></div>{msg&&<p role="status" className="text-gold-bright">{msg}</p>}<form className="panel p-5 space-y-3" onSubmit={e=>{e.preventDefault();save('/api/me/alliance',{alliance})}}><h3 className="font-display text-lg text-gold">My Alliance</h3><input className="wr-input" maxLength="60" value={alliance} onChange={e=>setAlliance(e.target.value)} placeholder="Alliance name / tag"/><button className="btn-primary">Save Alliance</button></form><form className="panel p-5 space-y-3" onSubmit={e=>{e.preventDefault();save('/api/me/password',{currentPassword,newPassword})}}><h3 className="font-display text-lg text-gold">Change My Password</h3><input className="wr-input" type="password" autoComplete="current-password" required placeholder="Current password" value={currentPassword} onChange={e=>setCurrentPassword(e.target.value)}/><input className="wr-input" type="password" autoComplete="new-password" minLength="12" required placeholder="New password (at least 12 characters)" value={newPassword} onChange={e=>setNewPassword(e.target.value)}/><button className="btn-primary">Update Password</button></form></div>}
-function Admin(){const [rows,setRows]=useState([]),[msg,setMsg]=useState(''),[alliance,setAlliance]=useState(''),[target,setTarget]=useState(''),[password,setPassword]=useState(''),[currentPassword,setCurrentPassword]=useState(''),[newPassword,setNewPassword]=useState('');
-const get=async()=>{const r=await fetch('/api/admin/users');const d=await r.json();setRows(d.users||[])};useEffect(()=>{get()},[]);
-async function save(url,body){setMsg('');const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const d=await r.json();if(!r.ok){setMsg(d.error||'Save failed');return}setMsg('Saved successfully');setPassword('');setNewPassword('');setCurrentPassword('');get()}
-return <div className="space-y-5"><div className="panel p-6"><div className="eyebrow">OWNER CONTROL</div><h2 className="font-display text-2xl text-gold">Kingdom 791 Access</h2><p className="mt-2 text-sm text-parchment/60">Five client accounts plus your separate owner login. Set credentials here, never in source files. Each user can change their own password after login.</p></div>{msg&&<p role="status" className="text-gold-bright">{msg}</p>}<div className="grid gap-3 md:grid-cols-2">{rows.map(u=><div key={u.username} className="panel p-5"><div className="flex justify-between items-start"><div><div className="flex items-center gap-3"><Avatar name={u.display_name} className="h-12 w-12"/><div className="font-display text-lg text-gold-bright">{u.display_name}</div></div><div className="text-xs text-parchment/60">@{u.username} {u.role==='admin'?'· Owner':'· Crew'}</div></div></div><form className="flex gap-2 mt-3" onSubmit={e=>{e.preventDefault();save('/api/admin/alliance',{username:u.username,alliance:e.target.elements.alliance.value})}}><input name="alliance" key={u.username+'-'+u.alliance} defaultValue={u.alliance||''} placeholder="Alliance name or tag" className="wr-input min-w-0 flex-1"/><button className="btn-primary !px-3">Save</button></form>{u.role!=='admin'&&<form onSubmit={e=>{e.preventDefault();const p=e.target.elements.password.value;save('/api/admin/reset-password',{username:u.username,password:p});e.target.reset()}} className="mt-2 flex gap-2"><input name="password" type="password" autoComplete="new-password" minLength="12" required placeholder="New password (12+ chars)" className="wr-input min-w-0 flex-1"/><button className="btn-primary !px-3">Set</button></form>}</div>)}</div><form className="panel p-5 space-y-3" onSubmit={e=>{e.preventDefault();save('/api/me/password',{currentPassword,newPassword})}}><h3 className="font-display text-lg text-gold">Change My Password</h3><input type="password" autoComplete="current-password" required value={currentPassword} onChange={e=>setCurrentPassword(e.target.value)} className="wr-input" placeholder="Current password"/><input type="password" autoComplete="new-password" required minLength="12" value={newPassword} onChange={e=>setNewPassword(e.target.value)} className="wr-input" placeholder="New password (12+ characters)"/><button className="btn-primary">Update My Password</button></form></div>}
+ </div>
+}
+
+function Shell(){
+ const {user,logout,refresh}=useAuth()
+ const [tab,setTab]=useState('warroom')
+ const tabs=[['warroom','War Room'],['profile','My Account'],...(user.role==='admin'?[['manage','Members']]:[])]
+ return <div className="k-shell">
+  <header className="k-header">
+   <div className="k-header-in">
+    <Crest size={36}/>
+    <div className="k-title"><span>KINGDOM 791</span><b>War Room</b></div>
+    <nav className="k-tabs" aria-label="Sections">{tabs.map(([id,l])=><button key={id} onClick={()=>setTab(id)} className={tab===id?'on':''}>{l}</button>)}</nav>
+    <button className="k-me" onClick={()=>setTab('profile')} aria-label="My account"><Portrait name={user.username} size={34} ring/><span>{user.display_name}</span></button>
+    <button className="k-exit" onClick={logout}>Exit</button>
+   </div>
+  </header>
+  <main className="k-main">
+   {tab==='manage'&&user.role==='admin'?<Admin/>:tab==='profile'?<Profile user={user} refresh={refresh}/>:<><CommandRoster/><WarRoom/></>}
+  </main>
+ </div>
+}
+function CommandRoster(){
+ return <div className="k-roster" aria-label="Authorized commanders">{MEMBERS.map(n=><div className="k-rp" key={n}><Portrait name={n} size={30}/><span>{n}</span></div>)}</div>
+}
+function Profile({user,refresh}){
+ const [cur,setCur]=useState(''),[nw,setNw]=useState(''),[msg,setMsg]=useState(''),[bad,setBad]=useState(false),[busy,setBusy]=useState(false)
+ const run=async(fn)=>{setMsg('');setBusy(true);try{await fn();setBad(false);setMsg('Saved');refresh()}catch(e){setBad(true);setMsg(e.message)}finally{setBusy(false)}}
+ return <div className="k-narrow">
+  <div className="k-panel k-profile"><Portrait name={user.username} size={120} ring/><div><p className="k-kicker">{user.role==='admin'?'OWNER':'WAR ROOM MEMBER'}</p><h2>{user.display_name}</h2><p className="k-dim">@{user.username}</p><AllianceTag value={user.alliance}/></div></div>
+  {msg&&<p role="status" className={bad?'k-err':'k-ok'}>{msg}</p>}
+  <div className="k-panel"><h3>My Alliance</h3><AlliancePicker value={user.alliance} busy={busy} onSave={a=>run(()=>post('/api/me/alliance',{alliance:a}))}/></div>
+  <form className="k-panel k-form" onSubmit={e=>{e.preventDefault();run(async()=>{await post('/api/me/password',{currentPassword:cur,newPassword:nw});setCur('');setNw('')})}}>
+   <h3>Change My Password</h3>
+   <input className="wr-input" type="password" autoComplete="current-password" required placeholder="Current password" value={cur} onChange={e=>setCur(e.target.value)}/>
+   <input className="wr-input" type="password" autoComplete="new-password" minLength={12} required placeholder="New password (12+ characters)" value={nw} onChange={e=>setNw(e.target.value)}/>
+   <button className="btn-primary" disabled={busy}>Update Password</button>
+  </form>
+ </div>
+}
+function Admin(){
+ const [rows,setRows]=useState([]),[msg,setMsg]=useState(''),[bad,setBad]=useState(false)
+ const load=async()=>{const r=await fetch('/api/admin/users',{credentials:'same-origin'});const d=await r.json();setRows(d.users||[])}
+ useEffect(()=>{load()},[])
+ const run=async(fn)=>{setMsg('');try{await fn();setBad(false);setMsg('Saved');load()}catch(e){setBad(true);setMsg(e.message)}}
+ return <div className="k-wide">
+  <div className="k-panel"><p className="k-kicker">OWNER CONTROL</p><h2>Member Management</h2><p className="k-dim">Five member accounts plus your owner login. Set a new password for a member here; they can change it themselves after logging in.</p></div>
+  {msg&&<p role="status" className={bad?'k-err':'k-ok'}>{msg}</p>}
+  <div className="k-grid">{rows.map(u=><div className="k-panel k-member" key={u.username}>
+   <div className="k-mhead"><Portrait name={u.username} size={64} ring/><div><h3>{u.display_name}</h3><p className="k-dim">@{u.username} · {u.role==='admin'?'Owner':'Member'}</p><AllianceTag value={u.alliance}/></div></div>
+   <AlliancePicker value={u.alliance} onSave={a=>run(()=>post('/api/admin/alliance',{username:u.username,alliance:a}))}/>
+   {u.role!=='admin'&&<form className="k-row" onSubmit={e=>{e.preventDefault();const f=e.target;const pw=f.elements.password.value;run(async()=>{await post('/api/admin/reset-password',{username:u.username,password:pw});f.reset()})}}>
+    <input name="password" className="wr-input" type="password" autoComplete="new-password" minLength={12} required placeholder="New password (12+ chars)"/><button className="btn-primary">Set</button></form>}
+  </div>)}</div>
+ </div>
+}
+function Screen(){
+ const {user,ready,refresh}=useAuth()
+ useEffect(()=>{refresh()},[refresh])
+ if(!ready)return <div className="k-loading"><Crest size={96}/><p>Opening the gates…</p></div>
+ return user?<Shell/>:<Login/>
+}
 export default function App(){return <AuthProvider><Screen/></AuthProvider>}

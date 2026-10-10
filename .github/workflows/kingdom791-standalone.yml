@@ -1,0 +1,27 @@
+name: Kingdom 791 standalone verification
+on:
+  push:
+    branches: [kingdom791-standalone-warroom]
+    paths:
+      - 'standalone/**'
+      - '.github/workflows/kingdom791-standalone.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'standalone/**'
+      - '.github/workflows/kingdom791-standalone.yml'
+  workflow_dispatch:
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: standalone
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install
+      - run: npm run build
+      - run: npm test

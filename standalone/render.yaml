@@ -1,0 +1,17 @@
+# Kingdom 791 War Room: free Render web service + external free Neon PostgreSQL.
+# No persistent disk (paid). DATABASE_URL and ADMIN_PASSWORD are set in the Render dashboard, never here.
+services:
+  - type: web
+    name: kingdom791-war-room
+    runtime: node
+    plan: free
+    branch: kingdom791-standalone-warroom
+    buildCommand: cd standalone && npm install && npm run build
+    startCommand: cd standalone && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false

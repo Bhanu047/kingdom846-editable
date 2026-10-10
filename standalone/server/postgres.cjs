@@ -58,5 +58,5 @@ app.put('/api/war-room/roster',auth,asyncHandler(async(req,res)=>{const groups=c
 app.get('/api/health',asyncHandler(async(req,res)=>{await pool.query('SELECT 1');res.json({ok:true,kingdom:791,database:'postgres'})}))
 const dist=path.join(__dirname,'../dist');app.use(express.static(dist,{index:false}));app.get('/{*path}',(req,res)=>res.sendFile(path.join(dist,'index.html')))
 app.use((err,req,res,next)=>{console.error('Kingdom791 PostgreSQL error:',err.message);if(!res.headersSent)res.status(503).json({error:'Database temporarily unavailable'})})
-if(require.main===module){init().then(()=>app.listen(PORT,'0.0.0.0',()=>console.log('Kingdom791 persistent PostgreSQL War Room online'))).catch(err=>{console.error('PostgreSQL startup failed:',err.message);process.exit(1)})}
+if(require.main===module || process.env.K791_BOOT==='1'){init().then(()=>app.listen(PORT,'0.0.0.0',()=>console.log('Kingdom791 persistent PostgreSQL War Room online'))).catch(err=>{console.error('PostgreSQL startup failed:',err.message);process.exit(1)})}
 module.exports={app,pool,init}

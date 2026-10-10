@@ -5,6 +5,11 @@ on:
     paths:
       - 'standalone/**'
       - '.github/workflows/kingdom791-standalone.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'standalone/**'
+      - '.github/workflows/kingdom791-standalone.yml'
   workflow_dispatch:
 jobs:
   build-and-test:

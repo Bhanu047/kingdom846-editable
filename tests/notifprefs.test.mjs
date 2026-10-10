@@ -12,6 +12,7 @@ import https from 'node:https'
 import crypto from 'node:crypto'
 import { execFileSync } from 'node:child_process'
 import { createRequire } from 'node:module'
+import { PW } from './_seed-passwords.mjs'
 
 const require = createRequire(import.meta.url)
 const workdir = fs.mkdtempSync(path.join(os.tmpdir(), 'k846-prefs-'))
@@ -126,7 +127,7 @@ test('preferences for an unknown device are refused rather than invented', async
 async function adminToken() {
   const out = await fetch(`${BASE}/api/login`, {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ mode: 'admin', username: 'sparta', password: 'SpartaAdmin_846!' }),
+    body: JSON.stringify({ mode: 'admin', username: 'sparta', password: PW.sparta }),
   }).then((r) => r.json())
   return out.token
 }

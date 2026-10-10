@@ -470,26 +470,39 @@ try {
   console.warn('[transfers] could not create the slot uniqueness index -- existing rows double-book a window:', e.message)
 }
 
-// --- Seed 5 accounts (server-side only; never in the frontend bundle) ---
+// --- Seed accounts (server-side only; never in the frontend bundle) ---
+// Starting passwords are not kept in the code: anyone who can read the repo
+// could otherwise sign in as Sparta. Each one comes from the environment as
+// SEED_PASSWORD_<USERNAME> (e.g. SEED_PASSWORD_ABSTRACTION). An account that is
+// created without one gets a random password, printed once to the server log.
+// Accounts already in the database are never touched by this, and every seeded
+// account must replace its starting password on first sign-in.
 const SEED = [
-  { username: 'sparta', password: 'SpartaAdmin_846!', role: 'admin', display_name: 'Sparta (Sovereign)', alliance_tag: '[RYO]', alliance: 'ryo' },
-  { username: 'shoni', password: 'ShoniRyo_846!', role: 'leader', display_name: 'Shoni', alliance_tag: '[RYO]', alliance: 'ryo' },
-  { username: 'lovelykhaos', password: 'LovelyKzK_846!', role: 'leader', display_name: 'Lovely Khaos', alliance_tag: '[KzK]', alliance: 'kzk' },
-  { username: 'ladycharlotte', password: 'CharlotteSas_846!', role: 'leader', display_name: 'Lady Charlotte', alliance_tag: '[SAS]', alliance: 'sas' },
-  { username: 'dunngeon', password: 'DunngeonIce_846!', role: 'leader', display_name: 'Dunngeon', alliance_tag: '[ICE]', alliance: 'ice' },
+  { username: 'sparta', role: 'admin', display_name: 'Sparta (Sovereign)', alliance_tag: '[RYO]', alliance: 'ryo' },
+  { username: 'shoni', role: 'leader', display_name: 'Shoni', alliance_tag: '[RYO]', alliance: 'ryo' },
+  { username: 'lovelykhaos', role: 'leader', display_name: 'Lovely Khaos', alliance_tag: '[KzK]', alliance: 'kzk' },
+  { username: 'ladycharlotte', role: 'leader', display_name: 'Lady Charlotte', alliance_tag: '[SAS]', alliance: 'sas' },
+  { username: 'dunngeon', role: 'leader', display_name: 'Dunngeon', alliance_tag: '[ICE]', alliance: 'ice' },
   // War Room crew. They are not alliance leaders -- they run rallies with Shoni
   // and Sparta, and nothing else -- so they carry their own role rather than
   // 'leader', which would hand them a leader's roster and event schedule too.
-  // Both sign in through the ordinary Login button and must replace the
-  // temporary password below on their first visit.
-  { username: 'panini', password: 'PaniniWar_846!', role: 'warroom', display_name: 'Panini', alliance_tag: '[RYO]', alliance: 'ryo', must_change_password: 1 },
-  { username: 'anonymous', password: 'AnonWar_846!', role: 'warroom', display_name: 'Anonymous', alliance_tag: '[RYO]', alliance: 'ryo', must_change_password: 1 },
+  // They sign in through the ordinary Login button.
+  { username: 'panini', role: 'warroom', display_name: 'Panini', alliance_tag: '[RYO]', alliance: 'ryo' },
+  { username: 'anonymous', role: 'warroom', display_name: 'Anonymous', alliance_tag: '[RYO]', alliance: 'ryo' },
+  { username: 'abstraction', role: 'warroom', display_name: 'Abstraction', alliance_tag: '[RYO]', alliance: 'ryo' },
 ]
+const seedPassword = (username) => {
+  const fromEnv = process.env[`SEED_PASSWORD_${username.toUpperCase()}`]
+  if (fromEnv) return fromEnv
+  const generated = crypto.randomBytes(9).toString('base64url')
+  console.warn(`[seed] created account "${username}" with temporary password ${generated} -- it must be changed on first sign-in (set SEED_PASSWORD_${username.toUpperCase()} to choose it instead)`)
+  return generated
+}
 const exists = db.prepare('SELECT id, display_name FROM users WHERE username = ?')
 const ins = db.prepare('INSERT INTO users (username, password_hash, role, alliance_slug, display_name, alliance_tag, must_change_password) VALUES (?,?,?,?,?,?,?)')
 for (const u of SEED) {
   const row = exists.get(u.username)
-  if (!row) ins.run(u.username, hash(u.password), u.role, u.alliance, u.display_name, u.alliance_tag, u.must_change_password ? 1 : 0)
+  if (!row) ins.run(u.username, hash(seedPassword(u.username)), u.role, u.alliance, u.display_name, u.alliance_tag, 1)
   else if (!row.display_name) db.prepare('UPDATE users SET display_name=?, alliance_tag=? WHERE id=?').run(u.display_name, u.alliance_tag, row.id)
 }
 

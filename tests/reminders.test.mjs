@@ -11,6 +11,7 @@ import path from 'node:path'
 import crypto from 'node:crypto'
 import { execFileSync } from 'node:child_process'
 import { createRequire } from 'node:module'
+import './_seed-passwords.mjs'
 
 const require = createRequire(import.meta.url)
 const workdir = fs.mkdtempSync(path.join(os.tmpdir(), 'k846-push-'))

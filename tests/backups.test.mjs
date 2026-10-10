@@ -10,6 +10,7 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { createRequire } from 'node:module'
+import { PW } from './_seed-passwords.mjs'
 
 const require = createRequire(import.meta.url)
 const workdir = fs.mkdtempSync(path.join(os.tmpdir(), 'k846-backup-'))
@@ -92,7 +93,7 @@ test('the download endpoint refuses anything that is not a backup name', async (
   const base = 'http://127.0.0.1:5395'
   const login = await fetch(`${base}/api/login`, {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ mode: 'admin', username: 'sparta', password: 'SpartaAdmin_846!' }),
+    body: JSON.stringify({ mode: 'admin', username: 'sparta', password: PW.sparta }),
   }).then((r) => r.json())
   assert.ok(login.token, 'admin login works')
   const headers = { Authorization: `Bearer ${login.token}` }

@@ -13,6 +13,7 @@ const AVATARS = './assets/avatars'
 const BY_USERNAME = {
   panini: `${AVATARS}/panini.webp`,
   anonymous: `${AVATARS}/anonymous.webp`,
+  abstraction: `${AVATARS}/abstraction.webp`,
 }
 
 const BY_ALLIANCE = {

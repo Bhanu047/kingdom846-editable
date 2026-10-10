@@ -2707,42 +2707,116 @@ app.post('/api/leader/roster', auth, leaderOnly, (req, res) => {
 
 const WAR_ROOM_MAX_WHALES = 200
 const WAR_ROOM_MAX_GROUPS = 12
+// A pet's march buff lasts two hours in game. A little slack covers clocks that
+// disagree by a minute; anything longer is not a pet and is refused.
+const PET_MS = 2 * 60 * 60 * 1000
+const PET_SLACK_MS = 5 * 60 * 1000
 
-/** Only the fields the room actually renders survive a save. */
-function cleanWhales(raw) {
+const wrText = (v, n, fallback) => String(v == null ? '' : v).trim().slice(0, n) || fallback
+const nameKey = (name) => String(name || '').trim().toLowerCase()
+
+/**
+ * The whales, once each, with the march time that belongs to them. A whale's
+ * march does not change with the group it is in, so it lives here and every
+ * group points at it -- fix it once and every group is right.
+ *
+ * `petMarch` and `petUntil` are a running pet buff: until `petUntil` the whale
+ * marches at `petMarch`, then back at `march`. An expired buff is dropped here,
+ * which is what "goes back by itself" means for anyone reading after it ends.
+ */
+function cleanCatalog(raw, now = Date.now()) {
   const list = Array.isArray(raw) ? raw.slice(0, WAR_ROOM_MAX_WHALES) : []
-  return list.map((w, i) => ({
-    id: String(w && w.id != null ? w.id : `w${i}`).slice(0, 64),
-    name: String((w && w.name) || '').trim().slice(0, 64) || 'Unnamed',
-    march: String((w && w.march) || '0:00').trim().slice(0, 12),
-    status: String((w && w.status) || 'Undeployed').trim().slice(0, 48),
-  }))
+  const seen = new Set()
+  const out = []
+  list.forEach((w, i) => {
+    if (!w) return
+    const id = wrText(w.id, 64, `c${i}`)
+    if (seen.has(id)) return
+    seen.add(id)
+    const whale = { id, name: wrText(w.name, 64, 'Unnamed'), march: wrText(w.march, 12, '0:00') }
+    const until = Number(w.petUntil)
+    if (Number.isFinite(until) && until > now && until <= now + PET_MS + PET_SLACK_MS) {
+      whale.petUntil = until
+      whale.petMarch = wrText(w.petMarch, 12, whale.march)
+    }
+    out.push(whale)
+  })
+  return out
 }
 
 /**
- * A castle fight is not one roster -- there is the main rally and the counter --
- * so the shared document is the groups, each with its own whales. A bare array
- * is read as the single roster this held before groups existed.
+ * The shared document: the whale list plus the rally groups. A group holds
+ * which whales are in it and where each is deployed -- never a march time of
+ * its own.
+ *
+ * Older shapes still read: a bare array of whales (before groups), and groups
+ * whose whales carry their own name and march (before the shared list). Those
+ * are matched to the list by name, and a name it does not have yet joins it.
+ * A screen still running the older page saves the older shape, so a whale it
+ * sends with a march time also updates that whale's march here.
  */
-function cleanGroups(raw) {
-  // Whales carry a march time and no whale list of their own.
-  if (Array.isArray(raw) && raw.length && raw.every((w) => w && !Array.isArray(w.whales) && w.march !== undefined)) {
-    return [{ id: 'main', name: 'Main rally', whales: cleanWhales(raw) }]
+function cleanWarRoom(raw, base = [], now = Date.now()) {
+  let groupsRaw = raw && !Array.isArray(raw) ? raw.groups : raw
+  if (Array.isArray(groupsRaw) && groupsRaw.length && groupsRaw.every((w) => w && !Array.isArray(w.whales) && w.march !== undefined)) {
+    groupsRaw = [{ id: 'main', name: 'Main rally', whales: groupsRaw }]
   }
-  const list = Array.isArray(raw) ? raw.slice(0, WAR_ROOM_MAX_GROUPS) : []
-  return list.map((g, i) => ({
-    id: String(g && g.id != null ? g.id : `g${i}`).slice(0, 64),
-    name: String((g && g.name) || '').trim().slice(0, 48) || 'Untitled',
-    whales: cleanWhales(g && g.whales),
-  }))
+  const hasCatalog = raw && !Array.isArray(raw) && Array.isArray(raw.catalog)
+  const catalog = cleanCatalog(hasCatalog ? raw.catalog : base, now)
+  const byId = new Map(catalog.map((w) => [w.id, w]))
+  const byName = new Map(catalog.map((w) => [nameKey(w.name), w]))
+
+  const glist = Array.isArray(groupsRaw) ? groupsRaw.slice(0, WAR_ROOM_MAX_GROUPS) : []
+  const groups = glist.map((g, gi) => {
+    const entries = (Array.isArray(g && g.whales) ? g.whales.slice(0, WAR_ROOM_MAX_WHALES) : []).map((e, i) => {
+      let whale = e && e.whaleId != null ? byId.get(String(e.whaleId)) : null
+      if (!whale && e && e.name) {
+        whale = byName.get(nameKey(e.name))
+        if (!whale && catalog.length < WAR_ROOM_MAX_WHALES) {
+          whale = { id: `c${now.toString(36)}${gi}x${i}`, name: wrText(e.name, 64, 'Unnamed'), march: wrText(e.march, 12, '0:00') }
+          catalog.push(whale); byId.set(whale.id, whale); byName.set(nameKey(whale.name), whale)
+        } else if (whale && !hasCatalog && e.march != null) {
+          whale.march = wrText(e.march, 12, whale.march)
+        }
+      }
+      if (!whale) return null
+      return { id: wrText(e && e.id, 64, `w${gi}x${i}`), whaleId: whale.id, status: wrText(e && e.status, 48, 'Undeployed') }
+    }).filter(Boolean)
+    return { id: wrText(g && g.id, 64, `g${gi}`), name: wrText(g && g.name, 48, 'Untitled'), whales: entries }
+  })
+  return { catalog, groups }
+}
+
+/**
+ * What a screen reads. Each group's whales also carry the whale's name and its
+ * march time right now -- the pet time while a pet runs -- so anything that
+ * only wants "who, how fast, where" does not have to join the list itself.
+ */
+function presentWarRoom(doc, now = Date.now()) {
+  const byId = new Map(doc.catalog.map((w) => [w.id, w]))
+  return {
+    catalog: doc.catalog,
+    groups: doc.groups.map((g) => ({
+      ...g,
+      whales: g.whales.map((e) => {
+        const w = byId.get(e.whaleId)
+        const march = w.petUntil && w.petUntil > now ? w.petMarch : w.march
+        return { ...e, name: w.name, march }
+      }),
+    })),
+  }
+}
+
+const storedWarRoom = () => {
+  const row = db.prepare('SELECT data, version, updated_at, updated_by FROM war_room_state WHERE id = 1').get()
+  let doc = { catalog: [], groups: [] }
+  if (row) { try { doc = cleanWarRoom(JSON.parse(row.data)) } catch {} }
+  return { row, doc }
 }
 
 const readWarRoom = () => {
-  const row = db.prepare('SELECT data, version, updated_at, updated_by FROM war_room_state WHERE id = 1').get()
-  let groups = []
-  if (row) { try { groups = cleanGroups(JSON.parse(row.data)) } catch { groups = [] } }
+  const { row, doc } = storedWarRoom()
   return {
-    groups,
+    ...presentWarRoom(doc),
     version: row ? row.version : 0,
     updated_at: row ? row.updated_at : null,
     updated_by: row ? row.updated_by : null,
@@ -2752,9 +2826,10 @@ const readWarRoom = () => {
 app.get('/api/war-room/roster', auth, warRoomOnly, (_req, res) => res.json(readWarRoom()))
 
 app.put('/api/war-room/roster', auth, warRoomOnly, (req, res) => {
-  const groups = cleanGroups(req.body && req.body.groups)
-  const claimed = req.body && req.body.version
+  const body = req.body || {}
+  const claimed = body.version
   const by = req.user.display_name || req.user.username
+  let doc
   // The save and the version check are one unit: two callers pressing Save in
   // the same second must not both read version 4 and both write version 5.
   const commit = db.transaction(() => {
@@ -2763,10 +2838,13 @@ app.put('/api/war-room/roster', auth, warRoomOnly, (req, res) => {
     // A save that names no version is a deliberate overwrite -- the caller has
     // already been shown the other roster and chose theirs.
     if (claimed != null && Number(claimed) !== version) return null
+    // An older page sends groups alone; they are matched against the stored list.
+    const base = storedWarRoom().doc.catalog
+    doc = Array.isArray(body.catalog) ? cleanWarRoom({ groups: body.groups, catalog: body.catalog }, base) : cleanWarRoom(body.groups, base)
     const next = version + 1
     db.prepare(`INSERT INTO war_room_state (id, data, version, updated_at, updated_by) VALUES (1,?,?,datetime('now'),?)
       ON CONFLICT(id) DO UPDATE SET data=excluded.data, version=excluded.version, updated_at=excluded.updated_at, updated_by=excluded.updated_by`)
-      .run(JSON.stringify(groups), next, by)
+      .run(JSON.stringify(doc), next, by)
     return next
   })
   const saved = commit()
@@ -2775,7 +2853,7 @@ app.put('/api/war-room/roster', auth, warRoomOnly, (req, res) => {
     // than leaving the caller guessing what they would have destroyed.
     return res.status(409).json({ error: 'Someone else saved the roster while you were editing.', ...readWarRoom() })
   }
-  logEvent(req, 'action', 'war-room-save', { detail: String(groups.reduce((n, g) => n + g.whales.length, 0)), userId: req.user.id })
+  logEvent(req, 'action', 'war-room-save', { detail: String(doc.groups.reduce((n, g) => n + g.whales.length, 0)), userId: req.user.id })
   res.json(readWarRoom())
 })
 

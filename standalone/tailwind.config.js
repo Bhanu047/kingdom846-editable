@@ -4,23 +4,23 @@ export default {
   theme: {
     extend: {
       colors: {
-        ink: '#0E1220',
-        'ink-2': '#161B30',
-        'ink-3': '#1E2440',
-        parchment: '#F3E8CC',
-        'parchment-dim': '#D9CBA3',
-        gold: '#D4AF37',
-        'gold-deep': '#9C7A24',
-        'gold-bright': '#E8C766',
+        ink: '#0D0908',
+        'ink-2': '#150E0C',
+        'ink-3': '#1E1411',
+        parchment: '#F6ECE6',
+        'parchment-dim': '#C9B2A6',
+        gold: '#EC6A30',
+        'gold-deep': '#9A3A16',
+        'gold-bright': '#FFB27A',
         crimson: '#8C2B3A',
         amethyst: '#6647A6',
         ice: '#5FA8CC'
       },
       fontFamily: {
-        display: ['Cinzel', 'serif'],
+        display: ['"Barlow Condensed"', 'sans-serif'],
         decorative: ['"Cinzel Decorative"', 'serif'],
-        body: ['Spectral', 'serif'],
-        sans: ['Montserrat', 'sans-serif'],
+        body: ['Barlow', 'sans-serif'],
+        sans: ['Barlow', 'sans-serif'],
         mono: ['"JetBrains Mono"', 'monospace']
       },
       backgroundImage: {

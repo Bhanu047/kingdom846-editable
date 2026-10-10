@@ -1,0 +1,323 @@
+/* Rally console instrument styles (live call screen + approach map). */
+.k-plate {
+  position: relative;
+  border-radius: 14px;
+  border: 1px solid transparent;
+  background-image:
+    linear-gradient(168deg, rgba(18,11,9,.97), rgba(9,6,5,.98)),
+    linear-gradient(150deg, rgba(255,226,210,.34) 0%, rgba(236,104,48,.20) 24%, rgba(70,24,12,.35) 52%, rgba(236,104,48,.20) 78%, rgba(255,226,210,.30) 100%);
+  background-origin: padding-box, border-box;
+  background-clip: padding-box, border-box;
+}
+/* Registration ticks at the corners -- the marks on an instrument face. Eight
+   gradients on one pseudo, so no extra elements and nothing to clip. */
+.k-plate::after {
+  content: ""; position: absolute; inset: 7px; pointer-events: none;
+  background:
+    linear-gradient(90deg, rgba(255,178,122,.5) 0 13px, transparent 13px) 0 0/100% 1px no-repeat,
+    linear-gradient(270deg, rgba(255,178,122,.5) 0 13px, transparent 13px) 100% 0/100% 1px no-repeat,
+    linear-gradient(180deg, rgba(255,178,122,.5) 0 13px, transparent 13px) 0 0/1px 100% no-repeat,
+    linear-gradient(180deg, rgba(255,178,122,.5) 0 13px, transparent 13px) 100% 0/1px 100% no-repeat,
+    linear-gradient(90deg, rgba(255,178,122,.5) 0 13px, transparent 13px) 0 100%/100% 1px no-repeat,
+    linear-gradient(270deg, rgba(255,178,122,.5) 0 13px, transparent 13px) 100% 100%/100% 1px no-repeat,
+    linear-gradient(0deg, rgba(255,178,122,.5) 0 13px, transparent 13px) 0 100%/1px 100% no-repeat,
+    linear-gradient(0deg, rgba(255,178,122,.5) 0 13px, transparent 13px) 100% 100%/1px 100% no-repeat;
+}
+.wr-console {
+  --wr: #EC6A30;          /* HOLD    -- gold, calm  */
+  --wr-dim: rgba(236,104,48,.16);
+  --wr-glow: rgba(236,104,48,.30);
+  position: relative;
+  overflow: hidden;
+  transition: --wr 420ms linear;
+}
+.wr-console[data-phase="STANDBY"] { --wr:#FFB27A; --wr-dim:rgba(255,178,122,.20); --wr-glow:rgba(255,178,122,.38) }
+.wr-console[data-phase="CALL"]    { --wr:#E5484D; --wr-dim:rgba(229,72,77,.22);  --wr-glow:rgba(229,72,77,.50) }
+.wr-console[data-phase="LAUNCH"]  { --wr:#3DD68C; --wr-dim:rgba(61,214,140,.22); --wr-glow:rgba(61,214,140,.55) }
+.wr-console[data-phase="ARMING"]  { --wr:#7F9ED6; --wr-dim:rgba(127,158,214,.18);--wr-glow:rgba(127,158,214,.34) }
+
+/* The sweep. A war room has a radar; this is one, drawn as a
+   rotating conic wedge rather than a sprite so it inherits the
+   state colour for free. */
+.wr-radar {
+  position: absolute; inset: -40%;
+  background: conic-gradient(from 0deg, var(--wr-glow) 0deg, transparent 42deg, transparent 360deg);
+  opacity: .16;
+  animation: wr-sweep 4.2s linear infinite;
+  pointer-events: none;
+}
+@keyframes wr-sweep { to { transform: rotate(360deg) } }
+
+/* Range rings, so the sweep has something to sweep over. */
+.wr-rings {
+  position: absolute; inset: 0; pointer-events: none; opacity: .5;
+  background:
+    radial-gradient(circle at 50% 50%, transparent 21%, var(--wr-dim) 21.4%, transparent 22%),
+    radial-gradient(circle at 50% 50%, transparent 35%, var(--wr-dim) 35.4%, transparent 36%),
+    radial-gradient(circle at 50% 50%, transparent 49%, var(--wr-dim) 49.4%, transparent 50%);
+}
+
+/* CRT scanlines + a faint grid. Cheap, and it is what sells the
+   console as a screen inside the room rather than a web page. */
+.wr-scan {
+  position: absolute; inset: 0; pointer-events: none; opacity: .35;
+  background:
+    repeating-linear-gradient(to bottom, rgba(0,0,0,.22) 0 1px, transparent 1px 3px),
+    linear-gradient(rgba(255,255,255,.02) 1px, transparent 1px) 0 0 / 100% 34px,
+    linear-gradient(90deg, rgba(255,255,255,.02) 1px, transparent 1px) 0 0 / 34px 100%;
+}
+
+/* THE NUMERAL. Tabular figures so it does not jitter as digits
+   change -- a countdown that shifts sideways every second is
+   unreadable at a glance, which is the only way this is read. */
+.wr-readout {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+  letter-spacing: -.02em;
+  color: var(--wr);
+  text-shadow: 0 0 28px var(--wr-glow), 0 0 70px var(--wr-dim);
+  line-height: .92;
+}
+.wr-console[data-phase="CALL"]   .wr-readout { animation: wr-beat 1s steps(1,end) infinite }
+.wr-console[data-phase="LAUNCH"] .wr-readout { animation: wr-launch 620ms cubic-bezier(.2,1.5,.4,1) }
+@keyframes wr-beat   { 0%,54% { opacity:1 } 55%,100% { opacity:.55 } }
+@keyframes wr-launch { from { transform: scale(.72); opacity:.2 } 60% { transform: scale(1.09) } to { transform: none } }
+
+/* The launch ring -- one expanding shock, not a loop. A pulse
+   that repeats reads as "waiting"; this has to read as "now". */
+.wr-burst {
+  position: absolute; left: 50%; top: 50%; width: 42vmin; height: 42vmin;
+  translate: -50% -50%; border-radius: 999px; pointer-events: none;
+  border: 2px solid var(--wr);
+  animation: wr-burst 700ms cubic-bezier(.15,.7,.3,1) forwards;
+}
+@keyframes wr-burst { from { scale:.25; opacity:.85 } to { scale:1.75; opacity:0 } }
+
+/* FIRING RAIL. The whole operation on one line: every call is a
+   notch, the playhead is where you are, and the fill behind it
+   is what is already spent. */
+.wr-rail { position: relative; height: 34px }
+.wr-rail-track {
+  position: absolute; inset: 14px 0 auto; height: 6px; border-radius: 999px;
+  background: rgba(255,255,255,.05);
+  box-shadow: inset 0 0 0 1px rgba(236,104,48,.14);
+}
+.wr-rail-fill {
+  position: absolute; inset: 14px auto auto 0; height: 6px; border-radius: 999px;
+  background: linear-gradient(90deg, rgba(236,104,48,.35), var(--wr));
+  box-shadow: 0 0 14px var(--wr-glow);
+  transition: width 120ms linear;
+}
+.wr-notch {
+  position: absolute; top: 6px; width: 2px; height: 22px; border-radius: 1px;
+  background: rgba(255,178,122,.45); translate: -1px 0;
+}
+.wr-notch[data-done="true"] { background: rgba(246,236,230,.22) }
+.wr-head {
+  position: absolute; top: 3px; width: 3px; height: 28px; border-radius: 2px;
+  background: var(--wr); box-shadow: 0 0 12px var(--wr), 0 0 26px var(--wr-glow);
+  translate: -1.5px 0; transition: left 120ms linear;
+}
+
+/* Row states in the firing order. */
+/* Tighter than a stock plaque. The queue sits above the call panel now, so
+   every row it saves is a row of the big readout that stays on screen. */
+.wr-row { padding: .55rem .75rem; transition: background 260ms ease, border-color 260ms ease, opacity 260ms ease }
+.wr-row[data-state="active"] {
+  border-color: var(--wr) !important;
+  background: color-mix(in srgb, var(--wr) 10%, transparent);
+  box-shadow: 0 0 0 1px var(--wr-dim), 0 8px 24px -14px var(--wr);
+}
+.wr-row[data-state="done"] { opacity: .38 }
+
+/* The live dot in the status bar. */
+.wr-live { animation: wr-live 1.6s ease-in-out infinite }
+@keyframes wr-live { 0%,100% { opacity:1; box-shadow:0 0 0 0 var(--wr-glow) } 50% { opacity:.55; box-shadow:0 0 0 6px transparent } }
+
+@media (prefers-reduced-motion: reduce) {
+  .wr-radar, .wr-live { animation: none !important }
+  .wr-console[data-phase="CALL"] .wr-readout,
+  .wr-console[data-phase="LAUNCH"] .wr-readout { animation: none !important }
+  .wr-burst { display: none }
+}
+
+/* The radar, rings and scanline layers are ordinary children, so they paint
+   over .k-plate's corner registration ticks and bury them. Lift the ticks
+   above the atmosphere but keep them under the readout, which owns z-10.
+   (Do NOT also apply .gold-corners here: it targets the same ::after and the
+   two rules merge into a malformed hybrid bracket.) */
+.wr-console.k-plate::after { z-index: 2 }
+
+/* ------------------------------------------------------------
+   The approach trace.
+   ------------------------------------------------------------
+   The call panel's own edge drains as a call comes due.
+
+   It measures a FIXED ten seconds, not the gap to the next call.
+   That distinction is the whole point. Gaps vary -- eight seconds
+   here, twenty-two there -- so an edge scaled to the gap would sit
+   half-drawn at rates that mean something different every time,
+   which looks informative and is not. Pinned to ten, it always
+   drains at the same rate, so a caller learns what a quarter-edge
+   looks like and can act on it without reading the number.
+
+   Drawn on the border rather than around the numeral: it needs no
+   space of its own, does not fight the radar rings, and is visible
+   from the far corner of vision, which is the whole job in the last
+   seconds when the caller is looking at the game instead.
+   ------------------------------------------------------------ */
+/* The approach trace: the call panel's own border, draining. Drawn 1:1 in
+   pixels by the component, so nothing here rescales it. */
+.wr-edge {
+  position: absolute; inset: 0;
+  pointer-events: none; z-index: 3; overflow: visible;
+}
+.wr-edge path {
+  stroke: var(--wr);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 7px var(--wr-glow));
+}
+/* On the call itself the whole outline is lit and released, so the panel edge
+   reads as the thing that fired. */
+.wr-console[data-phase="LAUNCH"] .wr-edge path { animation: wr-edge-flash 620ms ease-out forwards }
+@keyframes wr-edge-flash { from { opacity: 1 } to { opacity: 0 } }
+
+@media (prefers-reduced-motion: reduce) {
+  .wr-console[data-phase="LAUNCH"] .wr-edge path { animation: none }
+}
+/* The target at the centre, every march closing on it from its own bearing.
+   Positions are driven in pixels by RallyApproach -- the rings are the only
+   part CSS owns, so the two can never disagree about where the middle is. */
+.wr-field {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  max-height: 20rem;
+  margin: 0 auto;
+  max-width: 20rem;
+}
+.wr-field-ring {
+  position: absolute;
+  left: 50%; top: 50%;
+  width: calc(100% * var(--k));
+  height: calc(100% * var(--k));
+  margin-left: calc(-50% * var(--k));
+  margin-top: calc(-50% * var(--k));
+  border-radius: 50%;
+  border: 1px solid rgba(236, 104, 48, .14);
+}
+/* The target is a castle now rather than a third gold dot. Sized in one place,
+   centred by translate rather than by negative margins so the size can change
+   without the centring having to be recomputed. */
+.wr-field-core {
+  position: absolute;
+  left: 50%; top: 50%;
+  width: 34px; height: 28px;
+  translate: -50% -50%;
+  color: var(--wr, #EC6A30);
+  filter: drop-shadow(0 0 9px var(--wr-glow, rgba(236,104,48,.3)));
+}
+.wr-castle-art { display: block; width: 100%; height: 100%; overflow: visible }
+
+/* TAKEN. Until now the castle wore the phase colour like everything else, so
+   the one instant the whole screen exists for -- every march in, together --
+   looked exactly like the second before it. When the last one lands the castle
+   stops being the target and becomes the hit, and goes red and stays red.
+   Not the phase red: this is its own state, and it outlives the phase that
+   caused it. */
+.wr-field[data-struck="true"] .wr-field-core {
+  color: #E5484D;
+  filter: drop-shadow(0 0 16px rgba(229, 72, 77, .6));
+  animation: wr-castle-struck 620ms cubic-bezier(.2, 1.4, .35, 1) both;
+}
+/* One strike, no loop: a castle that keeps flashing reads as an alarm still
+   going off rather than a blow that has landed. Scale only -- nothing on this
+   site slides sideways. */
+@keyframes wr-castle-struck {
+  0%   { scale: 1 }
+  32%  { scale: 1.28 }
+  100% { scale: 1 }
+}
+.wr-struck-label { color: #E5484D; font-weight: 600 }
+
+@media (prefers-reduced-motion: reduce) {
+  /* The red is the information; the lunge is not. */
+  .wr-field[data-struck="true"] .wr-field-core { animation: none }
+}
+
+/* A march. The element is placed at the field's origin and moved by transform,
+   so its own box never enters the layout maths. */
+.wr-march {
+  position: absolute;
+  left: 0; top: 0;
+  margin: 0;
+  color: var(--wr, #EC6A30);
+  will-change: transform;
+}
+/* Centred on the march's own point by translate, so the banner can be any size
+   without the transform anime drives on the parent having to know. */
+.wr-march-mark {
+  position: absolute;
+  left: 0; top: 0;
+  /* Square, because the mark is: a tall narrow box shrank the swords to fit its
+     width and they dissolved. Every candidate shape wants the box its own
+     proportions need. */
+  width: 17px; height: 17px;
+  translate: -50% -50%;
+  filter: drop-shadow(0 0 7px var(--wr-glow, rgba(236,104,48,.35)));
+  transition: opacity .3s ease, scale .3s ease;
+}
+.wr-rally-art { display: block; width: 100%; height: 100%; overflow: visible }
+.wr-march-name {
+  position: absolute;
+  left: 0;
+  translate: -50% 0;
+  top: 12px;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-size: 8px;
+  letter-spacing: .04em;
+  white-space: nowrap;
+  color: rgba(246, 236, 230, .5);
+  pointer-events: none;
+}
+/* Waiting marches are present but quiet: the eye should find the ones moving. */
+/* scale, not transform: the mark is centred with `translate`, and a transform
+   here would replace that and throw the banner off its own point. */
+.wr-march[data-state="waiting"] .wr-march-mark { opacity: .34; scale: .78 }
+.wr-march[data-state="waiting"] .wr-march-name { color: rgba(246, 236, 230, .28) }
+.wr-march[data-state="flying"]  .wr-march-mark { opacity: 1; scale: 1 }
+/* Landed: it is inside the walls, so it stands down rather than vanishing. */
+.wr-march[data-state="landed"]  .wr-march-mark { opacity: .45; scale: .6 }
+/* The name STAYS. These are typed into the roster by hand, one per whale, and
+   they are how the caller knows who is where -- dropping them at impact threw
+   away the thing the field is labelled with. The pile they made was real, but
+   the answer was to spread them, not delete them: RallyApproach walks each
+   label outward along its own bearing as its march closes, so at impact they
+   ring the castle instead of stacking on it. */
+.wr-march[data-state="landed"]  .wr-march-name { opacity: .6 }
+/* The label is positioned by transform every frame, so it must not animate the
+   same property -- only the fade between states belongs here. */
+.wr-march-name { transition: opacity .3s ease, color .3s ease }
+
+.wr-impact {
+  position: absolute;
+  left: 50%; top: 50%;
+  width: 100%; height: 100%;
+  margin: -50% 0 0 -50%;
+  border-radius: 50%;
+  border: 2px solid var(--wr, #EC6A30);
+  box-shadow: 0 0 30px var(--wr-glow, rgba(236,104,48,.35));
+  opacity: 0;
+  pointer-events: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .wr-march-mark, .wr-march-name { transition: none }
+  .wr-impact { display: none }
+}
+
+
+/* Shared console primitives (previously from the legacy site stylesheet). */
+.eyebrow { font: 600 10.5px/1.2 var(--ui); letter-spacing: .22em; text-transform: uppercase; color: var(--gold); }
+.royal-plaque { border-radius: 11px; border: 1px solid var(--line); background: rgba(255, 226, 210, .025); }
+.wr-console .font-display { font-family: var(--display); text-transform: uppercase; letter-spacing: .02em; }

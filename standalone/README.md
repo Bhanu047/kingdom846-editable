@@ -14,9 +14,9 @@ Requires Node 20+. From `standalone/`:
 
 ```bash
 npm install
-ADMIN_PASSWORD='replace-with-a-unique-strong-password' npm run dev
+ADMIN_PASSWORD='replace-with-a-unique-strong-password' npm start
 ```
-For live API, separately run `ADMIN_PASSWORD='...' npm start` in another terminal; dev server proxies `/api` to port 5000 only if `PORT=5000` is set on the backend.
+In a second terminal run `npm run dev` for hot-reloaded development. Vite proxies `/api` to the standalone backend on port 10000.
 For a built app: `npm run build && ADMIN_PASSWORD='...' npm start`.
 
 ## Production deployment
@@ -30,3 +30,7 @@ Built-in theme: `public/crest.svg`, `public/war-banner.svg`, and six themed SVG 
 Do not use the Kingdom 846 Render service, disk, domain or environment variables. The application must run as **a separate new Render service** with the Kingdom 791 project root and its own persistent `DB_PATH`. No client password is committed. The owner supplies `ADMIN_PASSWORD` as an environment secret, logs in as `spartan`, then assigns strong initial passwords for Poofy, Charles, Jakey, Polar and Erika. Each can then change their own password.
 
 The standalone version has no signup route: exactly six provisioned accounts (five client members plus the owner). It includes the existing rally grouping, synchronized call times, approach visualization, and shared roster conflict handling.
+
+## Verify before deployment
+
+From `standalone/`, run `npm install && npm run build && npm test`. The integration suite starts the application on a temporary port and writes to a throwaway database. A passing test run is required before any user credentials are distributed or the service is deployed. Do not mark deployment as successful until a fresh Render persistent database survives a restart and the five member accounts can log in independently.

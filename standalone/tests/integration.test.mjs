@@ -10,7 +10,7 @@ import {fileURLToPath} from 'node:url'
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..')
 const dir=fs.mkdtempSync(path.join(os.tmpdir(),'k791-integration-'))
 const db=path.join(dir,'separate-791.db')
-const ADMIN_PASSWORD='Owner791Test_Password_A!9'
+const ADMIN_PASSWORD='K791Test_1!'
 let processHandle,base
 const port=await new Promise((resolve,reject)=>{const s=net.createServer();s.once('error',reject);s.listen(0,'127.0.0.1',()=>{const port=s.address().port;s.close(()=>resolve(port))})})
 base='http://127.0.0.1:'+port

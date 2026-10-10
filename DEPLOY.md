@@ -102,8 +102,12 @@ This is a larger change — ask and I'll wire it up.
 
 ## After first deploy: change the default passwords
 
-Log in as Sparta (`sparta` / `SpartaAdmin_846!`) → Master Console → reset every
-leader and your own admin password. Default credentials are only meant for first login.
+Starting passwords are not stored in the code. Before the first deploy, set
+`SEED_PASSWORD_<USERNAME>` (e.g. `SEED_PASSWORD_SPARTA`) for any account whose
+starting password you want to choose; any account created without one gets a
+random password printed once in the server log. Every seeded account must set
+its own password at first sign-in. Sparta can reset any leader or War Room
+password from the Master Console.
 
 ---
 

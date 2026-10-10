@@ -16,6 +16,7 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import { createRequire } from 'node:module'
+import { PW } from './_seed-passwords.mjs'
 
 const require = createRequire(import.meta.url)
 const workdir = fs.mkdtempSync(path.join(os.tmpdir(), 'k846-warroom-'))
@@ -59,10 +60,11 @@ const tokenFor = async (username, password, mode = 'leader') => {
   return body.token
 }
 
-test('panini and anonymous exist and can sign in through the leader door', async () => {
+test('panini, anonymous and abstraction exist and can sign in through the leader door', async () => {
   for (const [username, password, display] of [
-    ['panini', 'PaniniWar_846!', 'Panini'],
-    ['anonymous', 'AnonWar_846!', 'Anonymous'],
+    ['panini', PW.panini, 'Panini'],
+    ['anonymous', PW.anonymous, 'Anonymous'],
+    ['abstraction', PW.abstraction, 'Abstraction'],
   ]) {
     const { status, body } = await login(username, password)
     assert.equal(status, 200)
@@ -75,10 +77,10 @@ test('panini and anonymous exist and can sign in through the leader door', async
 
 test('the war room accounts are not admins and not alliance leaders', async () => {
   // Royal Access stays Sparta's alone.
-  const royal = await login('panini', 'PaniniWar_846!', 'admin')
+  const royal = await login('panini', PW.panini, 'admin')
   assert.equal(royal.status, 403)
 
-  const token = await tokenFor('panini', 'PaniniWar_846!')
+  const token = await tokenFor('panini', PW.panini)
   // A leader's roster upload is not theirs to touch.
   const roster = await fetch(`${BASE}/api/leader/roster`, { headers: authed(token) })
   assert.equal(roster.status, 403)
@@ -87,11 +89,12 @@ test('the war room accounts are not admins and not alliance leaders', async () =
   assert.equal(leaders.status, 403)
 })
 
-test('what Shoni saves is what Panini, Anonymous and Sparta read', async () => {
-  const shoni = await tokenFor('shoni', 'ShoniRyo_846!')
-  const panini = await tokenFor('panini', 'PaniniWar_846!')
-  const anon = await tokenFor('anonymous', 'AnonWar_846!')
-  const sparta = await tokenFor('sparta', 'SpartaAdmin_846!', 'admin')
+test('what Shoni saves is what Panini, Anonymous, Abstraction and Sparta read', async () => {
+  const shoni = await tokenFor('shoni', PW.shoni)
+  const panini = await tokenFor('panini', PW.panini)
+  const anon = await tokenFor('anonymous', PW.anonymous)
+  const abstraction = await tokenFor('abstraction', PW.abstraction)
+  const sparta = await tokenFor('sparta', PW.sparta, 'admin')
 
   const start = await read(shoni)
   const saved = await write(shoni, oneGroup([
@@ -100,7 +103,7 @@ test('what Shoni saves is what Panini, Anonymous and Sparta read', async () => {
   ]), start.version)
   assert.equal(saved.status, 200)
 
-  for (const [who, token] of [['panini', panini], ['anonymous', anon], ['sparta', sparta]]) {
+  for (const [who, token] of [['panini', panini], ['anonymous', anon], ['abstraction', abstraction], ['sparta', sparta]]) {
     const seen = await read(token)
     assert.deepEqual(whalesOf(seen).map((w) => `${w.name}@${w.march}`), ['Bru@1:12', 'Kaz@0:48'], `${who} saw a different roster`)
     assert.equal(seen.updated_by, 'Shoni')
@@ -108,9 +111,9 @@ test('what Shoni saves is what Panini, Anonymous and Sparta read', async () => {
 })
 
 test("and what Anonymous saves comes back to everyone else, Sparta included", async () => {
-  const anon = await tokenFor('anonymous', 'AnonWar_846!')
-  const shoni = await tokenFor('shoni', 'ShoniRyo_846!')
-  const sparta = await tokenFor('sparta', 'SpartaAdmin_846!', 'admin')
+  const anon = await tokenFor('anonymous', PW.anonymous)
+  const shoni = await tokenFor('shoni', PW.shoni)
+  const sparta = await tokenFor('sparta', PW.sparta, 'admin')
 
   const current = await read(anon)
   const saved = await write(anon, oneGroup([{ id: 'c', name: 'Nyx', march: '2:05', status: 'HUN' }]), current.version)
@@ -131,8 +134,8 @@ test("and what Anonymous saves comes back to everyone else, Sparta included", as
 })
 
 test('a save built on a roster someone else already replaced is refused, not applied', async () => {
-  const shoni = await tokenFor('shoni', 'ShoniRyo_846!')
-  const panini = await tokenFor('panini', 'PaniniWar_846!')
+  const shoni = await tokenFor('shoni', PW.shoni)
+  const panini = await tokenFor('panini', PW.panini)
 
   // Both open the room on the same version.
   const base = await read(shoni)
@@ -153,8 +156,8 @@ test('a save built on a roster someone else already replaced is refused, not app
 })
 
 test('the groups themselves are shared, not only the whales inside one', async () => {
-  const shoni = await tokenFor('shoni', 'ShoniRyo_846!')
-  const panini = await tokenFor('panini', 'PaniniWar_846!')
+  const shoni = await tokenFor('shoni', PW.shoni)
+  const panini = await tokenFor('panini', PW.panini)
 
   const base = await read(shoni)
   const saved = await write(shoni, [
@@ -172,7 +175,7 @@ test('the groups themselves are shared, not only the whales inside one', async (
 })
 
 test('the room is closed to everyone else', async () => {
-  const outsider = await tokenFor('lovelykhaos', 'LovelyKzK_846!')
+  const outsider = await tokenFor('lovelykhaos', PW.lovelykhaos)
   const res = await fetch(`${BASE}/api/war-room/roster`, { headers: authed(outsider) })
   assert.equal(res.status, 403)
   const put = await write(outsider, oneGroup([{ id: 'z', name: 'nope', march: '1:00' }]), undefined)

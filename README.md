@@ -113,7 +113,7 @@ fixed by their account, never by the request.
 
 ### The War Room is shared
 
-Sparta, Shoni, Panini and Anonymous all open the **same** roster. It is stored
+Sparta, Shoni, Panini, Anonymous and Abstraction all open the **same** roster. It is stored
 once on the server (`war_room_state`), not per device: a march time saved by any
 of them is what the next one to look sees, within a few seconds — the room polls
 while it is open.
@@ -126,6 +126,12 @@ keep and overwrite with yours. Nothing is silently replaced.
 To add somebody to the crew, give their account `role: 'warroom'` in the `SEED`
 array (or change an existing account's role); Sparta resets their password from
 the Master Console like any leader's.
+
+Starting passwords are never written in the code. When the server creates a
+seeded account it uses the environment variable `SEED_PASSWORD_<USERNAME>`
+(for example `SEED_PASSWORD_ABSTRACTION`) if it is set; otherwise it generates a
+random one and prints it once in the server log. Either way the person must
+choose their own password the first time they sign in.
 
 ---
 

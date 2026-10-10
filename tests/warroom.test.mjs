@@ -60,11 +60,13 @@ const tokenFor = async (username, password, mode = 'leader') => {
   return body.token
 }
 
-test('panini, anonymous and abstraction exist and can sign in through the leader door', async () => {
+test('the war room crew exist and can sign in through the leader door', async () => {
   for (const [username, password, display] of [
     ['panini', PW.panini, 'Panini'],
     ['anonymous', PW.anonymous, 'Anonymous'],
     ['abstraction', PW.abstraction, 'Abstraction'],
+    ['shiba', PW.shiba, 'Shiba'],
+    ['bubbles', PW.bubbles, 'Bubbles'],
   ]) {
     const { status, body } = await login(username, password)
     assert.equal(status, 200)
@@ -89,11 +91,13 @@ test('the war room accounts are not admins and not alliance leaders', async () =
   assert.equal(leaders.status, 403)
 })
 
-test('what Shoni saves is what Panini, Anonymous, Abstraction and Sparta read', async () => {
+test('what Shoni saves is what the whole war room crew reads', async () => {
   const shoni = await tokenFor('shoni', PW.shoni)
   const panini = await tokenFor('panini', PW.panini)
   const anon = await tokenFor('anonymous', PW.anonymous)
   const abstraction = await tokenFor('abstraction', PW.abstraction)
+  const shiba = await tokenFor('shiba', PW.shiba)
+  const bubbles = await tokenFor('bubbles', PW.bubbles)
   const sparta = await tokenFor('sparta', PW.sparta, 'admin')
 
   const start = await read(shoni)
@@ -103,7 +107,7 @@ test('what Shoni saves is what Panini, Anonymous, Abstraction and Sparta read', 
   ]), start.version)
   assert.equal(saved.status, 200)
 
-  for (const [who, token] of [['panini', panini], ['anonymous', anon], ['abstraction', abstraction], ['sparta', sparta]]) {
+  for (const [who, token] of [['panini', panini], ['anonymous', anon], ['abstraction', abstraction], ['shiba', shiba], ['bubbles', bubbles], ['sparta', sparta]]) {
     const seen = await read(token)
     assert.deepEqual(whalesOf(seen).map((w) => `${w.name}@${w.march}`), ['Bru@1:12', 'Kaz@0:48'], `${who} saw a different roster`)
     assert.equal(seen.updated_by, 'Shoni')

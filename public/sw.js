@@ -21,7 +21,9 @@
 // prompt actually has an event to fire on, and activate then deletes every
 // cache not in KEEP -- including the stale shell -- so the next navigation has
 // nothing to serve but the network.
-const CACHE_VERSION = 'v7'
+// v8: page titles drawn whole, the War Room's shared whale list and pet
+// timer, the new crew portraits. Bumped for the same reason as v7.
+const CACHE_VERSION = 'v8'
 const SHELL_CACHE = `k846-shell-${CACHE_VERSION}`
 const ASSET_CACHE = `k846-assets-${CACHE_VERSION}`
 const FONT_CACHE = `k846-fonts-${CACHE_VERSION}`

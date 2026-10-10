@@ -224,22 +224,10 @@ export default function WarRoom() {
   const linkText = link === 'live' ? 'Live' : link === 'offline' ? 'Offline' : 'Connecting'
   const selCount = sequence.length
   return <div className="kw">
-    {!running&&<section className="kw-hero">
-      <img src="/art/war-scene.webp" alt="" className="kw-hero-img"/>
-      <div className="kw-hero-shade"/>
-      <div className="kw-hero-body">
-        <div>
-          <p className="k-kicker">Shared Command</p>
-          <h1>Rally Command</h1>
-          <p className="kw-hero-sub">One roster for the whole crew. Save a march time and every screen updates.</p>
-        </div>
-        <div className="kw-stats">
-          <div><b>{countWhales(groups)}</b><span>Whales</span></div>
-          <div><b>{groups.length}</b><span>Groups</span></div>
-          <div><b>{selCount}</b><span>Selected</span></div>
-          <div className={'kw-link kw-link-'+link}><b><i/>{linkText}</b><span>{dirty?'Unsaved changes':mine?'Saved by you':lastSave.by?'By '+lastSave.by:'Not saved yet'}{lastSave.at&&!dirty?' · '+whenText(lastSave.at):''}</span></div>
-        </div>
-      </div>
+    {!running&&<section className="kw-bar">
+      <div className={'kw-live kw-link-'+link}><i/><b>{linkText}</b></div>
+      <div className="kw-bar-meta"><span><b>{countWhales(groups)}</b> whales</span><span><b>{groups.length}</b> group{groups.length===1?'':'s'}</span><span><b>{selCount}</b> armed</span></div>
+      <div className="kw-bar-save">{dirty?'Unsaved changes':mine?'Saved by you':lastSave.by?'Saved by '+lastSave.by:'Not saved yet'}{lastSave.at&&!dirty?' · '+whenText(lastSave.at):''}</div>
     </section>}
 
     {!running&&incoming&&<div className="kw-alert">
@@ -252,7 +240,7 @@ export default function WarRoom() {
     </div>}
 
     {!running?<div className="kw-grid">
-      <aside className="kw-launch">
+      <aside className="kw-launch kw-desk">
         <div className="kw-card kw-launch-card">
           <p className="k-kicker">Launch</p>
           <h2>Synced Rally</h2>
@@ -286,6 +274,7 @@ export default function WarRoom() {
           <div className="kw-foot"><span>{saved?'Saved. The whole room can see it.':`${selCount} selected for rally`}</span><button onClick={()=>saveRoster()} disabled={saving} className="kw-btn kw-gold">{saving?'Saving…':'Save roster'}</button></div>
         </div>
       </section>
+      <div className="kw-sticky"><div><b>{selCount}</b><span>armed</span></div><button onClick={startRally} disabled={!selCount} className="kw-go">Start Synced Rally</button></div>
       {sequence.length>0&&<div className="kw-approach"><RallyApproach sequence={sequence} now={preview ?? 0} impactAt={impactAt} phase="HOLD" /></div>}
     </div>:<RallyConsole sequence={sequence} startAt={startRef.current} onAbort={stopRally} onComplete={stopRally}/>}
   </div>

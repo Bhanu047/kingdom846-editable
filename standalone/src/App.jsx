@@ -22,7 +22,7 @@ function AllianceTag({value}){
  return <span className={'k-tag '+(a?'k-tag-'+a.tone:'')}>{a?.label||value}</span>
 }
 function AllianceCards(){
- return <div className="k-alliances">{ALLIANCES.map(a=><figure key={a.tag} className={'k-acard k-acard-'+a.tone}><img src={a.img} alt={a.label+' emblem'} loading="lazy"/><figcaption><b>[{a.tag}]</b><span>{a.name}</span></figcaption></figure>)}</div>
+ return <div className="k-alliances">{ALLIANCES.map(a=><figure key={a.tag} className={'k-acard k-acard-'+a.tone}><div className="k-med"><img src={a.img} alt={a.label+' emblem'} loading="lazy"/></div><figcaption><b>[{a.tag}]</b><span>{a.name}</span></figcaption></figure>)}</div>
 }
 function AlliancePicker({value,onSave,busy}){
  const [text,setText]=useState(value||'')
@@ -71,20 +71,23 @@ function Login(){
 function Shell(){
  const {user,logout,refresh}=useAuth()
  const [tab,setTab]=useState('warroom')
- const tabs=[['warroom','War Room'],['profile','My Account'],...(user.role==='admin'?[['manage','Members']]:[])]
+ const tabs=[['warroom','War Room','swords'],['profile','Account','user'],...(user.role==='admin'?[['manage','Members','users']]:[])]
+ const ico={swords:'M14.5 17.5 3 6V3h3l11.5 11.5M13 19l6-6M16 16l4 4M19 21l2-2M14.5 6.5 18 3h3v3l-3.5 3.5M5 14l4 4M7 17l-3 3M3 19l2 2',user:'M20 21a8 8 0 0 0-16 0M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8',users:'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8M22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8'}
  return <div className="k-shell">
+  <div className="k-shell-bg" aria-hidden="true"/>
   <header className="k-header">
    <div className="k-header-in">
-    <Crest size={36}/>
+    <Crest size={38}/>
     <div className="k-title"><span>KINGDOM 791</span><b>War Room</b></div>
-    <nav className="k-tabs" aria-label="Sections">{tabs.map(([id,l])=><button key={id} onClick={()=>setTab(id)} className={tab===id?'on':''}>{l}</button>)}</nav>
+    <nav className="k-tabs k-tabs-desk" aria-label="Sections">{tabs.map(([id,l])=><button key={id} onClick={()=>setTab(id)} className={tab===id?'on':''}>{l}</button>)}</nav>
     <button className="k-me" onClick={()=>setTab('profile')} aria-label="My account"><Portrait name={user.username} size={34} ring/><span>{user.display_name}</span></button>
-    <button className="k-exit" onClick={logout}>Exit</button>
+    <button className="k-exit" onClick={logout} aria-label="Exit">Exit</button>
    </div>
   </header>
   <main className="k-main">
-   {tab==='manage'&&user.role==='admin'?<Admin/>:tab==='profile'?<Profile user={user} refresh={refresh}/>:<><CommandRoster/><WarRoom/></>}
+   {tab==='manage'&&user.role==='admin'?<Admin/>:tab==='profile'?<Profile user={user} refresh={refresh}/>:<WarRoom/>}
   </main>
+  <nav className="k-bottom" aria-label="Sections">{tabs.map(([id,l,i])=><button key={id} onClick={()=>setTab(id)} className={tab===id?'on':''}><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d={ico[i]}/></svg><span>{l}</span></button>)}</nav>
  </div>
 }
 function CommandRoster(){

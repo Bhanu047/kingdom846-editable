@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Swords, UserRound, Users, LogOut, Eye, EyeOff, Check, PenLine, KeyRound, ShieldCheck } from 'lucide-react'
+import { Swords, UserRound, Users, LogOut, Eye, EyeOff, Check, PenLine, KeyRound, ShieldCheck, Smartphone, Share, X } from 'lucide-react'
 import { AuthProvider, useAuth } from './context/AuthContext'
 import WarRoom from './pages/WarRoom'
 import { ALLIANCES, allianceFor, AllianceBadge, Crest, Portrait } from './components/brand'
@@ -104,6 +104,7 @@ function Shell() {
         </div>
       </header>
       <main className={'main' + (tab === 'warroom' && dock ? ' with-dock' : '')}>
+        {tab === 'warroom' && <InstallBanner />}
         {tab === 'members' && isOwner ? <Members />
           : tab === 'account' ? <Account user={user} refresh={refresh} logout={logout} />
           : <WarRoom onDock={setDock} />}
@@ -163,6 +164,67 @@ function AlliancePicker({ value, onSave, busy, idPrefix }) {
   )
 }
 
+/* ------------------------------------------------------------ install app */
+function useInstall() {
+  const standalone = () => window.matchMedia?.('(display-mode: standalone)').matches || window.navigator.standalone === true
+  const [state, setState] = useState(() => (standalone() ? 'installed' : window.__k791Install ? 'ready' : 'none'))
+  useEffect(() => {
+    const ready = () => setState(standalone() ? 'installed' : 'ready')
+    const done = () => { window.__k791Install = null; setState('installed') }
+    window.addEventListener('k791-installable', ready)
+    window.addEventListener('appinstalled', done)
+    return () => { window.removeEventListener('k791-installable', ready); window.removeEventListener('appinstalled', done) }
+  }, [])
+  const install = async () => {
+    const p = window.__k791Install
+    if (!p) return
+    p.prompt()
+    const { outcome } = await p.userChoice.catch(() => ({}))
+    if (outcome === 'accepted') { window.__k791Install = null; setState('installed') }
+  }
+  const ios = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+  return { state, install, ios }
+}
+
+function InstallCard() {
+  const { state, install, ios } = useInstall()
+  return (
+    <section className="card card-pad install">
+      <img src="/icon-192.png" alt="" className="install-icon" />
+      <div className="install-text">
+        <p className="kicker">App</p>
+        <h2 className="card-title">{state === 'installed' ? 'Installed on this device' : 'Install the War Room'}</h2>
+        <p className="card-sub">
+          {state === 'installed' ? 'You are using the app. Open it from your home screen any time.'
+            : state === 'ready' ? 'Add it to your home screen or desktop. It opens full-screen, like any other app.'
+            : ios ? <>On iPhone or iPad: tap <Share size={13} style={{ display: 'inline', verticalAlign: '-2px' }} /> <b>Share</b> in Safari, then <b>Add to Home Screen</b>.</>
+            : 'In your browser menu, choose Install app or Add to Home screen.'}
+        </p>
+      </div>
+      {state === 'ready' && <button className="btn btn-gold" onClick={install}><Smartphone size={16} />Install app</button>}
+    </section>
+  )
+}
+
+const SNOOZE_KEY = 'k791-install-snooze'
+function InstallBanner() {
+  const { state, install, ios } = useInstall()
+  const [hidden, setHidden] = useState(() => { try { return Number(localStorage.getItem(SNOOZE_KEY) || 0) > Date.now() } catch { return false } })
+  if (hidden || state === 'installed' || (state === 'none' && !ios)) return null
+  const snooze = () => { try { localStorage.setItem(SNOOZE_KEY, String(Date.now() + 7 * 864e5)) } catch {} setHidden(true) }
+  return (
+    <div className="ibar" role="region" aria-label="Install the app">
+      <img src="/icon-192.png" alt="" />
+      <div className="ibar-text">
+        <b>Install the War Room app</b>
+        <span>{state === 'ready' ? 'Full-screen, one tap from your home screen.' : <>Tap <Share size={12} style={{ display: 'inline', verticalAlign: '-1px' }} /> Share, then <b>Add to Home Screen</b>.</>}</span>
+      </div>
+      {state === 'ready' && <button className="btn btn-gold btn-sm" onClick={install}>Install</button>}
+      <button className="ibar-x" onClick={snooze} aria-label="Not now"><X size={16} /></button>
+    </div>
+  )
+}
+
 /* ---------------------------------------------------------------- account */
 function Account({ user, refresh, logout }) {
   const [cur, setCur] = useState(''), [nw, setNw] = useState(''), [conf, setConf] = useState('')
@@ -205,6 +267,7 @@ function Account({ user, refresh, logout }) {
           </form>
         </section>
       </div>
+      <InstallCard />
       <section className="card card-pad signout">
         <div><h2 className="card-title" style={{ marginTop: 0 }}>Sign out</h2><p className="card-sub">End your session on this device.</p></div>
         <button className="btn btn-danger" onClick={logout}><LogOut size={16} />Sign out</button>

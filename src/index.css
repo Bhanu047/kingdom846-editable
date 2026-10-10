@@ -3295,39 +3295,6 @@ html.k846-js-nav .app-tab .app-tab-mark { display: none; }
 }
 @media (prefers-reduced-motion: reduce) { .k846-ripple-layer { display: none } }
 
-/* ---- The title's letters ------------------------------------------------- */
-/* bloomHeading splits the page title into characters and releases them outward
-   from its centre. Each character has to carry the gilt itself: .gilt-display
-   paints a gradient and clips it to the heading's own text, and a transformed
-   child paints into its own layer -- dropping out of that clip and vanishing.
-   The hero wordmark solved this the same way, and index.css has carried the
-   warning since the welcome screen hit it. */
-.k846-bloom-title { perspective: 900px; }
-/* Each word holds its letters on one line, and passes the perspective on: it
-   only reaches an element's direct children, and the letters are now a level
-   further down. */
-.k846-word { display: inline-block; white-space: nowrap; perspective: 900px; }
-/* A title that is not gilt keeps its own colour: the split needs the geometry
-   and nothing else from .k846-char below. */
-.k846-char-plain {
-  display: inline-block;
-  transform-origin: 50% 100%;
-  will-change: transform, opacity;
-}
-.k846-char {
-  display: inline-block;
-  transform-origin: 50% 100%;
-  background-image: linear-gradient(176deg,
-    #2E2206 0%, #6B5414 13%, #A8842A 26%, #E8C766 39%, #FFF9E6 48%,
-    #FFFFFF 51%, #F2DC9A 55%, #C9A238 68%, #7A5C13 84%, #3A2B08 100%);
-  background-size: 100% 260%;
-  background-position: 50% 46%;
-  -webkit-background-clip: text; background-clip: text;
-  -webkit-text-fill-color: transparent; color: transparent;
-  filter: drop-shadow(0 1px 0 rgba(0,0,0,.85)) drop-shadow(0 3px 10px rgba(0,0,0,.9));
-  will-change: transform, opacity;
-}
-
 /* ---- The crest's ring and the hall's answer ------------------------------ */
 /* The ring opens from where the crest lands; the bloom opens from where you
    touch. Both are light -- `screen` can only lighten, so neither can dim the

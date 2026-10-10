@@ -654,82 +654,42 @@ export function installTorch() {
 }
 
 /**
- * The page title blooms out of its own centre, a letter at a time.
- *
- * What was here decoded the heading out of random characters. It read as a
- * terminal booting rather than as a kingdom, and it was the first thing to go
- * when it was seen in place -- so the noise is gone and the movement is not.
- *
- * splitText gives every character its own element, and `stagger` ordered
- * `from: 'center'` releases them outward in both directions at once: the title
- * opens the way the rule under it does, rather than travelling across the page.
- * Each letter arrives tipped back and springs upright, which is the wordmark's
- * own gesture carried onto every other page.
- *
- * The characters must carry the gilt themselves. `.gilt-display` paints a
- * gradient and clips it to the heading's text -- and a transformed child paints
- * into its own layer, dropping out of that clip and vanishing. index.css has
- * carried that warning since the welcome screen hit it; `.k846-char` is the
- * answer, the same one the hero wordmark uses.
+ * The page title rises into place as the page arrives.
  */
 export function bloomHeading(root) {
   if (!root || prefersReducedMotion()) return () => {}
 
-  let split = null
+  /* The title rises in WHOLE. It used to be cut into one element per letter,
+     each scaled up from 62% and tipped back in 3D. Phone browsers drew those
+     letters at the small size and stretched them, so titles looked pixelated,
+     and could leave a stray capital beside the title or break a word across
+     two lines. A heading that stays one piece of text is drawn as text. Only
+     opacity and position move: no scale, so nothing is ever enlarged from a
+     smaller drawing. */
+  let anim = null
   let title = null
   const stopWait = whenPageReady(root, () => {
-    /* Any page title, not only a gilt one. Requiring .gilt-display was the last
-       of the "I can see it only on a few pages" bug: Battle Lab and its six
-       tools set their own parchment heading, so they were skipped in silence.
-       A heading that is NOT gilt is split with a class that carries the
-       geometry alone -- .k846-char forces the gold gradient, which is right for
-       .gilt-display and would repaint every other title. */
-    const gilt = root.querySelector('h1.gilt-display')
-    const el = gilt || root.querySelector('h1')
-    if (!el || el.children.length > 0) return                 // not pure text
-    const text = (el.textContent || '').trim()
-    if (!text || text.length > 60) return
+    const el = root.querySelector('h1.gilt-display') || root.querySelector('h1')
+    if (!el) return
     title = el
-
     try {
-      el.classList.add('k846-bloom-title')
-      /* Letters are grouped by word. Split into bare letters, a narrow screen
-         could break the line inside a word -- "Upcomin / g Events" -- and leave
-         a capital stranded on a line of its own. */
-      split = animeText.splitText(el, { chars: { class: gilt ? 'k846-char' : 'k846-char-plain' }, words: { class: 'k846-word' } })
-      const done = split
-      animate(split.chars, {
+      anim = animate(el, {
         opacity: { from: 0, to: 1 },
-        scale: { from: 0.62, to: 1 },
-        translateY: { from: 16, to: 0 },
-        rotateX: { from: -58, to: 0 },
-        delay: stagger(26, { from: 'center' }),
+        translateY: { from: 14, to: 0 },
         ease: motion.spring.accent(),
-        /* Once landed, the title goes back to being plain text. Left split, it
-           was dozens of separately painted letters for the life of the page,
-           and some phone browsers drew a stray copy of the first one beside
-           the title. */
-        onComplete: () => {
-          if (split !== done) return
-          try { done.revert() } catch {}
-          el.classList.remove('k846-bloom-title')
-          split = null
-        },
+        onComplete: () => { el.style.removeProperty('transform'); el.style.removeProperty('opacity') },
       })
     } catch (err) {
-      console.error('[motion] title bloom failed, showing it', err)
-      try { split?.revert() } catch {}
-      el.classList.remove('k846-bloom-title')
-      split = null
-      title = null
+      console.error('[motion] title rise failed, showing it', err)
+      el.style.removeProperty('transform'); el.style.removeProperty('opacity')
     }
   })
 
   return () => {
     stopWait()
-    // Hand the heading back whole: a reverted split leaves the original text.
-    try { split?.revert() } catch {}
-    title?.classList.remove('k846-bloom-title')
+    try { anim?.cancel?.() } catch {}
+    title?.style.removeProperty('transform')
+    title?.style.removeProperty('opacity')
   }
 }
 

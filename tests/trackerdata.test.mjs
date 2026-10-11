@@ -101,11 +101,24 @@ import path from 'node:path'
 const require_ = createRequire(import.meta.url)
 const advisor = require_('../server/ai/record.cjs')
 
+test('the rating and ranking histories line up with the record and end on the published figures', () => {
+  const oldestFirst = [...kvk.history].reverse()
+  assert.deepEqual(atlas.history.map((p) => p.kvk), oldestFirst.map((r) => r.kvk), 'a history point per KvK, oldest first')
+  const last = atlas.history.at(-1)
+  // The last point is what the profile header prints, not a reading.
+  assert.deepEqual([last.rating, last.battleRating, last.prepRating], [atlas.rating, atlas.battle.rating, atlas.prep.rating])
+  assert.deepEqual([last.rank, last.battleRank, last.prepRank], [atlas.rank, atlas.battle.rank, atlas.prep.rank])
+  for (const p of atlas.history) {
+    for (const k of ['rating', 'battleRating', 'prepRating']) assert.ok(p[k] >= 990 && p[k] <= 1221.4, `KvK ${p.kvk} ${k} is off the chart's axis`)
+    for (const k of ['rank', 'battleRank', 'prepRank']) assert.ok(p[k] == null || (p[k] >= 1 && p[k] <= 333), `KvK ${p.kvk} ${k} is off the chart's axis`)
+  }
+})
+
 test('the atlas block still carries everything the cards read', () => {
   // AtlasAnalytics, About and the Dashboard dereference these directly; losing
   // one renders an error boundary where the analytics should be, which no
   // build step notices.
-  for (const key of ['rating', 'rank', 'prep', 'battle', 'mystic', 'trend', 'verified']) {
+  for (const key of ['rating', 'rank', 'prep', 'battle', 'mystic', 'trend', 'history', 'verified']) {
     assert.ok(atlas[key] !== undefined, `atlas.${key} is missing — the page reads it`)
   }
   assert.ok(tracker846.tier, 'the tier pill reads tracker846.tier')

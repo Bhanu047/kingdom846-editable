@@ -8,10 +8,11 @@ import { smoothPath, useCountUp, useInView, useReveal } from '../lib/chartAnim'
 // Everything drawn here is either published by Atlas verbatim or derived from
 // the KvK history we already hold. Atlas now rates kingdoms on three ratings --
 // Atlas, Prep and Battle -- each with its own global rank, and plots their
-// history as charts without printing the numbers behind them. Those histories
-// are not redrawn here: a chart that looks authoritative and is read off
-// someone else's picture is worse than an honest gap. The win-rate trend is
-// drawn, because it is counted exactly from the runs.
+// history as charts without printing the numbers behind them.
+//
+// The rating and ranking histories are drawn from readings of Atlas's charts,
+// checked against the figures it prints for the latest KvK and labelled as
+// readings; the win-rate trend is counted exactly from the runs.
 
 const GOLD = '#E8C558'
 const BLUE = '#7f9ed6'
@@ -205,6 +206,99 @@ function AtlasRatings({ delay = 0 }) {
   )
 }
 
+/* -------------------------------------------------------------- histories --
+   Atlas's Ratings History and Kingdom Ranking History: three lines each --
+   Atlas, Battle, Prep -- on the same KvK axis as the trend. A line simply
+   starts later when Atlas has no point for the early KvKs (its ranking chart
+   begins at KvK 9).
+   ------------------------------------------------------------------------ */
+const GREEN = '#5BC98C'
+const LINES = [
+  { key: 'atlas', label: 'Atlas', color: GREEN, dash: null },
+  { key: 'battle', label: 'Battle', color: GOLD, dash: '8 4' },
+  { key: 'prep', label: 'Prep', color: BLUE, dash: '2 4' },
+]
+
+function HistoryChart({ eyebrow, title, fields, domain, ticks, tickLabel, valueLabel, invert = false, delay = 0, note }) {
+  const ent = useEntrance(delay)
+  const series = tracker846.atlas.history
+  const { active, setActive, x } = useKvkPoints(series.length)
+  const { W, H, L, R, T, B } = PLOT
+  const [lo, hi] = domain
+  // Ranks run the other way: #1 belongs at the top.
+  const y = (v) => (invert
+    ? T + ((v - lo) / (hi - lo)) * (H - T - B)
+    : H - B - ((v - lo) / (hi - lo)) * (H - T - B))
+  const pts = (field) => series.map((p, i) => (p[field] == null ? null : { x: x(i), y: y(p[field]) })).filter(Boolean)
+  const hot = active == null ? null : series[active]
+  const last = series[series.length - 1]
+
+  return (
+    <Panel style={ent.cardStyle}>
+      <SectionTitle eyebrow={eyebrow} title={title} />
+      <div className="mt-1 flex flex-wrap items-baseline gap-3 text-[11px]">
+        {LINES.map((l, i) => (
+          <span key={l.key} className="inline-flex items-center gap-1.5" style={{ color: l.color }}>
+            <svg width="18" height="3" aria-hidden="true"><line x1="0" y1="1.5" x2="18" y2="1.5" stroke={l.color} strokeWidth="3" strokeDasharray={l.dash || undefined} /></svg>
+            {l.label} <span className="tabular-nums">{valueLabel(last[fields[i]])}</span>
+          </span>
+        ))}
+      </div>
+      <div ref={ent.ref} className="relative mt-2">
+        <svg viewBox={`0 0 ${W} ${H}`} className="w-full">
+          {ticks.map((t) => <line key={t} x1={L} x2={W - R} y1={y(t)} y2={y(t)} stroke="rgba(226,199,125,.10)" />)}
+          {LINES.map((l, li) => {
+            const line = smoothPath(pts(fields[li]))
+            // Dashed lines cannot also carry the dash-offset draw-in, so they
+            // fade in after the solid one has drawn.
+            return l.dash
+              ? <path key={l.key} d={line} fill="none" stroke={l.color} strokeWidth="2.4" strokeDasharray={l.dash} style={ent.fadeStyle(DRAW_MS * 0.5)} />
+              : <path key={l.key} d={line} pathLength="1" fill="none" stroke={l.color} strokeWidth="2.6" style={ent.drawStyle()} />
+          })}
+          {LINES.map((l, li) => series.map((p, i) => (p[fields[li]] == null ? null : (
+            <circle key={`${l.key}-${p.kvk}`} cx={x(i)} cy={y(p[fields[li]])} r={active === i ? 4 : 2.4}
+              fill={l.color} stroke="#0b1222" strokeWidth="1"
+              style={{ ...ent.dotStyle(i, x(i), y(p[fields[li]])), transitionProperty: 'transform, r', transitionDuration: '260ms, 140ms' }} />
+          ))))}
+        </svg>
+        {ticks.map((t) => (
+          <div key={t} className="pointer-events-none absolute -translate-y-1/2 font-mono text-[9px] text-parchment/35"
+            style={{ right: `${((W - L + 6) / W) * 100}%`, top: `${(y(t) / H) * 100}%` }}>{tickLabel(t)}</div>
+        ))}
+        <KvkHover count={series.length} onActive={setActive} />
+        {hot && hot[fields[0]] != null && <KvkTooltip label={hot.kvk}
+          value={LINES.map((l, li) => `${l.label} ${valueLabel(hot[fields[li]])}`).join(' · ')}
+          left={`${(x(active) / W) * 100}%`} top={`${(y(hot[fields[0]]) / H) * 100}%`} />}
+      </div>
+      <KvkAxis series={series} x={x} />
+      <p className="mt-4 text-[10px] leading-relaxed text-parchment/40">{note}</p>
+    </Panel>
+  )
+}
+
+const fmtRating = (v) => (v == null ? '—' : Number.isInteger(v) ? String(v) : v.toFixed(1))
+const fmtRank = (v) => (v == null ? '—' : `#${v}`)
+
+function RatingsHistory({ delay = 0 }) {
+  return (
+    <HistoryChart eyebrow="Trajectory" title="Ratings History" delay={delay}
+      fields={['rating', 'battleRating', 'prepRating']}
+      domain={[990, 1221.4]} ticks={[990, 1048, 1106, 1164, 1221.4]}
+      tickLabel={(t) => Math.round(t)} valueLabel={fmtRating}
+      note="Read off Atlas's Ratings History chart (about ±1); KvK 19 is Atlas's published figure." />
+  )
+}
+
+function RankingHistory({ delay = 0 }) {
+  return (
+    <HistoryChart eyebrow="Standing" title="Kingdom Ranking History" delay={delay} invert
+      fields={['rank', 'battleRank', 'prepRank']}
+      domain={[1, 333]} ticks={[1, 84, 167, 250, 333]}
+      tickLabel={(t) => `#${t}`} valueLabel={fmtRank}
+      note="Read off Atlas's Kingdom Ranking History chart (about ±1 rank), which starts at KvK 9; KvK 19 is published." />
+  )
+}
+
 /* ------------------------------------------------------------------ trend --
    Prep and battle win rate as they developed, KvK by KvK -- the profile's
    "Performance Trend", counted from the runs.
@@ -359,6 +453,10 @@ export default function AtlasAnalytics() {
       <div className="grid gap-6 lg:grid-cols-2">
         <AtlasRatings />
         <PerformanceTrend delay={ROW_STAGGER_MS} />
+      </div>
+      <div className="grid gap-6 lg:grid-cols-2">
+        <RatingsHistory />
+        <RankingHistory delay={ROW_STAGGER_MS} />
       </div>
     </div>
   )

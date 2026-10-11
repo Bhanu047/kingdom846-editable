@@ -8,7 +8,8 @@
 //   the page's JavaScript, which a plain fetch cannot do. Atlas has since moved
 //   from a 0-100 score (with a breakdown and radar) to three ratings, each with
 //   its own rank; the old score, breakdown, radar and score curve no longer
-//   exist on the profile, so they are not kept here either.
+//   exist on the profile, so they are not kept here either. The per-KvK
+//   rating and rank histories are read off its charts -- see ratingHistory.
 //
 // The KvK runs are the only record typed out here. Everything countable --
 // totals, records, win rates, streaks, and the four outcome kinds -- is counted
@@ -95,6 +96,31 @@ const trend = [...runs].reverse().map((run, i, oldestFirst) => {
   return { kvk: run.kvk, prepWinRate: rate('prep'), battleWinRate: rate('battle') }
 })
 
+// Atlas's Ratings History and Kingdom Ranking History, point by point, oldest
+// first. Atlas shows these charts only to signed-in users and prints no numbers
+// under them, so they were read off screenshots of the profile taken
+// 2026-10-10: each dot's centre measured in pixels and converted on the axis.
+// The scale was checked against the three ratings and ranks Atlas DOES print
+// for KvK 19 -- with the line fitted to two of them, the third lands within
+// 0.02 of a rating and 0.04 of a rank -- so a reading is good to about +/-1
+// either way. KvK 19 itself is the published figure, not a reading. The
+// ranking chart starts at KvK 9, so 7 and 8 have no ranks.
+const ratingHistory = [
+  { kvk: 7,  rating: 1006, battleRating: 1006, prepRating: 1006, rank: null, battleRank: null, prepRank: null },
+  { kvk: 8,  rating: 1022, battleRating: 1022, prepRating: 1023, rank: null, battleRank: null, prepRank: null },
+  { kvk: 9,  rating: 1033, battleRating: 1045, prepRating: 1019, rank: 196, battleRank: 155, prepRank: 319 },
+  { kvk: 10, rating: 1060, battleRating: 1077, prepRating: 1039, rank: 126, battleRank: 86,  prepRank: 313 },
+  { kvk: 11, rating: 1098, battleRating: 1117, prepRating: 1076, rank: 72,  battleRank: 49,  prepRank: 207 },
+  { kvk: 12, rating: 1088, battleRating: 1110, prepRating: 1060, rank: 105, battleRank: 68,  prepRank: 333 },
+  { kvk: 13, rating: 1124, battleRating: 1153, prepRating: 1088, rank: 61,  battleRank: 33,  prepRank: 254 },
+  { kvk: 14, rating: 1142, battleRating: 1172, prepRating: 1105, rank: 46,  battleRank: 21,  prepRank: 234 },
+  { kvk: 15, rating: 1166, battleRating: 1192, prepRating: 1135, rank: 32,  battleRank: 18,  prepRank: 177 },
+  { kvk: 16, rating: 1168, battleRating: 1170, prepRating: 1167, rank: 33,  battleRank: 32,  prepRank: 123 },
+  { kvk: 17, rating: 1187, battleRating: 1185, prepRating: 1191, rank: 24,  battleRank: 30,  prepRank: 99 },
+  { kvk: 18, rating: 1205, battleRating: 1202, prepRating: 1207, rank: 21,  battleRank: 24,  prepRank: 87 },
+  { kvk: 19, rating: 1196.9, battleRating: 1176.8, prepRating: 1221.4, rank: 30, battleRank: 48, prepRank: 80 },
+]
+
 export const tracker846 = {
   tier: 'S-Tier',
   atlas: {
@@ -107,6 +133,7 @@ export const tracker846 = {
     // "Mystic Trials Top 100 Total" on the same header.
     mystic: { total: 224722, rank: 112 },
     trend,
+    history: ratingHistory.map((point) => ({ ...point })),
   },
   kvk: {
     verified: '2026-10-11',

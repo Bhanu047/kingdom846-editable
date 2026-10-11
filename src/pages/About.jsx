@@ -157,7 +157,7 @@ export default function About() {
 
       <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
         <MetricCard label="KvK Rating" value={tracker846.kvk.rating.toFixed(3)} sub={`Global Rank #${tracker846.kvk.rank}`} />
-        <MetricCard label="Atlas Score" value={tracker846.atlas.score.toFixed(2)} sub={`Rank #${tracker846.atlas.rank}`} />
+        <MetricCard label="Atlas Rating" value={tracker846.atlas.rating.toLocaleString('en-US', { minimumFractionDigits: 1 })} sub={`Rank #${tracker846.atlas.rank}`} />
         <MetricCard label="Latest KvK" value={`#${latestKvk.kvk}`} sub={`K846 vs ${latestKvk.opponent}`} />
       </div>
 
@@ -236,8 +236,8 @@ export default function About() {
           <div className="eyebrow text-gold/70">Kingdom Atlas</div>
           <h2 className="mt-1 font-display text-2xl font-bold text-parchment">Standing &amp; Analytics</h2>
           <p className="mt-1 max-w-3xl text-xs leading-relaxed text-parchment/50">
-            The kingdom&apos;s Atlas profile — where the score comes from, the six performance
-            metrics, and how the standing has moved.
+            The kingdom&apos;s Atlas profile — its Atlas, Prep and Battle ratings with their
+            global ranks, and how the win rates have moved KvK by KvK.
           </p>
         </div>
         <AtlasAnalytics />

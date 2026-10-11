@@ -19,17 +19,17 @@
  */
 
 const record = {
-  wars: 12,
+  wars: 13,
   dominations: 9,
   comebacks: 1,
-  reversals: 1,
+  reversals: 2,
   invasions: 1,
-  prepRecord: '10-2',
-  battleRecord: '10-2',
-  rating: 3.115,
-  ratingRank: 10,
-  atlasScore: 70.04,
-  atlasRank: 23,
+  prepRecord: '11-2',
+  battleRecord: '10-3',
+  rating: 2.885,
+  ratingRank: 25,
+  atlasRating: 1196.9,
+  atlasRank: 30,
   tier: 'S-Tier',
 }
 

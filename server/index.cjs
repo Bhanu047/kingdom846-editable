@@ -386,30 +386,34 @@ if (!cols.some((c) => c.name === 'must_change_password')) {
 //
 // Names and order only. The stage counts are not published -- see the strip
 // below, which also clears them from any database this already seeded.
-const RANKINGS_SEED = 'mystic-trial-2026-09-27'
+const RANKINGS_SEED = 'mystic-trial-2026-10-11'
 const MYSTIC_TRIAL_TOP15 = [
-  { rank: 1,  name: 'NeMo',          tag: '[SAS]', slug: 'sas', alliance: 'SaintsAndSinners',    avatar: 'king' },
-  { rank: 2,  name: 'MM27',          tag: '[RYO]', slug: 'ryo', alliance: 'Spiders',             avatar: 'mage' },
-  { rank: 3,  name: 'Shibashoni',    tag: '[ICE]', slug: 'ice', alliance: 'IceHunters',          avatar: 'sorceress' },
-  { rank: 4,  name: 'Corgi ツ',       tag: '[RYO]', slug: 'ryo', alliance: 'Spiders',             avatar: 'queen' },
-  { rank: 5,  name: 'NomNomNom',     tag: '[RYO]', slug: 'ryo', alliance: 'Spiders',             avatar: 'archer' },
-  { rank: 6,  name: 'xLife',         tag: '[RYO]', slug: 'ryo', alliance: 'Spiders',             avatar: 'knight' },
-  { rank: 7,  name: 'LittleMRex',    tag: '[KzK]', slug: 'kzk', alliance: 'KamikazeKarnival',    avatar: 'berserker' },
-  { rank: 8,  name: 'PansyPants',    tag: '[SAS]', slug: 'sas', alliance: 'SaintsAndSinners',    avatar: 'panini' },
-  { rank: 9,  name: 'TegarXRhukus',  tag: '[KzK]', slug: 'kzk', alliance: 'KamikazeKarnival',    avatar: 'warrior' },
-  { rank: 10, name: 'Goaty',         tag: '[ICE]', slug: 'ice', alliance: 'IceHunters',          avatar: 'shieldmaiden' },
-  { rank: 11, name: 'Armageddon',    tag: '[SAS]', slug: 'sas', alliance: 'SaintsAndSinners',    avatar: 'anonymous' },
-  { rank: 12, name: 'Spartan',       tag: '[RYO]', slug: 'ryo', alliance: 'Spiders',             avatar: 'spartan' },
-  { rank: 13, name: 'Frog',          tag: '[KzK]', slug: 'kzk', alliance: 'KamikazeKarnival',    avatar: 'ice-lord' },
-  { rank: 14, name: 'Ghey Ranger',   tag: '[SAS]', slug: 'sas', alliance: 'SaintsAndSinners',    avatar: 'archer' },
-  { rank: 15, name: 'Chom ツ',        tag: '[RYO]', slug: 'ryo', alliance: 'Spiders',             avatar: 'queen' },
+  { rank: 1,  name: 'NeMo',            tag: '[SAS]', slug: 'sas', alliance: 'SaintsAndSinners',    avatar: 'king' },
+  { rank: 2,  name: 'MM27',            tag: '[RYO]', slug: 'ryo', alliance: 'Spiders',             avatar: 'mage' },
+  { rank: 3,  name: 'Kloud',           tag: '[ICE]', slug: 'ice', alliance: 'IceHunters',          avatar: 'sorceress' },
+  { rank: 4,  name: 'CiLoZ',           tag: '[RYO]', slug: 'ryo', alliance: 'Spiders',             avatar: 'ryo-lord' },
+  { rank: 5,  name: 'NomNomNom',       tag: '[RYO]', slug: 'ryo', alliance: 'Spiders',             avatar: 'archer' },
+  { rank: 6,  name: 'xLife',           tag: '[RYO]', slug: 'ryo', alliance: 'Spiders',             avatar: 'knight' },
+  { rank: 7,  name: 'LittleMRex',      tag: '[KzK]', slug: 'kzk', alliance: 'KamikazeKarnival',    avatar: 'berserker' },
+  { rank: 8,  name: 'PansyPants',      tag: '[SAS]', slug: 'sas', alliance: 'SaintsAndSinners',    avatar: 'panini' },
+  { rank: 9,  name: 'Dead Player #18', tag: '[KzK]', slug: 'kzk', alliance: 'KamikazeKarnival',    avatar: 'warrior' },
+  { rank: 10, name: 'Goaty',           tag: '[ICE]', slug: 'ice', alliance: 'IceHunters',          avatar: 'shieldmaiden' },
+  { rank: 11, name: 'Armageddon',      tag: '[SAS]', slug: 'sas', alliance: 'SaintsAndSinners',    avatar: 'anonymous' },
+  { rank: 12, name: 'Spartan',         tag: '[RYO]', slug: 'ryo', alliance: 'Spiders',             avatar: 'spartan' },
+  { rank: 13, name: 'Frog',            tag: '[KzK]', slug: 'kzk', alliance: 'KamikazeKarnival',    avatar: 'ice-lord' },
+  { rank: 14, name: 'Genie',           tag: '[SAS]', slug: 'sas', alliance: 'SaintsAndSinners',    avatar: 'sas-lord' },
+  { rank: 15, name: 'Chommy',          tag: '[RYO]', slug: 'ryo', alliance: 'Spiders',             avatar: 'queen' },
 ]
 try {
   const scRow = db.prepare('SELECT data FROM site_content WHERE id = ?').get('current')
   if (scRow) {
     const blob = JSON.parse(scRow.data)
     if (blob && blob.__rankingsSeed !== RANKINGS_SEED) {
-      blob.players = MYSTIC_TRIAL_TOP15
+      // A face Sparta picked for a governor stays with that governor; only
+      // names new to the board take the default.
+      const chosen = new Map((Array.isArray(blob.players) ? blob.players : [])
+        .filter((pl) => pl && pl.name && pl.avatar).map((pl) => [String(pl.name).toLowerCase(), pl.avatar]))
+      blob.players = MYSTIC_TRIAL_TOP15.map((pl) => ({ ...pl, avatar: chosen.get(pl.name.toLowerCase()) || pl.avatar }))
       blob.__rankingsSeed = RANKINGS_SEED
       db.prepare("UPDATE site_content SET data = ?, updated_at = datetime('now') WHERE id = ?")
         .run(JSON.stringify(blob), 'current')

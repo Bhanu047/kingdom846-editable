@@ -45,15 +45,11 @@ export const kingdom = {
   level: 100,
   // Public tracker data (real). Everything the Atlas snapshot already carries
   // is read from it; a second hand-typed copy is just a second thing to forget.
-  // The mystic figures have no entry in tracker846.js, so they stay written out
-  // here -- read off the Atlas header on 2026-09-13 with the rest.
   tier: tracker846.tier,
-  atlasScore: tracker846.atlas.score,
+  atlasRating: tracker846.atlas.rating,
   atlasRank: tracker846.atlas.rank,
-  atlasPercentile: `Top ${(100 - tracker846.atlas.percentile).toFixed(1)}%`,
-  mysticScore: 198614,
-  mysticRank: 250,
-  mysticPercentile: 'Top 10.3%',
+  mysticScore: tracker846.atlas.mystic.total,
+  mysticRank: tracker846.atlas.mystic.rank,
   transferStatus: tracker846.transfers[0]?.status ?? 'Ordinary',
   // KvK performance overview -- read off the tracker snapshot, not typed again.
   // This block held its own copy of every figure and all of them had fallen a
@@ -243,21 +239,21 @@ export const AVATAR_OPTIONS = [
 // and this list is served to anyone over /api/content, so a number kept here
 // would be public whether or not the page draws it.
 export const players = [
-  { rank: 1,  name: 'NeMo',          tag: '[SAS]', slug: 'sas', alliance: 'SaintsAndSinners',    avatar: 'king' },
-  { rank: 2,  name: 'MM27',          tag: '[RYO]', slug: 'ryo', alliance: 'Spiders',             avatar: 'mage' },
-  { rank: 3,  name: 'Shibashoni',    tag: '[ICE]', slug: 'ice', alliance: 'IceHunters',          avatar: 'sorceress' },
-  { rank: 4,  name: 'Corgi ツ',       tag: '[RYO]', slug: 'ryo', alliance: 'Spiders',             avatar: 'queen' },
-  { rank: 5,  name: 'NomNomNom',     tag: '[RYO]', slug: 'ryo', alliance: 'Spiders',             avatar: 'archer' },
-  { rank: 6,  name: 'xLife',         tag: '[RYO]', slug: 'ryo', alliance: 'Spiders',             avatar: 'knight' },
-  { rank: 7,  name: 'LittleMRex',    tag: '[KzK]', slug: 'kzk', alliance: 'KamikazeKarnival',    avatar: 'berserker' },
-  { rank: 8,  name: 'PansyPants',    tag: '[SAS]', slug: 'sas', alliance: 'SaintsAndSinners',    avatar: 'panini' },
-  { rank: 9,  name: 'TegarXRhukus',  tag: '[KzK]', slug: 'kzk', alliance: 'KamikazeKarnival',    avatar: 'warrior' },
-  { rank: 10, name: 'Goaty',         tag: '[ICE]', slug: 'ice', alliance: 'IceHunters',          avatar: 'shieldmaiden' },
-  { rank: 11, name: 'Armageddon',    tag: '[SAS]', slug: 'sas', alliance: 'SaintsAndSinners',    avatar: 'anonymous' },
-  { rank: 12, name: 'Spartan',       tag: '[RYO]', slug: 'ryo', alliance: 'Spiders',             avatar: 'spartan' },
-  { rank: 13, name: 'Frog',          tag: '[KzK]', slug: 'kzk', alliance: 'KamikazeKarnival',    avatar: 'ice-lord' },
-  { rank: 14, name: 'Ghey Ranger',   tag: '[SAS]', slug: 'sas', alliance: 'SaintsAndSinners',    avatar: 'archer' },
-  { rank: 15, name: 'Chom ツ',        tag: '[RYO]', slug: 'ryo', alliance: 'Spiders',             avatar: 'queen' },
+  { rank: 1,  name: 'NeMo',            tag: '[SAS]', slug: 'sas', alliance: 'SaintsAndSinners',    avatar: 'king' },
+  { rank: 2,  name: 'MM27',            tag: '[RYO]', slug: 'ryo', alliance: 'Spiders',             avatar: 'mage' },
+  { rank: 3,  name: 'Kloud',           tag: '[ICE]', slug: 'ice', alliance: 'IceHunters',          avatar: 'sorceress' },
+  { rank: 4,  name: 'CiLoZ',           tag: '[RYO]', slug: 'ryo', alliance: 'Spiders',             avatar: 'ryo-lord' },
+  { rank: 5,  name: 'NomNomNom',       tag: '[RYO]', slug: 'ryo', alliance: 'Spiders',             avatar: 'archer' },
+  { rank: 6,  name: 'xLife',           tag: '[RYO]', slug: 'ryo', alliance: 'Spiders',             avatar: 'knight' },
+  { rank: 7,  name: 'LittleMRex',      tag: '[KzK]', slug: 'kzk', alliance: 'KamikazeKarnival',    avatar: 'berserker' },
+  { rank: 8,  name: 'PansyPants',      tag: '[SAS]', slug: 'sas', alliance: 'SaintsAndSinners',    avatar: 'panini' },
+  { rank: 9,  name: 'Dead Player #18', tag: '[KzK]', slug: 'kzk', alliance: 'KamikazeKarnival',    avatar: 'warrior' },
+  { rank: 10, name: 'Goaty',           tag: '[ICE]', slug: 'ice', alliance: 'IceHunters',          avatar: 'shieldmaiden' },
+  { rank: 11, name: 'Armageddon',      tag: '[SAS]', slug: 'sas', alliance: 'SaintsAndSinners',    avatar: 'anonymous' },
+  { rank: 12, name: 'Spartan',         tag: '[RYO]', slug: 'ryo', alliance: 'Spiders',             avatar: 'spartan' },
+  { rank: 13, name: 'Frog',            tag: '[KzK]', slug: 'kzk', alliance: 'KamikazeKarnival',    avatar: 'ice-lord' },
+  { rank: 14, name: 'Genie',           tag: '[SAS]', slug: 'sas', alliance: 'SaintsAndSinners',    avatar: 'sas-lord' },
+  { rank: 15, name: 'Chommy',          tag: '[RYO]', slug: 'ryo', alliance: 'Spiders',             avatar: 'queen' },
 ]
 
 
@@ -284,12 +280,23 @@ const chronicle = [
     source: kingdom.timelineSource
   },
   {
+    id: 'kvk19-recap',
+    title: `KvK ${tracker846.kvk.latest.kvk} vs ${tracker846.kvk.latest.opponent}: prep won, battle lost`,
+    category: 'KVK',
+    date: 'Oct 10, 2026',
+    excerpt: `Preparation taken for a ${tracker846.kvk.prep.streak} prep streak; the battle went to ${tracker846.kvk.latest.opponent}. ${tracker846.kvk.prep.record} in prep, ${tracker846.kvk.battle.record} in battle, rating ${tracker846.kvk.rating.toFixed(3)} at global rank #${tracker846.kvk.rank}.`,
+    body: `KvK ${tracker846.kvk.latest.kvk} (October 10, 2026) matched Kingdom 846 against ${tracker846.kvk.latest.opponent}, ranked #${tracker846.kvk.latest.opponentRank} globally, at match quality ${tracker846.kvk.latest.quality.toFixed(2)}. Preparation was won -- the prep streak now stands at ${tracker846.kvk.prep.streak} -- and the battle was lost, the kingdom's second reversal.\n\nAcross ${tracker846.kvk.total} KvKs that makes ${tracker846.kvk.prep.record} in preparation and ${tracker846.kvk.battle.record} in battle, with ${tracker846.kvk.dominations} dominations -- a ${tracker846.kvk.dominationRate}% domination rate. The KvK rating stands at ${tracker846.kvk.rating.toFixed(3)} for global rank #${tracker846.kvk.rank}, and the Atlas Rating at ${tracker846.atlas.rating.toLocaleString('en-US', { minimumFractionDigits: 1 })} (#${tracker846.atlas.rank}).`,
+    source: kingdom.kvkSource
+  },
+  {
+    // Written out as it stood after KvK 18. It used to read the live record,
+    // which would now describe KvK 19 under a KvK 18 headline.
     id: 'kvk18-recap',
-    title: `KvK ${tracker846.kvk.latest.kvk} swept against ${tracker846.kvk.latest.opponent}`,
+    title: 'KvK 18 swept against K617',
     category: 'KVK',
     date: 'Sep 12, 2026',
-    excerpt: `Prep and battle both won. ${tracker846.kvk.prep.record} in prep, ${tracker846.kvk.battle.record} in battle, and the rating climbs to ${tracker846.kvk.rating.toFixed(3)} at global rank #${tracker846.kvk.rank}.`,
-    body: `KvK ${tracker846.kvk.latest.kvk} (September 12, 2026) matched Kingdom 846 against ${tracker846.kvk.latest.opponent}, ranked #${tracker846.kvk.latest.opponentRank} globally, at match quality ${tracker846.kvk.latest.quality}. Both phases were won, and the preparation streak reaches ${tracker846.kvk.prep.streak}.\n\nAcross ${tracker846.kvk.total} KvKs that makes ${tracker846.kvk.prep.record} in preparation and ${tracker846.kvk.battle.record} in battle, with ${tracker846.kvk.dominations} dominations — a ${tracker846.kvk.dominationRate}% domination rate. The rating stands at ${tracker846.kvk.rating.toFixed(3)} for global rank #${tracker846.kvk.rank}.`,
+    excerpt: 'Prep and battle both won. 10-2 in prep, 10-2 in battle, and the rating climbs to 3.115 at global rank #10.',
+    body: 'KvK 18 (September 12, 2026) matched Kingdom 846 against K617. Both phases were won, and the preparation streak reached 6W.\n\nAcross 12 KvKs that made 10-2 in preparation and 10-2 in battle, with 9 dominations -- a 75% domination rate. The rating stood at 3.115 for global rank #10.',
     source: kingdom.kvkSource
   },
   {

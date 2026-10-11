@@ -23,7 +23,8 @@
 // nothing to serve but the network.
 // v8: page titles drawn whole, the War Room's shared whale list and pet
 // timer, the new crew portraits. Bumped for the same reason as v7.
-const CACHE_VERSION = 'v8'
+// v9: KvK 19, Atlas's new ratings, the October Mystic Trial top fifteen.
+const CACHE_VERSION = 'v9'
 const SHELL_CACHE = `k846-shell-${CACHE_VERSION}`
 const ASSET_CACHE = `k846-assets-${CACHE_VERSION}`
 const FONT_CACHE = `k846-fonts-${CACHE_VERSION}`

@@ -1,33 +1,23 @@
 import { useEffect, useId, useState } from 'react'
 import { Panel, SectionTitle, Pill } from './ui'
-import Icon from './Icon'
 import { tracker846 } from '../data/tracker846'
 import { smoothPath, useCountUp, useInView, useReveal } from '../lib/chartAnim'
 
 // The Atlas profile, rebuilt on our own page.
 //
-// A note on what is and is not drawn here, because it is the whole design
-// constraint. Everything on this page is either published by Atlas verbatim,
-// read off its own charts, or derived from the KvK history we already hold.
-//
-// The score and rank curves used to be RECONSTRUCTED -- modelled from our
-// record with weights solved out of the published breakdown -- because the
-// profile draws those curves without publishing the numbers behind them. They
-// are the real per-KvK figures now, read point by point off the profile's
-// charts, so the model and its calibration rings are gone. What the readings
-// cost in precision is stated where it matters: about +/-0.1 on a score and
-// +/-1 on a rank, against win rates that are exact.
-//
-// The rule that produced the old model still holds for anything we cannot
-// read: a chart that looks authoritative and is guessed is worse than one with
-// an honest gap in it. This is a kingdom's public record, and people compare
-// it against the real profile.
+// Everything drawn here is either published by Atlas verbatim or derived from
+// the KvK history we already hold. Atlas now rates kingdoms on three ratings --
+// Atlas, Prep and Battle -- each with its own global rank, and plots their
+// history as charts without printing the numbers behind them. Those histories
+// are not redrawn here: a chart that looks authoritative and is read off
+// someone else's picture is worse than an honest gap. The win-rate trend is
+// drawn, because it is counted exactly from the runs.
 
 const GOLD = '#E8C558'
 const BLUE = '#7f9ed6'
 
 /* ------------------------------------------------------------ kvk charts --
-   The three line charts share an x-axis -- one point per KvK, 7 through 18 --
+   The trend chart's x-axis -- one point per KvK, from 7 to the latest --
    and everything that follows from it: where a point sits, which labels fit,
    and what the reader gets when they hover or tap one.
 
@@ -169,160 +159,65 @@ function KvkAxis({ series, x }) {
   )
 }
 
-/* ---------------------------------------------------------------- history --
-   Atlas score across the campaign, as the profile plots it.
+/* ---------------------------------------------------------------- ratings --
+   The three ratings and their ranks, as the profile header prints them.
    ------------------------------------------------------------------------ */
-function ScoreHistory({ delay = 0 }) {
-  const gid = useId()
+function AtlasRatings({ delay = 0 }) {
   const ent = useEntrance(delay)
-  const { atlas } = tracker846
-  const series = atlas.curve
-  const move = atlas.lastMove
-  const { active, setActive, x } = useKvkPoints(series.length)
-
-  const { W, H, L, R, T, B } = PLOT
-  const ticks = [0, 25, 50, 75, 100]
-  const y = (v) => H - B - (v / 100) * (H - T - B)
-  const line = smoothPath(series.map((p, i) => ({ x: x(i), y: y(p.score) })))
-  const hot = active == null ? null : series[active]
-  const shownMove = useFigure(move.score, ent.on)
-  const shownScore = useFigure(atlas.score, ent.on)
+  const { atlas, tier } = tracker846
+  const shownRating = useFigure(atlas.rating, ent.on)
+  const shownRank = useFigure(atlas.rank, ent.on)
+  const sub = [
+    { label: 'Prep Rating', ...atlas.prep, color: BLUE },
+    { label: 'Battle Rating', ...atlas.battle, color: GOLD },
+  ]
 
   return (
     <Panel style={ent.cardStyle}>
-      <SectionTitle eyebrow="Trajectory" title="Atlas Score History" />
-      <div className="mt-1 flex items-baseline gap-2">
-        <span className="font-display text-xl font-bold tabular-nums" style={{ color: GOLD }}>▲{shownMove.toFixed(2)}</span>
-        <span className="text-[11px] text-parchment/50">KvK {move.fromKvk} → {move.toKvk}</span>
-        <span className="ml-auto font-mono text-lg font-black tabular-nums text-gold-bright">{shownScore.toFixed(2)}</span>
+      <SectionTitle eyebrow="Standing" title="Atlas Ratings" action={<Pill tone="gold">{tier}</Pill>} />
+      <div ref={ent.ref} className="mt-3 flex items-baseline gap-3">
+        <span className="gilt-text font-mono text-3xl font-black tabular-nums">
+          {shownRating.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}
+        </span>
+        <span className="text-[11px] uppercase tracking-wider text-parchment/45">Atlas Rating</span>
+        <span className="ml-auto font-mono text-lg font-black tabular-nums text-gold-bright">#{Math.round(shownRank)}</span>
       </div>
-      <div ref={ent.ref} className="relative mt-2">
-        <svg viewBox={`0 0 ${W} ${H}`} className="w-full">
-          <defs>
-            <linearGradient id={`${gid}-f`} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={GOLD} stopOpacity=".26" />
-              <stop offset="100%" stopColor={GOLD} stopOpacity="0" />
-            </linearGradient>
-          </defs>
-          {ticks.map((t) => <line key={t} x1={L} x2={W - R} y1={y(t)} y2={y(t)} stroke="rgba(226,199,125,.10)" />)}
-          {/* Fill last: it belongs under a line that already exists. */}
-          <path d={`${line} L${x(series.length - 1)},${H - B} L${x(0)},${H - B} Z`}
-            fill={`url(#${gid}-f)`} style={ent.fadeStyle(DRAW_MS * 0.8)} />
-          <path d={line} pathLength="1" fill="none" stroke={GOLD} strokeWidth="2.6" style={ent.drawStyle()} />
-          {series.map((p, i) => (
-            <circle key={p.kvk} cx={x(i)} cy={y(p.score)} r={active === i ? 4.2 : 2.4}
-              fill="#FFF6DA" stroke={GOLD} strokeWidth={active === i ? 1.6 : 0}
-              style={{ ...ent.dotStyle(i, x(i), y(p.score)), transitionProperty: 'transform, r, stroke-width', transitionDuration: '260ms, 140ms, 140ms' }} />
-          ))}
-        </svg>
-        {ticks.map((t) => (
-          <div key={t} className="pointer-events-none absolute -translate-y-1/2 font-mono text-[9px] text-parchment/35"
-            style={{ right: `${((W - L + 6) / W) * 100}%`, top: `${(y(t) / H) * 100}%` }}>{t}</div>
+      <div className="mt-4 grid grid-cols-2 gap-2">
+        {sub.map((r, i) => (
+          <div key={r.label} className="rounded-lg bg-white/5 p-3 text-center" style={ent.fadeStyle(250 + i * 120)}>
+            <div className="font-mono text-lg font-bold tabular-nums" style={{ color: r.color }}>
+              {r.rating.toLocaleString('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 })}
+            </div>
+            <div className="text-[9px] uppercase tracking-wider text-parchment/45">{r.label}</div>
+            <div className="mt-0.5 font-mono text-[11px] text-parchment/70">Rank #{r.rank}</div>
+          </div>
         ))}
-        <KvkHover count={series.length} onActive={setActive} />
-        {hot && <KvkTooltip label={hot.kvk} value={hot.score.toFixed(2)}
-          left={`${(x(active) / W) * 100}%`} top={`${(y(hot.score) / H) * 100}%`} />}
       </div>
-      <KvkAxis series={series} x={x} />
+      <div className="mt-2 rounded-lg bg-white/5 p-3 text-center" style={ent.fadeStyle(490)}>
+        <div className="font-mono text-lg font-bold tabular-nums text-parchment">{atlas.mystic.total.toLocaleString('en-US')}</div>
+        <div className="text-[9px] uppercase tracking-wider text-parchment/45">Mystic Trials · Top 100 total</div>
+        <div className="mt-0.5 font-mono text-[11px] text-parchment/70">Rank #{atlas.mystic.rank}</div>
+      </div>
       <p className="mt-4 text-[10px] leading-relaxed text-parchment/40">
-        Read off the Atlas history chart (±0.1). Its last point sits at {series[series.length - 1].score.toFixed(2)};
-        the profile recalculates after a KvK settles, and {atlas.score.toFixed(2)} is the standing it shows now.
+        As shown on the Kingshot Atlas profile on {atlas.verified}.
       </p>
     </Panel>
   )
 }
 
-function RankHistory({ delay = 0 }) {
-  const gid = useId()
-  const ent = useEntrance(delay)
-  const { atlas, tier } = tracker846
-  const series = atlas.curve
-  const move = atlas.lastMove
-  const headroom = atlas.score - atlas.tierThreshold
-  const { active, setActive, x } = useKvkPoints(series.length)
-
-  // Atlas's own axis: linear, #1 at the top, running to #470 -- the size of the
-  // ladder rather than the band this kingdom happens to occupy. A log domain
-  // read better in isolation, but this chart is compared against the source
-  // side by side, and a curve whose shape depends on which scale we picked is
-  // the wrong kind of difference to introduce.
-  const { W, H, L, R, T, B } = PLOT
-  const FLOOR = 470
-  const ticks = [1, 118, 236, 353, FLOOR]
-  const y = (rank) => T + ((rank - 1) / (FLOOR - 1)) * (H - T - B)
-  const line = smoothPath(series.map((p, i) => ({ x: x(i), y: y(p.rank) })))
-  const hot = active == null ? null : series[active]
-  const shownRanks = useFigure(move.ranks, ent.on)
-  const shownRank = useFigure(atlas.rank, ent.on)
-
-  return (
-    <Panel style={ent.cardStyle}>
-      <SectionTitle eyebrow="Standing" title="Kingdom Ranking History" />
-      <div className="mt-1 flex items-baseline gap-2">
-        <span className="font-display text-xl font-bold tabular-nums" style={{ color: BLUE }}>▲{Math.round(shownRanks)} ranks</span>
-        <span className="text-[11px] text-parchment/50">KvK {move.fromKvk} → {move.toKvk}</span>
-        <span className="ml-auto font-mono text-lg font-black tabular-nums text-gold-bright">#{Math.round(shownRank)}</span>
-      </div>
-      <div ref={ent.ref} className="relative mt-2">
-        <svg viewBox={`0 0 ${W} ${H}`} className="w-full">
-          <defs>
-            <linearGradient id={`${gid}-r`} x1="0" y1="0" x2="1" y2="0">
-              <stop offset="0%" stopColor={BLUE} stopOpacity=".55" />
-              <stop offset="100%" stopColor="#FFF6DA" stopOpacity="1" />
-            </linearGradient>
-          </defs>
-          {ticks.map((t) => <line key={t} x1={L} x2={W - R} y1={y(t)} y2={y(t)} stroke="rgba(127,158,214,.12)" />)}
-          <path d={line} pathLength="1" fill="none" stroke={`url(#${gid}-r)`} strokeWidth="2.6" style={ent.drawStyle()} />
-          {series.map((p, i) => (
-            <circle key={p.kvk} cx={x(i)} cy={y(p.rank)} r={active === i ? 4.2 : 2.4}
-              fill="#FFF6DA" stroke={BLUE} strokeWidth={active === i ? 1.6 : 0}
-              style={{ ...ent.dotStyle(i, x(i), y(p.rank)), transitionProperty: 'transform, r, stroke-width', transitionDuration: '260ms, 140ms, 140ms' }} />
-          ))}
-        </svg>
-        {ticks.map((t) => (
-          <div key={t} className="pointer-events-none absolute -translate-y-1/2 font-mono text-[9px] text-parchment/35"
-            style={{ right: `${((W - L + 6) / W) * 100}%`, top: `${(y(t) / H) * 100}%` }}>#{t}</div>
-        ))}
-        <KvkHover count={series.length} onActive={setActive} />
-        {hot && <KvkTooltip label={hot.kvk} value={`#${hot.rank}`}
-          left={`${(x(active) / W) * 100}%`} top={`${(y(hot.rank) / H) * 100}%`} />}
-      </div>
-      <KvkAxis series={series} x={x} />
-
-      <div className="mt-5 grid grid-cols-2 gap-2">
-        <div className="rounded-lg bg-white/5 p-2.5 text-center">
-          <div className="font-display text-lg font-bold text-gold-bright">{tier}</div>
-          <div className="text-[9px] uppercase tracking-wider text-parchment/45">Tier · {atlas.tierThreshold}+ to hold</div>
-        </div>
-        <div className="rounded-lg bg-white/5 p-2.5 text-center">
-          <div className="font-display text-lg font-bold text-emerald-300">+{headroom.toFixed(2)}</div>
-          <div className="text-[9px] uppercase tracking-wider text-parchment/45">Above threshold</div>
-        </div>
-      </div>
-
-      <div className="mt-3 rounded-lg border border-gold/15 bg-gold/[.04] px-3 py-2 text-[11px] text-parchment/65">
-        Ranks better than <span className="font-bold text-gold-bright">{atlas.percentile}%</span> of all kingdoms.
-      </div>
-    </Panel>
-  )
-}
-
 /* ------------------------------------------------------------------ trend --
-   Prep and battle win rate as they developed, from the same curve the other
-   two charts use. The stored rates are the profile's own, and the test file
-   holds them against the rates recomputed from the twelve runs -- so these are
-   read from the source AND checked against our record, not one or the other.
+   Prep and battle win rate as they developed, KvK by KvK -- the profile's
+   "Performance Trend", counted from the runs.
    ------------------------------------------------------------------------ */
 function PerformanceTrend({ delay = 0 }) {
   const gid = useId()
   const ent = useEntrance(delay)
-  const series = tracker846.atlas.curve
+  const series = tracker846.atlas.trend
   const { active, setActive, x } = useKvkPoints(series.length)
 
   // preserveAspectRatio="none" so the plot stretches to whatever height the
-  // card ends up with. This card sits in a grid row beside the radar and gets
-  // stretched to match it -- measured, that left 248px of empty panel under a
-  // 178px chart, half the card doing nothing. A line plot has no intrinsic
+  // card ends up with. This card sits in a grid row beside the ratings card
+  // and gets stretched to match it. A line plot has no intrinsic
   // aspect ratio to protect, and the only things that WOULD distort under a
   // non-uniform scale are the end markers, so those are HTML dots positioned
   // over the SVG rather than circles inside it.
@@ -437,8 +332,7 @@ function PerformanceTrend({ delay = 0 }) {
       </div>
       <KvkAxis series={series} x={x} />
 
-      {/* The card is stretched to the radar's height either way, so it may as
-          well carry the record the curves are drawn from. */}
+      {/* The record the curves are drawn from. */}
       <div className="mt-4 grid grid-cols-3 gap-2">
         {[
           { label: 'Prep', value: k.prep.record, sub: `${k.prep.winRate}% win` },
@@ -456,143 +350,16 @@ function PerformanceTrend({ delay = 0 }) {
   )
 }
 
-// The five score components, each its own colour so the stacked bar and the
-// list below it read as the same thing.
-const SEG_COLORS = { base: '#E0B23B', dominv: '#5D90E8', form: '#5BC98C', streaks: '#C77FD8', history: '#D76158' }
-
-function ScoreBreakdown({ delay = 0 }) {
-  const ent = useEntrance(delay)
-  const { breakdown, score, experiencePenalty } = tracker846.atlas
-  const total = breakdown.reduce((s, b) => s + b.pts, 0)
-  // The components are re-read less often than the score is. When they are
-  // behind it, the bar is a decomposition of the OLDER score, so the panel
-  // shows that older total and its date instead of printing today's score
-  // above five segments that do not add up to it.
-  const stale = Math.abs(total - score) > 0.05
-
-  return (
-    <Panel style={ent.cardStyle}>
-      <SectionTitle eyebrow="Score Components" title="Atlas Score Breakdown"
-        action={<Pill tone="gold">{tracker846.tier}</Pill>} />
-      <div className="mt-3 flex items-baseline gap-2">
-        <span className="gilt-text font-mono text-3xl font-black">{(stale ? total : score).toFixed(2)}</span>
-        <span className="text-[11px] text-parchment/40">
-          {stale
-            ? `components as of ${tracker846.atlas.componentsVerified} · score now ${score.toFixed(2)}`
-            : 'breakdown is approximate'}
-        </span>
-      </div>
-      <div ref={ent.ref} className="k-track mt-3 flex h-5 overflow-hidden rounded-full border border-gold/15">
-        {breakdown.map((b, i) => (
-          <div key={b.key} className="k-seg" title={`${b.label} ${b.pts}`}
-            style={{ width: ent.on ? `${(b.pts / total) * 100}%` : '0%', '--c': SEG_COLORS[b.key], transitionDelay: `${i * 90}ms` }} />
-        ))}
-      </div>
-      <div className="mt-3 space-y-1.5">
-        {breakdown.map((b) => (
-          <div key={b.key} className="flex items-center gap-2 text-[11px]">
-            <span className="h-2 w-2 shrink-0 rounded-[2px]" style={{ backgroundColor: SEG_COLORS[b.key] }} />
-            <span className="flex-1 text-parchment/70">{b.label}
-              <span className="ml-1.5 text-parchment/35">{b.note}</span>
-            </span>
-            <span className="font-mono font-bold tabular-nums text-parchment/90">+{b.pts.toFixed(2)}</span>
-          </div>
-        ))}
-        <div className="flex items-center gap-2 border-t border-gold/10 pt-2 text-[11px]">
-          <Icon name="shield" size={12} className="text-emerald-300/80" />
-          <span className="flex-1 text-parchment/70">Experience
-            <span className="ml-1.5 text-parchment/35">{experiencePenalty ? 'penalty applied' : 'no penalty'}</span>
-          </span>
-          <span className="font-mono font-bold text-emerald-300">{experiencePenalty ? '—' : '✓'}</span>
-        </div>
-      </div>
-    </Panel>
-  )
-}
-
-/* ------------------------------------------------------------------ radar --
-   Six axes. Labels sit outside the grid by opting out of the clamp -- the
-   same trap that printed the PvP radar's labels on top of its own polygon.
-   ------------------------------------------------------------------------ */
-function PerformanceRadar({ delay = 0 }) {
-  const ent = useEntrance(delay)
-  const gid = useId()
-  const axes = tracker846.atlas.radar
-  const CX = 170, CY = 152, R = 96
-  const angleFor = (i) => (i / axes.length) * Math.PI * 2 - Math.PI / 2
-  const pt = (i, val, clamp = true) => {
-    const k = clamp ? Math.min(1, val / 100) : val / 100
-    return [CX + R * k * Math.cos(angleFor(i)), CY + R * k * Math.sin(angleFor(i))]
-  }
-  const poly = axes.map((a, i) => pt(i, a.value).join(',')).join(' ')
-  const rings = [25, 50, 75, 100]
-
-  return (
-    <Panel style={ent.cardStyle}>
-      <SectionTitle eyebrow="Profile" title="Performance Radar" />
-      <div ref={ent.ref} className="relative mt-2">
-        <svg viewBox="0 0 340 300" className="w-full" role="img"
-          aria-label={`Performance radar. ${axes.map((a) => `${a.label}: ${a.value}%`).join(', ')}.`}>
-          <defs>
-            <radialGradient id={`${gid}-f`}>
-              <stop offset="0%" stopColor={GOLD} stopOpacity=".34" />
-              <stop offset="100%" stopColor={GOLD} stopOpacity=".10" />
-            </radialGradient>
-          </defs>
-          {rings.map((r) => (
-            <polygon key={r} points={axes.map((_, i) => pt(i, r).join(',')).join(' ')}
-              fill="none" stroke="rgba(226,199,125,.13)" strokeWidth="1" />
-          ))}
-          {axes.map((_, i) => {
-            const [ex, ey] = pt(i, 100)
-            return <line key={i} x1={CX} y1={CY} x2={ex} y2={ey} stroke="rgba(226,199,125,.10)" />
-          })}
-          <polygon points={poly} fill={`url(#${gid}-f)`} stroke={GOLD} strokeWidth="2.2"
-            style={ent.calm
-              ? { opacity: ent.on ? 1 : 0, transition: `opacity ${CALM_FADE_MS}ms ease` }
-              : { transformOrigin: `${CX}px ${CY}px`, transform: ent.on ? 'scale(1)' : 'scale(.05)', opacity: ent.on ? 1 : 0, transition: 'transform .9s cubic-bezier(.34,1.4,.6,1), opacity .5s ease' }} />
-          {/* The axis figures land after the shape does, not with it. */}
-          <g style={ent.fadeStyle(800)}>
-            {axes.map((a, i) => {
-              const [px, py] = pt(i, a.value)
-              return <circle key={a.label} cx={px} cy={py} r="3" fill="#F6E2A4" stroke="#0b1222" strokeWidth="1.4" />
-            })}
-          </g>
-        </svg>
-        {axes.map((a, i) => {
-          // 1.3 with the clamp switched off, so labels clear the outer ring
-          // instead of being pinned to it.
-          const [lx, ly] = pt(i, 130, false)
-          return (
-            <div key={a.label}
-              className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 whitespace-nowrap text-center"
-              style={{ left: `${lx / 340 * 100}%`, top: `${ly / 300 * 100}%` }}>
-              <div className="text-[9px] uppercase tracking-[.1em] text-parchment/45">{a.label}</div>
-              <div className="font-mono text-[12px] font-bold text-gold-bright">{a.value}%</div>
-            </div>
-          )
-        })}
-      </div>
-    </Panel>
-  )
-}
-
-
 /* -------------------------------------------------------------------------- */
 export default function AtlasAnalytics() {
   return (
     <div className="space-y-6">
-      {/* The second card in each row follows the first. A grid that fires all
-          at once reads as the page glitching rather than as an entrance. */}
+      {/* The second card follows the first. A grid that fires all at once
+          reads as the page glitching rather than as an entrance. */}
       <div className="grid gap-6 lg:grid-cols-2">
-        <ScoreHistory />
-        <RankHistory delay={ROW_STAGGER_MS} />
+        <AtlasRatings />
+        <PerformanceTrend delay={ROW_STAGGER_MS} />
       </div>
-      <div className="grid gap-6 lg:grid-cols-2">
-        <PerformanceTrend />
-        <PerformanceRadar delay={ROW_STAGGER_MS} />
-      </div>
-      <ScoreBreakdown />
     </div>
   )
 }

@@ -367,3 +367,85 @@ test('the mystic optimizer is deterministic', () => {
   const first = run()
   for (let i = 0; i < 3; i += 1) assert.equal(run(), first)
 })
+
+// -------------------------------------------- parity with the reference sim
+//
+// These pin what was MEASURED off the reference simulator over its websocket
+// rather than fitted to noisy player reports. research/frakinator-parity.md
+// explains the method; research/frakinator-parity.json holds the battles.
+
+const duel = (aType, bType, n = 100000) => {
+  const one = (type, count) => Object.fromEntries(TROOP_TYPES.map(
+    (t) => [t, { count: t === type ? count : 0, attack: 0, lethality: 0, defense: 0, health: 0, tier: 'T10' }]))
+  return runBattle(one(aType, n), one(bType, n), { maxTurns: 5000 })
+}
+
+// Was: types differed only by the counter triangle, so equal-sized single-type
+// armies annihilated each other whatever they were. The reference disagrees --
+// Infantry keeps 26,849 of 100,000 against Cavalry, and Archery keeps 32,443
+// against Infantry -- which is far more than an 11.5% counter bonus can buy.
+test('the troop types are not equally powerful', () => {
+  const inf = duel('infantry', 'cavalry')
+  assert.equal(inf.outcome, 'attacker', 'Infantry should beat equal Cavalry')
+  assert.ok(Math.abs(inf.attacker.infantry.count - 26849) < 2000, `${inf.attacker.infantry.count} left, reference says 26,849`)
+
+  const arc = duel('infantry', 'archers')
+  assert.equal(arc.outcome, 'defender', 'Archery should beat equal Infantry')
+  assert.ok(Math.abs(arc.defender.archers.count - 32443) < 2000, `${arc.defender.archers.count} left, reference says 32,443`)
+
+  // Cavalry against Archery is the one even matchup (reference: 53/47).
+  const even = duel('cavalry', 'archers')
+  assert.ok(Math.abs(even.survivalEdge) < 5, `edge ${even.survivalEdge} -- reference calls this a coin flip`)
+})
+
+// Was: FRONT_ROW_SPILL sent 20% of every volley past the front row, a constant
+// fitted to two proxy battles. Eleven reference battles return the winner's
+// back row at full strength, to the troop.
+test('nothing but Ambusher reaches a shielded back row', () => {
+  const withBack = (backType) => Object.fromEntries(TROOP_TYPES.map(
+    (t) => [t, { count: t === 'infantry' ? 50000 : (t === backType ? 50000 : 0), attack: 0, lethality: 0, defense: 0, health: 0, tier: 'T10' }]))
+  const plainInfantry = Object.fromEntries(TROOP_TYPES.map(
+    (t) => [t, { count: t === 'infantry' ? 100000 : 0, attack: 0, lethality: 0, defense: 0, health: 0, tier: 'T10' }]))
+
+  const behindWall = runBattle(withBack('archers'), plainInfantry, { maxTurns: 5000 })
+  assert.equal(behindWall.attacker.archers.count, 50000, 'Archery behind an Infantry wall took losses')
+
+  // Cavalry does get through, by design: that is Ambusher, and it is the only
+  // thing that does.
+  const ambushed = runBattle(plainInfantry, withBack('archers'), { maxTurns: 5000 })
+  assert.ok(ambushed.defender.archers.count === 50000 || ambushed.outcome === 'defender')
+  const cav = Object.fromEntries(TROOP_TYPES.map(
+    (t) => [t, { count: t === 'cavalry' ? 100000 : 0, attack: 0, lethality: 0, defense: 0, health: 0, tier: 'T10' }]))
+  const throughWall = runBattle(cav, withBack('archers'), { maxTurns: 5000 })
+  assert.ok(throughWall.defender.archers.count < 50000, 'Ambusher never reached the Archers')
+})
+
+// Was: STAT_PAIR_WEIGHT 1.09 made Attack and Lethality buy different amounts.
+// The reference leaves 62,859 / 62,830 / 62,981 survivors for +100% Attack,
+// +100% Lethality and +100% enemy Defense -- one answer, three spellings.
+test('attack, lethality and defense are the same purchase', () => {
+  const inf = (count, over = {}) => Object.fromEntries(TROOP_TYPES.map(
+    (t) => [t, { count: t === 'infantry' ? count : 0, attack: 0, lethality: 0, defense: 0, health: 0, tier: 'T10', ...(t === 'infantry' ? over : {}) }]))
+  const plain = () => inf(100000)
+  const survivors = [
+    runBattle(inf(100000, { attack: 100 }), plain(), { maxTurns: 5000 }).attacker.infantry.count,
+    runBattle(inf(100000, { lethality: 100 }), plain(), { maxTurns: 5000 }).attacker.infantry.count,
+    runBattle(plain(), inf(100000, { defense: 100 }), { maxTurns: 5000 }).defender.infantry.count,
+  ]
+  for (const n of survivors) assert.ok(Math.abs(n - 62859) < 1500, `${n} survivors, reference says ~62,860`)
+  assert.ok(Math.max(...survivors) - Math.min(...survivors) < 200, `the three differ: ${survivors}`)
+})
+
+// The whole measured set, replayed. This is the number that says whether the
+// engine still matches the reference; research/frakinator-parity.mjs prints it
+// per battle.
+test('the engine reproduces every decisive reference battle', async () => {
+  const { parityReport } = await import('../research/frakinator-parity.mjs')
+  const { scored } = parityReport()
+  assert.ok(scored.length >= 19, `only ${scored.length} decisive battles replayed`)
+  const worst = scored.reduce((w, s) => (s.worst > w.worst ? s : w), scored[0])
+  const mean = scored.reduce((a, s) => a + s.worst, 0) / scored.length
+  assert.ok(worst.worst < 0.05, `${worst.name} is off by ${(worst.worst * 100).toFixed(2)}% of the army`)
+  assert.ok(mean < 0.015, `mean error ${(mean * 100).toFixed(2)}% across ${scored.length} battles`)
+  for (const s of scored) assert.ok(s.sideWon, `${s.name}: we call the wrong side the winner`)
+})

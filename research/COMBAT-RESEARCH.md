@@ -1527,3 +1527,50 @@ guides, which is why it is marked [DOC]; the 3% figure appeared in one
 Labyrinth guide and should be treated as [OBS] until a second source confirms
 it. Per-tier troop stat tables — which would have settled §14a's T11 question
 from first principles rather than by fitting — could not be reached at all.
+
+---
+
+## 16. The reference simulator, measured directly  [MEASURED 2026-09-23]
+
+Everything above is inference from player-reported battles, whose replication
+noise (§13) is large enough that two of the constants could not be identified
+from it. A public simulator of the same game — `frakinator.streamlit.app` —
+resolves the same fight thousands of times and reports a mean, so it answers
+those questions without the noise. Its source is not public; the numbers below
+were measured by driving its Streamlit websocket with chosen inputs and reading
+the rendered results back.
+
+**Full write-up, method, data and replay script: `frakinator-parity.md`,
+`frakinator-parity.json`, `frakinator-parity.mjs`.**
+
+Two findings overturn conclusions reached above.
+
+**1. `FRONT_ROW_SPILL` is 0, not 0.20.** §11 re-fitted it on two real outcomes
+and §12 recorded that it is *not identifiable* from that data. It is directly
+observable in the reference: eleven battles in which the winner held a back row
+returned that row at full strength, to the troop. The only thing that reaches
+past a front row is Cavalry's Ambusher.
+
+**2. `STAT_PAIR_WEIGHT` is 1.0, not 1.09.** §1 split the exponents because ten
+real battles preferred it. Measured directly, +100% Attack, +100% Lethality and
++100% enemy Defense leave 62,859 / 62,830 / 62,981 survivors out of 100,000 —
+the same purchase three ways, inside 0.2%.
+
+**3. The types differ in base power, which this file denied.** §"no per-type
+base stats" removed a `T10_BASE` table for having constructed-looking ratios.
+The ratios were wrong, but the claim that replaced them — that types differ only
+by the counter triangle — predicts mutual annihilation for every equal-sized
+duel. Measured: Infantry beats Cavalry keeping 26.8%, Archery beats Infantry
+keeping 32.4%, Cavalry vs Archery is a genuine 53/47 coin flip. Cavalry and
+Archery are glass cannons at roughly 3.2x / 4.4x offence and 3.3x / 4.5x
+fragility. Now carried as `TROOP_OFFENCE` and `TROOP_DEFENCE`.
+
+Replaying all 19 decisive measured battles through the engine: mean worst-row
+error **0.54%** of army size, max 2.8%. Six of them were held out — designed
+after the constants were fixed, with per-type stat spreads the fit never saw.
+
+Still open: the eight coin-flip battles (the reference's win-rate spread comes
+from an ability roll we model in expectation), and troop tier — the reference's
+PvP tab returns ~51% for T6 vs T10 at equal counts, which looks like a gap in
+that tab rather than a game rule, so `TIER_STAT_MULTIPLIER` is deliberately
+*not* flattened to match it.

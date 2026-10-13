@@ -1,0 +1,1417 @@
+[
+ {
+  "case": {
+   "name": "inf_vs_inf_equal",
+   "p1": {
+    "inf_n": 100000,
+    "inf_att": 0,
+    "inf_def": 0,
+    "inf_let": 0,
+    "inf_hea": 0,
+    "cav_n": 0,
+    "cav_att": 0,
+    "cav_def": 0,
+    "cav_let": 0,
+    "cav_hea": 0,
+    "arc_n": 0,
+    "arc_att": 0,
+    "arc_def": 0,
+    "arc_let": 0,
+    "arc_hea": 0
+   },
+   "p2": {
+    "inf_n": 100000,
+    "inf_att": 0,
+    "inf_def": 0,
+    "inf_let": 0,
+    "inf_hea": 0,
+    "cav_n": 0,
+    "cav_att": 0,
+    "cav_def": 0,
+    "cav_let": 0,
+    "cav_hea": 0,
+    "arc_n": 0,
+    "arc_att": 0,
+    "arc_def": 0,
+    "arc_let": 0,
+    "arc_hea": 0
+   }
+  },
+  "result": {
+   "win_rate_p1": 46,
+   "ratios": [
+    "- Player1 has 100,000 total troops in a 100.0/0.0/0.0 ratio",
+    "- Player2 has 100,000 total troops in a 100.0/0.0/0.0 ratio"
+   ],
+   "p1_wins_resident": 4009.0,
+   "p1_wins_infantry": 4009.0,
+   "p1_wins_cavalry": 0.0,
+   "p1_wins_archery": 0.0,
+   "p2_wins_resident": 3844.0,
+   "p2_wins_infantry": 3844.0,
+   "p2_wins_cavalry": 0.0,
+   "p2_wins_archery": 0.0
+  }
+ },
+ {
+  "case": {
+   "name": "inf_vs_inf_2to1",
+   "p1": {
+    "inf_n": 100000,
+    "inf_att": 0,
+    "inf_def": 0,
+    "inf_let": 0,
+    "inf_hea": 0,
+    "cav_n": 0,
+    "cav_att": 0,
+    "cav_def": 0,
+    "cav_let": 0,
+    "cav_hea": 0,
+    "arc_n": 0,
+    "arc_att": 0,
+    "arc_def": 0,
+    "arc_let": 0,
+    "arc_hea": 0
+   },
+   "p2": {
+    "inf_n": 50000,
+    "inf_att": 0,
+    "inf_def": 0,
+    "inf_let": 0,
+    "inf_hea": 0,
+    "cav_n": 0,
+    "cav_att": 0,
+    "cav_def": 0,
+    "cav_let": 0,
+    "cav_hea": 0,
+    "arc_n": 0,
+    "arc_att": 0,
+    "arc_def": 0,
+    "arc_let": 0,
+    "arc_hea": 0
+   }
+  },
+  "result": {
+   "win_rate_p1": 100,
+   "ratios": [
+    "- Player1 has 100,000 total troops in a 100.0/0.0/0.0 ratio",
+    "- Player2 has 50,000 total troops in a 100.0/0.0/0.0 ratio"
+   ],
+   "p1_wins_resident": 74725.0,
+   "p1_wins_infantry": 74725.0,
+   "p1_wins_cavalry": 0.0,
+   "p1_wins_archery": 0.0
+  }
+ },
+ {
+  "case": {
+   "name": "inf_vs_cav",
+   "p1": {
+    "inf_n": 100000,
+    "inf_att": 0,
+    "inf_def": 0,
+    "inf_let": 0,
+    "inf_hea": 0,
+    "cav_n": 0,
+    "cav_att": 0,
+    "cav_def": 0,
+    "cav_let": 0,
+    "cav_hea": 0,
+    "arc_n": 0,
+    "arc_att": 0,
+    "arc_def": 0,
+    "arc_let": 0,
+    "arc_hea": 0
+   },
+   "p2": {
+    "inf_n": 0,
+    "inf_att": 0,
+    "inf_def": 0,
+    "inf_let": 0,
+    "inf_hea": 0,
+    "cav_n": 100000,
+    "cav_att": 0,
+    "cav_def": 0,
+    "cav_let": 0,
+    "cav_hea": 0,
+    "arc_n": 0,
+    "arc_att": 0,
+    "arc_def": 0,
+    "arc_let": 0,
+    "arc_hea": 0
+   }
+  },
+  "result": {
+   "win_rate_p1": 99,
+   "ratios": [
+    "- Player1 has 100,000 total troops in a 100.0/0.0/0.0 ratio",
+    "- Player2 has 100,000 total troops in a 0.0/100.0/0.0 ratio"
+   ],
+   "p1_wins_resident": 26849.0,
+   "p1_wins_infantry": 26849.0,
+   "p1_wins_cavalry": 0.0,
+   "p1_wins_archery": 0.0,
+   "p2_wins_resident": 67.0,
+   "p2_wins_infantry": 0.0,
+   "p2_wins_cavalry": 67.0,
+   "p2_wins_archery": 0.0
+  }
+ },
+ {
+  "case": {
+   "name": "inf_vs_arc",
+   "p1": {
+    "inf_n": 100000,
+    "inf_att": 0,
+    "inf_def": 0,
+    "inf_let": 0,
+    "inf_hea": 0,
+    "cav_n": 0,
+    "cav_att": 0,
+    "cav_def": 0,
+    "cav_let": 0,
+    "cav_hea": 0,
+    "arc_n": 0,
+    "arc_att": 0,
+    "arc_def": 0,
+    "arc_let": 0,
+    "arc_hea": 0
+   },
+   "p2": {
+    "inf_n": 0,
+    "inf_att": 0,
+    "inf_def": 0,
+    "inf_let": 0,
+    "inf_hea": 0,
+    "cav_n": 0,
+    "cav_att": 0,
+    "cav_def": 0,
+    "cav_let": 0,
+    "cav_hea": 0,
+    "arc_n": 100000,
+    "arc_att": 0,
+    "arc_def": 0,
+    "arc_let": 0,
+    "arc_hea": 0
+   }
+  },
+  "result": {
+   "win_rate_p1": 0,
+   "ratios": [
+    "- Player1 has 100,000 total troops in a 100.0/0.0/0.0 ratio",
+    "- Player2 has 100,000 total troops in a 0.0/0.0/100.0 ratio"
+   ],
+   "p2_wins_resident": 32443.0,
+   "p2_wins_infantry": 0.0,
+   "p2_wins_cavalry": 0.0,
+   "p2_wins_archery": 32443.0
+  }
+ },
+ {
+  "case": {
+   "name": "cav_vs_arc",
+   "p1": {
+    "inf_n": 0,
+    "inf_att": 0,
+    "inf_def": 0,
+    "inf_let": 0,
+    "inf_hea": 0,
+    "cav_n": 100000,
+    "cav_att": 0,
+    "cav_def": 0,
+    "cav_let": 0,
+    "cav_hea": 0,
+    "arc_n": 0,
+    "arc_att": 0,
+    "arc_def": 0,
+    "arc_let": 0,
+    "arc_hea": 0
+   },
+   "p2": {
+    "inf_n": 0,
+    "inf_att": 0,
+    "inf_def": 0,
+    "inf_let": 0,
+    "inf_hea": 0,
+    "cav_n": 0,
+    "cav_att": 0,
+    "cav_def": 0,
+    "cav_let": 0,
+    "cav_hea": 0,
+    "arc_n": 100000,
+    "arc_att": 0,
+    "arc_def": 0,
+    "arc_let": 0,
+    "arc_hea": 0
+   }
+  },
+  "result": {
+   "win_rate_p1": 53,
+   "ratios": [
+    "- Player1 has 100,000 total troops in a 0.0/100.0/0.0 ratio",
+    "- Player2 has 100,000 total troops in a 0.0/0.0/100.0 ratio"
+   ],
+   "p1_wins_resident": 15545.0,
+   "p1_wins_infantry": 0.0,
+   "p1_wins_cavalry": 15545.0,
+   "p1_wins_archery": 0.0,
+   "p2_wins_resident": 14494.0,
+   "p2_wins_infantry": 0.0,
+   "p2_wins_cavalry": 0.0,
+   "p2_wins_archery": 14494.0
+  }
+ },
+ {
+  "case": {
+   "name": "infcav_vs_inf",
+   "p1": {
+    "inf_n": 50000,
+    "inf_att": 0,
+    "inf_def": 0,
+    "inf_let": 0,
+    "inf_hea": 0,
+    "cav_n": 50000,
+    "cav_att": 0,
+    "cav_def": 0,
+    "cav_let": 0,
+    "cav_hea": 0,
+    "arc_n": 0,
+    "arc_att": 0,
+    "arc_def": 0,
+    "arc_let": 0,
+    "arc_hea": 0
+   },
+   "p2": {
+    "inf_n": 100000,
+    "inf_att": 0,
+    "inf_def": 0,
+    "inf_let": 0,
+    "inf_hea": 0,
+    "cav_n": 0,
+    "cav_att": 0,
+    "cav_def": 0,
+    "cav_let": 0,
+    "cav_hea": 0,
+    "arc_n": 0,
+    "arc_att": 0,
+    "arc_def": 0,
+    "arc_let": 0,
+    "arc_hea": 0
+   }
+  },
+  "result": {
+   "win_rate_p1": 100,
+   "ratios": [
+    "- Player1 has 100,000 total troops in a 50.0/50.0/0.0 ratio",
+    "- Player2 has 100,000 total troops in a 100.0/0.0/0.0 ratio"
+   ],
+   "p1_wins_resident": 76377.0,
+   "p1_wins_infantry": 26377.0,
+   "p1_wins_cavalry": 50000.0,
+   "p1_wins_archery": 0.0
+  }
+ },
+ {
+  "case": {
+   "name": "atk100_inf_vs_inf",
+   "p1": {
+    "inf_n": 100000,
+    "inf_att": 100,
+    "inf_def": 0,
+    "inf_let": 0,
+    "inf_hea": 0,
+    "cav_n": 0,
+    "cav_att": 100,
+    "cav_def": 0,
+    "cav_let": 0,
+    "cav_hea": 0,
+    "arc_n": 0,
+    "arc_att": 100,
+    "arc_def": 0,
+    "arc_let": 0,
+    "arc_hea": 0
+   },
+   "p2": {
+    "inf_n": 100000,
+    "inf_att": 0,
+    "inf_def": 0,
+    "inf_let": 0,
+    "inf_hea": 0,
+    "cav_n": 0,
+    "cav_att": 0,
+    "cav_def": 0,
+    "cav_let": 0,
+    "cav_hea": 0,
+    "arc_n": 0,
+    "arc_att": 0,
+    "arc_def": 0,
+    "arc_let": 0,
+    "arc_hea": 0
+   }
+  },
+  "result": {
+   "win_rate_p1": 100,
+   "ratios": [
+    "- Player1 has 100,000 total troops in a 100.0/0.0/0.0 ratio",
+    "- Player2 has 100,000 total troops in a 100.0/0.0/0.0 ratio"
+   ],
+   "p1_wins_resident": 62859.0,
+   "p1_wins_infantry": 62859.0,
+   "p1_wins_cavalry": 0.0,
+   "p1_wins_archery": 0.0
+  }
+ },
+ {
+  "case": {
+   "name": "let100_inf_vs_inf",
+   "p1": {
+    "inf_n": 100000,
+    "inf_att": 0,
+    "inf_def": 0,
+    "inf_let": 100,
+    "inf_hea": 0,
+    "cav_n": 0,
+    "cav_att": 0,
+    "cav_def": 0,
+    "cav_let": 100,
+    "cav_hea": 0,
+    "arc_n": 0,
+    "arc_att": 0,
+    "arc_def": 0,
+    "arc_let": 100,
+    "arc_hea": 0
+   },
+   "p2": {
+    "inf_n": 100000,
+    "inf_att": 0,
+    "inf_def": 0,
+    "inf_let": 0,
+    "inf_hea": 0,
+    "cav_n": 0,
+    "cav_att": 0,
+    "cav_def": 0,
+    "cav_let": 0,
+    "cav_hea": 0,
+    "arc_n": 0,
+    "arc_att": 0,
+    "arc_def": 0,
+    "arc_let": 0,
+    "arc_hea": 0
+   }
+  },
+  "result": {
+   "win_rate_p1": 100,
+   "ratios": [
+    "- Player1 has 100,000 total troops in a 100.0/0.0/0.0 ratio",
+    "- Player2 has 100,000 total troops in a 100.0/0.0/0.0 ratio"
+   ],
+   "p1_wins_resident": 62830.0,
+   "p1_wins_infantry": 62830.0,
+   "p1_wins_cavalry": 0.0,
+   "p1_wins_archery": 0.0
+  }
+ },
+ {
+  "case": {
+   "name": "def100_defender",
+   "p1": {
+    "inf_n": 100000,
+    "inf_att": 0,
+    "inf_def": 0,
+    "inf_let": 0,
+    "inf_hea": 0,
+    "cav_n": 0,
+    "cav_att": 0,
+    "cav_def": 0,
+    "cav_let": 0,
+    "cav_hea": 0,
+    "arc_n": 0,
+    "arc_att": 0,
+    "arc_def": 0,
+    "arc_let": 0,
+    "arc_hea": 0
+   },
+   "p2": {
+    "inf_n": 100000,
+    "inf_att": 0,
+    "inf_def": 100,
+    "inf_let": 0,
+    "inf_hea": 0,
+    "cav_n": 0,
+    "cav_att": 0,
+    "cav_def": 100,
+    "cav_let": 0,
+    "cav_hea": 0,
+    "arc_n": 0,
+    "arc_att": 0,
+    "arc_def": 100,
+    "arc_let": 0,
+    "arc_hea": 0
+   }
+  },
+  "result": {
+   "win_rate_p1": 0,
+   "ratios": [
+    "- Player1 has 100,000 total troops in a 100.0/0.0/0.0 ratio",
+    "- Player2 has 100,000 total troops in a 100.0/0.0/0.0 ratio"
+   ],
+   "p2_wins_resident": 62981.0,
+   "p2_wins_infantry": 62981.0,
+   "p2_wins_cavalry": 0.0,
+   "p2_wins_archery": 0.0
+  }
+ },
+ {
+  "case": {
+   "name": "tier_t6_vs_t10",
+   "p1": {
+    "inf_n": 100000,
+    "inf_att": 0,
+    "inf_def": 0,
+    "inf_let": 0,
+    "inf_hea": 0,
+    "cav_n": 0,
+    "cav_att": 0,
+    "cav_def": 0,
+    "cav_let": 0,
+    "cav_hea": 0,
+    "arc_n": 0,
+    "arc_att": 0,
+    "arc_def": 0,
+    "arc_let": 0,
+    "arc_hea": 0
+   },
+   "p2": {
+    "inf_n": 100000,
+    "inf_att": 0,
+    "inf_def": 0,
+    "inf_let": 0,
+    "inf_hea": 0,
+    "cav_n": 0,
+    "cav_att": 0,
+    "cav_def": 0,
+    "cav_let": 0,
+    "cav_hea": 0,
+    "arc_n": 0,
+    "arc_att": 0,
+    "arc_def": 0,
+    "arc_let": 0,
+    "arc_hea": 0
+   },
+   "tier_p1": "t6"
+  },
+  "result": {
+   "win_rate_p1": 51,
+   "ratios": [
+    "- Player1 has 100,000 total troops in a 100.0/0.0/0.0 ratio",
+    "- Player2 has 100,000 total troops in a 100.0/0.0/0.0 ratio"
+   ],
+   "p1_wins_resident": 3653.0,
+   "p1_wins_infantry": 3653.0,
+   "p1_wins_cavalry": 0.0,
+   "p1_wins_archery": 0.0,
+   "p2_wins_resident": 3660.0,
+   "p2_wins_infantry": 3660.0,
+   "p2_wins_cavalry": 0.0,
+   "p2_wins_archery": 0.0
+  }
+ },
+ {
+  "case": {
+   "name": "balanced_symmetric",
+   "p1": {
+    "inf_n": 50000,
+    "inf_att": 200,
+    "inf_def": 200,
+    "inf_let": 200,
+    "inf_hea": 200,
+    "cav_n": 30000,
+    "cav_att": 200,
+    "cav_def": 200,
+    "cav_let": 200,
+    "cav_hea": 200,
+    "arc_n": 20000,
+    "arc_att": 200,
+    "arc_def": 200,
+    "arc_let": 200,
+    "arc_hea": 200
+   },
+   "p2": {
+    "inf_n": 50000,
+    "inf_att": 200,
+    "inf_def": 200,
+    "inf_let": 200,
+    "inf_hea": 200,
+    "cav_n": 30000,
+    "cav_att": 200,
+    "cav_def": 200,
+    "cav_let": 200,
+    "cav_hea": 200,
+    "arc_n": 20000,
+    "arc_att": 200,
+    "arc_def": 200,
+    "arc_let": 200,
+    "arc_hea": 200
+   }
+  },
+  "result": {
+   "win_rate_p1": 48,
+   "ratios": [
+    "- Player1 has 100,000 total troops in a 50.0/30.0/20.0 ratio",
+    "- Player2 has 100,000 total troops in a 50.0/30.0/20.0 ratio"
+   ],
+   "p1_wins_resident": 27729.0,
+   "p1_wins_infantry": 2746.0,
+   "p1_wins_cavalry": 23672.0,
+   "p1_wins_archery": 1310.0,
+   "p2_wins_resident": 28376.0,
+   "p2_wins_infantry": 2741.0,
+   "p2_wins_cavalry": 24330.0,
+   "p2_wins_archery": 1304.0
+  }
+ },
+ {
+  "case": {
+   "name": "inf_vs_infcav",
+   "p1": {
+    "inf_n": 100000,
+    "inf_att": 0,
+    "inf_def": 0,
+    "inf_let": 0,
+    "inf_hea": 0,
+    "cav_n": 0,
+    "cav_att": 0,
+    "cav_def": 0,
+    "cav_let": 0,
+    "cav_hea": 0,
+    "arc_n": 0,
+    "arc_att": 0,
+    "arc_def": 0,
+    "arc_let": 0,
+    "arc_hea": 0
+   },
+   "p2": {
+    "inf_n": 50000,
+    "inf_att": 0,
+    "inf_def": 0,
+    "inf_let": 0,
+    "inf_hea": 0,
+    "cav_n": 50000,
+    "cav_att": 0,
+    "cav_def": 0,
+    "cav_let": 0,
+    "cav_hea": 0,
+    "arc_n": 0,
+    "arc_att": 0,
+    "arc_def": 0,
+    "arc_let": 0,
+    "arc_hea": 0
+   },
+   "nbattles": 20
+  },
+  "result": {
+   "win_rate_p1": 0,
+   "ratios": [
+    "- Player1 has 100,000 total troops in a 100.0/0.0/0.0 ratio",
+    "- Player2 has 100,000 total troops in a 50.0/50.0/0.0 ratio"
+   ],
+   "p2_wins_resident": 76238.0,
+   "p2_wins_infantry": 26238.0,
+   "p2_wins_cavalry": 50000.0,
+   "p2_wins_archery": 0.0
+  }
+ },
+ {
+  "case": {
+   "name": "inf_vs_infarc",
+   "p1": {
+    "inf_n": 100000,
+    "inf_att": 0,
+    "inf_def": 0,
+    "inf_let": 0,
+    "inf_hea": 0,
+    "cav_n": 0,
+    "cav_att": 0,
+    "cav_def": 0,
+    "cav_let": 0,
+    "cav_hea": 0,
+    "arc_n": 0,
+    "arc_att": 0,
+    "arc_def": 0,
+    "arc_let": 0,
+    "arc_hea": 0
+   },
+   "p2": {
+    "inf_n": 50000,
+    "inf_att": 0,
+    "inf_def": 0,
+    "inf_let": 0,
+    "inf_hea": 0,
+    "cav_n": 0,
+    "cav_att": 0,
+    "cav_def": 0,
+    "cav_let": 0,
+    "cav_hea": 0,
+    "arc_n": 50000,
+    "arc_att": 0,
+    "arc_def": 0,
+    "arc_let": 0,
+    "arc_hea": 0
+   },
+   "nbattles": 20
+  },
+  "result": {
+   "win_rate_p1": 0,
+   "ratios": [
+    "- Player1 has 100,000 total troops in a 100.0/0.0/0.0 ratio",
+    "- Player2 has 100,000 total troops in a 50.0/0.0/50.0 ratio"
+   ],
+   "p2_wins_resident": 85152.0,
+   "p2_wins_infantry": 35152.0,
+   "p2_wins_cavalry": 0.0,
+   "p2_wins_archery": 50000.0
+  }
+ },
+ {
+  "case": {
+   "name": "infarc_vs_inf",
+   "p1": {
+    "inf_n": 50000,
+    "inf_att": 0,
+    "inf_def": 0,
+    "inf_let": 0,
+    "inf_hea": 0,
+    "cav_n": 0,
+    "cav_att": 0,
+    "cav_def": 0,
+    "cav_let": 0,
+    "cav_hea": 0,
+    "arc_n": 50000,
+    "arc_att": 0,
+    "arc_def": 0,
+    "arc_let": 0,
+    "arc_hea": 0
+   },
+   "p2": {
+    "inf_n": 100000,
+    "inf_att": 0,
+    "inf_def": 0,
+    "inf_let": 0,
+    "inf_hea": 0,
+    "cav_n": 0,
+    "cav_att": 0,
+    "cav_def": 0,
+    "cav_let": 0,
+    "cav_hea": 0,
+    "arc_n": 0,
+    "arc_att": 0,
+    "arc_def": 0,
+    "arc_let": 0,
+    "arc_hea": 0
+   },
+   "nbattles": 20
+  },
+  "result": {
+   "win_rate_p1": 100,
+   "ratios": [
+    "- Player1 has 100,000 total troops in a 50.0/0.0/50.0 ratio",
+    "- Player2 has 100,000 total troops in a 100.0/0.0/0.0 ratio"
+   ],
+   "p1_wins_resident": 85159.0,
+   "p1_wins_infantry": 35159.0,
+   "p1_wins_cavalry": 0.0,
+   "p1_wins_archery": 50000.0
+  }
+ },
+ {
+  "case": {
+   "name": "cav_vs_infarc",
+   "p1": {
+    "inf_n": 0,
+    "inf_att": 0,
+    "inf_def": 0,
+    "inf_let": 0,
+    "inf_hea": 0,
+    "cav_n": 100000,
+    "cav_att": 0,
+    "cav_def": 0,
+    "cav_let": 0,
+    "cav_hea": 0,
+    "arc_n": 0,
+    "arc_att": 0,
+    "arc_def": 0,
+    "arc_let": 0,
+    "arc_hea": 0
+   },
+   "p2": {
+    "inf_n": 50000,
+    "inf_att": 0,
+    "inf_def": 0,
+    "inf_let": 0,
+    "inf_hea": 0,
+    "cav_n": 0,
+    "cav_att": 0,
+    "cav_def": 0,
+    "cav_let": 0,
+    "cav_hea": 0,
+    "arc_n": 50000,
+    "arc_att": 0,
+    "arc_def": 0,
+    "arc_let": 0,
+    "arc_hea": 0
+   },
+   "nbattles": 20
+  },
+  "result": {
+   "win_rate_p1": 0,
+   "ratios": [
+    "- Player1 has 100,000 total troops in a 0.0/100.0/0.0 ratio",
+    "- Player2 has 100,000 total troops in a 50.0/0.0/50.0 ratio"
+   ],
+   "p2_wins_resident": 69448.0,
+   "p2_wins_infantry": 36820.0,
+   "p2_wins_cavalry": 0.0,
+   "p2_wins_archery": 32627.0
+  }
+ },
+ {
+  "case": {
+   "name": "arc_vs_infcav",
+   "p1": {
+    "inf_n": 0,
+    "inf_att": 0,
+    "inf_def": 0,
+    "inf_let": 0,
+    "inf_hea": 0,
+    "cav_n": 0,
+    "cav_att": 0,
+    "cav_def": 0,
+    "cav_let": 0,
+    "cav_hea": 0,
+    "arc_n": 100000,
+    "arc_att": 0,
+    "arc_def": 0,
+    "arc_let": 0,
+    "arc_hea": 0
+   },
+   "p2": {
+    "inf_n": 50000,
+    "inf_att": 0,
+    "inf_def": 0,
+    "inf_let": 0,
+    "inf_hea": 0,
+    "cav_n": 50000,
+    "cav_att": 0,
+    "cav_def": 0,
+    "cav_let": 0,
+    "cav_hea": 0,
+    "arc_n": 0,
+    "arc_att": 0,
+    "arc_def": 0,
+    "arc_let": 0,
+    "arc_hea": 0
+   },
+   "nbattles": 20
+  },
+  "result": {
+   "win_rate_p1": 0,
+   "ratios": [
+    "- Player1 has 100,000 total troops in a 0.0/0.0/100.0 ratio",
+    "- Player2 has 100,000 total troops in a 50.0/50.0/0.0 ratio"
+   ],
+   "p2_wins_resident": 74197.0,
+   "p2_wins_infantry": 24197.0,
+   "p2_wins_cavalry": 50000.0,
+   "p2_wins_archery": 0.0
+  }
+ },
+ {
+  "case": {
+   "name": "inf_vs_cavarc",
+   "p1": {
+    "inf_n": 100000,
+    "inf_att": 0,
+    "inf_def": 0,
+    "inf_let": 0,
+    "inf_hea": 0,
+    "cav_n": 0,
+    "cav_att": 0,
+    "cav_def": 0,
+    "cav_let": 0,
+    "cav_hea": 0,
+    "arc_n": 0,
+    "arc_att": 0,
+    "arc_def": 0,
+    "arc_let": 0,
+    "arc_hea": 0
+   },
+   "p2": {
+    "inf_n": 0,
+    "inf_att": 0,
+    "inf_def": 0,
+    "inf_let": 0,
+    "inf_hea": 0,
+    "cav_n": 50000,
+    "cav_att": 0,
+    "cav_def": 0,
+    "cav_let": 0,
+    "cav_hea": 0,
+    "arc_n": 50000,
+    "arc_att": 0,
+    "arc_def": 0,
+    "arc_let": 0,
+    "arc_hea": 0
+   },
+   "nbattles": 20
+  },
+  "result": {
+   "win_rate_p1": 0,
+   "ratios": [
+    "- Player1 has 100,000 total troops in a 100.0/0.0/0.0 ratio",
+    "- Player2 has 100,000 total troops in a 0.0/50.0/50.0 ratio"
+   ],
+   "p2_wins_resident": 54805.0,
+   "p2_wins_infantry": 0.0,
+   "p2_wins_cavalry": 4812.0,
+   "p2_wins_archery": 49993.0
+  }
+ },
+ {
+  "case": {
+   "name": "inf100_vs_arc50",
+   "p1": {
+    "inf_n": 100000,
+    "inf_att": 0,
+    "inf_def": 0,
+    "inf_let": 0,
+    "inf_hea": 0,
+    "cav_n": 0,
+    "cav_att": 0,
+    "cav_def": 0,
+    "cav_let": 0,
+    "cav_hea": 0,
+    "arc_n": 0,
+    "arc_att": 0,
+    "arc_def": 0,
+    "arc_let": 0,
+    "arc_hea": 0
+   },
+   "p2": {
+    "inf_n": 0,
+    "inf_att": 0,
+    "inf_def": 0,
+    "inf_let": 0,
+    "inf_hea": 0,
+    "cav_n": 0,
+    "cav_att": 0,
+    "cav_def": 0,
+    "cav_let": 0,
+    "cav_hea": 0,
+    "arc_n": 50000,
+    "arc_att": 0,
+    "arc_def": 0,
+    "arc_let": 0,
+    "arc_hea": 0
+   },
+   "nbattles": 20
+  },
+  "result": {
+   "win_rate_p1": 100,
+   "ratios": [
+    "- Player1 has 100,000 total troops in a 100.0/0.0/0.0 ratio",
+    "- Player2 has 50,000 total troops in a 0.0/0.0/100.0 ratio"
+   ],
+   "p1_wins_resident": 67745.0,
+   "p1_wins_infantry": 67745.0,
+   "p1_wins_cavalry": 0.0,
+   "p1_wins_archery": 0.0
+  }
+ },
+ {
+  "case": {
+   "name": "cav_vs_cavinf",
+   "p1": {
+    "inf_n": 0,
+    "inf_att": 0,
+    "inf_def": 0,
+    "inf_let": 0,
+    "inf_hea": 0,
+    "cav_n": 100000,
+    "cav_att": 0,
+    "cav_def": 0,
+    "cav_let": 0,
+    "cav_hea": 0,
+    "arc_n": 0,
+    "arc_att": 0,
+    "arc_def": 0,
+    "arc_let": 0,
+    "arc_hea": 0
+   },
+   "p2": {
+    "inf_n": 50000,
+    "inf_att": 0,
+    "inf_def": 0,
+    "inf_let": 0,
+    "inf_hea": 0,
+    "cav_n": 50000,
+    "cav_att": 0,
+    "cav_def": 0,
+    "cav_let": 0,
+    "cav_hea": 0,
+    "arc_n": 0,
+    "arc_att": 0,
+    "arc_def": 0,
+    "arc_let": 0,
+    "arc_hea": 0
+   },
+   "nbattles": 20
+  },
+  "result": {
+   "win_rate_p1": 0,
+   "ratios": [
+    "- Player1 has 100,000 total troops in a 0.0/100.0/0.0 ratio",
+    "- Player2 has 100,000 total troops in a 50.0/50.0/0.0 ratio"
+   ],
+   "p2_wins_resident": 79425.0,
+   "p2_wins_infantry": 29425.0,
+   "p2_wins_cavalry": 50000.0,
+   "p2_wins_archery": 0.0
+  }
+ },
+ {
+  "case": {
+   "name": "tier_t6_vs_t11p8",
+   "p1": {
+    "inf_n": 100000,
+    "inf_att": 0,
+    "inf_def": 0,
+    "inf_let": 0,
+    "inf_hea": 0,
+    "cav_n": 0,
+    "cav_att": 0,
+    "cav_def": 0,
+    "cav_let": 0,
+    "cav_hea": 0,
+    "arc_n": 0,
+    "arc_att": 0,
+    "arc_def": 0,
+    "arc_let": 0,
+    "arc_hea": 0
+   },
+   "p2": {
+    "inf_n": 100000,
+    "inf_att": 0,
+    "inf_def": 0,
+    "inf_let": 0,
+    "inf_hea": 0,
+    "cav_n": 0,
+    "cav_att": 0,
+    "cav_def": 0,
+    "cav_let": 0,
+    "cav_hea": 0,
+    "arc_n": 0,
+    "arc_att": 0,
+    "arc_def": 0,
+    "arc_let": 0,
+    "arc_hea": 0
+   },
+   "nbattles": 20,
+   "tier_p1": "t6",
+   "tier_p2": "t11p8"
+  },
+  "result": {
+   "win_rate_p1": 54,
+   "ratios": [
+    "- Player1 has 100,000 total troops in a 100.0/0.0/0.0 ratio",
+    "- Player2 has 100,000 total troops in a 100.0/0.0/0.0 ratio"
+   ],
+   "p1_wins_resident": 3865.0,
+   "p1_wins_infantry": 3865.0,
+   "p1_wins_cavalry": 0.0,
+   "p1_wins_archery": 0.0,
+   "p2_wins_resident": 3800.0,
+   "p2_wins_infantry": 3800.0,
+   "p2_wins_cavalry": 0.0,
+   "p2_wins_archery": 0.0
+  }
+ },
+ {
+  "case": {
+   "name": "tier_tg4_vs_t9",
+   "p1": {
+    "inf_n": 100000,
+    "inf_att": 0,
+    "inf_def": 0,
+    "inf_let": 0,
+    "inf_hea": 0,
+    "cav_n": 0,
+    "cav_att": 0,
+    "cav_def": 0,
+    "cav_let": 0,
+    "cav_hea": 0,
+    "arc_n": 0,
+    "arc_att": 0,
+    "arc_def": 0,
+    "arc_let": 0,
+    "arc_hea": 0
+   },
+   "p2": {
+    "inf_n": 100000,
+    "inf_att": 0,
+    "inf_def": 0,
+    "inf_let": 0,
+    "inf_hea": 0,
+    "cav_n": 0,
+    "cav_att": 0,
+    "cav_def": 0,
+    "cav_let": 0,
+    "cav_hea": 0,
+    "arc_n": 0,
+    "arc_att": 0,
+    "arc_def": 0,
+    "arc_let": 0,
+    "arc_hea": 0
+   },
+   "nbattles": 20,
+   "tier_p1": "tg4",
+   "tier_p2": "t9"
+  },
+  "result": {
+   "win_rate_p1": 51,
+   "ratios": [
+    "- Player1 has 100,000 total troops in a 100.0/0.0/0.0 ratio",
+    "- Player2 has 100,000 total troops in a 100.0/0.0/0.0 ratio"
+   ],
+   "p1_wins_resident": 3430.0,
+   "p1_wins_infantry": 3430.0,
+   "p1_wins_cavalry": 0.0,
+   "p1_wins_archery": 0.0,
+   "p2_wins_resident": 3666.0,
+   "p2_wins_infantry": 3666.0,
+   "p2_wins_cavalry": 0.0,
+   "p2_wins_archery": 0.0
+  }
+ },
+ {
+  "case": {
+   "name": "v_mix_vs_mix",
+   "p1": {
+    "inf_n": 50000,
+    "inf_att": 0,
+    "inf_def": 0,
+    "inf_let": 0,
+    "inf_hea": 0,
+    "cav_n": 30000,
+    "cav_att": 0,
+    "cav_def": 0,
+    "cav_let": 0,
+    "cav_hea": 0,
+    "arc_n": 20000,
+    "arc_att": 0,
+    "arc_def": 0,
+    "arc_let": 0,
+    "arc_hea": 0
+   },
+   "p2": {
+    "inf_n": 60000,
+    "inf_att": 0,
+    "inf_def": 0,
+    "inf_let": 0,
+    "inf_hea": 0,
+    "cav_n": 20000,
+    "cav_att": 0,
+    "cav_def": 0,
+    "cav_let": 0,
+    "cav_hea": 0,
+    "arc_n": 20000,
+    "arc_att": 0,
+    "arc_def": 0,
+    "arc_let": 0,
+    "arc_hea": 0
+   },
+   "nbattles": 20
+  },
+  "result": {
+   "win_rate_p1": 50,
+   "ratios": [
+    "- Player1 has 100,000 total troops in a 50.0/30.0/20.0 ratio",
+    "- Player2 has 100,000 total troops in a 60.0/20.0/20.0 ratio"
+   ],
+   "p1_wins_resident": 29407.0,
+   "p1_wins_infantry": 3185.0,
+   "p1_wins_cavalry": 24950.0,
+   "p1_wins_archery": 1271.0,
+   "p2_wins_resident": 23971.0,
+   "p2_wins_infantry": 4954.0,
+   "p2_wins_cavalry": 18007.0,
+   "p2_wins_archery": 1010.0
+  }
+ },
+ {
+  "case": {
+   "name": "v_stats_asym",
+   "p1": {
+    "inf_n": 50000,
+    "inf_att": 150,
+    "inf_def": 80,
+    "inf_let": 120,
+    "inf_hea": 60,
+    "cav_n": 25000,
+    "cav_att": 150,
+    "cav_def": 80,
+    "cav_let": 120,
+    "cav_hea": 60,
+    "arc_n": 25000,
+    "arc_att": 150,
+    "arc_def": 80,
+    "arc_let": 120,
+    "arc_hea": 60
+   },
+   "p2": {
+    "inf_n": 40000,
+    "inf_att": 100,
+    "inf_def": 120,
+    "inf_let": 90,
+    "inf_hea": 140,
+    "cav_n": 30000,
+    "cav_att": 100,
+    "cav_def": 120,
+    "cav_let": 90,
+    "cav_hea": 140,
+    "arc_n": 30000,
+    "arc_att": 100,
+    "arc_def": 120,
+    "arc_let": 90,
+    "arc_hea": 140
+   },
+   "nbattles": 20
+  },
+  "result": {
+   "win_rate_p1": 2,
+   "ratios": [
+    "- Player1 has 100,000 total troops in a 50.0/25.0/25.0 ratio",
+    "- Player2 has 100,000 total troops in a 40.0/30.0/30.0 ratio"
+   ],
+   "p1_wins_resident": 25924.0,
+   "p1_wins_infantry": 99.0,
+   "p1_wins_cavalry": 17970.0,
+   "p1_wins_archery": 7854.0,
+   "p2_wins_resident": 43323.0,
+   "p2_wins_infantry": 3394.0,
+   "p2_wins_cavalry": 27196.0,
+   "p2_wins_archery": 12732.0
+  }
+ },
+ {
+  "case": {
+   "name": "v_pertype_stats",
+   "p1": {
+    "inf_n": 60000,
+    "inf_att": 200,
+    "inf_def": 300,
+    "inf_let": 100,
+    "inf_hea": 50,
+    "cav_n": 20000,
+    "cav_att": 50,
+    "cav_def": 0,
+    "cav_let": 400,
+    "cav_hea": 0,
+    "arc_n": 20000,
+    "arc_att": 300,
+    "arc_def": 0,
+    "arc_let": 0,
+    "arc_hea": 200
+   },
+   "p2": {
+    "inf_n": 40000,
+    "inf_att": 100,
+    "inf_def": 100,
+    "inf_let": 100,
+    "inf_hea": 100,
+    "cav_n": 40000,
+    "cav_att": 200,
+    "cav_def": 50,
+    "cav_let": 50,
+    "cav_hea": 200,
+    "arc_n": 20000,
+    "arc_att": 0,
+    "arc_def": 300,
+    "arc_let": 300,
+    "arc_hea": 0
+   },
+   "nbattles": 20
+  },
+  "result": {
+   "win_rate_p1": 100,
+   "ratios": [
+    "- Player1 has 100,000 total troops in a 60.0/20.0/20.0 ratio",
+    "- Player2 has 100,000 total troops in a 40.0/40.0/20.0 ratio"
+   ],
+   "p1_wins_resident": 53841.0,
+   "p1_wins_infantry": 33219.0,
+   "p1_wins_cavalry": 20000.0,
+   "p1_wins_archery": 621.0
+  }
+ },
+ {
+  "case": {
+   "name": "v_big_vs_small",
+   "p1": {
+    "inf_n": 120000,
+    "inf_att": 0,
+    "inf_def": 0,
+    "inf_let": 0,
+    "inf_hea": 0,
+    "cav_n": 40000,
+    "cav_att": 0,
+    "cav_def": 0,
+    "cav_let": 0,
+    "cav_hea": 0,
+    "arc_n": 40000,
+    "arc_att": 0,
+    "arc_def": 0,
+    "arc_let": 0,
+    "arc_hea": 0
+   },
+   "p2": {
+    "inf_n": 50000,
+    "inf_att": 0,
+    "inf_def": 0,
+    "inf_let": 0,
+    "inf_hea": 0,
+    "cav_n": 25000,
+    "cav_att": 0,
+    "cav_def": 0,
+    "cav_let": 0,
+    "cav_hea": 0,
+    "arc_n": 25000,
+    "arc_att": 0,
+    "arc_def": 0,
+    "arc_let": 0,
+    "arc_hea": 0
+   },
+   "nbattles": 20
+  },
+  "result": {
+   "win_rate_p1": 100,
+   "ratios": [
+    "- Player1 has 200,000 total troops in a 60.0/20.0/20.0 ratio",
+    "- Player2 has 100,000 total troops in a 50.0/25.0/25.0 ratio"
+   ],
+   "p1_wins_resident": 146920.0,
+   "p1_wins_infantry": 83814.0,
+   "p1_wins_cavalry": 40000.0,
+   "p1_wins_archery": 23105.0
+  }
+ },
+ {
+  "case": {
+   "name": "v_arc_heavy",
+   "p1": {
+    "inf_n": 20000,
+    "inf_att": 0,
+    "inf_def": 0,
+    "inf_let": 0,
+    "inf_hea": 0,
+    "cav_n": 20000,
+    "cav_att": 0,
+    "cav_def": 0,
+    "cav_let": 0,
+    "cav_hea": 0,
+    "arc_n": 60000,
+    "arc_att": 0,
+    "arc_def": 0,
+    "arc_let": 0,
+    "arc_hea": 0
+   },
+   "p2": {
+    "inf_n": 60000,
+    "inf_att": 0,
+    "inf_def": 0,
+    "inf_let": 0,
+    "inf_hea": 0,
+    "cav_n": 20000,
+    "cav_att": 0,
+    "cav_def": 0,
+    "cav_let": 0,
+    "cav_hea": 0,
+    "arc_n": 20000,
+    "arc_att": 0,
+    "arc_def": 0,
+    "arc_let": 0,
+    "arc_hea": 0
+   },
+   "nbattles": 20
+  },
+  "result": {
+   "win_rate_p1": 0,
+   "ratios": [
+    "- Player1 has 100,000 total troops in a 20.0/20.0/60.0 ratio",
+    "- Player2 has 100,000 total troops in a 60.0/20.0/20.0 ratio"
+   ],
+   "p1_wins_resident": 29842.0,
+   "p1_wins_infantry": 0.0,
+   "p1_wins_cavalry": 0.0,
+   "p1_wins_archery": 29842.0,
+   "p2_wins_resident": 44611.0,
+   "p2_wins_infantry": 14004.0,
+   "p2_wins_cavalry": 20000.0,
+   "p2_wins_archery": 10607.0
+  }
+ },
+ {
+  "case": {
+   "name": "v_cav_heavy",
+   "p1": {
+    "inf_n": 20000,
+    "inf_att": 0,
+    "inf_def": 0,
+    "inf_let": 0,
+    "inf_hea": 0,
+    "cav_n": 60000,
+    "cav_att": 0,
+    "cav_def": 0,
+    "cav_let": 0,
+    "cav_hea": 0,
+    "arc_n": 20000,
+    "arc_att": 0,
+    "arc_def": 0,
+    "arc_let": 0,
+    "arc_hea": 0
+   },
+   "p2": {
+    "inf_n": 20000,
+    "inf_att": 0,
+    "inf_def": 0,
+    "inf_let": 0,
+    "inf_hea": 0,
+    "cav_n": 20000,
+    "cav_att": 0,
+    "cav_def": 0,
+    "cav_let": 0,
+    "cav_hea": 0,
+    "arc_n": 60000,
+    "arc_att": 0,
+    "arc_def": 0,
+    "arc_let": 0,
+    "arc_hea": 0
+   },
+   "nbattles": 20
+  },
+  "result": {
+   "win_rate_p1": 41,
+   "ratios": [
+    "- Player1 has 100,000 total troops in a 20.0/60.0/20.0 ratio",
+    "- Player2 has 100,000 total troops in a 20.0/20.0/60.0 ratio"
+   ],
+   "p1_wins_resident": 18036.0,
+   "p1_wins_infantry": 0.0,
+   "p1_wins_cavalry": 6343.0,
+   "p1_wins_archery": 11693.0,
+   "p2_wins_resident": 25545.0,
+   "p2_wins_infantry": 0.0,
+   "p2_wins_cavalry": 582.0,
+   "p2_wins_archery": 24963.0
+  }
+ }
+]

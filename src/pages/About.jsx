@@ -250,7 +250,7 @@ export default function About() {
             { title: 'One Crown', body: 'Four alliances, one kingdom. Every decision serves the realm first. Rallies are shared, intelligence is pooled, and the kingdom moves as one body in war.' },
             { title: 'Discipline Wins Wars', body: 'Shield coverage, march discipline, reinforcement timing, and prep-phase coordination turn strength into results.' },
             { title: 'Honor in Diplomacy', body: 'Clear communication and reliable coordination keep the realm stable between wars and focused when KvK begins.' },
-            { title: 'Forged in Fire', body: `The recorded war history now leads through KvK ${latestKvk.kvk} against ${latestKvk.opponent}: preparation won and battle won.` },
+            { title: 'Forged in Fire', body: `The recorded war history now leads through KvK ${latestKvk.kvk} against ${latestKvk.opponent}: preparation ${latestKvk.prep === 'W' ? 'won' : 'lost'} and battle ${latestKvk.battle === 'W' ? 'won' : 'lost'}.` },
           ].map((d) => (
             <div key={d.title} className="rounded-lg border border-gold/15 bg-white/5 p-5">
               <div className="font-display text-lg font-bold text-gold-bright">{d.title}</div>

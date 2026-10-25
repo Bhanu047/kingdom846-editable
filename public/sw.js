@@ -25,7 +25,8 @@
 // timer, the new crew portraits. Bumped for the same reason as v7.
 // v9: KvK 19, Atlas's new ratings, the October Mystic Trial top fifteen.
 // v10: Atlas's ratings and ranking history charts.
-const CACHE_VERSION = 'v10'
+// v11: the KvK 19 line on About reads the result instead of assuming a sweep.
+const CACHE_VERSION = 'v11'
 const SHELL_CACHE = `k846-shell-${CACHE_VERSION}`
 const ASSET_CACHE = `k846-assets-${CACHE_VERSION}`
 const FONT_CACHE = `k846-fonts-${CACHE_VERSION}`
